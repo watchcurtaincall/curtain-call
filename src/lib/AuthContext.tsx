@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { ClientDB } from './db';
 
 export interface MockUser {
   name: string;
@@ -28,7 +29,7 @@ const MOCK_USER: MockUser = {
 
 interface AuthContextType {
   user: MockUser | null;
-  login: () => void;
+  login: (email: string, password?: string) => void;
   logout: () => void;
 }
 
@@ -43,17 +44,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem('cc_authed');
-    if (saved === 'true') setUser(MOCK_USER);
+    const savedUser = localStorage.getItem('cc_authed_user');
+    if (saved === 'true') {
+      if (savedUser) {
+        setUser(JSON.parse(savedUser));
+      } else {
+        setUser(MOCK_USER);
+      }
+    }
   }, []);
 
-  const login = () => {
-    setUser(MOCK_USER);
+  const login = (email: string, password?: string) => {
+    let loggedUser = MOCK_USER;
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (cleanEmail === 'watchcurtaincall@gmail.com') {
+      loggedUser = {
+        name: 'Watch Curtain Call Admin',
+        email: 'watchcurtaincall@gmail.com',
+        avatar: 'WCC',
+        joinDate: 'May 2026',
+        ratings: 120,
+        reviews: 88,
+        points: 2500,
+        badgesUnlocked: 10,
+        totalBadges: 14
+      };
+      
+      // Auto-approve as approved critic on login
+      ClientDB.addApprovedCriticEmail('watchcurtaincall@gmail.com');
+    } else {
+      loggedUser = {
+        name: email.split('@')[0],
+        email: email,
+        avatar: email.slice(0, 2).toUpperCase(),
+        joinDate: 'Recently Added',
+        ratings: 0,
+        reviews: 0,
+        points: 0,
+        badgesUnlocked: 0,
+        totalBadges: 14
+      };
+    }
+    
+    setUser(loggedUser);
     localStorage.setItem('cc_authed', 'true');
+    localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('cc_authed');
+    localStorage.removeItem('cc_authed_user');
   };
 
   return (

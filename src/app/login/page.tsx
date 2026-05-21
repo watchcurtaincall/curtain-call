@@ -10,12 +10,34 @@ export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1200));
-    login();
+    setErrorMsg('');
+    await new Promise(r => setTimeout(r, 1000));
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const enteredEmail = (formData.get('email') as string || '').trim();
+    const enteredPassword = formData.get('password') as string || '';
+
+    if (!enteredEmail) {
+      setErrorMsg('Please enter your email address.');
+      setLoading(false);
+      return;
+    }
+
+    // Custom Administrator Credential Check
+    if (enteredEmail.toLowerCase() === 'watchcurtaincall@gmail.com') {
+      if (enteredPassword !== '11647Curtain_') {
+        setErrorMsg('Invalid password for the Administrator account.');
+        setLoading(false);
+        return;
+      }
+    }
+
+    login(enteredEmail, enteredPassword);
     router.push('/profile');
   };
 
@@ -31,6 +53,12 @@ export default function LoginPage() {
             <p className="text-zinc-400 text-sm">Sign in to review plays and manage your watchlist.</p>
           </div>
 
+          {errorMsg && (
+            <div className="mb-4 p-3 bg-red-950/40 border border-red-500/30 rounded-xl text-red-200 text-sm text-center font-medium">
+              {errorMsg}
+            </div>
+          )}
+
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email Address</label>
@@ -38,9 +66,11 @@ export default function LoginPage() {
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                 <input
                   type="email"
+                  name="email"
                   defaultValue="adaeze@example.com"
                   placeholder="name@example.com"
                   className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
+                  required
                 />
               </div>
             </div>
@@ -54,9 +84,11 @@ export default function LoginPage() {
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                 <input
                   type="password"
+                  name="password"
                   defaultValue="password"
                   placeholder="••••••••"
                   className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
+                  required
                 />
               </div>
             </div>
