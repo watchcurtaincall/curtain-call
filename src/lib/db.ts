@@ -1109,7 +1109,7 @@ export const syncFromSupabase = async () => {
   try {
     // 1. Pull productions
     const { data: prods } = await supabase.from('productions').select('*');
-    if (prods) {
+    if (prods && prods.length > 0) {
       const mapped = prods.map(mapProductionFromDb);
       const approved = mapped.filter(p => p.curationStatus === 'Approved');
       const pending = mapped.filter(p => p.curationStatus === 'Pending');
@@ -1120,7 +1120,7 @@ export const syncFromSupabase = async () => {
 
     // 2. Pull artists
     const { data: arts } = await supabase.from('artists').select('*');
-    if (arts) {
+    if (arts && arts.length > 0) {
       const mapped = arts.map(mapArtistFromDb);
       const approved = mapped.filter(a => a.curationStatus === 'Approved');
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
@@ -1131,7 +1131,7 @@ export const syncFromSupabase = async () => {
 
     // 3. Pull articles
     const { data: articles } = await supabase.from('articles').select('*');
-    if (articles) {
+    if (articles && articles.length > 0) {
       const mapped = articles.map(mapArticleFromDb);
       const approved = mapped.filter(a => a.curationStatus === 'Approved');
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
@@ -1142,14 +1142,14 @@ export const syncFromSupabase = async () => {
 
     // 4. Pull reviews
     const { data: revs } = await supabase.from('reviews').select('*');
-    if (revs) {
+    if (revs && revs.length > 0) {
       const mapped = revs.map(mapReviewFromDb);
       localStorage.setItem(REVIEWS_KEY, JSON.stringify(mapped));
     }
 
     // 5. Pull critic applications
     const { data: apps } = await supabase.from('critic_applications').select('*');
-    if (apps) {
+    if (apps && apps.length > 0) {
       const mapped = apps.map(mapCriticAppFromDb);
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
       localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pending));
@@ -1157,7 +1157,7 @@ export const syncFromSupabase = async () => {
 
     // 6. Pull approved critic emails whitelist
     const { data: whitelist } = await supabase.from('approved_critics').select('email');
-    if (whitelist) {
+    if (whitelist && whitelist.length > 0) {
       const emails = whitelist.map(w => w.email.toLowerCase());
       localStorage.setItem('curtain_approved_critic_emails', JSON.stringify(emails));
     }
@@ -1165,7 +1165,7 @@ export const syncFromSupabase = async () => {
     // 7. Pull withdrawals
     try {
       const { data: withdrawals } = await supabase.from('withdrawals').select('*');
-      if (withdrawals) {
+      if (withdrawals && withdrawals.length > 0) {
         localStorage.setItem('curtain_withdrawals', JSON.stringify(withdrawals));
       }
     } catch (e) {
@@ -1175,7 +1175,7 @@ export const syncFromSupabase = async () => {
     // 8. Pull tickets
     try {
       const { data: tickets } = await supabase.from('tickets').select('*');
-      if (tickets) {
+      if (tickets && tickets.length > 0) {
         localStorage.setItem('curtain_tickets', JSON.stringify(tickets));
       }
     } catch (e) {
@@ -1185,7 +1185,7 @@ export const syncFromSupabase = async () => {
     // 9. Pull notifications
     try {
       const { data: notifications } = await supabase.from('notifications').select('*');
-      if (notifications) {
+      if (notifications && notifications.length > 0) {
         localStorage.setItem('curtain_notifications', JSON.stringify(notifications));
       }
     } catch (e) {
