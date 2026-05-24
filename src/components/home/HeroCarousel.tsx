@@ -110,11 +110,7 @@ export function HeroCarousel({ productions }: { productions: Production[] }) {
             >
               View Details
             </Link>
-            {featured.status !== 'Past Production' && (
-              !!featured.submitterEmail ||
-              featured.id.startsWith('direct_play_') ||
-              featured.id.startsWith('prod_')
-            ) && (
+            {featured.status !== 'Past Production' && featured.status !== 'Recently Concluded' && (
               <Link
                 href={`/tickets/${featured.id}`}
                 className="bg-zinc-900/60 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-zinc-800/80 transition-colors"
