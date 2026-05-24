@@ -36,19 +36,19 @@ export default function Home() {
   }, []);
 
   // Sort and filter productions for different categories
-  const featured = [...productions].slice(0, 5); // Take top 5 for hero carousel
+  const featured = productions.filter(p => p.status !== 'Draft').slice(0, 5); // Take top 5 for hero carousel
   const currentlyShowing = productions.filter(p => p.status === 'Currently Showing');
   const comingSoon = productions.filter(p => p.status === 'Coming Soon');
   
   // "Highest Rated by Critics" equivalent to "Certified Fresh"
-  const highestRatedCritics = [...productions]
-    .filter(p => p.criticScore !== null)
+  const highestRatedCritics = productions
+    .filter(p => p.criticScore !== null && p.status !== 'Draft')
     .sort((a, b) => (b.criticScore || 0) - (a.criticScore || 0))
     .slice(0, 5);
 
   // "Audience Favorites"
-  const highestRatedAudience = [...productions]
-    .filter(p => p.audienceScore !== null)
+  const highestRatedAudience = productions
+    .filter(p => p.audienceScore !== null && p.status !== 'Draft')
     .sort((a, b) => (b.audienceScore || 0) - (a.audienceScore || 0))
     .slice(0, 5);
 

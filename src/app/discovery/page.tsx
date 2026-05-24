@@ -16,7 +16,7 @@ export default function DiscoveryPage() {
 
   useEffect(() => {
     const loadData = () => {
-      setProductions(ClientDB.getProductions());
+      setProductions(ClientDB.getProductions().filter(p => p.status !== 'Draft'));
       setLoading(false);
     };
     loadData();

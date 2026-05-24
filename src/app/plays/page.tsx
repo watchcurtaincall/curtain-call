@@ -15,7 +15,7 @@ export default function DocumentedPlaysPage() {
   // Load dynamically from the ClientDB on mount
   useEffect(() => {
     const loadData = () => {
-      setProductions(ClientDB.getProductions());
+      setProductions(ClientDB.getProductions().filter(p => p.status !== 'Draft'));
     };
     loadData();
     

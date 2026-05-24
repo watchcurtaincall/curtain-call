@@ -13,7 +13,7 @@ import {
   LogOut, Settings, Bell, ChevronRight, Lock,
   PenSquare, Target, Ticket, Mic2, Drama,
   FileText, Trophy, Library, Zap, Users, Crown, Sparkles, Shield,
-  Plus, Wallet, TrendingUp, ArrowUpRight, BookOpen, AlertCircle
+  Plus, Wallet, TrendingUp, ArrowUpRight, BookOpen, AlertCircle, Trash2
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/producer/WithdrawModal';
 import { NotificationsPanel } from '@/components/profile/NotificationsPanel';
@@ -134,6 +134,13 @@ export default function ProfilePage() {
         status: 'Recently Concluded' as const
       };
       ClientDB.saveProduction(updatedPlay);
+      setSyncCount(prev => prev + 1);
+    }
+  };
+
+  const handleDeleteDraft = (id: string) => {
+    if (confirm('Are you sure you want to permanently delete this draft? This action cannot be undone.')) {
+      ClientDB.deleteProduction(id);
       setSyncCount(prev => prev + 1);
     }
   };
@@ -488,6 +495,35 @@ export default function ProfilePage() {
                             className="w-full bg-zinc-900/80 hover:bg-red-950/20 text-zinc-400 hover:text-red-400 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase mt-1 shrink-0"
                           >
                             End Show
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Drafts & Unfinished Works */}
+                <div className="mt-8 pt-8 border-t border-white/5">
+                  <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span className="w-1.5 h-3.5 bg-zinc-600 rounded-full" />
+                    Drafts & Unfinished Works
+                  </h3>
+                  {allPlays.filter(p => p.submitterEmail === user.email && p.status === 'Draft').length === 0 ? (
+                    <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-8 text-center text-zinc-500 text-sm">
+                      No drafts or unfinished works found.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {allPlays.filter(p => p.submitterEmail === user.email && p.status === 'Draft').map(p => (
+                        <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl relative group/card">
+                          <div className="flex-1">
+                            <ProductionCard production={p} />
+                          </div>
+                          <button
+                            onClick={() => handleDeleteDraft(p.id)}
+                            className="w-full bg-zinc-900/80 hover:bg-red-950/20 text-red-450 hover:text-red-400 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase flex items-center justify-center gap-1 mt-1 shrink-0"
+                          >
+                            <Trash2 className="h-3 w-3" /> Delete Draft
                           </button>
                         </div>
                       ))}

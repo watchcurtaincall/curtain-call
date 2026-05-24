@@ -70,6 +70,7 @@ export default function CreateProductionPage() {
   const [createdProductionId, setCreatedProductionId] = useState('');
   const [uploading, setUploading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isDraftMode, setIsDraftMode] = useState(false);
   const [banks, setBanks] = useState<Bank[]>([]);
   const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
   const [resolvedName, setResolvedName] = useState('');
@@ -187,6 +188,7 @@ export default function CreateProductionPage() {
 
   const handlePublish = async () => {
     try {
+      setIsDraftMode(false);
       const firstDate = form.dates[0]?.date || '';
       
       // Generate highly professional, human-readable SEO link slug
@@ -230,6 +232,49 @@ export default function CreateProductionPage() {
     }
   };
 
+  const handleSaveDraft = async () => {
+    try {
+      setIsDraftMode(true);
+      const firstDate = form.dates[0]?.date || '';
+      
+      const slug = form.title
+        ? form.title.toLowerCase().replace(/[^a-z0-9_ ]/g, '').trim().replace(/\s+/g, '-')
+        : 'draft';
+      const newPlayId = `${slug}-${Date.now().toString().slice(-4)}`;
+      
+      const newPlay = {
+        id: newPlayId,
+        title: form.title || 'Untitled Draft',
+        synopsis: form.synopsis || 'No synopsis added yet.',
+        genre: form.genre || 'Drama',
+        runtime: '120 mins',
+        venue: form.venue || 'No venue set',
+        status: 'Draft' as const,
+        posterUrl: form.posterUrl || '',
+        criticScore: null,
+        audienceScore: null,
+        totalReviews: 0,
+        galleryImages: form.posterUrl ? [form.posterUrl] : [],
+        submitterEmail: user?.email || '',
+        curationStatus: 'Approved' as const, // Drafts are pre-approved but private
+        showDate: firstDate || undefined,
+        ticketTiers: form.tiers.map(t => ({
+          id: t.id,
+          name: t.name || 'General',
+          price: t.price || '0',
+          capacity: t.capacity || '0'
+        })),
+        castAndCrew: form.castAndCrew || [],
+      };
+
+      ClientDB.saveProduction(newPlay);
+      setCreatedProductionId(newPlayId);
+      setPublished(true);
+    } catch (err) {
+      console.error('Failed to save draft:', err);
+    }
+  };
+
   if (published) {
     const playUrl = `/productions/${createdProductionId}`;
     const ticketsUrl = `/tickets/${createdProductionId}`;
@@ -241,14 +286,25 @@ export default function CreateProductionPage() {
         </div>
         
         <div>
-          <h1 className="text-3xl md:text-4xl font-serif font-bold text-white mb-2 tracking-tight">Production Published!</h1>
+          <h1 className="text-3xl md:text-4xl font-serif font-bold text-white mb-2 tracking-tight">
+            {isDraftMode ? 'Draft Saved!' : 'Production Published!'}
+          </h1>
           <p className="text-zinc-400 text-sm max-w-sm mx-auto leading-relaxed">
-            <strong className="text-white font-semibold">{form.title}</strong> is now live on Curtain Call and listed under <strong className="text-white font-semibold">Coming Soon</strong>.
+            {isDraftMode ? (
+              <>
+                <strong className="text-white font-semibold">{form.title || 'Untitled Draft'}</strong> has been saved locally as a draft. You can manage, edit, or publish it under your dashboard Production Hub.
+              </>
+            ) : (
+              <>
+                <strong className="text-white font-semibold">{form.title}</strong> is now live on Curtain Call and listed under <strong className="text-white font-semibold">Coming Soon</strong>.
+              </>
+            )}
           </p>
         </div>
 
-        {/* Premium Share Section */}
-        <div className="w-full max-w-md bg-zinc-900/60 border border-white/5 rounded-3xl p-6 backdrop-blur-md flex flex-col gap-4 text-left shadow-2xl">
+        {/* Premium Share Section - only show if NOT saved as a draft */}
+        {!isDraftMode ? (
+          <div className="w-full max-w-md bg-zinc-900/60 border border-white/5 rounded-3xl p-6 backdrop-blur-md flex flex-col gap-4 text-left shadow-2xl">
           <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Share Your Production</h3>
           
           <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
@@ -283,6 +339,7 @@ export default function CreateProductionPage() {
             </div>
           </div>
         </div>
+        ) : null}
 
         <div className="flex gap-3 w-full max-w-md">
           <Link href="/profile" className="flex-1 bg-white text-black font-bold py-4 rounded-2xl hover:bg-zinc-100 transition-colors shadow-lg text-sm flex items-center justify-center">
@@ -837,6 +894,13 @@ export default function CreateProductionPage() {
               className="flex-1 flex items-center justify-center gap-2 py-3 bg-white text-black font-bold rounded-2xl hover:bg-zinc-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Continue <ChevronRight className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              className="px-5 py-3 bg-zinc-900 border border-white/10 hover:border-red-650/30 hover:bg-red-950/10 text-zinc-400 hover:text-red-400 rounded-2xl font-bold transition-all text-xs uppercase tracking-wider shrink-0"
+            >
+              Save Draft
             </button>
           </div>
         )}

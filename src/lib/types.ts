@@ -1,4 +1,4 @@
-export type ProductionStatus = 'Currently Showing' | 'Coming Soon' | 'Past Production' | 'Recently Concluded';
+export type ProductionStatus = 'Currently Showing' | 'Coming Soon' | 'Past Production' | 'Recently Concluded' | 'Draft';
 
 export interface Artist {
   id: string;

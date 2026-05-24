@@ -259,12 +259,24 @@ const deleteFromCloud = async (table: string, id: string) => {
 
 // ── HYBRID DATABASE MANAGER LAYER ──
 
-export function calculateDynamicStatus(showDateStr?: string, initialStatus?: string): 'Currently Showing' | 'Coming Soon' | 'Past Production' | 'Recently Concluded' {
+export function calculateDynamicStatus(showDateStr?: string, initialStatus?: string): 'Currently Showing' | 'Coming Soon' | 'Past Production' | 'Recently Concluded' | 'Draft' {
+  if (initialStatus === 'Draft') {
+    return 'Draft';
+  }
   if (!showDateStr) {
     return (initialStatus as any) || 'Currently Showing';
   }
   
-  const showDate = new Date(showDateStr);
+  const parts = showDateStr.split('-');
+  let showDate: Date;
+  if (parts.length === 3) {
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    showDate = new Date(year, month, day);
+  } else {
+    showDate = new Date(showDateStr);
+  }
   showDate.setHours(0, 0, 0, 0);
   
   const today = new Date();
@@ -1150,7 +1162,7 @@ export const syncFromSupabase = async () => {
   if (!supabase) return;
   try {
     // 1. Pull productions
-    const { data: prods } = await supabase.from('productions').select('*');
+    const { data: prods } = await supabase.from('productions').select('*').neq('id', 'cache_bust_' + Date.now());
     if (prods && prods.length > 0) {
       const mapped = prods.map(mapProductionFromDb);
       const approved = mapped.filter(p => p.curationStatus === 'Approved');
@@ -1167,7 +1179,7 @@ export const syncFromSupabase = async () => {
     }
 
     // 2. Pull artists
-    const { data: arts } = await supabase.from('artists').select('*');
+    const { data: arts } = await supabase.from('artists').select('*').neq('id', 'cache_bust_' + Date.now());
     if (arts && arts.length > 0) {
       const mapped = arts.map(mapArtistFromDb);
       const approved = mapped.filter(a => a.curationStatus === 'Approved');
@@ -1184,7 +1196,7 @@ export const syncFromSupabase = async () => {
     }
 
     // 3. Pull articles
-    const { data: articles } = await supabase.from('articles').select('*');
+    const { data: articles } = await supabase.from('articles').select('*').neq('id', 'cache_bust_' + Date.now());
     if (articles && articles.length > 0) {
       const mapped = articles.map(mapArticleFromDb);
       const approved = mapped.filter(a => a.curationStatus === 'Approved');
@@ -1201,14 +1213,14 @@ export const syncFromSupabase = async () => {
     }
 
     // 4. Pull reviews
-    const { data: revs } = await supabase.from('reviews').select('*');
+    const { data: revs } = await supabase.from('reviews').select('*').neq('id', 'cache_bust_' + Date.now());
     if (revs && revs.length > 0) {
       const mapped = revs.map(mapReviewFromDb);
       localStorage.setItem(REVIEWS_KEY, JSON.stringify(mapped));
     }
 
     // 5. Pull critic applications
-    const { data: apps } = await supabase.from('critic_applications').select('*');
+    const { data: apps } = await supabase.from('critic_applications').select('*').neq('id', 'cache_bust_' + Date.now());
     if (apps && apps.length > 0) {
       const mapped = apps.map(mapCriticAppFromDb);
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
@@ -1216,7 +1228,7 @@ export const syncFromSupabase = async () => {
     }
 
     // 6. Pull approved critic emails whitelist
-    const { data: whitelist } = await supabase.from('approved_critics').select('email');
+    const { data: whitelist } = await supabase.from('approved_critics').select('email').neq('email', 'cache_bust_' + Date.now() + '@example.com');
     if (whitelist && whitelist.length > 0) {
       const emails = whitelist.map(w => w.email.toLowerCase());
       localStorage.setItem('curtain_approved_critic_emails', JSON.stringify(emails));
@@ -1224,7 +1236,7 @@ export const syncFromSupabase = async () => {
 
     // 7. Pull withdrawals
     try {
-      const { data: withdrawals } = await supabase.from('withdrawals').select('*');
+      const { data: withdrawals } = await supabase.from('withdrawals').select('*').neq('id', 'cache_bust_' + Date.now());
       if (withdrawals && withdrawals.length > 0) {
         localStorage.setItem('curtain_withdrawals', JSON.stringify(withdrawals));
       }
@@ -1234,7 +1246,7 @@ export const syncFromSupabase = async () => {
 
     // 8. Pull tickets
     try {
-      const { data: tickets } = await supabase.from('tickets').select('*');
+      const { data: tickets } = await supabase.from('tickets').select('*').neq('id', 'cache_bust_' + Date.now());
       if (tickets && tickets.length > 0) {
         localStorage.setItem('curtain_tickets', JSON.stringify(tickets));
       }
@@ -1244,7 +1256,7 @@ export const syncFromSupabase = async () => {
 
     // 9. Pull notifications
     try {
-      const { data: notifications } = await supabase.from('notifications').select('*');
+      const { data: notifications } = await supabase.from('notifications').select('*').neq('id', 'cache_bust_' + Date.now());
       if (notifications && notifications.length > 0) {
         localStorage.setItem('curtain_notifications', JSON.stringify(notifications));
       }
