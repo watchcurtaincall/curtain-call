@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -15,6 +16,10 @@
 }
 
 :root {
+  /* Google Fonts CDN Fallback Variables */
+  --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-playfair: 'Playfair Display', Georgia, serif;
+
   /* Dark mode first */
   --background: #09090b;   /* Zinc 950 */
   --foreground: #f4f4f5;   /* Zinc 100 */

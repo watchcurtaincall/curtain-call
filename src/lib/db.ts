@@ -1114,7 +1114,9 @@ export const syncFromSupabase = async () => {
       const approved = mapped.filter(p => p.curationStatus === 'Approved');
       const pending = mapped.filter(p => p.curationStatus === 'Pending');
       
-      localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify(approved));
+      if (approved.length > 0) {
+        localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify(approved));
+      }
       localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(pending));
     }
 
@@ -1125,7 +1127,9 @@ export const syncFromSupabase = async () => {
       const approved = mapped.filter(a => a.curationStatus === 'Approved');
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
       
-      localStorage.setItem(ARTISTS_KEY, JSON.stringify(approved));
+      if (approved.length > 0) {
+        localStorage.setItem(ARTISTS_KEY, JSON.stringify(approved));
+      }
       localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(pending));
     }
 
@@ -1136,7 +1140,9 @@ export const syncFromSupabase = async () => {
       const approved = mapped.filter(a => a.curationStatus === 'Approved');
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
 
-      localStorage.setItem(ARTICLES_KEY, JSON.stringify(approved));
+      if (approved.length > 0) {
+        localStorage.setItem(ARTICLES_KEY, JSON.stringify(approved));
+      }
       localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(pending));
     }
 

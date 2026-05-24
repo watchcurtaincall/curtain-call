@@ -240,7 +240,7 @@ export default function Home() {
                   </div>
                   
                   <Link 
-                    href="/editorial" 
+                    href={`/editorial?read=${article.id}`} 
                     className="inline-flex items-center gap-1 text-[11px] font-bold text-zinc-400 group-hover:text-white uppercase tracking-wider mt-4 transition-colors"
                   >
                     Read Chronicle <ArrowRight className="h-3 w-3" />

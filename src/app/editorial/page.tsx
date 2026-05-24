@@ -13,7 +13,20 @@ export default function EditorialPage() {
 
   useEffect(() => {
     const loadData = () => {
-      setArticles(ClientDB.getArticles());
+      const allArticles = ClientDB.getArticles();
+      setArticles(allArticles);
+
+      // Check query parameter for automatic reading
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const articleId = params.get('read');
+        if (articleId) {
+          const article = allArticles.find(a => a.id === articleId);
+          if (article) {
+            setSelectedArticle(article);
+          }
+        }
+      }
     };
     loadData();
 
