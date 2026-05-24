@@ -532,6 +532,12 @@ export default function ProfilePage() {
                           <p className="text-zinc-500 text-xs mt-1 line-clamp-1">
                             {sub.bio || sub.synopsis || sub.excerpt}
                           </p>
+                          {sub.status === 'Declined' && sub.declineReason && (
+                            <div className="mt-3 bg-red-950/20 border border-red-500/10 rounded-xl p-3 text-xs text-red-300/90 max-w-xl">
+                              <span className="font-mono text-[9px] uppercase tracking-wider font-bold block mb-1 text-red-400">Curator Rejection Note:</span>
+                              "{sub.declineReason}"
+                            </div>
+                          )}
                         </div>
                       </div>
 

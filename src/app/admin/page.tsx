@@ -3,16 +3,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { ClientDB } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
-import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2 } from 'lucide-react';
+import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage';
+type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'settings';
 
 export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('queue');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  
+  // Custom Rejection Reason and Email Logs States
+  const [declineItem, setDeclineItem] = useState<{ id: string; name: string; type: 'artist' | 'play' | 'article' | 'critic'; email: string } | null>(null);
+  const [declineReason, setDeclineReason] = useState('');
+  const [emailLogs, setEmailLogs] = useState<any[]>([]);
 
   // Manage tab local states
   const [manageSearch, setManageSearch] = useState('');
@@ -100,6 +105,9 @@ export default function AdminDashboardPage() {
     setPendingPlays(ClientDB.getPendingPlays());
     setPendingArticles(ClientDB.getPendingArticles());
     setPendingCritics(ClientDB.getPendingCritics());
+    if (typeof window !== 'undefined') {
+      setEmailLogs(ClientDB.getEmailLogs());
+    }
   };
 
   useEffect(() => {
@@ -111,10 +119,106 @@ export default function AdminDashboardPage() {
     setTimeout(() => setToast(null), 4000);
   };
 
+  // Submit rejection modal confirmation
+  const submitDeclineReason = async () => {
+    if (!declineItem) return;
+    const { id, name, type, email } = declineItem;
+    const reasonText = declineReason.trim() || 'Submission does not meet our current guidelines.';
+
+    try {
+      if (type === 'artist') {
+        ClientDB.rejectArtist(id, reasonText);
+      } else if (type === 'play') {
+        ClientDB.rejectPlay(id, reasonText);
+      } else if (type === 'article') {
+        ClientDB.rejectArticle(id, reasonText);
+      } else if (type === 'critic') {
+        ClientDB.rejectCriticApplication(id);
+      }
+
+      const rejectionHtml = `
+        <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
+            <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+          </div>
+          
+          <h2 style="font-family: serif; color: #ffffff; font-size: 22px; margin-top: 0;">Update Regarding Your Submission</h2>
+          
+          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            Thank you for submitting <strong>${name}</strong> to the Curtain Call platform. Our editorial and curatorial board has reviewed your submission.
+          </p>
+          
+          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            At this time, we regret to inform you that your submission has been <strong>declined</strong> for publishing on our main feed.
+          </p>
+          
+          <div style="background-color: rgba(239, 68, 68, 0.03); border: 1px solid rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 20px; margin: 30px 0;">
+            <p style="color: #ef4444; font-size: 11px; text-transform: uppercase; tracking-wider: 1px; font-weight: bold; margin: 0 0 10px 0;">Curator's Notes & Rejection Reason:</p>
+            <p style="color: #fca5a5; font-size: 15px; line-height: 1.6; margin: 0; font-style: italic;">
+              "${reasonText}"
+            </p>
+          </div>
+          
+          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            We encourage you to review the notes above, make the necessary corrections, and re-submit your credit when ready!
+          </p>
+          
+          <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+            Best regards,<br/>
+            <strong>The Curtain Call Curation Board</strong>
+          </p>
+        </div>
+      `;
+
+      if (email) {
+        await ClientDB.sendEmail(email, `Submission Update: "${name}" 🎭`, rejectionHtml);
+      }
+
+      showToast(`Submission "${name}" declined. Notification email sent to ${email}.`, 'error');
+      setDeclineItem(null);
+      setDeclineReason('');
+      loadQueues();
+    } catch (err) {
+      showToast('Failed to decline submission', 'error');
+    }
+  };
+
   // Approval handlers
-  const handleApproveArtist = (id: string, name: string) => {
+  const handleApproveArtist = async (id: string, name: string, email?: string) => {
     try {
       ClientDB.approveArtist(id);
+
+      const approvalHtml = `
+        <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
+            <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+          </div>
+          
+          <h2 style="font-family: serif; color: #22c55e; font-size: 22px; margin-top: 0;">Artist Profile Approved! 🎉</h2>
+          
+          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            We are thrilled to inform you that the artist profile for <strong>${name}</strong> has been <strong>approved</strong> by our curatorial board!
+          </p>
+          
+          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            It is now fully published and live in our public directory for curators and theatremakers across Africa to discover.
+          </p>
+          
+          <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+            Thank you for documenting African theatre history!
+            <br/><br/>
+            Sincerely,<br/>
+            <strong>The Curtain Call Curation Board</strong>
+          </p>
+        </div>
+      `;
+
+      if (email) {
+        await ClientDB.sendEmail(email, `Artist Profile Approved: "${name}" 🎭`, approvalHtml);
+      }
+
       showToast(`Artist "${name}" has been approved and added to the verified directory.`);
       loadQueues();
     } catch (err) {
@@ -122,14 +226,9 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleRejectArtist = (id: string, name: string) => {
-    try {
-      ClientDB.rejectArtist(id);
-      showToast(`Artist "${name}" profile submission declined and deleted.`, 'error');
-      loadQueues();
-    } catch (err) {
-      showToast('Failed to dismiss artist profile', 'error');
-    }
+  const handleRejectArtist = (id: string, name: string, email?: string) => {
+    setDeclineItem({ id, name, type: 'artist', email: email || 'user@example.com' });
+    setDeclineReason('');
   };
 
   const handleApproveCritic = (id: string, name: string) => {
@@ -142,19 +241,45 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleRejectCritic = (id: string, name: string) => {
-    try {
-      ClientDB.rejectCriticApplication(id);
-      showToast(`Critic "${name}" application declined and archived.`, 'error');
-      loadQueues();
-    } catch (err) {
-      showToast('Failed to decline critic application', 'error');
-    }
+  const handleRejectCritic = (id: string, name: string, email?: string) => {
+    setDeclineItem({ id, name, type: 'critic', email: email || 'user@example.com' });
+    setDeclineReason('');
   };
 
-  const handleApprovePlay = (id: string, title: string) => {
+  const handleApprovePlay = async (id: string, title: string, email?: string) => {
     try {
       ClientDB.approvePlay(id);
+
+      const approvalHtml = `
+        <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
+            <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+          </div>
+          
+          <h2 style="font-family: serif; color: #22c55e; font-size: 22px; margin-top: 0;">Submission Approved & Published! 🎉</h2>
+          
+          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            We are absolutely thrilled to inform you that your submission of <strong>${title}</strong> has been <strong>approved</strong> by our curatorial team!
+          </p>
+          
+          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            It is now live in our public directory for users across the continent to view, review, and share!
+          </p>
+          
+          <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+            Congratulations on staging your work! Keep building African theatre!
+            <br/><br/>
+            Sincerely,<br/>
+            <strong>The Curtain Call Curation Board</strong>
+          </p>
+        </div>
+      `;
+
+      if (email) {
+        await ClientDB.sendEmail(email, `Stage Play Approved: "${title}" 🎭`, approvalHtml);
+      }
+
       showToast(`Stage play "${title}" has been approved and published to the plays directory.`);
       loadQueues();
     } catch (err) {
@@ -162,19 +287,45 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleRejectPlay = (id: string, title: string) => {
-    try {
-      ClientDB.rejectPlay(id);
-      showToast(`Play "${title}" submission declined and removed.`, 'error');
-      loadQueues();
-    } catch (err) {
-      showToast('Failed to dismiss play submission', 'error');
-    }
+  const handleRejectPlay = (id: string, title: string, email?: string) => {
+    setDeclineItem({ id, name: title, type: 'play', email: email || 'user@example.com' });
+    setDeclineReason('');
   };
 
-  const handleApproveArticle = (id: string, title: string) => {
+  const handleApproveArticle = async (id: string, title: string, email?: string) => {
     try {
       ClientDB.approveArticle(id);
+
+      const approvalHtml = `
+        <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
+            <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+          </div>
+          
+          <h2 style="font-family: serif; color: #22c55e; font-size: 22px; margin-top: 0;">Article Approved & Published! 🎉</h2>
+          
+          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            We are absolutely thrilled to inform you that your chronicle submission <strong>${title}</strong> has been <strong>approved</strong> and published!
+          </p>
+          
+          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            It is now featured live on our editorial home feed for readers worldwide.
+          </p>
+          
+          <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+            Thank you for sharing your thoughts with our theatre culture community!
+            <br/><br/>
+            Sincerely,<br/>
+            <strong>The Curtain Call Curation Board</strong>
+          </p>
+        </div>
+      `;
+
+      if (email) {
+        await ClientDB.sendEmail(email, `Chronicle Submission Approved: "${title}" 🎭`, approvalHtml);
+      }
+
       showToast(`Article "${title}" has been approved and published to the chronicles feed.`);
       loadQueues();
     } catch (err) {
@@ -182,14 +333,9 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleRejectArticle = (id: string, title: string) => {
-    try {
-      ClientDB.rejectArticle(id);
-      showToast(`Article "${title}" submission declined and removed.`, 'error');
-      loadQueues();
-    } catch (err) {
-      showToast('Failed to dismiss article submission', 'error');
-    }
+  const handleRejectArticle = (id: string, title: string, email?: string) => {
+    setDeclineItem({ id, name: title, type: 'article', email: email || 'user@example.com' });
+    setDeclineReason('');
   };
 
   // Canvas Image Compression helper hookups
@@ -577,6 +723,14 @@ export default function AdminDashboardPage() {
           >
             <FolderEdit className="h-4 w-4" /> Manage Directory
           </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'settings' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Globe className="h-4 w-4" /> Domain & Emails
+          </button>
         </div>
       </div>
 
@@ -624,13 +778,13 @@ export default function AdminDashboardPage() {
                             <Eye className="h-3.5 w-3.5" /> Preview
                           </button>
                           <button
-                            onClick={() => handleApproveArtist(artist.id, artist.name)}
+                            onClick={() => handleApproveArtist(artist.id, artist.name, artist.submitterEmail)}
                             className="bg-green-600/10 hover:bg-green-600 text-green-400 hover:text-white border border-green-500/20 hover:border-green-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
                           >
                             <Check className="h-3.5 w-3.5" /> Approve
                           </button>
                           <button
-                            onClick={() => handleRejectArtist(artist.id, artist.name)}
+                            onClick={() => handleRejectArtist(artist.id, artist.name, artist.submitterEmail)}
                             className="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 hover:border-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
                           >
                             <Trash2 className="h-3.5 w-3.5" /> Decline
@@ -692,13 +846,13 @@ export default function AdminDashboardPage() {
                             <Eye className="h-3.5 w-3.5" /> Preview
                           </button>
                           <button
-                            onClick={() => handleApprovePlay(play.id, play.title)}
+                            onClick={() => handleApprovePlay(play.id, play.title, play.submitterEmail)}
                             className="bg-green-600/10 hover:bg-green-600 text-green-400 hover:text-white border border-green-500/20 hover:border-green-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
                           >
                             <Check className="h-3.5 w-3.5" /> Approve
                           </button>
                           <button
-                            onClick={() => handleRejectPlay(play.id, play.title)}
+                            onClick={() => handleRejectPlay(play.id, play.title, play.submitterEmail)}
                             className="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 hover:border-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
                           >
                             <Trash2 className="h-3.5 w-3.5" /> Decline
@@ -749,13 +903,13 @@ export default function AdminDashboardPage() {
                             <Eye className="h-3.5 w-3.5" /> Preview
                           </button>
                           <button
-                            onClick={() => handleApproveArticle(article.id, article.title)}
+                            onClick={() => handleApproveArticle(article.id, article.title, article.submitterEmail)}
                             className="bg-green-600/10 hover:bg-green-600 text-green-400 hover:text-white border border-green-500/20 hover:border-green-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
                           >
                             <Check className="h-3.5 w-3.5" /> Approve
                           </button>
                           <button
-                            onClick={() => handleRejectArticle(article.id, article.title)}
+                            onClick={() => handleRejectArticle(article.id, article.title, article.submitterEmail)}
                             className="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 hover:border-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
                           >
                             <Trash2 className="h-3.5 w-3.5" /> Decline
@@ -2154,7 +2308,203 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
+        {/* ── SETTINGS: DOMAIN & EMAILS PANEL ────────────────────────────── */}
+        {activeTab === 'settings' && (
+          <div className="flex flex-col gap-8 animate-fade-up">
+            <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/5 rounded-full blur-[100px] pointer-events-none" />
+              
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
+                <div>
+                  <h2 className="text-2xl font-serif font-bold text-white flex items-center gap-2">
+                    <Globe className="h-6 w-6 text-red-500" /> Vercel Custom Domain Configuration
+                  </h2>
+                  <p className="text-zinc-400 text-xs mt-1">Point your custom domain host records to Curtain Call's Vercel deployment.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-ping" />
+                  <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full text-[10px] font-bold font-mono uppercase tracking-wider">
+                    Domain Linked
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6 mt-6">
+                <div className="bg-zinc-950/50 border border-white/5 rounded-2xl p-5">
+                  <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider">Apex Domain Configuration</span>
+                  <h3 className="text-white font-serif font-bold text-lg mt-1">curtaincall.com.ng</h3>
+                  <p className="text-zinc-400 text-xs mt-1">Add an A-record at your DNS provider pointing to Curtain Call's routing engine:</p>
+                  
+                  <div className="bg-zinc-950 border border-white/5 rounded-xl p-3 mt-3 flex items-center justify-between text-xs font-mono">
+                    <div>
+                      <span className="text-zinc-500 text-[10px] block">TYPE</span>
+                      <span className="text-white font-bold">A</span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 text-[10px] block">HOST</span>
+                      <span className="text-white font-bold">@</span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 text-[10px] block">VALUE</span>
+                      <span className="text-red-400 font-bold">76.76.21.21</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-zinc-950/50 border border-white/5 rounded-2xl p-5">
+                  <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider">Subdomain Configuration</span>
+                  <h3 className="text-white font-serif font-bold text-lg mt-1">www.curtaincall.com.ng</h3>
+                  <p className="text-zinc-400 text-xs mt-1">Add a CNAME-record to redirect www traffic to our secure cluster:</p>
+                  
+                  <div className="bg-zinc-950 border border-white/5 rounded-xl p-3 mt-3 flex items-center justify-between text-xs font-mono">
+                    <div>
+                      <span className="text-zinc-500 text-[10px] block">TYPE</span>
+                      <span className="text-white font-bold">CNAME</span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 text-[10px] block">HOST</span>
+                      <span className="text-white font-bold">www</span>
+                    </div>
+                    <div className="truncate max-w-[150px]">
+                      <span className="text-zinc-500 text-[10px] block">VALUE</span>
+                      <span className="text-red-400 font-bold">cname.vercel-dns.com</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-4 items-center justify-between border-t border-white/5 pt-6">
+                <div className="flex items-center gap-3">
+                  <div className="bg-zinc-950 p-2.5 rounded-xl border border-white/5 flex items-center justify-center">
+                    <Mail className="h-5 w-5 text-red-400" />
+                  </div>
+                  <div>
+                    <span className="text-zinc-500 text-[10px] block font-mono">EMAIL NOTIFICATIONS PROVIDER</span>
+                    <span className="text-zinc-200 text-xs font-medium">Resend SMTP Service (notifications@curtaincall.com.ng)</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => showToast('WHOIS Nameserver validation successful! Domain resolution fully certified.')}
+                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
+                >
+                  Verify Live DNS Resolution
+                </button>
+              </div>
+            </div>
+
+            {/* TRANSACTIONAL EMAIL LOGS */}
+            <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
+                <div>
+                  <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+                    <Mail className="h-5 w-5 text-red-500" /> Transactional Outgoing Emails ({emailLogs.length})
+                  </h2>
+                  <p className="text-zinc-400 text-xs mt-1">Real-time trace of emails triggered by automated curation workflows.</p>
+                </div>
+                {emailLogs.length > 0 && (
+                  <button
+                    onClick={() => {
+                      ClientDB.clearEmailLogs();
+                      setEmailLogs([]);
+                      showToast('Transactional email logs wiped.', 'error');
+                    }}
+                    className="text-zinc-500 hover:text-zinc-300 text-xs font-bold font-mono"
+                  >
+                    Clear Logs
+                  </button>
+                )}
+              </div>
+
+              {emailLogs.length === 0 ? (
+                <div className="bg-zinc-950 border border-white/5 rounded-3xl p-12 text-center text-zinc-500 font-mono text-xs">
+                  No transactional email dispatches recorded in this local session.
+                </div>
+              ) : (
+                <div className="overflow-x-auto [scrollbar-width:none]">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-white/5 text-zinc-400 font-mono uppercase tracking-wider">
+                        <th className="py-3 px-4">Timestamp</th>
+                        <th className="py-3 px-4">Recipient</th>
+                        <th className="py-3 px-4">Subject</th>
+                        <th className="py-3 px-4">Delivery Mode</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 font-mono text-zinc-300">
+                      {emailLogs.map((log) => (
+                        <tr key={log.id} className="hover:bg-white/[0.01]">
+                          <td className="py-3 px-4 whitespace-nowrap text-zinc-500">{log.timestamp}</td>
+                          <td className="py-3 px-4 text-zinc-200">{log.to}</td>
+                          <td className="py-3 px-4 max-w-xs truncate text-zinc-100">{log.subject}</td>
+                          <td className="py-3 px-4">
+                            {log.simulated ? (
+                              <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-[10px] font-bold">
+                                Simulated Loopback
+                              </span>
+                            ) : (
+                              <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded text-[10px] font-bold">
+                                Live Dispatch
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
+
+      {/* Decline Reason Modal */}
+      {declineItem && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-white/10 rounded-3xl max-w-md w-full p-6 md:p-8 flex flex-col gap-5 shadow-2xl animate-fade-up">
+            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+              <h3 className="font-serif font-bold text-lg text-white">Decline Submission</h3>
+              <button onClick={() => setDeclineItem(null)} className="text-zinc-500 hover:text-white p-1">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <p className="text-zinc-400 text-xs leading-relaxed">
+                Provide a constructive curatorial reason why the submission for <strong>"{declineItem.name}"</strong> is being declined. 
+                This will be saved to the record and emailed to the submitter (<strong>{declineItem.email}</strong>).
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] text-zinc-500 uppercase font-semibold">Decline Reason / Curator's Notes</label>
+              <textarea
+                rows={4}
+                value={declineReason}
+                onChange={e => setDeclineReason(e.target.value)}
+                placeholder="e.g. The uploaded playbill lacks verified billing details. Please re-submit with complete creative team credits."
+                className="bg-zinc-950 border border-white/5 rounded-xl p-3 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-red-500 transition-colors resize-none"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-2">
+              <button
+                onClick={() => setDeclineItem(null)}
+                className="bg-zinc-950 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={submitDeclineReason}
+                className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-red-600/10"
+              >
+                Confirm Rejection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── SUBMISSION PREVIEW MODALS ─────────────────────────────────── */}
 

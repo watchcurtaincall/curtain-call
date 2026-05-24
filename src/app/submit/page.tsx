@@ -134,6 +134,46 @@ export default function SubmitPortalPage() {
   };
 
   // Submit Handlers
+  const sendSubmissionEmail = async (email: string, itemName: string) => {
+    if (!email) return;
+    const html = `
+      <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
+          <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+        </div>
+        
+        <h2 style="font-family: serif; color: #ffffff; font-size: 22px; margin-top: 0;">Submission Received! 🎭</h2>
+        
+        <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+          Thank you for your submission of <strong>${itemName}</strong> to the Curtain Call digital platform!
+        </p>
+        
+        <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+          Your submission has been successfully received and is currently in our **Curation Queue** pending evaluation. Our editorial team usually completes reviews within 24 to 48 hours.
+        </p>
+        
+        <div style="background-color: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; margin: 30px 0; text-align: center;">
+          <p style="color: #a1a1aa; font-size: 13px; margin: 0 0 5px 0;">Item Submitted:</p>
+          <p style="color: #ffffff; font-size: 16px; font-weight: bold; margin: 0 0 5px 0;">${itemName}</p>
+          <p style="color: #ef4444; font-size: 11px; text-transform: uppercase; font-weight: bold; tracking-wider: 1px; margin: 0;">Curation Status: Pending Review</p>
+        </div>
+        
+        <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+          You will receive another email notification as soon as the curation team approves or updates your submission details!
+        </p>
+        
+        <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+          Thank you for contributing to African theatrical history archives!
+          <br/><br/>
+          Sincerely,<br/>
+          <strong>The Curtain Call Curation Board</strong>
+        </p>
+      </div>
+    `;
+    await ClientDB.sendEmail(email, `Submission Received: "${itemName}" 🎭`, html);
+  };
+
   const handleMakerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -150,6 +190,7 @@ export default function SubmitPortalPage() {
 
     setTimeout(() => {
       ClientDB.submitArtist(newArtist);
+      sendSubmissionEmail(newArtist.submitterEmail, `Artist: ${newArtist.name}`);
       setLoading(false);
       setIsSubmitted(true);
     }, 1000);
@@ -180,6 +221,7 @@ export default function SubmitPortalPage() {
 
     setTimeout(() => {
       ClientDB.submitPlay(newPlay);
+      sendSubmissionEmail(newPlay.submitterEmail, `Stage Play: ${newPlay.title}`);
       setLoading(false);
       setIsSubmitted(true);
     }, 1000);
@@ -207,6 +249,7 @@ export default function SubmitPortalPage() {
 
     setTimeout(() => {
       ClientDB.submitPendingArticle(newArticle);
+      sendSubmissionEmail(newArticle.submitterEmail, `Chronicle Article: ${newArticle.title}`);
       setLoading(false);
       setIsSubmitted(true);
     }, 1000);

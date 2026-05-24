@@ -68,7 +68,8 @@ const mapProductionToDb = (p: any) => ({
   submitter_email: p.submitterEmail || null,
   curation_status: p.curationStatus || 'Approved',
   cast_and_crew: p.castAndCrew || [],
-  show_date: p.showDate || null
+  show_date: p.showDate || null,
+  decline_reason: p.declineReason || null
 });
 
 const mapProductionFromDb = (row: any) => ({
@@ -87,7 +88,8 @@ const mapProductionFromDb = (row: any) => ({
   submitterEmail: row.submitter_email,
   curationStatus: row.curation_status,
   castAndCrew: row.cast_and_crew || [],
-  showDate: row.show_date
+  showDate: row.show_date,
+  declineReason: row.decline_reason || null
 });
 
 const mapArtistToDb = (a: any) => ({
@@ -101,7 +103,8 @@ const mapArtistToDb = (a: any) => ({
   submitter_email: a.submitterEmail || null,
   curation_status: a.curationStatus || 'Approved',
   is_deceased: a.isDeceased || false,
-  date_of_death: a.dateOfDeath || null
+  date_of_death: a.dateOfDeath || null,
+  decline_reason: a.declineReason || null
 });
 
 const mapArtistFromDb = (row: any) => ({
@@ -115,7 +118,8 @@ const mapArtistFromDb = (row: any) => ({
   submitterEmail: row.submitter_email,
   curationStatus: row.curation_status,
   isDeceased: row.is_deceased,
-  dateOfDeath: row.date_of_death
+  dateOfDeath: row.date_of_death,
+  declineReason: row.decline_reason || null
 });
 
 const mapArticleToDb = (art: any) => ({
@@ -127,7 +131,8 @@ const mapArticleToDb = (art: any) => ({
   image_url: art.imageUrl,
   content: art.content || '',
   submitter_email: art.submitterEmail || null,
-  curation_status: art.curationStatus || 'Approved'
+  curation_status: art.curationStatus || 'Approved',
+  decline_reason: art.declineReason || null
 });
 
 const mapArticleFromDb = (row: any) => ({
@@ -139,7 +144,8 @@ const mapArticleFromDb = (row: any) => ({
   imageUrl: row.image_url,
   content: row.content,
   submitterEmail: row.submitter_email,
-  curationStatus: row.curation_status
+  curationStatus: row.curation_status,
+  declineReason: row.decline_reason || null
 });
 
 const mapCriticAppToDb = (c: any) => ({
@@ -239,6 +245,45 @@ export function calculateDynamicStatus(showDateStr?: string, initialStatus?: str
 }
 
 export const ClientDB = {
+  // ── EMAIL TRANSACTIONAL NOTIFICATION UTILITY ──
+  async sendEmail(to: string, subject: string, html: string): Promise<any> {
+    if (typeof window === 'undefined') return { success: true };
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, subject, html }),
+      });
+      const data = await response.json();
+      
+      const logs = JSON.parse(localStorage.getItem('cc_email_logs') || '[]');
+      const newLog = {
+        id: data.data?.id || `email_log_${Date.now()}`,
+        to,
+        subject,
+        html,
+        timestamp: new Date().toLocaleTimeString() + ' ' + new Date().toLocaleDateString(),
+        simulated: data.simulated || false
+      };
+      localStorage.setItem('cc_email_logs', JSON.stringify([newLog, ...logs].slice(0, 100)));
+      
+      return data;
+    } catch (error) {
+      console.error('[ClientDB.sendEmail Error]:', error);
+      return { error };
+    }
+  },
+
+  getEmailLogs() {
+    if (typeof window === 'undefined') return [];
+    return JSON.parse(localStorage.getItem('cc_email_logs') || '[]');
+  },
+
+  clearEmailLogs() {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem('cc_email_logs');
+  },
+
   // ── ARTISTS DATABASE ──
   getArtists(): Artist[] {
     if (typeof window === 'undefined') return MOCK_ARTISTS;
@@ -388,12 +433,16 @@ export const ClientDB = {
     }
   },
 
-  rejectArtist(id: string): void {
+  rejectArtist(id: string, reason?: string): void {
     if (typeof window === 'undefined') return;
     const pending = this.getPendingArtists();
     const artist = pending.find(a => a.id === id);
     if (artist) {
-      const declined = { ...artist, curationStatus: 'Declined' as const };
+      const declined = { 
+        ...artist, 
+        curationStatus: 'Declined' as const,
+        declineReason: reason || 'Does not meet our current curatorial guidelines.'
+      };
       this.saveDeclinedSubmission(declined);
       const filtered = pending.filter(a => a.id !== id);
       localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(filtered));
@@ -432,12 +481,16 @@ export const ClientDB = {
     }
   },
 
-  rejectPlay(id: string): void {
+  rejectPlay(id: string, reason?: string): void {
     if (typeof window === 'undefined') return;
     const pending = this.getPendingPlays();
     const play = pending.find(p => p.id === id);
     if (play) {
-      const declined = { ...play, curationStatus: 'Declined' as const };
+      const declined = { 
+        ...play, 
+        curationStatus: 'Declined' as const,
+        declineReason: reason || 'Does not meet our current curatorial guidelines.'
+      };
       this.saveDeclinedSubmission(declined);
       const filtered = pending.filter(p => p.id !== id);
       localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(filtered));
@@ -477,12 +530,16 @@ export const ClientDB = {
     }
   },
 
-  rejectArticle(id: string): void {
+  rejectArticle(id: string, reason?: string): void {
     if (typeof window === 'undefined') return;
     const pending = this.getPendingArticles();
     const article = pending.find(a => a.id === id);
     if (article) {
-      const declined = { ...article, curationStatus: 'Declined' as const };
+      const declined = { 
+        ...article, 
+        curationStatus: 'Declined' as const,
+        declineReason: reason || 'Does not meet our current curatorial guidelines.'
+      };
       this.saveDeclinedSubmission(declined);
       const filtered = pending.filter(a => a.id !== id);
       localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(filtered));
