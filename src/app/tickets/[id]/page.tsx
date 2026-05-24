@@ -41,11 +41,67 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     { name: 'VVIP Premium Cabin', price: 40000 },
   ];
 
-  const handlePaymentSuccess = (reference: string) => {
+  const handlePaymentSuccess = async (reference: string) => {
     setSuccessData({
       reference,
       tier: selectedTier.name,
     });
+
+    // Send Ticket Email via Resend
+    const recipient = email || 'guest@curtaincall.ng';
+    const gatePass = `CC-${reference.substring(0, 6).toUpperCase()}`;
+    const subject = `Your Curtain Call Admission Pass: ${production?.title || 'Theatre Ticket'}`;
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Admission Pass</span>
+          <div style="height: 2px; width: 80px; background-color: #dc2626; margin: 15px auto 0;"></div>
+        </div>
+        
+        <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center;">
+          Your seat has been reserved. Present this digital pass at the gates.
+        </p>
+        
+        <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
+          <div style="margin-bottom: 20px;">
+            <span style="font-size: 9px; color: #dc2626; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Admit One (1)</span>
+            <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; margin: 4px 0 0; font-family: Georgia, serif;">${production?.title}</h2>
+          </div>
+          
+          <div style="border-top: 1px dashed #27272a; margin: 20px 0;"></div>
+          
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Tier</td>
+              <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${selectedTier.name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Venue</td>
+              <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${production?.venue}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Reference</td>
+              <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-family: monospace;">${reference}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Gate Pass</td>
+              <td style="padding: 8px 0; font-size: 12px; color: #22c55e; text-align: right; font-weight: bold; font-family: monospace;">${gatePass}</td>
+            </tr>
+          </table>
+        </div>
+        
+        <p style="font-size: 11px; color: #71717a; text-align: center; font-family: monospace; line-height: 1.5; margin: 0;">
+          CURTAIN CALL DIGITAL TICKETING AGENT · POWERED BY RESEND
+        </p>
+      </div>
+    `;
+
+    try {
+      await ClientDB.sendEmail(recipient, subject, htmlContent);
+      console.log('✓ Secure Ticket Confirmation email sent to:', recipient);
+    } catch (err) {
+      console.error('✗ Failed to dispatch ticket confirmation mail:', err);
+    }
   };
 
   return (

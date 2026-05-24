@@ -353,134 +353,138 @@ export default function ProfilePage() {
 
         {/* PRODUCTION HUB */}
         {tab === 'productions' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-up">
+          <div className="flex flex-col gap-8 animate-fade-up">
             
-            {/* Active / Past list */}
-            <div className="lg:col-span-2 flex flex-col gap-8">
-              <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                <div>
-                  <h2 className="font-serif font-bold text-white text-lg">Production Hub</h2>
-                  <p className="text-zinc-500 text-xs mt-0.5">Manage your dynamically listed theatrical stage plays.</p>
+            {/* Top grid (Active Productions + Wallet) */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              
+              {/* Active list */}
+              <div className="lg:col-span-2 flex flex-col gap-6">
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                  <div>
+                    <h2 className="font-serif font-bold text-white text-lg">Production Hub</h2>
+                    <p className="text-zinc-500 text-xs mt-0.5">Manage your dynamically listed theatrical stage plays.</p>
+                  </div>
+                  <Link href="/create" className="flex items-center gap-1.5 bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-widest shadow-lg shadow-red-950/20 hover:scale-[1.02] active:scale-[0.98] border border-white/10">
+                    <Plus className="h-3.5 w-3.5" /> Add Production
+                  </Link>
                 </div>
-                <Link href="/submit" className="flex items-center gap-1.5 bg-white text-black hover:bg-zinc-100 font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider">
-                  <Plus className="h-3.5 w-3.5" /> Add Production
-                </Link>
+
+                {/* Active Productions */}
+                <div>
+                  <h3 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span className="w-1.5 h-3.5 bg-red-600 rounded-full" />
+                    Active Productions
+                  </h3>
+                  {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).length === 0 ? (
+                    <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-8 text-center text-zinc-500 text-sm">
+                      No active plays currently listed.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).map(p => (
+                        <ProductionCard key={p.id} production={p} />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Active Productions */}
-              <div>
-                <h3 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <span className="w-1.5 h-3.5 bg-red-600 rounded-full" />
-                  Active Productions
-                </h3>
-                {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).length === 0 ? (
-                  <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-8 text-center text-zinc-500 text-sm">
-                    No active plays currently listed.
+              {/* Wallet Panel */}
+              <div className="flex flex-col gap-4">
+                <h2 className="font-serif font-bold text-white text-lg">My Producer Wallet</h2>
+                
+                <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="h-5 w-5 text-green-500" />
+                      <h3 className="font-serif font-bold text-white text-base">Wallet Earnings</h3>
+                    </div>
+                    <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+                      Active
+                    </span>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).map(p => (
-                      <ProductionCard key={p.id} production={p} />
-                    ))}
-                  </div>
-                )}
-              </div>
 
-              {/* Past Productions */}
-              <div>
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <span className="w-1.5 h-3.5 bg-zinc-700 rounded-full" />
-                  Past Productions
-                </h3>
-                {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Past Production' || p.status === 'Recently Concluded')).length === 0 ? (
-                  <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-8 text-center text-zinc-500 text-sm">
-                    No past/concluded plays registered.
+                  <div className="mb-6">
+                    <p className="text-xs text-zinc-500 mb-1">Available Balance</p>
+                    <p className="text-4xl font-serif font-bold text-white">₦{WALLET_BALANCE.toLocaleString()}.<span className="text-2xl text-zinc-500">00</span></p>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Past Production' || p.status === 'Recently Concluded')).map(p => (
-                      <ProductionCard key={p.id} production={p} />
+
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    <div className="bg-zinc-800/40 rounded-xl p-3 border border-white/5">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <TrendingUp className="h-3 w-3 text-green-500" />
+                        <p className="text-[10px] text-zinc-500">Total Earned</p>
+                      </div>
+                      <p className="text-lg font-bold font-serif text-white">₦127,400</p>
+                    </div>
+                    <div className="bg-zinc-800/40 rounded-xl p-3 border border-white/5">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <ArrowUpRight className="h-3 w-3 text-blue-400" />
+                        <p className="text-[10px] text-zinc-500">Withdrawn</p>
+                      </div>
+                      <p className="text-lg font-bold font-serif text-white">₦42,800</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setShowWithdraw(true)}
+                    className="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-zinc-200 transition-all text-xs uppercase tracking-wider"
+                  >
+                    Withdraw to Bank Account
+                  </button>
+                </div>
+
+                {/* Recent Transactions */}
+                <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6">
+                  <h3 className="font-serif font-bold text-white mb-4 text-sm">Recent Transactions</h3>
+                  <div className="flex flex-col divide-y divide-white/5">
+                    {[
+                      { label: 'Ticket sales — WATERSIDE (Night 2)', amount: '+₦38,000', date: 'May 18', positive: true },
+                      { label: 'Ticket sales — WATERSIDE (Night 1)', amount: '+₦46,400', date: 'May 17', positive: true },
+                      { label: 'Withdrawal to GT Bank ···4821',      amount: '−₦42,800', date: 'May 15', positive: false },
+                    ].map((tx, i) => (
+                      <div key={i} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                        <div>
+                          <p className="text-xs text-white leading-tight">{tx.label}</p>
+                          <p className="text-[10px] text-zinc-600 mt-0.5">{tx.date}</p>
+                        </div>
+                        <span className={`text-xs font-bold ${tx.positive ? 'text-green-400' : 'text-zinc-400'}`}>{tx.amount}</span>
+                      </div>
                     ))}
                   </div>
-                )}
+                </div>
+
+                {/* Administrative entry button (hidden except inside creator dashboard) */}
+                <div className="bg-zinc-900 border border-red-900/10 rounded-2xl p-5 text-center flex flex-col gap-2">
+                  <div className="text-xs text-zinc-500 font-medium">Administrator Curation Engine</div>
+                  <Link
+                    href="/admin"
+                    className="w-full bg-zinc-800 border border-white/5 hover:border-red-600/30 text-zinc-300 hover:text-white font-bold py-2 rounded-xl transition-all text-xs"
+                  >
+                    Open Curation Board
+                  </Link>
+                </div>
               </div>
             </div>
 
-            {/* Wallet Panel */}
-            <div className="flex flex-col gap-4">
-              <h2 className="font-serif font-bold text-white text-lg">My Producer Wallet</h2>
-              
-              <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <Wallet className="h-5 w-5 text-green-500" />
-                    <h3 className="font-serif font-bold text-white text-base">Wallet Earnings</h3>
-                  </div>
-                  <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider">
-                    Active
-                  </span>
+            {/* Bottom Section - Full Width Past Productions */}
+            <div className="mt-8 pt-8 border-t border-white/5 w-full">
+              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <span className="w-1.5 h-3.5 bg-zinc-700 rounded-full" />
+                Past Productions
+              </h3>
+              {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Past Production' || p.status === 'Recently Concluded')).length === 0 ? (
+                <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-8 text-center text-zinc-500 text-sm">
+                  No past/concluded plays registered.
                 </div>
-
-                <div className="mb-6">
-                  <p className="text-xs text-zinc-500 mb-1">Available Balance</p>
-                  <p className="text-4xl font-serif font-bold text-white">₦{WALLET_BALANCE.toLocaleString()}.<span className="text-2xl text-zinc-500">00</span></p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                  <div className="bg-zinc-800/40 rounded-xl p-3 border border-white/5">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <TrendingUp className="h-3 w-3 text-green-500" />
-                      <p className="text-[10px] text-zinc-500">Total Earned</p>
-                    </div>
-                    <p className="text-lg font-bold font-serif text-white">₦127,400</p>
-                  </div>
-                  <div className="bg-zinc-800/40 rounded-xl p-3 border border-white/5">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <ArrowUpRight className="h-3 w-3 text-blue-400" />
-                      <p className="text-[10px] text-zinc-500">Withdrawn</p>
-                    </div>
-                    <p className="text-lg font-bold font-serif text-white">₦42,800</p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setShowWithdraw(true)}
-                  className="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-zinc-200 transition-all text-xs uppercase tracking-wider"
-                >
-                  Withdraw to Bank Account
-                </button>
-              </div>
-
-              {/* Recent Transactions */}
-              <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6">
-                <h3 className="font-serif font-bold text-white mb-4 text-sm">Recent Transactions</h3>
-                <div className="flex flex-col divide-y divide-white/5">
-                  {[
-                    { label: 'Ticket sales — WATERSIDE (Night 2)', amount: '+₦38,000', date: 'May 18', positive: true },
-                    { label: 'Ticket sales — WATERSIDE (Night 1)', amount: '+₦46,400', date: 'May 17', positive: true },
-                    { label: 'Withdrawal to GT Bank ···4821',      amount: '−₦42,800', date: 'May 15', positive: false },
-                  ].map((tx, i) => (
-                    <div key={i} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                      <div>
-                        <p className="text-xs text-white leading-tight">{tx.label}</p>
-                        <p className="text-[10px] text-zinc-600 mt-0.5">{tx.date}</p>
-                      </div>
-                      <span className={`text-xs font-bold ${tx.positive ? 'text-green-400' : 'text-zinc-400'}`}>{tx.amount}</span>
-                    </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                  {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Past Production' || p.status === 'Recently Concluded')).map(p => (
+                    <ProductionCard key={p.id} production={p} />
                   ))}
                 </div>
-              </div>
-
-              {/* Administrative entry button (hidden except inside creator dashboard) */}
-              <div className="bg-zinc-900 border border-red-900/10 rounded-2xl p-5 text-center flex flex-col gap-2">
-                <div className="text-xs text-zinc-500 font-medium">Administrator Curation Engine</div>
-                <Link
-                  href="/admin"
-                  className="w-full bg-zinc-800 border border-white/5 hover:border-red-600/30 text-zinc-300 hover:text-white font-bold py-2 rounded-xl transition-all text-xs"
-                >
-                  Open Curation Board
-                </Link>
-              </div>
+              )}
             </div>
 
           </div>

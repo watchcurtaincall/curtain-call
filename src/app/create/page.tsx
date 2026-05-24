@@ -491,9 +491,28 @@ export default function CreateProductionPage() {
                 </div>
               )}
               {resolveError && !resolving && (
-                <div className="flex items-center gap-2 mt-2 p-3 bg-red-500/8 border border-red-500/20 rounded-xl">
-                  <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
-                  <p className="text-xs text-red-400">{resolveError}</p>
+                <div className="flex flex-col gap-3 mt-2">
+                  <div className="flex items-center gap-2 p-3 bg-red-500/8 border border-red-500/20 rounded-xl">
+                    <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
+                    <p className="text-xs text-red-400">{resolveError}</p>
+                  </div>
+                  <div className="bg-zinc-900/60 border border-white/5 rounded-xl p-3">
+                    <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider block mb-1">
+                      Manual Account Name Entry
+                    </label>
+                    <input
+                      type="text"
+                      value={form.accountName}
+                      onChange={e => {
+                        set('accountName', e.target.value);
+                      }}
+                      placeholder="Enter the name on your bank account"
+                      className={`${inputCls} text-xs`}
+                    />
+                    <p className="text-[9px] text-zinc-500 mt-1">
+                      Auto-resolution is currently unavailable. You may manually type your account name to proceed.
+                    </p>
+                  </div>
                 </div>
               )}
             </Field>
