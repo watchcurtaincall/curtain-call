@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { X, Banknote, ChevronDown, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { getBanks, resolveAccount, type Bank } from '@/lib/paystack';
+import { ClientDB } from '@/lib/db';
+import { useAuth } from '@/lib/AuthContext';
 
 interface WithdrawModalProps {
   availableBalance: number;
@@ -12,6 +14,7 @@ interface WithdrawModalProps {
 type Step = 'amount' | 'account' | 'confirm' | 'processing' | 'success' | 'error';
 
 export function WithdrawModal({ availableBalance, onClose }: WithdrawModalProps) {
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>('amount');
   const [amount, setAmount] = useState('');
   const [banks, setBanks] = useState<Bank[]>([]);
@@ -65,11 +68,78 @@ export function WithdrawModal({ availableBalance, onClose }: WithdrawModalProps)
   const handleWithdraw = async () => {
     setStep('processing');
     try {
-      // In production: call /api/paystack/transfer
-      await new Promise(r => setTimeout(r, 2500));
+      const withdrawalId = `w_req_${Date.now()}`;
+      const newRequest = {
+        id: withdrawalId,
+        email: user?.email || 'unknown@curtaincall.ng',
+        amount: parsedAmount,
+        bankName: selectedBank?.name || 'Unknown Bank',
+        accountNumber: accountNumber,
+        accountName: resolvedName,
+        status: 'Pending' as const,
+        timestamp: new Date().toLocaleString()
+      };
+
+      // Submit withdrawal request to ClientDB
+      ClientDB.submitWithdrawal(newRequest);
+
+      // Send pending email notification
+      const recipient = user?.email || 'unknown@curtaincall.ng';
+      const subject = `Withdrawal Request Initiated 💸 - ₦${parsedAmount.toLocaleString()}`;
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Financials</span>
+            <div style="height: 2px; width: 80px; background-color: #dc2626; margin: 15px auto 0;"></div>
+          </div>
+          
+          <h2 style="font-family: Georgia, serif; color: #ffffff; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Withdrawal Request Initiated</h2>
+          
+          <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+            We have received your request to withdraw your ticket sales earnings. Your request is currently undergoing review.
+          </p>
+          
+          <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Amount Requested</td>
+                <td style="padding: 8px 0; font-size: 14px; color: #ffffff; text-align: right; font-weight: bold;">₦${parsedAmount.toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Target Bank</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${selectedBank?.name}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Account Number</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-family: monospace;">${accountNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Account Name</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${resolvedName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Request Status</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #eab308; text-align: right; font-weight: bold;">Pending Review</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="background-color: rgba(234, 179, 8, 0.04); border: 1px solid rgba(234, 179, 8, 0.15); border-radius: 12px; padding: 15px; margin-bottom: 25px; text-align: center;">
+            <p style="color: #eab308; font-size: 13px; margin: 0; line-height: 1.5; font-weight: 500;">
+              🕒 Notice: Payout reviews usually take between 24 to 48 hours to be fully approved and cleared into your bank account. (Usually within 24 hours on working days).
+            </p>
+          </div>
+          
+          <p style="color: #71717a; font-size: 11px; line-height: 1.6; border-top: 1px solid #27272a; padding-top: 25px; margin-top: 30px; text-align: center; font-family: monospace;">
+            This is an automated financial notification from Curtain Call Ltd.
+          </p>
+        </div>
+      `;
+
+      await ClientDB.sendEmail(recipient, subject, emailHtml);
       setStep('success');
-    } catch {
-      setErrorMsg('Transfer failed. Please try again.');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Transfer initiation failed. Please try again.');
       setStep('error');
     }
   };

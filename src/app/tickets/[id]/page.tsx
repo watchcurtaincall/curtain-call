@@ -18,7 +18,13 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     params.then(resolved => {
       const fetched = ClientDB.getProductionById(resolved.id);
-      setProduction(fetched || null);
+      if (fetched) {
+        setProduction(fetched);
+        if (fetched.ticketTiers && fetched.ticketTiers.length > 0) {
+          const firstTier = fetched.ticketTiers[0];
+          setSelectedTier({ name: firstTier.name, price: Number(firstTier.price) || 0 });
+        }
+      }
       setLoading(false);
     });
   }, [params]);
@@ -35,11 +41,13 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     notFound();
   }
 
-  const standardTiers = [
-    { name: 'General Admission', price: 5000 },
-    { name: 'VIP Pass', price: 15000 },
-    { name: 'VVIP Premium Cabin', price: 40000 },
-  ];
+  const tiersToUse = (production?.ticketTiers && production.ticketTiers.length > 0)
+    ? production.ticketTiers.map(t => ({ name: t.name, price: Number(t.price) || 0 }))
+    : [
+        { name: 'General Admission', price: 5000 },
+        { name: 'VIP Pass', price: 15000 },
+        { name: 'VVIP Premium Cabin', price: 40000 },
+      ];
 
   const handlePaymentSuccess = async (reference: string) => {
     setSuccessData({
@@ -51,6 +59,13 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     const recipient = email || 'guest@curtaincall.ng';
     const gatePass = `CC-${reference.substring(0, 6).toUpperCase()}`;
     const subject = `Your Curtain Call Admission Pass: ${production?.title || 'Theatre Ticket'}`;
+    const showDateFormatted = production?.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }) : 'Scheduled Date';
+
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
         <div style="text-align: center; margin-bottom: 30px;">
@@ -72,6 +87,10 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
           
           <table style="width: 100%; border-collapse: collapse;">
             <tr>
+              <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Event Date</td>
+              <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${showDateFormatted}</td>
+            </tr>
+            <tr>
               <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Tier</td>
               <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${selectedTier.name}</td>
             </tr>
@@ -89,6 +108,10 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             </tr>
           </table>
         </div>
+
+        <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
+          Don't forget to mark your calendar! The play is scheduled to take place at <strong>${production?.venue}</strong> on <strong>${showDateFormatted}</strong>. We recommend arriving 30 minutes before the curtains rise.
+        </p>
         
         <p style="font-size: 11px; color: #71717a; text-align: center; font-family: monospace; line-height: 1.5; margin: 0;">
           CURTAIN CALL DIGITAL TICKETING AGENT · POWERED BY RESEND
@@ -147,21 +170,24 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                 <span className="text-xs text-zinc-200 font-semibold">{successData.tier}</span>
               </div>
               <div>
-                <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Reference</span>
-                <span className="text-xs text-zinc-200 font-mono font-semibold">{successData.reference.substring(0, 10)}...</span>
+                <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Event Date</span>
+                <span className="text-xs text-zinc-200 font-semibold">
+                  {production.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Scheduled'}
+                </span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Venue</span>
-                <span className="text-xs text-zinc-200 font-semibold">{production.venue}</span>
+                <span className="text-xs text-zinc-200 font-semibold truncate block" title={production.venue}>{production.venue}</span>
               </div>
               <div>
-                <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Gate Pass</span>
+                <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Gate Pass / Ref</span>
                 <span className="text-xs text-green-400 font-mono font-bold flex items-center gap-1">
                   <QrCode className="h-3.5 w-3.5" /> CC-{successData.reference.substring(0, 6).toUpperCase()}
                 </span>
+                <span className="text-[9px] text-zinc-500 font-mono block mt-0.5">Ref: {successData.reference.substring(0, 10)}...</span>
               </div>
             </div>
           </div>
@@ -220,7 +246,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                 Select Ticket Tier
               </label>
               <div className="flex flex-col gap-2">
-                {standardTiers.map(tier => (
+                {tiersToUse.map(tier => (
                   <div
                     key={tier.name}
                     onClick={() => setSelectedTier(tier)}

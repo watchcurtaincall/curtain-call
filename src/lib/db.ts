@@ -52,45 +52,72 @@ const MOCK_ARTICLES: Article[] = [
 
 // ── DATABASE TRANSLATION MAPPERS (camelCase to snake_case) ──
 
-const mapProductionToDb = (p: any) => ({
-  id: p.id,
-  title: p.title,
-  synopsis: p.synopsis,
-  genre: p.genre,
-  runtime: p.runtime || '120 mins',
-  venue: p.venue,
-  status: p.status,
-  poster_url: p.posterUrl,
-  critic_score: p.criticScore,
-  audience_score: p.audienceScore,
-  total_reviews: p.totalReviews,
-  gallery_images: p.galleryImages || [],
-  submitter_email: p.submitterEmail || null,
-  curation_status: p.curationStatus || 'Approved',
-  cast_and_crew: p.castAndCrew || [],
-  show_date: p.showDate || null,
-  decline_reason: p.declineReason || null
-});
+const mapProductionToDb = (p: any) => {
+  const gallery = [...(p.galleryImages || [])];
+  if (p.ticketTiers) {
+    gallery.push(JSON.stringify({ __ticketTiers: p.ticketTiers }));
+  }
+  return {
+    id: p.id,
+    title: p.title,
+    synopsis: p.synopsis,
+    genre: p.genre,
+    runtime: p.runtime || '120 mins',
+    venue: p.venue,
+    status: p.status,
+    poster_url: p.posterUrl,
+    critic_score: p.criticScore,
+    audience_score: p.audienceScore,
+    total_reviews: p.totalReviews,
+    gallery_images: gallery,
+    submitter_email: p.submitterEmail || null,
+    curation_status: p.curationStatus || 'Approved',
+    cast_and_crew: p.castAndCrew || [],
+    show_date: p.showDate || null,
+    decline_reason: p.declineReason || null
+  };
+};
 
-const mapProductionFromDb = (row: any) => ({
-  id: row.id,
-  title: row.title,
-  synopsis: row.synopsis,
-  genre: row.genre,
-  runtime: row.runtime,
-  venue: row.venue,
-  status: row.status,
-  posterUrl: row.poster_url,
-  criticScore: row.critic_score,
-  audienceScore: row.audience_score ? parseFloat(row.audience_score) : null,
-  totalReviews: row.total_reviews,
-  galleryImages: row.gallery_images || [],
-  submitterEmail: row.submitter_email,
-  curationStatus: row.curation_status,
-  castAndCrew: row.cast_and_crew || [],
-  showDate: row.show_date,
-  declineReason: row.decline_reason || null
-});
+const mapProductionFromDb = (row: any) => {
+  const galleryImages: string[] = [];
+  let ticketTiers: any[] = [];
+  
+  if (row.gallery_images && Array.isArray(row.gallery_images)) {
+    row.gallery_images.forEach((item: any) => {
+      if (typeof item === 'string' && item.startsWith('{"__ticketTiers":')) {
+        try {
+          const parsed = JSON.parse(item);
+          ticketTiers = parsed.__ticketTiers;
+        } catch (e) {
+          // ignore
+        }
+      } else {
+        galleryImages.push(item);
+      }
+    });
+  }
+
+  return {
+    id: row.id,
+    title: row.title,
+    synopsis: row.synopsis,
+    genre: row.genre,
+    runtime: row.runtime,
+    venue: row.venue,
+    status: row.status,
+    posterUrl: row.poster_url,
+    criticScore: row.critic_score,
+    audienceScore: row.audience_score ? parseFloat(row.audience_score) : null,
+    totalReviews: row.total_reviews,
+    galleryImages,
+    submitterEmail: row.submitter_email,
+    curationStatus: row.curation_status,
+    castAndCrew: row.cast_and_crew || [],
+    showDate: row.show_date,
+    declineReason: row.decline_reason || null,
+    ticketTiers: ticketTiers.length > 0 ? ticketTiers : undefined
+  };
+};
 
 const mapArtistToDb = (a: any) => ({
   id: a.id,
@@ -749,6 +776,47 @@ export const ClientDB = {
     }
   },
 
+  // ── WITHDRAWALS DATABASE ──
+  getWithdrawals(): any[] {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem('curtain_withdrawals');
+    return stored ? JSON.parse(stored) : [];
+  },
+
+  submitWithdrawal(req: any): void {
+    if (typeof window === 'undefined') return;
+    const current = this.getWithdrawals();
+    const updated = [req, ...current];
+    localStorage.setItem('curtain_withdrawals', JSON.stringify(updated));
+
+    // Sync to cloud withdrawals table
+    syncToCloud('withdrawals', req);
+  },
+
+  approveWithdrawal(id: string): void {
+    if (typeof window === 'undefined') return;
+    const current = this.getWithdrawals();
+    const updated = current.map(w => w.id === id ? { ...w, status: 'Approved' } : w);
+    localStorage.setItem('curtain_withdrawals', JSON.stringify(updated));
+
+    const req = updated.find(w => w.id === id);
+    if (req) {
+      syncToCloud('withdrawals', req);
+    }
+  },
+
+  rejectWithdrawal(id: string, reason?: string): void {
+    if (typeof window === 'undefined') return;
+    const current = this.getWithdrawals();
+    const updated = current.map(w => w.id === id ? { ...w, status: 'Declined', declineReason: reason || 'Information mismatch.' } : w);
+    localStorage.setItem('curtain_withdrawals', JSON.stringify(updated));
+
+    const req = updated.find(w => w.id === id);
+    if (req) {
+      syncToCloud('withdrawals', req);
+    }
+  },
+
   // ── CLIENT-SIDE IMAGE COMPRESSION (STEP-DOWN QUALITY) ──
   compressImage(file: File, maxDimension: number = 800, quality: number = 0.5): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -851,6 +919,16 @@ export const syncFromSupabase = async () => {
     if (whitelist) {
       const emails = whitelist.map(w => w.email.toLowerCase());
       localStorage.setItem('curtain_approved_critic_emails', JSON.stringify(emails));
+    }
+
+    // 7. Pull withdrawals
+    try {
+      const { data: withdrawals } = await supabase.from('withdrawals').select('*');
+      if (withdrawals) {
+        localStorage.setItem('curtain_withdrawals', JSON.stringify(withdrawals));
+      }
+    } catch (e) {
+      // ignore
     }
 
     console.log('[Curtain Call Database] Sync successfully completed with Supabase cloud!');

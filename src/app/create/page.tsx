@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { getBanks, resolveAccount, type Bank } from '@/lib/paystack';
+import { ClientDB } from '@/lib/db';
 
 // ─── Types ───────────────────────────────────────────────
 interface ShowDate {
@@ -36,6 +37,7 @@ interface FormData {
   accountName: string;
   accountNumber: string;
   bankName: string;
+  posterUrl: string;
 }
 
 const GENRES = ['Musical', 'Drama', 'Comedy', 'Historical Epic', 'Spoken Word', 'Dance Theatre', 'Opera', 'Experimental'];
@@ -58,11 +60,22 @@ export default function CreateProductionPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [published, setPublished] = useState(false);
+  const [createdProductionId, setCreatedProductionId] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [banks, setBanks] = useState<Bank[]>([]);
   const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
   const [resolvedName, setResolvedName] = useState('');
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState('');
+
+  const handleCopyLink = () => {
+    if (typeof window === 'undefined') return;
+    const link = `${window.location.origin}/productions/${createdProductionId}`;
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => { getBanks().then(setBanks); }, []);
 
@@ -84,7 +97,22 @@ export default function CreateProductionPage() {
     dates: [{ date: '', time: '19:00' }],
     tiers: [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '' }],
     accountName: '', accountNumber: '', bankName: '',
+    posterUrl: '',
   });
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const compressed = await ClientDB.compressImage(file, 800, 0.6);
+      setForm(prev => ({ ...prev, posterUrl: compressed }));
+    } catch (err) {
+      console.error('Failed to compress image:', err);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (!user) {
     return (
@@ -127,31 +155,121 @@ export default function CreateProductionPage() {
   ][step];
 
   const handlePublish = async () => {
-    // Simulate API call
-    await new Promise(r => setTimeout(r, 1800));
-    setPublished(true);
+    try {
+      const firstDate = form.dates[0]?.date || '';
+      const newPlayId = `p_created_${Date.now()}`;
+      
+      const newPlay = {
+        id: newPlayId,
+        title: form.title,
+        synopsis: form.synopsis,
+        genre: form.genre,
+        runtime: '120 mins',
+        venue: form.venue,
+        status: 'Coming Soon' as const,
+        posterUrl: form.posterUrl || '/images/default_poster.png',
+        criticScore: 92,
+        audienceScore: 9.0,
+        totalReviews: 0,
+        galleryImages: form.posterUrl ? [form.posterUrl] : [],
+        submitterEmail: user?.email || '',
+        curationStatus: 'Approved' as const,
+        showDate: firstDate,
+        ticketTiers: form.tiers.map(t => ({
+          id: t.id,
+          name: t.name,
+          price: t.price,
+          capacity: t.capacity
+        })),
+        castAndCrew: [],
+      };
+
+      ClientDB.saveProduction(newPlay);
+      setCreatedProductionId(newPlayId);
+      setPublished(true);
+    } catch (err) {
+      console.error('Failed to publish production:', err);
+    }
   };
 
   if (published) {
+    const playUrl = `/productions/${createdProductionId}`;
+    const ticketsUrl = `/tickets/${createdProductionId}`;
+    
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 gap-6 text-center">
-        <div className="w-20 h-20 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12 gap-8 text-center bg-zinc-950">
+        <div className="w-20 h-20 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center animate-bounce">
           <Check className="h-9 w-9 text-green-500" />
         </div>
+        
         <div>
-          <h1 className="text-3xl font-serif font-bold text-white mb-2">Production Published!</h1>
-          <p className="text-zinc-400 text-sm max-w-sm">
-            <strong className="text-white">{form.title}</strong> is now live on Curtain Call.
-            Ticket sales will reflect in your wallet within minutes.
+          <h1 className="text-3xl md:text-4xl font-serif font-bold text-white mb-2 tracking-tight">Production Published!</h1>
+          <p className="text-zinc-400 text-sm max-w-sm mx-auto leading-relaxed">
+            <strong className="text-white font-semibold">{form.title}</strong> is now live on Curtain Call and listed under <strong className="text-white font-semibold">Coming Soon</strong>.
           </p>
         </div>
-        <div className="flex gap-3">
-          <Link href="/profile" className="bg-white text-black font-bold px-6 py-3 rounded-xl hover:bg-zinc-100 transition-colors">
+
+        {/* Premium Share Section */}
+        <div className="w-full max-w-md bg-zinc-900/60 border border-white/5 rounded-3xl p-6 backdrop-blur-md flex flex-col gap-4 text-left shadow-2xl">
+          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest">Share Your Production</h3>
+          
+          <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 flex flex-col gap-3">
+            <div className="flex justify-between items-center gap-4">
+              <div className="min-w-0">
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-bold">Public Playbill URL</span>
+                <Link href={playUrl} target="_blank" className="text-sm text-red-500 hover:text-red-400 font-medium break-all flex items-center gap-1 mt-0.5">
+                  /productions/{createdProductionId}
+                </Link>
+              </div>
+              <button
+                onClick={handleCopyLink}
+                className="bg-white/5 border border-white/10 hover:bg-white/10 text-white text-xs font-bold py-2 px-4 rounded-xl transition-all flex items-center gap-1 shrink-0"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-green-500" /> Copied!
+                  </>
+                ) : (
+                  <>Copy Link</>
+                )}
+              </button>
+            </div>
+            
+            <div className="border-t border-dashed border-white/5 my-1" />
+            
+            <div>
+              <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-bold">Direct Ticket Checkout</span>
+              <Link href={ticketsUrl} target="_blank" className="text-sm text-zinc-200 hover:text-white font-medium break-all flex items-center gap-1 mt-0.5">
+                /tickets/{createdProductionId}
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 w-full max-w-md">
+          <Link href="/profile" className="flex-1 bg-white text-black font-bold py-4 rounded-2xl hover:bg-zinc-100 transition-colors shadow-lg text-sm flex items-center justify-center">
             Go to Dashboard
           </Link>
           <button
-            onClick={() => { setPublished(false); setStep(0); setForm({ title: '', genre: '', synopsis: '', venue: '', city: '', address: '', dates: [{ date: '', time: '19:00' }], tiers: [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '' }], accountName: '', accountNumber: '', bankName: '' }); }}
-            className="bg-zinc-900 border border-white/10 text-white px-6 py-3 rounded-xl hover:bg-zinc-800 transition-colors"
+            onClick={() => {
+              setPublished(false);
+              setStep(0);
+              setForm({
+                title: '',
+                genre: '',
+                synopsis: '',
+                venue: '',
+                city: '',
+                address: '',
+                dates: [{ date: '', time: '19:00' }],
+                tiers: [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '' }],
+                accountName: '',
+                accountNumber: '',
+                bankName: '',
+                posterUrl: '',
+              });
+            }}
+            className="flex-1 bg-zinc-900 border border-white/10 text-white font-bold py-4 rounded-2xl hover:bg-zinc-800 transition-colors text-sm"
           >
             Create Another
           </button>
@@ -232,12 +350,48 @@ export default function CreateProductionPage() {
             </Field>
 
             <Field label="Poster / Banner">
-              <div className="border-2 border-dashed border-white/10 rounded-2xl p-8 text-center hover:border-white/25 transition-colors cursor-pointer relative">
-                <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" />
-                <Upload className="h-7 w-7 text-zinc-600 mx-auto mb-2" />
-                <p className="text-sm text-zinc-400">Upload poster image</p>
-                <p className="text-xs text-zinc-600 mt-1">JPG, PNG — recommended 2:3 ratio</p>
-              </div>
+              {form.posterUrl ? (
+                <div className="relative group aspect-[2/3] w-48 mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={form.posterUrl}
+                    alt="Poster Preview"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-[2px]">
+                    <button
+                      type="button"
+                      onClick={() => setForm(prev => ({ ...prev, posterUrl: '' }))}
+                      className="bg-red-600/90 hover:bg-red-600 text-white font-bold p-2.5 rounded-full transition-colors flex items-center justify-center"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Remove Poster</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-white/10 rounded-2xl p-8 text-center hover:border-white/25 transition-colors cursor-pointer relative bg-zinc-900/50 backdrop-blur-sm">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    disabled={uploading}
+                  />
+                  {uploading ? (
+                    <div className="flex flex-col items-center gap-2 py-4">
+                      <Loader2 className="h-7 w-7 text-red-500 animate-spin" />
+                      <p className="text-sm text-zinc-400">Processing high-fidelity file...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="h-7 w-7 text-zinc-600 mx-auto mb-2" />
+                      <p className="text-sm text-zinc-400">Upload poster image</p>
+                      <p className="text-xs text-zinc-600 mt-1">JPG, PNG — recommended 2:3 ratio</p>
+                    </>
+                  )}
+                </div>
+              )}
             </Field>
           </div>
         )}
@@ -529,6 +683,12 @@ export default function CreateProductionPage() {
         {/* ── STEP 4: Review & Publish ── */}
         {step === 4 && (
           <div className="flex flex-col gap-4 animate-fade-up">
+            {form.posterUrl && (
+              <div className="aspect-[2/3] w-36 mx-auto rounded-xl overflow-hidden border border-white/10 shadow-lg mb-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={form.posterUrl} alt={form.title} className="w-full h-full object-cover" />
+              </div>
+            )}
             <ReviewRow label="Title" value={form.title} />
             <ReviewRow label="Genre" value={form.genre} />
             <ReviewRow label="Synopsis" value={form.synopsis} truncate />

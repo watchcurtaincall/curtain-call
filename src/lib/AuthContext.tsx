@@ -31,7 +31,6 @@ interface AuthContextType {
   user: MockUser | null;
   login: (email: string, password?: string) => Promise<void>;
   signUp: (email: string, password?: string, name?: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
   logout: () => void;
 }
 
@@ -39,7 +38,6 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   login: async () => {},
   signUp: async () => {},
-  loginWithGoogle: async () => {},
   logout: () => {},
 });
 
@@ -251,27 +249,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const loginWithGoogle = async () => {
-    if (supabase) {
-      try {
-        console.log('[AuthContext] Initiating real Supabase Google OAuth redirect...');
-        const { error } = await supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: {
-            redirectTo: typeof window !== 'undefined' ? window.location.origin + '/profile' : undefined
-          }
-        });
-        if (error) throw error;
-      } catch (err: any) {
-        console.error('[Supabase Google Sign-In Error]:', err.message);
-        // Clean fallback
-        login('watchcurtaincall@gmail.com', '');
-      }
-    } else {
-      login('watchcurtaincall@gmail.com', '');
-    }
-  };
-
   const logout = async () => {
     if (supabase) {
       await supabase.auth.signOut();
@@ -282,7 +259,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signUp, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, login, signUp, logout }}>
       {children}
     </AuthContext.Provider>
   );

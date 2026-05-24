@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { ClientDB } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
-import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail } from 'lucide-react';
+import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'settings';
+type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'settings' | 'withdrawals';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
@@ -20,9 +20,10 @@ export default function AdminDashboardPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
   // Custom Rejection Reason and Email Logs States
-  const [declineItem, setDeclineItem] = useState<{ id: string; name: string; type: 'artist' | 'play' | 'article' | 'critic'; email: string } | null>(null);
+  const [declineItem, setDeclineItem] = useState<{ id: string; name: string; type: 'artist' | 'play' | 'article' | 'critic' | 'withdrawal'; email: string } | null>(null);
   const [declineReason, setDeclineReason] = useState('');
   const [emailLogs, setEmailLogs] = useState<any[]>([]);
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
 
   // Manage tab local states
   const [manageSearch, setManageSearch] = useState('');
@@ -110,6 +111,7 @@ export default function AdminDashboardPage() {
     setPendingPlays(ClientDB.getPendingPlays());
     setPendingArticles(ClientDB.getPendingArticles());
     setPendingCritics(ClientDB.getPendingCritics());
+    setWithdrawals(ClientDB.getWithdrawals());
     if (typeof window !== 'undefined') {
       setEmailLogs(ClientDB.getEmailLogs());
     }
@@ -164,48 +166,86 @@ export default function AdminDashboardPage() {
         ClientDB.rejectArticle(id, reasonText);
       } else if (type === 'critic') {
         ClientDB.rejectCriticApplication(id);
+      } else if (type === 'withdrawal') {
+        ClientDB.rejectWithdrawal(id, reasonText);
       }
 
-      const rejectionHtml = `
-        <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
-            <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
-          </div>
-          
-          <h2 style="font-family: serif; color: #ffffff; font-size: 22px; margin-top: 0;">Update Regarding Your Submission</h2>
-          
-          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
-            Thank you for submitting <strong>${name}</strong> to the Curtain Call platform. Our editorial and curatorial board has reviewed your submission.
-          </p>
-          
-          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
-            At this time, we regret to inform you that your submission has been <strong>declined</strong> for publishing on our main feed.
-          </p>
-          
-          <div style="background-color: rgba(239, 68, 68, 0.03); border: 1px solid rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 20px; margin: 30px 0;">
-            <p style="color: #ef4444; font-size: 11px; text-transform: uppercase; tracking-wider: 1px; font-weight: bold; margin: 0 0 10px 0;">Curator's Notes & Rejection Reason:</p>
-            <p style="color: #fca5a5; font-size: 15px; line-height: 1.6; margin: 0; font-style: italic;">
-              "${reasonText}"
+      let rejectionHtml = '';
+      if (type === 'withdrawal') {
+        rejectionHtml = `
+          <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Financials</span>
+              <div style="height: 2px; width: 80px; background-color: #dc2626; margin: 15px auto 0;"></div>
+            </div>
+            
+            <h2 style="font-family: Georgia, serif; color: #ef4444; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Withdrawal Request Declined ❌</h2>
+            
+            <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+              Your withdrawal request has been reviewed and declined. The funds have been returned to your available balance.
+            </p>
+            
+            <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 20px; margin: 25px 0;">
+              <p style="color: #ef4444; font-size: 11px; text-transform: uppercase; font-weight: bold; margin: 0 0 5px 0;">Declined Amount:</p>
+              <p style="color: #ffffff; font-size: 18px; font-weight: bold; margin: 0 0 15px 0;">${name}</p>
+              
+              <p style="color: #71717a; font-size: 11px; text-transform: uppercase; font-weight: bold; margin: 0 0 5px 0;">Reason for Decline:</p>
+              <p style="color: #fca5a5; font-size: 14px; line-height: 1.5; margin: 0; font-style: italic;">
+                "${reasonText}"
+              </p>
+            </div>
+            
+            <p style="color: #a1a1aa; font-size: 13px; line-height: 1.6; text-align: center;">
+              Please review the reason above and ensure your bank account name matches your profile name, or submit a new ticket for support.
+            </p>
+            
+            <p style="color: #71717a; font-size: 11px; line-height: 1.6; border-top: 1px solid #27272a; padding-top: 25px; margin-top: 30px; text-align: center; font-family: monospace;">
+              Curtain Call Financial Operations.
             </p>
           </div>
-          
-          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
-            We encourage you to review the notes above, make the necessary corrections, and re-submit your credit when ready!
-          </p>
-          
-          <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
-            Best regards,<br/>
-            <strong>The Curtain Call Curation Board</strong>
-          </p>
-        </div>
-      `;
-
-      if (email) {
-        await ClientDB.sendEmail(email, `Submission Update: "${name}" 🎭`, rejectionHtml);
+        `;
+      } else {
+        rejectionHtml = `
+          <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
+              <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+            </div>
+            
+            <h2 style="font-family: serif; color: #ffffff; font-size: 22px; margin-top: 0;">Update Regarding Your Submission</h2>
+            
+            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+              Thank you for submitting <strong>${name}</strong> to the Curtain Call platform. Our editorial and curatorial board has reviewed your submission.
+            </p>
+            
+            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+              At this time, we regret to inform you that your submission has been <strong>declined</strong> for publishing on our main feed.
+            </p>
+            
+            <div style="background-color: rgba(239, 68, 68, 0.03); border: 1px solid rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 20px; margin: 30px 0;">
+              <p style="color: #ef4444; font-size: 11px; text-transform: uppercase; tracking-wider: 1px; font-weight: bold; margin: 0 0 10px 0;">Curator's Notes & Rejection Reason:</p>
+              <p style="color: #fca5a5; font-size: 15px; line-height: 1.6; margin: 0; font-style: italic;">
+                "${reasonText}"
+              </p>
+            </div>
+            
+            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+              We encourage you to review the notes above, make the necessary corrections, and re-submit your credit when ready!
+            </p>
+            
+            <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+              Best regards,<br/>
+              <strong>The Curtain Call Curation Board</strong>
+            </p>
+          </div>
+        `;
       }
 
-      showToast(`Submission "${name}" declined. Notification email sent to ${email}.`, 'error');
+      if (email) {
+        await ClientDB.sendEmail(email, type === 'withdrawal' ? `Withdrawal Request Update 💸` : `Submission Update: "${name}" 🎭`, rejectionHtml);
+      }
+
+      showToast(type === 'withdrawal' ? `Withdrawal of ${name} declined. Rejection email sent.` : `Submission "${name}" declined. Notification email sent to ${email}.`, 'error');
       setDeclineItem(null);
       setDeclineReason('');
       loadQueues();
@@ -365,6 +405,70 @@ export default function AdminDashboardPage() {
 
   const handleRejectArticle = (id: string, title: string, email?: string) => {
     setDeclineItem({ id, name: title, type: 'article', email: email || 'user@example.com' });
+    setDeclineReason('');
+  };
+
+  const handleApproveWithdrawal = async (id: string, amount: number, accountName: string, bankName: string, email: string) => {
+    try {
+      ClientDB.approveWithdrawal(id);
+
+      const approvalHtml = `
+        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Financials</span>
+            <div style="height: 2px; width: 80px; background-color: #22c55e; margin: 15px auto 0;"></div>
+          </div>
+          
+          <h2 style="font-family: Georgia, serif; color: #22c55e; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Withdrawal Approved & Transferred! 💸</h2>
+          
+          <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+            Great news! Your withdrawal request has been approved and processed. The funds have been successfully transferred to your bank account.
+          </p>
+          
+          <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Amount Approved</td>
+                <td style="padding: 8px 0; font-size: 14px; color: #22c55e; text-align: right; font-weight: bold;">₦${amount.toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Target Bank</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${bankName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Account Name</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right;">${accountName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Status</td>
+                <td style="padding: 8px 0; font-size: 11px; color: #22c55e; text-align: right; text-transform: uppercase; font-weight: bold;">Successful</td>
+              </tr>
+            </table>
+          </div>
+          
+          <p style="color: #a1a1aa; font-size: 13px; line-height: 1.6; text-align: center;">
+            Please note that depending on your bank, it may take a few minutes for the funds to reflect in your account. Thank you for utilizing Curtain Call!
+          </p>
+          
+          <p style="color: #71717a; font-size: 11px; line-height: 1.6; border-top: 1px solid #27272a; padding-top: 25px; margin-top: 30px; text-align: center; font-family: monospace;">
+            Curtain Call Financial Operations.
+          </p>
+        </div>
+      `;
+
+      if (email) {
+        await ClientDB.sendEmail(email, `Withdrawal Approved & Transferred! 💸 - ₦${amount.toLocaleString()}`, approvalHtml);
+      }
+
+      showToast(`Withdrawal request of ₦${amount.toLocaleString()} approved. Payout email sent to ${email}.`, 'success');
+      loadQueues();
+    } catch (err) {
+      showToast('Failed to approve withdrawal request', 'error');
+    }
+  };
+
+  const handleRejectWithdrawal = (id: string, amount: number, email: string) => {
+    setDeclineItem({ id, name: `₦${amount.toLocaleString()}`, type: 'withdrawal', email });
     setDeclineReason('');
   };
 
@@ -731,6 +835,19 @@ export default function AdminDashboardPage() {
             )}
           </button>
           <button
+            onClick={() => setActiveTab('withdrawals')}
+            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'withdrawals' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Banknote className="h-4 w-4" /> Withdrawals
+            {withdrawals.filter(w => w.status === 'Pending').length > 0 && (
+              <span className="text-[9px] font-mono bg-zinc-950 text-red-400 px-2 py-0.5 rounded-full border border-red-500/10 animate-pulse">
+                {withdrawals.filter(w => w.status === 'Pending').length}
+              </span>
+            )}
+          </button>
+          <button
             onClick={() => setActiveTab('blog')}
             className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'blog' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
@@ -1031,6 +1148,155 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* WITHDRAWALS MANAGEMENT BACKLOG */}
+        {activeTab === 'withdrawals' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-fade-up">
+            {/* Column 1: Pending Review (7 cols) */}
+            <div className="lg:col-span-7 flex flex-col gap-6">
+              <div className="flex items-center justify-between pb-4 border-b border-white/5">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-red-500/10 rounded-xl border border-red-500/20 text-red-400">
+                    <Banknote className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif font-bold text-xl">Pending Cash-outs</h3>
+                    <p className="text-zinc-500 text-xs mt-0.5">Verification queue for ticket revenue transfers</p>
+                  </div>
+                </div>
+                <span className="text-xs font-mono font-bold bg-zinc-900 px-3 py-1.5 rounded-full border border-white/5">
+                  {withdrawals.filter(w => w.status === 'Pending').length} Pending
+                </span>
+              </div>
+
+              {withdrawals.filter(w => w.status === 'Pending').length === 0 ? (
+                <div className="bg-zinc-900/50 backdrop-blur-md border border-white/5 rounded-3xl p-12 text-center flex flex-col items-center justify-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-zinc-800/80 border border-white/5 flex items-center justify-center text-zinc-500">
+                    <CheckCircle2 className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-zinc-300 font-bold text-sm">Clear Backlog</p>
+                    <p className="text-zinc-500 text-xs mt-1">All payout requests have been reviewed and completed.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {withdrawals
+                    .filter(w => w.status === 'Pending')
+                    .map(req => (
+                      <div
+                        key={req.id}
+                        className="bg-zinc-900 border border-white/5 hover:border-white/10 rounded-3xl p-6 flex flex-col gap-5 transition-all shadow-xl hover:shadow-2xl"
+                      >
+                        {/* Upper row: amount & timestamp */}
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <span className="text-[10px] text-zinc-400 font-mono tracking-wider bg-zinc-950 border border-white/5 px-2.5 py-1 rounded-md uppercase">
+                              ID: {req.id}
+                            </span>
+                            <div className="text-2xl font-bold font-serif text-emerald-400 mt-2">
+                              ₦{Number(req.amount).toLocaleString()}
+                            </div>
+                            <p className="text-zinc-400 text-xs mt-1 flex items-center gap-1.5">
+                              <Mail className="h-3 w-3 text-zinc-500" /> {req.email}
+                            </p>
+                          </div>
+                          <span className="text-[10px] text-zinc-500 font-mono mt-1 shrink-0">{req.timestamp}</span>
+                        </div>
+
+                        {/* Middle box: account details */}
+                        <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Beneficiary Name</p>
+                            <p className="text-sm font-bold text-white mt-1 font-serif">{req.accountName}</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Bank Details</p>
+                            <p className="text-sm text-zinc-300 mt-1 font-semibold">
+                              {req.bankName}
+                            </p>
+                            <p className="text-xs text-zinc-500 font-mono mt-0.5">{req.accountNumber}</p>
+                          </div>
+                        </div>
+
+                        {/* Bottom Actions */}
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => handleApproveWithdrawal(req.id, req.amount, req.accountName, req.bankName, req.email)}
+                            className="flex-1 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 hover:border-emerald-600 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md"
+                          >
+                            <Check className="h-4 w-4" /> Approve Transfer
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRejectWithdrawal(req.id, req.amount, req.email)}
+                            className="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 hover:border-red-600 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
+                          >
+                            <Trash2 className="h-4 w-4" /> Decline
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {/* Column 2: Payout History (5 cols) */}
+            <div className="lg:col-span-5 flex flex-col gap-6">
+              <div className="pb-4 border-b border-white/5">
+                <h3 className="font-serif font-bold text-xl">Payout History</h3>
+                <p className="text-zinc-500 text-xs mt-0.5">Chronological log of processed disbursements</p>
+              </div>
+
+              {withdrawals.filter(w => w.status !== 'Pending').length === 0 ? (
+                <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-8 text-center text-zinc-500 text-xs">
+                  No historical cash-out events recorded.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3.5 max-h-[70vh] overflow-y-auto pr-1">
+                  {withdrawals
+                    .filter(w => w.status !== 'Pending')
+                    .map(req => (
+                      <div
+                        key={req.id}
+                        className="bg-zinc-900/60 border border-white/5 rounded-2xl p-4.5 flex flex-col gap-3 text-xs"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <span className="font-bold text-white">₦{Number(req.amount).toLocaleString()}</span>
+                            <p className="text-zinc-500 text-[10px] truncate max-w-[180px] mt-0.5">{req.email}</p>
+                          </div>
+                          <span
+                            className={`px-2 py-0.5 rounded-md font-mono text-[9px] font-bold shrink-0 ${
+                              req.status === 'Approved'
+                                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                            }`}
+                          >
+                            {req.status}
+                          </span>
+                        </div>
+
+                        <div className="text-[10px] text-zinc-400 border-t border-white/5 pt-2.5 flex flex-col gap-1">
+                          <p className="text-zinc-500 font-semibold">{req.accountName}</p>
+                          <p className="text-zinc-500 font-mono">
+                            {req.bankName} • {req.accountNumber}
+                          </p>
+                          {req.status === 'Declined' && req.declineReason && (
+                            <p className="text-red-400/90 bg-red-950/20 border border-red-500/10 rounded-lg p-2 mt-1.5 font-sans leading-relaxed italic">
+                              "{req.declineReason}"
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-[9px] text-zinc-600 font-mono text-right">{req.timestamp}</span>
+                      </div>
+                    ))}
                 </div>
               )}
             </div>
