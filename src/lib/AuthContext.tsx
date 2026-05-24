@@ -29,7 +29,7 @@ const MOCK_USER: MockUser = {
 
 interface AuthContextType {
   user: MockUser | null;
-  login: (email: string, password?: string) => void;
+  login: (email: string, password?: string, name?: string) => void;
   logout: () => void;
 }
 
@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = (email: string, password?: string) => {
+  const login = (email: string, password?: string, name?: string) => {
     let loggedUser = MOCK_USER;
     const cleanEmail = email.trim().toLowerCase();
 
@@ -74,11 +74,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Auto-approve as approved critic on login
       ClientDB.addApprovedCriticEmail('watchcurtaincall@gmail.com');
     } else {
+      const displayName = name || email.split('@')[0];
       loggedUser = {
-        name: email.split('@')[0],
+        name: displayName,
         email: email,
-        avatar: email.slice(0, 2).toUpperCase(),
-        joinDate: 'Recently Added',
+        avatar: displayName.slice(0, 2).toUpperCase(),
+        joinDate: 'May 2026',
         ratings: 0,
         reviews: 0,
         points: 0,

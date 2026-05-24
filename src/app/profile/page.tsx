@@ -20,7 +20,7 @@ import { NotificationsPanel } from '@/components/profile/NotificationsPanel';
 import { SettingsPanel } from '@/components/profile/SettingsPanel';
 import Link from 'next/link';
 
-type Tab = 'dashboard' | 'submissions' | 'add-production' | 'reviews' | 'list' | 'badges';
+type Tab = 'dashboard' | 'productions' | 'submissions' | 'reviews' | 'list' | 'badges';
 
 const ACTIVITY = [
   { text: 'Rated WATERSIDE 9/10',                         time: '2 days ago',  Icon: Star       },
@@ -42,7 +42,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     setAllPlays(ClientDB.getProductions());
-  }, []);
+  }, [tab]);
   
   const WALLET_BALANCE = 84600;
 
@@ -112,12 +112,22 @@ export default function ProfilePage() {
   }
 
   const watchlistProductions = allPlays.filter(p => watchlist.includes(p.id));
-  const userReviews = MOCK_REVIEWS.filter(r => r.type === 'Audience');
+  
+  // Calculate dynamic user-specific reviews
+  const dbReviews = ClientDB.getReviews();
+  const userReviews = dbReviews.filter(r => 
+    r.submitterEmail === user.email || 
+    r.author.toLowerCase() === user.name.toLowerCase() || 
+    (user.email === 'adaeze@example.com' && r.type === 'Audience')
+  );
 
   // Dynamic point system logic - attach points to each step
-  const validatedDone = true; // Hardcoded done for Adaeze Obi
-  const ratedDone = user.ratings > 0;
-  const reviewedDone = user.reviews > 0;
+  const validatedDone = true; 
+  const ratedCount = user.email === 'adaeze@example.com' ? user.ratings : userReviews.length;
+  const reviewsCount = user.email === 'adaeze@example.com' ? user.reviews : userReviews.length;
+
+  const ratedDone = ratedCount > 0;
+  const reviewedDone = reviewsCount > 0;
   const watchlistDone = watchlist.length > 0;
 
   // Let's compute points dynamically based on the 4 steps of checklist
@@ -134,35 +144,33 @@ export default function ProfilePage() {
   ];
 
   const dynamicBadges = [
-    { id: 1,  name: 'First Review',       Icon: PenSquare,  desc: 'Write your first review',               points: 50,  unlocked: user.reviews > 0,      color: 'text-violet-400 bg-violet-500/10 border-violet-500/25' },
-    { id: 2,  name: 'First Rating',        Icon: Star,       desc: 'Rate your first production',            points: 50,  unlocked: user.ratings > 0,      color: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
-    { id: 3,  name: "Critic's Eye",        Icon: Target,     desc: 'Rate 10 productions',                   points: 100, unlocked: user.ratings >= 10,     color: 'text-blue-400 bg-blue-500/10 border-blue-500/25' },
+    { id: 1,  name: 'First Review',       Icon: PenSquare,  desc: 'Write your first review',               points: 50,  unlocked: reviewsCount > 0,      color: 'text-violet-400 bg-violet-500/10 border-violet-500/25' },
+    { id: 2,  name: 'First Rating',        Icon: Star,       desc: 'Rate your first production',            points: 50,  unlocked: ratedCount > 0,      color: 'text-amber-400 bg-amber-500/10 border-amber-500/25' },
+    { id: 3,  name: "Critic's Eye",        Icon: Target,     desc: 'Rate 10 productions',                   points: 100, unlocked: ratedCount >= 10,     color: 'text-blue-400 bg-blue-500/10 border-blue-500/25' },
     { id: 4,  name: 'Season Ticket',       Icon: Ticket,     desc: 'Add 5 shows to watchlist',              points: 100, unlocked: watchlist.length >= 5, color: 'text-green-400 bg-green-500/10 border-green-500/25' },
-    { id: 5,  name: 'Voice of the Stage',  Icon: Mic2,       desc: 'Write 10 reviews',                      points: 150, unlocked: user.reviews >= 10,     color: 'text-pink-400 bg-pink-500/10 border-pink-500/25' },
+    { id: 5,  name: 'Voice of the Stage',  Icon: Mic2,       desc: 'Write 10 reviews',                      points: 150, unlocked: reviewsCount >= 10,     color: 'text-pink-400 bg-pink-500/10 border-pink-500/25' },
     { id: 6,  name: 'Curtain Raiser',      Icon: Drama,      desc: 'Attend your first verified show',        points: 100, unlocked: true,                  color: 'text-red-400 bg-red-500/10 border-red-500/25' },
-    { id: 7,  name: 'Prolific Reviewer',   Icon: FileText,   desc: 'Write 50 reviews',                      points: 200, unlocked: user.reviews >= 50,     color: 'text-orange-400 bg-orange-500/10 border-orange-500/25' },
+    { id: 7,  name: 'Prolific Reviewer',   Icon: FileText,   desc: 'Write 50 reviews',                      points: 200, unlocked: reviewsCount >= 50,     color: 'text-orange-400 bg-orange-500/10 border-orange-500/25' },
     { id: 8,  name: 'Top Critic',          Icon: Trophy,     desc: 'Reach 500 points',                      points: 250, unlocked: points >= 500,        color: 'text-amber-500 bg-amber-500/10 border-amber-500/25' },
-    { id: 9,  name: 'Cultural Archivist',  Icon: Library,    desc: 'Review historical productions',         points: 150, unlocked: user.reviews >= 3,      color: 'text-sky-400 bg-sky-500/10 border-sky-500/25' },
-    { id: 10, name: 'Trendsetter',         Icon: Zap,        desc: 'Review show in first week',             points: 150, unlocked: user.reviews >= 5,      color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/25' },
+    { id: 9,  name: 'Cultural Archivist',  Icon: Library,    desc: 'Review historical productions',         points: 150, unlocked: reviewsCount >= 3,      color: 'text-sky-400 bg-sky-500/10 border-sky-500/25' },
+    { id: 10, name: 'Trendsetter',         Icon: Zap,        desc: 'Review show in first week',             points: 150, unlocked: reviewsCount >= 5,      color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/25' },
     { id: 11, name: 'Social Stage',        Icon: Users,      desc: 'Get 10 followers',                      points: 100, unlocked: true,                  color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/25' },
-    { id: 12, name: 'Grand Reviewer',      Icon: Crown,      desc: 'Write 100 reviews',                     points: 300, unlocked: user.reviews >= 100,    color: 'text-red-500 bg-red-500/10 border-red-500/25' },
+    { id: 12, name: 'Grand Reviewer',      Icon: Crown,      desc: 'Write 100 reviews',                     points: 300, unlocked: reviewsCount >= 100,    color: 'text-red-500 bg-red-500/10 border-red-500/25' },
     { id: 13, name: 'Patron of the Arts',  Icon: Sparkles,   desc: 'Reach 1000 points',                     points: 500, unlocked: points >= 1000,       color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25' },
     { id: 14, name: 'Legend',              Icon: Shield,     desc: 'Complete all other badges',             points: 1000,unlocked: points >= 1000,       color: 'text-rose-500 bg-rose-500/10 border-rose-500/25' },
   ];
 
   const badgesUnlockedCount = dynamicBadges.filter(b => b.unlocked).length;
 
+  // Tabs ordered Dashboard -> Production -> My Submissions
   const tabs: { id: Tab; label: string; Icon: React.FC<{ className?: string }> }[] = [
     { id: 'dashboard',   label: 'Dashboard',      Icon: Star     },
+    { id: 'productions', label: 'Production',     Icon: Drama    },
     { id: 'submissions', label: 'My Submissions',  Icon: FileText },
-    { id: 'add-production', label: 'Add Production', Icon: Plus },
     { id: 'reviews',     label: 'My Reviews',     Icon: PenLine  },
     { id: 'list',        label: 'My List',        Icon: Bookmark },
     { id: 'badges',      label: 'Badges',         Icon: Award    },
   ];
-
-  const pendingSubCount = userSubmissions.filter(s => s.status === 'Pending').length;
-  const approvedSubCount = userSubmissions.filter(s => s.status === 'Approved').length;
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -238,9 +246,9 @@ export default function ProfilePage() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3 mt-6">
             {[
-              { label: 'Ratings',   value: user.ratings      },
+              { label: 'Ratings',   value: ratedCount      },
               { label: 'Watchlist', value: watchlist.length   },
-              { label: 'Reviews',   value: user.reviews       },
+              { label: 'Reviews',   value: reviewsCount       },
             ].map(stat => (
               <div key={stat.label} className="bg-zinc-800/60 rounded-2xl p-4 text-center border border-white/5">
                 <div className="text-2xl font-bold text-white font-serif">{stat.value}</div>
@@ -256,13 +264,7 @@ export default function ProfilePage() {
             {tabs.map(({ id, label, Icon }) => (
               <button
                 key={id}
-                onClick={() => {
-                  if (id === 'add-production') {
-                    router.push('/create');
-                  } else {
-                    setTab(id);
-                  }
-                }}
+                onClick={() => setTab(id)}
                 className={`flex items-center gap-2 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors relative ${
                   tab === id ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                 }`}
@@ -349,81 +351,59 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* MY SUBMISSIONS */}
-        {tab === 'submissions' && (
+        {/* PRODUCTION HUB */}
+        {tab === 'productions' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-up">
             
-            {/* Submissions List */}
-            <div className="lg:col-span-2 flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <h2 className="font-serif font-bold text-white text-lg">Curation Status Tracker</h2>
-                <Link href="/submit" className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl transition-all text-xs">
-                  <Plus className="h-3.5 w-3.5" /> Submit New
+            {/* Active / Past list */}
+            <div className="lg:col-span-2 flex flex-col gap-8">
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <div>
+                  <h2 className="font-serif font-bold text-white text-lg">Production Hub</h2>
+                  <p className="text-zinc-500 text-xs mt-0.5">Manage your dynamically listed theatrical stage plays.</p>
+                </div>
+                <Link href="/submit" className="flex items-center gap-1.5 bg-white text-black hover:bg-zinc-100 font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider">
+                  <Plus className="h-3.5 w-3.5" /> Add Production
                 </Link>
               </div>
 
-              {userSubmissions.length === 0 ? (
-                <div className="bg-zinc-900 border border-white/5 rounded-3xl p-8 text-center flex flex-col items-center justify-center min-h-[300px]">
-                  <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-500 mb-4">
-                    <FileText className="h-6 w-6" />
+              {/* Active Productions */}
+              <div>
+                <h3 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span className="w-1.5 h-3.5 bg-red-600 rounded-full" />
+                  Active Productions
+                </h3>
+                {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).length === 0 ? (
+                  <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-8 text-center text-zinc-500 text-sm">
+                    No active plays currently listed.
                   </div>
-                  <h3 className="font-serif font-bold text-white text-lg mb-1">No Submissions Found</h3>
-                  <p className="text-zinc-500 text-sm max-w-sm leading-relaxed mb-6">
-                    You haven&apos;t submitted any stage playbills, theatremaker profiles, or chronicle drafts yet. Contribute to begin!
-                  </p>
-                  <Link href="/submit" className="bg-white text-black font-bold px-5 py-2.5 rounded-xl hover:bg-zinc-200 transition-colors text-sm">
-                    Submit Record
-                  </Link>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {userSubmissions.map((sub, idx) => {
-                    const SubIcon = sub.icon || FileText;
-                    return (
-                      <div key={idx} className="bg-zinc-900 border border-white/5 rounded-2xl p-5 flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center text-zinc-400 border border-white/5 shrink-0">
-                            <SubIcon className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest font-mono">
-                              {sub.contentType}
-                            </span>
-                            <h3 className="font-serif font-bold text-white text-base mt-0.5 leading-tight">
-                              {sub.name || sub.title}
-                            </h3>
-                            <p className="text-zinc-500 text-xs mt-1 line-clamp-1">
-                              {sub.bio || sub.synopsis || sub.excerpt}
-                            </p>
-                          </div>
-                        </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).map(p => (
+                      <ProductionCard key={p.id} production={p} />
+                    ))}
+                  </div>
+                )}
+              </div>
 
-                        <div className="shrink-0 flex flex-col items-end gap-1.5">
-                          {sub.status === 'Pending' && (
-                            <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5">
-                              <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
-                              Pending
-                            </span>
-                          )}
-                          {sub.status === 'Approved' && (
-                            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5">
-                              ✓ Approved & Live
-                            </span>
-                          )}
-                          {sub.status === 'Declined' && (
-                            <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5">
-                              ⚠ Declined
-                            </span>
-                          )}
-                          <span className="text-[9px] text-zinc-600 font-mono mt-1">
-                            ID: {sub.id.substring(0, 12)}...
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              {/* Past Productions */}
+              <div>
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span className="w-1.5 h-3.5 bg-zinc-700 rounded-full" />
+                  Past Productions
+                </h3>
+                {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Past Production' || p.status === 'Recently Concluded')).length === 0 ? (
+                  <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-8 text-center text-zinc-500 text-sm">
+                    No past/concluded plays registered.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Past Production' || p.status === 'Recently Concluded')).map(p => (
+                      <ProductionCard key={p.id} production={p} />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Wallet Panel */}
@@ -503,6 +483,84 @@ export default function ProfilePage() {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {/* MY SUBMISSIONS */}
+        {tab === 'submissions' && (
+          <div className="flex flex-col gap-4 animate-fade-up max-w-4xl mx-auto">
+            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+              <div>
+                <h2 className="font-serif font-bold text-white text-lg">Curation Status Tracker</h2>
+                <p className="text-zinc-500 text-xs mt-0.5">Track your submitted theatremakers, playbills, and drafts.</p>
+              </div>
+              <Link href="/submit" className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl transition-all text-xs">
+                <Plus className="h-3.5 w-3.5" /> Submit New
+              </Link>
+            </div>
+
+            {userSubmissions.length === 0 ? (
+              <div className="bg-zinc-900 border border-white/5 rounded-3xl p-8 text-center flex flex-col items-center justify-center min-h-[300px]">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-500 mb-4">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <h3 className="font-serif font-bold text-white text-lg mb-1">No Submissions Found</h3>
+                <p className="text-zinc-500 text-sm max-w-sm leading-relaxed mb-6">
+                  You haven&apos;t submitted any stage playbills, theatremaker profiles, or chronicle drafts yet. Contribute to begin!
+                </p>
+                <Link href="/submit" className="bg-white text-black font-bold px-5 py-2.5 rounded-xl hover:bg-zinc-200 transition-colors text-sm">
+                  Submit Record
+                </Link>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {userSubmissions.map((sub, idx) => {
+                  const SubIcon = sub.icon || FileText;
+                  return (
+                    <div key={idx} className="bg-zinc-900 border border-white/5 rounded-2xl p-5 flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center text-zinc-400 border border-white/5 shrink-0">
+                          <SubIcon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest font-mono">
+                            {sub.contentType}
+                          </span>
+                          <h3 className="font-serif font-bold text-white text-base mt-0.5 leading-tight">
+                            {sub.name || sub.title}
+                          </h3>
+                          <p className="text-zinc-500 text-xs mt-1 line-clamp-1">
+                            {sub.bio || sub.synopsis || sub.excerpt}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 flex flex-col items-end gap-1.5">
+                        {sub.status === 'Pending' && (
+                          <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse" />
+                            Pending
+                          </span>
+                        )}
+                        {sub.status === 'Approved' && (
+                          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            ✓ Approved & Live
+                          </span>
+                        )}
+                        {sub.status === 'Declined' && (
+                          <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1.5">
+                            ⚠ Declined
+                          </span>
+                        )}
+                        <span className="text-[9px] text-zinc-600 font-mono mt-1">
+                          ID: {sub.id.substring(0, 12)}...
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

@@ -19,7 +19,7 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const close = () => { setIsMenuOpen(false); setIsSearchOpen(false); };
 
@@ -157,14 +157,38 @@ export function Navbar() {
           </nav>
 
           <div className="px-6 mt-auto pb-12 pt-8">
-            <Link
-              href="/login"
-              onClick={close}
-              className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-white text-black font-bold text-base hover:bg-zinc-100 transition-colors"
-            >
-              <User className="h-5 w-5" />
-              Sign In
-            </Link>
+            {user ? (
+              <div className="flex flex-col gap-4">
+                <Link
+                  href="/profile"
+                  onClick={close}
+                  className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-zinc-800 text-white border border-white/10 font-bold text-base hover:bg-zinc-700 transition-colors"
+                >
+                  <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-[10px] font-bold text-white uppercase">
+                    {user.avatar}
+                  </div>
+                  My Profile ({user.name.split(' ')[0]})
+                </Link>
+                <button
+                  onClick={() => {
+                    logout();
+                    close();
+                  }}
+                  className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-red-600/10 text-red-500 border border-red-600/20 font-bold text-base hover:bg-red-600/20 transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                onClick={close}
+                className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-white text-black font-bold text-base hover:bg-zinc-100 transition-colors"
+              >
+                <User className="h-5 w-5" />
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
       )}

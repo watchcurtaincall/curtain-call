@@ -91,6 +91,29 @@ export function CastCrewSection({ artists, productionTitle, production }: CastCr
   };
 
   const credits = getFullCredits();
+  
+  // Find database matches for the first 8 cast & creative crew members
+  const dbArtists = artists && artists.length > 0 ? artists : [];
+  const castList = credits.cast || [];
+  const creativeList = credits.creative || [];
+  const allCreditsList = [...creativeList, ...castList];
+
+  const matchedPreviewArtists = allCreditsList.slice(0, 8).map(member => {
+    const matched = dbArtists.find(a => a.name.toLowerCase() === member.name.toLowerCase());
+    if (matched) {
+      return {
+        ...matched,
+        roleType: member.role
+      };
+    } else {
+      return {
+        id: '', // Virtual/Dynamic
+        name: member.name,
+        roleType: member.role,
+        headshotUrl: '', // Default placeholder SVG
+      } as Artist;
+    }
+  });
 
   return (
     <div>
@@ -109,8 +132,8 @@ export function CastCrewSection({ artists, productionTitle, production }: CastCr
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        {artists.slice(0, 4).map(artist => (
-          <ArtistCard key={artist.id} artist={artist} />
+        {matchedPreviewArtists.map((artist, idx) => (
+          <ArtistCard key={artist.id || idx} artist={artist} />
         ))}
       </div>
 

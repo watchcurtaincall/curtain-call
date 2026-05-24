@@ -54,6 +54,27 @@ export default function SubmitPortalPage() {
   const posterInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
+  // Dynamic Playbill Cast & Crew Builder states
+  const [castMembers, setCastMembers] = useState<{ name: string; role: string; category: 'Creative' | 'Cast' | 'Technical' }[]>([]);
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState('');
+  const [newMemberCategory, setNewMemberCategory] = useState<'Creative' | 'Cast' | 'Technical'>('Cast');
+
+  const addCastMember = () => {
+    if (!newMemberName.trim() || !newMemberRole.trim()) return;
+    setCastMembers([
+      ...castMembers,
+      {
+        name: newMemberName.trim(),
+        role: newMemberRole.trim(),
+        category: newMemberCategory
+      }
+    ]);
+    setNewMemberName('');
+    setNewMemberRole('');
+    setNewMemberCategory('Cast');
+  };
+
   // Form states - Blog Submission
   const [blogForm, setBlogForm] = useState({
     title: '',
@@ -153,7 +174,8 @@ export default function SubmitPortalPage() {
       galleryImages: galleryPreviews,
       submitterEmail: playForm.email || user?.email || 'guest@curtaincall.com',
       curationStatus: 'Pending' as const,
-      showDate: playForm.showDate || undefined
+      showDate: playForm.showDate || undefined,
+      castAndCrew: castMembers.length > 0 ? castMembers : undefined
     };
 
     setTimeout(() => {
@@ -614,6 +636,121 @@ export default function SubmitPortalPage() {
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* Dynamic Playbill Cast & Crew Builder */}
+              <div className="flex flex-col gap-3 bg-zinc-950/40 border border-white/5 rounded-2xl p-5">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Dynamic Playbill Cast & Crew</label>
+                  <span className="text-[9px] font-mono uppercase bg-zinc-900 border border-white/5 text-zinc-400 px-2 py-0.5 rounded">
+                    {castMembers.length} Credits Added
+                  </span>
+                </div>
+
+                {/* Added members preview */}
+                {castMembers.length > 0 && (
+                  <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.1)_transparent] mb-2 animate-fade-up">
+                    {castMembers.map((member, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-zinc-950/80 border border-white/5 px-3 py-2 rounded-xl text-xs">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] text-zinc-500 uppercase tracking-widest">{member.category} — {member.role}</span>
+                          <span className="text-white font-medium mt-0.5">{member.name}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCastMembers(castMembers.filter((_, i) => i !== idx))}
+                          className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Form to add single member */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="flex flex-col gap-1 relative">
+                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Member Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Joke Silva"
+                      value={newMemberName}
+                      onChange={e => setNewMemberName(e.target.value)}
+                      className="bg-zinc-950 border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
+                    />
+                    {(() => {
+                      const allArtists = ClientDB.getArtists();
+                      const matchingSuggestions = newMemberName.trim()
+                        ? allArtists.filter(a => 
+                            a.name.toLowerCase().includes(newMemberName.toLowerCase()) &&
+                            a.name.toLowerCase() !== newMemberName.toLowerCase()
+                          )
+                        : [];
+                      
+                      if (matchingSuggestions.length === 0) return null;
+
+                      return (
+                        <div className="absolute top-[100%] left-0 w-full bg-zinc-900 border border-white/10 rounded-lg shadow-2xl z-20 mt-1 max-h-36 overflow-y-auto [scrollbar-width:none]">
+                          {matchingSuggestions.map(artist => (
+                            <div
+                              key={artist.id}
+                              onClick={() => {
+                                setNewMemberName(artist.name);
+                                if (artist.roleType) {
+                                  setNewMemberRole(artist.roleType);
+                                  const roleLow = artist.roleType.toLowerCase();
+                                  if (roleLow.includes('director') || roleLow.includes('playwright') || roleLow.includes('producer') || roleLow.includes('designer')) {
+                                    setNewMemberCategory('Creative');
+                                  } else if (roleLow.includes('manager') || roleLow.includes('crew') || roleLow.includes('technical') || roleLow.includes('engineer')) {
+                                    setNewMemberCategory('Technical');
+                                  } else {
+                                    setNewMemberCategory('Cast');
+                                  }
+                                }
+                              }}
+                              className="px-3 py-2 text-xs hover:bg-red-600 hover:text-white cursor-pointer transition-colors border-b border-white/5 last:border-0 flex items-center justify-between text-left"
+                            >
+                              <span className="font-medium text-white">{artist.name}</span>
+                              <span className="text-[9px] text-zinc-400">{artist.roleType}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Billing Role</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Lead Actress"
+                      value={newMemberRole}
+                      onChange={e => setNewMemberRole(e.target.value)}
+                      className="bg-zinc-950 border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Billing Group</label>
+                    <div className="flex gap-2">
+                      <select
+                        value={newMemberCategory}
+                        onChange={e => setNewMemberCategory(e.target.value as any)}
+                        className="flex-1 bg-zinc-950 border border-white/5 rounded-lg px-2 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
+                      >
+                        <option value="Cast">Cast (Actor)</option>
+                        <option value="Creative">Creative (Director/Writer)</option>
+                        <option value="Technical">Technical (Crew)</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={addCastMember}
+                        className="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-2 rounded-lg transition-colors text-xs shrink-0"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
