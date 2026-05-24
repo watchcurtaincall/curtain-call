@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { ClientDB } from '@/lib/db';
+import { ClientDB, syncFromSupabase } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
 import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote } from 'lucide-react';
 import Link from 'next/link';
@@ -141,8 +141,16 @@ export default function AdminDashboardPage() {
   }, [user, router]);
 
   useEffect(() => {
-    if (isAuthorized) {
-      loadQueues();
+    if (!isAuthorized) return;
+    
+    loadQueues();
+    
+    // Background pull database sync on admin page mount to retrieve public submissions
+    syncFromSupabase();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cc-db-synced', loadQueues);
+      return () => window.removeEventListener('cc-db-synced', loadQueues);
     }
   }, [refreshTrigger, isAuthorized]);
 

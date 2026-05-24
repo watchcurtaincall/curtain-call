@@ -463,10 +463,6 @@ export const ClientDB = {
       list = JSON.parse(stored);
     }
     return list.map((p: any) => {
-      if (p.showDate) {
-        p.status = calculateDynamicStatus(p.showDate, p.status);
-      }
-
       // Dynamic Sanitizer: If this is a custom play (ID is not p1..p10 mock format),
       // dynamically reset or calculate critic and audience scores from the reviews list
       const isMock = p.id && /^p\d+$/.test(p.id);
@@ -1176,52 +1172,36 @@ export const syncFromSupabase = async () => {
   try {
     // 1. Pull productions
     const { data: prods } = await supabase.from('productions').select('*').neq('id', 'cache_bust_' + Date.now());
-    if (prods && prods.length > 0) {
+    if (prods) {
       const mapped = prods.map(mapProductionFromDb);
       const approved = mapped.filter(p => p.curationStatus === 'Approved');
       const pending = mapped.filter(p => p.curationStatus === 'Pending');
       
-      if (approved.length > 0) {
-        const currentLocal = JSON.parse(localStorage.getItem(PRODUCTIONS_KEY) || '[]');
-        const localOnly = currentLocal.filter((localItem: any) => 
-          !approved.some(cloudItem => cloudItem.id === localItem.id)
-        );
-        localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([...approved, ...localOnly]));
-      }
+      const currentLocal = JSON.parse(localStorage.getItem(PRODUCTIONS_KEY) || '[]');
+      const drafts = currentLocal.filter((p: any) => p.status === 'Draft');
+      localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([...approved, ...drafts]));
       localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(pending));
     }
 
     // 2. Pull artists
     const { data: arts } = await supabase.from('artists').select('*').neq('id', 'cache_bust_' + Date.now());
-    if (arts && arts.length > 0) {
+    if (arts) {
       const mapped = arts.map(mapArtistFromDb);
       const approved = mapped.filter(a => a.curationStatus === 'Approved');
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
       
-      if (approved.length > 0) {
-        const currentLocal = JSON.parse(localStorage.getItem(ARTISTS_KEY) || '[]');
-        const localOnly = currentLocal.filter((localItem: any) => 
-          !approved.some(cloudItem => cloudItem.id === localItem.id)
-        );
-        localStorage.setItem(ARTISTS_KEY, JSON.stringify([...approved, ...localOnly]));
-      }
+      localStorage.setItem(ARTISTS_KEY, JSON.stringify(approved));
       localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(pending));
     }
 
     // 3. Pull articles
     const { data: articles } = await supabase.from('articles').select('*').neq('id', 'cache_bust_' + Date.now());
-    if (articles && articles.length > 0) {
+    if (articles) {
       const mapped = articles.map(mapArticleFromDb);
       const approved = mapped.filter(a => a.curationStatus === 'Approved');
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
 
-      if (approved.length > 0) {
-        const currentLocal = JSON.parse(localStorage.getItem(ARTICLES_KEY) || '[]');
-        const localOnly = currentLocal.filter((localItem: any) => 
-          !approved.some(cloudItem => cloudItem.id === localItem.id)
-        );
-        localStorage.setItem(ARTICLES_KEY, JSON.stringify([...approved, ...localOnly]));
-      }
+      localStorage.setItem(ARTICLES_KEY, JSON.stringify(approved));
       localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(pending));
     }
 
