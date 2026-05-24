@@ -1,4 +1,4 @@
-export type ProductionStatus = 'Currently Showing' | 'Coming Soon' | 'Past Production';
+export type ProductionStatus = 'Currently Showing' | 'Coming Soon' | 'Past Production' | 'Recently Concluded';
 
 export interface Artist {
   id: string;
@@ -34,6 +34,7 @@ export interface Production {
   submitterEmail?: string;
   curationStatus?: 'Pending' | 'Approved' | 'Declined';
   castAndCrew?: { name: string; role: string; category: 'Creative' | 'Cast' | 'Technical' }[];
+  showDate?: string; // YYYY-MM-DD
 }
 
 export interface Article {

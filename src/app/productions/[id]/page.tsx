@@ -92,6 +92,8 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-widest ${
                 production.status === 'Currently Showing'
                   ? 'bg-red-600/20 text-red-400 border border-red-600/40'
+                  : production.status === 'Recently Concluded'
+                  ? 'bg-amber-600/20 text-amber-400 border border-amber-600/40'
                   : 'bg-zinc-800 text-zinc-400 border border-white/10'
               }`}>
                 {production.status}
@@ -142,10 +144,6 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
       <div className="container mx-auto px-4 mt-6">
         <div className="flex flex-col sm:flex-row gap-3">
           {production.status !== 'Past Production' && (
-            !!production.submitterEmail ||
-            production.id.startsWith('direct_play_') ||
-            production.id.startsWith('prod_')
-          ) && (
             <Link
               href={`/tickets/${production.id}`}
               className="flex-1 bg-white text-black text-center py-4 rounded-2xl font-bold hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 text-base"

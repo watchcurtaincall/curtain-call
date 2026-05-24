@@ -41,12 +41,14 @@ export function PhotoGallery({ productionTitle, galleryImages = [] }: PhotoGalle
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const photos = galleryImages.length > 0
-    ? galleryImages.map((url, i) => ({
-        url,
-        caption: `Stage photography scene ${i + 1}`,
-      }))
-    : DEFAULT_GALLERY_PHOTOS;
+  if (!galleryImages || galleryImages.length === 0) {
+    return null;
+  }
+
+  const photos = galleryImages.map((url, i) => ({
+    url,
+    caption: `Stage photography scene ${i + 1}`,
+  }));
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {

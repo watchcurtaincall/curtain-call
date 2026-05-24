@@ -76,7 +76,9 @@ export default function AdminDashboardPage() {
     director: '',
     synopsis: '',
     venue: '',
-    year: '2026'
+    year: '2026',
+    status: 'Coming Soon' as 'Currently Showing' | 'Coming Soon' | 'Past Production',
+    showDate: ''
   });
   const [genreSelect, setGenreSelect] = useState('Drama');
   const [customGenre, setCustomGenre] = useState('');
@@ -479,20 +481,21 @@ export default function AdminDashboardPage() {
       genre: finalGenre,
       runtime: '130 mins',
       venue: playForm.venue,
-      status: 'Coming Soon',
+      status: playForm.status,
       posterUrl: playPoster || '',
-      criticScore: 92,
-      audienceScore: 9.2,
-      totalReviews: 1,
+      criticScore: null,
+      audienceScore: null,
+      totalReviews: 0,
       galleryImages: playGallery,
-      castAndCrew: castMembers.length > 0 ? castMembers : undefined
+      castAndCrew: castMembers.length > 0 ? castMembers : undefined,
+      showDate: playForm.showDate || undefined
     };
 
     setTimeout(() => {
       ClientDB.saveProduction(newPlay);
       setLoading(false);
       showToast(`Stage production "${playForm.title}" directly published to database!`);
-      setPlayForm({ title: '', playwright: '', director: '', synopsis: '', venue: '', year: '2026' });
+      setPlayForm({ title: '', playwright: '', director: '', synopsis: '', venue: '', year: '2026', status: 'Coming Soon', showDate: '' });
       setGenreSelect('Drama');
       setCustomGenre('');
       setCastMembers([]);
@@ -1261,6 +1264,32 @@ export default function AdminDashboardPage() {
                 onChange={e => setPlayForm({ ...playForm, synopsis: e.target.value })}
                 className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors resize-none [scrollbar-width:none]"
               />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Status</label>
+                <select
+                  value={playForm.status}
+                  onChange={e => setPlayForm({ ...playForm, status: e.target.value as any })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
+                >
+                  <option value="Coming Soon">Coming Soon</option>
+                  <option value="Currently Showing">Currently Showing</option>
+                  <option value="Past Production">Past Production</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
+                  {playForm.status === 'Coming Soon' ? 'Upcoming Date' : playForm.status === 'Past Production' ? 'When did it happen?' : 'Show Date'}
+                </label>
+                <input
+                  type="date"
+                  value={playForm.showDate}
+                  onChange={e => setPlayForm({ ...playForm, showDate: e.target.value })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors [color-scheme:dark]"
+                />
+              </div>
             </div>
 
             {/* Dynamic Playbill Cast & Crew Builder */}

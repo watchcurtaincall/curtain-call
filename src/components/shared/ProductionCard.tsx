@@ -32,8 +32,10 @@ export function ProductionCard({ production }: { production: Production }) {
 
         {/* Status badge */}
         <div className={`absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wider uppercase backdrop-blur-sm border ${
-          isShowing
+          production.status === 'Currently Showing'
             ? 'bg-red-600/80 border-red-500/50 text-white'
+            : production.status === 'Recently Concluded'
+            ? 'bg-amber-600/85 border-amber-500/50 text-white'
             : 'bg-black/60 border-white/10 text-zinc-300'
         }`}>
           {production.status}
@@ -41,17 +43,17 @@ export function ProductionCard({ production }: { production: Production }) {
 
         {/* Score chips */}
         <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5">
-          {production.criticScore && (
+          {production.criticScore && production.criticScore > 0 ? (
             <div className="flex items-center bg-red-600/90 backdrop-blur-sm px-2 py-0.5 rounded-full text-[11px] font-bold text-white">
               {production.criticScore}%
             </div>
-          )}
-          {production.audienceScore && (
+          ) : null}
+          {production.audienceScore && production.audienceScore > 0 ? (
             <div className="flex items-center gap-1 bg-black/70 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10 text-[11px] font-bold text-white">
               <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
               {production.audienceScore}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 

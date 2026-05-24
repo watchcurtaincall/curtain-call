@@ -67,7 +67,8 @@ const mapProductionToDb = (p: any) => ({
   gallery_images: p.galleryImages || [],
   submitter_email: p.submitterEmail || null,
   curation_status: p.curationStatus || 'Approved',
-  cast_and_crew: p.castAndCrew || []
+  cast_and_crew: p.castAndCrew || [],
+  show_date: p.showDate || null
 });
 
 const mapProductionFromDb = (row: any) => ({
@@ -85,7 +86,8 @@ const mapProductionFromDb = (row: any) => ({
   galleryImages: row.gallery_images || [],
   submitterEmail: row.submitter_email,
   curationStatus: row.curation_status,
-  castAndCrew: row.cast_and_crew || []
+  castAndCrew: row.cast_and_crew || [],
+  showDate: row.show_date
 });
 
 const mapArtistToDb = (a: any) => ({
@@ -210,6 +212,32 @@ const deleteFromCloud = async (table: string, id: string) => {
 
 // ── HYBRID DATABASE MANAGER LAYER ──
 
+export function calculateDynamicStatus(showDateStr?: string, initialStatus?: string): 'Currently Showing' | 'Coming Soon' | 'Past Production' | 'Recently Concluded' {
+  if (!showDateStr) {
+    return (initialStatus as any) || 'Currently Showing';
+  }
+  
+  const showDate = new Date(showDateStr);
+  showDate.setHours(0, 0, 0, 0);
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  if (showDate > today) {
+    return 'Coming Soon';
+  } else if (showDate.getTime() === today.getTime()) {
+    return 'Currently Showing';
+  } else {
+    const diffTime = today.getTime() - showDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays <= 10) {
+      return 'Recently Concluded';
+    } else {
+      return 'Past Production';
+    }
+  }
+}
+
 export const ClientDB = {
   // ── ARTISTS DATABASE ──
   getArtists(): Artist[] {
@@ -260,11 +288,19 @@ export const ClientDB = {
   getProductions(): Production[] {
     if (typeof window === 'undefined') return MOCK_PRODUCTIONS;
     const stored = localStorage.getItem(PRODUCTIONS_KEY);
+    let list: Production[];
     if (!stored) {
       localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify(MOCK_PRODUCTIONS));
-      return MOCK_PRODUCTIONS;
+      list = MOCK_PRODUCTIONS;
+    } else {
+      list = JSON.parse(stored);
     }
-    return JSON.parse(stored);
+    return list.map((p: any) => {
+      if (p.showDate) {
+        p.status = calculateDynamicStatus(p.showDate, p.status);
+      }
+      return p;
+    });
   },
 
   getProductionById(id: string): Production | undefined {

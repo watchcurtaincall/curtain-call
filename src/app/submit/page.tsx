@@ -46,6 +46,8 @@ export default function SubmitPortalPage() {
     venue: '',
     year: '2026',
     email: user?.email || '',
+    status: 'Coming Soon' as 'Currently Showing' | 'Coming Soon' | 'Past Production',
+    showDate: ''
   });
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
@@ -143,7 +145,7 @@ export default function SubmitPortalPage() {
       genre: 'Drama',
       runtime: '120 mins',
       venue: playForm.venue,
-      status: 'Currently Showing' as const,
+      status: playForm.status,
       posterUrl: posterPreview || '',
       criticScore: null,
       audienceScore: null,
@@ -151,6 +153,7 @@ export default function SubmitPortalPage() {
       galleryImages: galleryPreviews,
       submitterEmail: playForm.email || user?.email || 'guest@curtaincall.com',
       curationStatus: 'Pending' as const,
+      showDate: playForm.showDate || undefined
     };
 
     setTimeout(() => {
@@ -203,7 +206,17 @@ export default function SubmitPortalPage() {
               onClick={() => {
                 setIsSubmitted(false);
                 setMakerForm({ name: '', dob: '', discipline: 'Actor', customDiscipline: '', bio: '', email: user?.email || '' });
-                setPlayForm({ title: '', playwright: '', director: '', synopsis: '', venue: '', year: '2026', email: user?.email || '' });
+                setPlayForm({
+                  title: '',
+                  playwright: '',
+                  director: '',
+                  synopsis: '',
+                  venue: '',
+                  year: '2026',
+                  email: user?.email || '',
+                  status: 'Coming Soon',
+                  showDate: ''
+                });
                 setBlogForm({ title: '', category: 'Critique', excerpt: '', content: '', email: user?.email || '' });
                 setHeadshotPreview(null);
                 setPosterPreview(null);
@@ -491,6 +504,30 @@ export default function SubmitPortalPage() {
                     className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
                   />
                 </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Status</label>
+                  <select
+                    value={playForm.status}
+                    onChange={e => setPlayForm({ ...playForm, status: e.target.value as any })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
+                  >
+                    <option value="Coming Soon">Coming Soon</option>
+                    <option value="Currently Showing">Currently Showing</option>
+                    <option value="Past Production">Past Production</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
+                  {playForm.status === 'Coming Soon' ? 'Upcoming Premiere / Show Date' : playForm.status === 'Past Production' ? 'Show Date (When did the play happen?)' : 'Show Date'}
+                </label>
+                <input
+                  type="date"
+                  value={playForm.showDate}
+                  onChange={e => setPlayForm({ ...playForm, showDate: e.target.value })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors [color-scheme:dark]"
+                />
               </div>
 
               {/* Poster Upload Dropzone */}

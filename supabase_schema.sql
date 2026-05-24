@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS productions (
     genre TEXT NOT NULL,
     runtime TEXT DEFAULT '120 mins',
     venue TEXT NOT NULL,
-    status TEXT NOT NULL CHECK (status IN ('Currently Showing', 'Coming Soon', 'Past Production')),
+    status TEXT NOT NULL CHECK (status IN ('Currently Showing', 'Coming Soon', 'Past Production', 'Recently Concluded')),
     poster_url TEXT,
     critic_score INTEGER,
     audience_score NUMERIC,
@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS productions (
     submitter_email TEXT,
     curation_status TEXT DEFAULT 'Approved' CHECK (curation_status IN ('Pending', 'Approved', 'Declined')),
     cast_and_crew JSONB DEFAULT '[]'::jsonb,
+    show_date TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
