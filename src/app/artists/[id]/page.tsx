@@ -8,19 +8,12 @@ import { ArrowLeft, Globe, LayoutGrid, List, Link as LinkIcon, Camera, User, Sha
 import { ProductionCard } from '@/components/shared/ProductionCard';
 import { ImageLightbox } from '@/components/shared/ImageLightbox';
 import { ArtistBioSection } from '@/components/artists/ArtistBioSection';
+import { ShareModal } from '@/components/shared/ShareModal';
 
 export default function ArtistPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [artist, setArtist] = useState<Artist | null>(null);
-  const [shared, setShared] = useState(false);
-
-  const handleShare = () => {
-    if (typeof window === 'undefined') return;
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    setShared(true);
-    setTimeout(() => setShared(false), 2500);
-  };
+  const [shareOpen, setShareOpen] = useState(false);
 
   // Load dynamically from the ClientDB on mount using the page param ID
   useEffect(() => {
@@ -121,20 +114,11 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
               {isFollowing ? '✓ Following' : 'Follow Artist'}
             </button>
             <button
-              onClick={handleShare}
+              onClick={() => setShareOpen(true)}
               className="px-6 py-2.5 rounded-full font-bold transition-all text-sm tracking-wide bg-zinc-900 hover:bg-zinc-800 text-white border border-white/10 flex items-center justify-center gap-1.5 group"
             >
-              {shared ? (
-                <>
-                  <Check className="h-4 w-4 text-green-500 animate-scale-up" />
-                  <span>Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Share2 className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors" />
-                  <span>Share</span>
-                </>
-              )}
+              <Share2 className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors" />
+              <span>Share</span>
             </button>
             <div className="flex items-center gap-3 text-zinc-400">
               <Link href="#" className="hover:text-white transition-colors p-2 bg-zinc-900 rounded-full">
@@ -174,6 +158,12 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
           ))}
         </div>
       </section>
+      <ShareModal 
+        isOpen={shareOpen} 
+        onClose={() => setShareOpen(false)} 
+        title={artist.name} 
+        url={typeof window !== 'undefined' ? window.location.href : ''} 
+      />
     </div>
   );
 }

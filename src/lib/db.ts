@@ -237,11 +237,24 @@ const mapReviewFromDb = (row: any) => ({
 
 // ── BACKGROUND CLOUD REPLICATION ENGINE ──
 
-const syncToCloud = async (table: string, dbItem: any) => {
+const syncToCloud = async (table: string, dbItem: any): Promise<void> => {
   if (!supabase) return;
   try {
     const { error } = await supabase.from(table).upsert(dbItem);
-    if (error) console.error(`[Supabase Sync] Upsert failed for table ${table}:`, error);
+    if (error) {
+      console.error(`[Supabase Sync] Upsert failed for table ${table}:`, error);
+      // Self-Healing Schema Fallback: If column does not exist in remote schema, strip it and retry
+      if (error.code === 'PGRST204' && error.message && error.message.includes('schema cache')) {
+        const match = error.message.match(/Could not find the '([^']+)' column/);
+        if (match && match[1]) {
+          const colName = match[1];
+          console.warn(`[Supabase Sync Fallback] Stripping missing column '${colName}' and retrying upsert...`);
+          const stripped = { ...dbItem };
+          delete stripped[colName];
+          return await syncToCloud(table, stripped);
+        }
+      }
+    }
   } catch (err) {
     console.error(`[Supabase Sync] Server error on ${table}:`, err);
   }
