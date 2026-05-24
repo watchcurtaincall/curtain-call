@@ -6,7 +6,7 @@ import { useWatchlist } from '@/lib/WatchlistContext';
 import { MOCK_PRODUCTIONS, MOCK_REVIEWS } from '@/lib/mock';
 import { ProductionCard } from '@/components/shared/ProductionCard';
 import { useRouter } from 'next/navigation';
-import { ClientDB } from '@/lib/db';
+import { ClientDB, syncFromSupabase } from '@/lib/db';
 import { Production } from '@/lib/types';
 import {
   Star, Bookmark, PenLine, Award, CheckCircle, Circle,
@@ -46,6 +46,10 @@ export default function ProfilePage() {
     const handleSync = () => setSyncCount(prev => prev + 1);
     window.addEventListener('cc-db-synced', handleSync);
     window.addEventListener('cc-profile-updated', handleSync);
+    
+    // Background pull database sync on page load/mount
+    syncFromSupabase();
+
     return () => {
       window.removeEventListener('cc-db-synced', handleSync);
       window.removeEventListener('cc-profile-updated', handleSync);

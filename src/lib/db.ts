@@ -441,6 +441,40 @@ export const ClientDB = {
       if (p.showDate) {
         p.status = calculateDynamicStatus(p.showDate, p.status);
       }
+
+      // Dynamic Sanitizer: If this is a custom play (ID is not p1..p10 mock format),
+      // dynamically reset or calculate critic and audience scores from the reviews list
+      const isMock = p.id && /^p\d+$/.test(p.id);
+      if (!isMock) {
+        const storedReviews = localStorage.getItem('curtain_call_reviews');
+        const reviewsList = storedReviews ? JSON.parse(storedReviews) : [];
+        const prodReviews = reviewsList.filter((r: any) => r.productionId === p.id);
+        
+        if (prodReviews.length === 0) {
+          p.criticScore = null;
+          p.audienceScore = null;
+          p.totalReviews = 0;
+        } else {
+          const critics = prodReviews.filter((r: any) => r.type === 'Critic');
+          const audience = prodReviews.filter((r: any) => r.type === 'Audience');
+          
+          if (critics.length > 0) {
+            const sum = critics.reduce((acc: number, r: any) => acc + r.rating, 0);
+            p.criticScore = Math.round(sum / critics.length);
+          } else {
+            p.criticScore = null;
+          }
+          
+          if (audience.length > 0) {
+            const sum = audience.reduce((acc: number, r: any) => acc + r.rating, 0);
+            p.audienceScore = parseFloat(((sum / audience.length) / 10).toFixed(1));
+          } else {
+            p.audienceScore = null;
+          }
+          p.totalReviews = prodReviews.length;
+        }
+      }
+
       return p;
     });
   },

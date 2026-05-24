@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ClientDB } from '@/lib/db';
+import { ClientDB, syncFromSupabase } from '@/lib/db';
 import { Production } from '@/lib/types';
 import { ProductionCard } from '@/components/shared/ProductionCard';
 import { Search, PlusCircle, Drama, Info, FileText } from 'lucide-react';
@@ -18,6 +18,9 @@ export default function DocumentedPlaysPage() {
       setProductions(ClientDB.getProductions());
     };
     loadData();
+    
+    // Background pull database sync on page load/mount
+    syncFromSupabase();
 
     if (typeof window !== 'undefined') {
       window.addEventListener('cc-db-synced', loadData);

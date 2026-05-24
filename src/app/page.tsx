@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { TrendingUp, BookOpen, Calendar, ArrowRight } from 'lucide-react';
 
-import { ClientDB } from '@/lib/db';
+import { ClientDB, syncFromSupabase } from '@/lib/db';
 import { Production, Artist } from '@/lib/types';
 import { useState, useEffect } from 'react';
 
@@ -25,6 +25,9 @@ export default function Home() {
     };
 
     loadData();
+    
+    // Background pull database sync on page load/mount
+    syncFromSupabase();
 
     if (typeof window !== 'undefined') {
       window.addEventListener('cc-db-synced', loadData);
