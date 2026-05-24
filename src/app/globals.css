@@ -10,8 +10,8 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-amber: var(--amber);
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-serif: 'Playfair Display', ui-serif, Georgia, serif;
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
 }
 
 :root {
