@@ -7,13 +7,21 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, Ticket as TicketIcon, Mail, CheckCircle2, QrCode } from 'lucide-react';
 import { PaystackButton } from '@/components/payments/PaystackButton';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function TicketPage({ params }: { params: Promise<{ id: string }> }) {
+  const { user } = useAuth();
   const [production, setProduction] = useState<Production | null>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [selectedTier, setSelectedTier] = useState({ name: 'General Admission', price: 5000 });
   const [successData, setSuccessData] = useState<{ reference: string; tier: string } | null>(null);
+
+  useEffect(() => {
+    if (user?.email && !email) {
+      setEmail(user.email);
+    }
+  }, [user, email]);
 
   useEffect(() => {
     params.then(resolved => {
@@ -55,9 +63,23 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       tier: selectedTier.name,
     });
 
-    // Send Ticket Email via Resend
     const recipient = email || 'guest@curtaincall.ng';
     const gatePass = `CC-${reference.substring(0, 6).toUpperCase()}`;
+
+    // Record ticket purchase in Hybrid DB
+    if (production) {
+      ClientDB.purchaseTicket({
+        productionId: production.id,
+        productionTitle: production.title,
+        buyerEmail: recipient,
+        tier: selectedTier.name,
+        price: selectedTier.price,
+        reference,
+        gatePass
+      });
+    }
+
+    // Send Ticket Email via Resend
     const subject = `Your Curtain Call Admission Pass: ${production?.title || 'Theatre Ticket'}`;
     const showDateFormatted = production?.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', {
       weekday: 'long',

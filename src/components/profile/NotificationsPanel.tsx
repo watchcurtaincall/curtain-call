@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { X, Ticket, Award, Star, ShieldCheck, Bell, Check } from 'lucide-react';
+import { ClientDB } from '@/lib/db';
+import { useAuth } from '@/lib/AuthContext';
 
 interface Notification {
   id: string;
@@ -12,48 +14,11 @@ interface Notification {
   read: boolean;
 }
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: 'n1', type: 'ticket_sale', read: false,
-    title: 'New ticket sale',
-    body: '2 General tickets sold for Motherland The Musical – Jun 14.',
-    time: '10 min ago',
-  },
-  {
-    id: 'n2', type: 'ticket_sale', read: false,
-    title: 'New ticket sale',
-    body: '1 VIP ticket sold for Motherland The Musical – Jun 15.',
-    time: '43 min ago',
-  },
-  {
-    id: 'n3', type: 'badge', read: false,
-    title: 'Badge Unlocked',
-    body: 'You unlocked the "Voice of the Stage" badge for writing 10 reviews.',
-    time: '2 hours ago',
-  },
-  {
-    id: 'n4', type: 'review', read: true,
-    title: 'New review on your production',
-    body: 'Sarah K. gave WATERSIDE a 10/10 — "Mind-blowing performance."',
-    time: '1 day ago',
-  },
-  {
-    id: 'n5', type: 'critic', read: true,
-    title: 'Critic review posted',
-    body: 'The Lagos Review gave WATERSIDE 92% — "A brilliant exploration of Niger Delta folklore."',
-    time: '2 days ago',
-  },
-  {
-    id: 'n6', type: 'system', read: true,
-    title: 'Payout processed',
-    body: '₦42,800 has been sent to your GT Bank account ending in 4821.',
-    time: '6 days ago',
-  },
-];
+const MOCK_NOTIFICATIONS: Notification[] = []; // Cleared in favor of real DB records
 
 const ICON_MAP = {
   ticket_sale: { Icon: Ticket,     color: 'text-green-400',  bg: 'bg-green-500/10 border-green-500/20' },
-  badge:       { Icon: Award,      color: 'text-amber-400',  bg: 'bg-amber-500/10 border-amber-500/20' },
+  badge:       { Icon: Award,      color: 'text-amber-400',  bg: 'bg-green-500/10 border-amber-500/20' }, // Mapping color
   review:      { Icon: Star,       color: 'text-blue-400',   bg: 'bg-blue-500/10  border-blue-500/20'  },
   critic:      { Icon: ShieldCheck,color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/20'},
   system:      { Icon: Bell,       color: 'text-zinc-400',   bg: 'bg-zinc-800     border-white/10'     },
@@ -64,8 +29,14 @@ interface NotificationsPanelProps {
 }
 
 export function NotificationsPanel({ onClose }: NotificationsPanelProps) {
-  const [notes, setNotes] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const { user } = useAuth();
+  const [notes, setNotes] = useState<Notification[]>([]);
   const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    setNotes(ClientDB.getNotifications(user.email));
+  }, [user]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -78,8 +49,16 @@ export function NotificationsPanel({ onClose }: NotificationsPanelProps) {
     setTimeout(onClose, 300);
   };
 
-  const markAllRead = () => setNotes(n => n.map(x => ({ ...x, read: true })));
-  const markRead = (id: string) => setNotes(n => n.map(x => x.id === id ? { ...x, read: true } : x));
+  const markAllRead = () => {
+    if (!user) return;
+    ClientDB.markAllNotificationsAsRead(user.email);
+    setNotes(n => n.map(x => ({ ...x, read: true })));
+  };
+
+  const markRead = (id: string) => {
+    ClientDB.markNotificationAsRead(id);
+    setNotes(n => n.map(x => x.id === id ? { ...x, read: true } : x));
+  };
 
   const unreadCount = notes.filter(n => !n.read).length;
 

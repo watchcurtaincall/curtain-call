@@ -1,16 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, User, FileText, Link2, Upload, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
+import { Mail, User, FileText, Link2, Upload, ArrowLeft, CheckCircle, Loader2, Lock } from 'lucide-react';
 import Link from 'next/link';
 
 import { ClientDB } from '@/lib/db';
+import { useAuth } from '@/lib/AuthContext';
 
 type Step = 'form' | 'submitting' | 'success';
 
 export default function ApplyToCriticPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [step, setStep] = useState<Step>('form');
   const [form, setForm] = useState({
     fullName: '',
@@ -21,6 +23,33 @@ export default function ApplyToCriticPage() {
   });
   const [files, setFiles] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setForm(prev => ({
+        ...prev,
+        fullName: prev.fullName || user.name || '',
+        email: user.email || ''
+      }));
+    }
+  }, [user]);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 px-4 bg-zinc-950">
+        <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-white/10 flex items-center justify-center animate-pulse">
+          <Lock className="h-7 w-7 text-zinc-500" />
+        </div>
+        <h1 className="text-2xl font-serif font-bold text-white text-center">Sign in to apply as a critic</h1>
+        <p className="text-zinc-400 text-sm max-w-sm text-center leading-relaxed">
+          You must be authenticated to apply to our verified critic programme. This locks your credentials dynamically to your verified email profile.
+        </p>
+        <Link href="/login" className="bg-white text-black font-bold px-6 py-3 rounded-xl hover:bg-zinc-100 transition-colors mt-2">
+          Sign In
+        </Link>
+      </div>
+    );
+  }
 
   const isValid =
     form.fullName.trim().length > 2 &&
@@ -119,12 +148,12 @@ export default function ApplyToCriticPage() {
                 type="email"
                 placeholder="name@example.com"
                 value={form.email}
-                onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                className="w-full bg-zinc-900 border border-white/10 rounded-xl pl-10 pr-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition-colors"
+                disabled
+                className="w-full bg-zinc-900/50 border border-white/10 rounded-xl pl-10 pr-4 py-3.5 text-sm text-zinc-500 cursor-not-allowed focus:outline-none"
                 required
               />
             </div>
-            <p className="text-[11px] text-zinc-600">This will be auto-filled once auth is connected.</p>
+            <p className="text-[10px] text-red-500 font-mono">Verified Email Locked</p>
           </div>
 
           {/* Publication */}

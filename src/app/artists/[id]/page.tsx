@@ -18,11 +18,13 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
     const fetched = ClientDB.getArtistById(resolvedParams.id);
     if (fetched) {
       setArtist(fetched);
+      ClientDB.incrementArtistHits(resolvedParams.id);
     } else {
       // Fallback to first artist if not found
       const list = ClientDB.getArtists();
       if (list.length > 0) {
         setArtist(list[0]);
+        ClientDB.incrementArtistHits(list[0].id);
       }
     }
   }, [resolvedParams.id]);

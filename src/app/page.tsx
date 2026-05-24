@@ -19,7 +19,8 @@ export default function Home() {
   useEffect(() => {
     const loadData = () => {
       setProductions(ClientDB.getProductions());
-      setTrendingPeople(ClientDB.getArtists().slice(0, 6));
+      const sortedArtists = ClientDB.getArtists().sort((a, b) => (b.hits || 0) - (a.hits || 0));
+      setTrendingPeople(sortedArtists.slice(0, 6));
       setRecentArticles(ClientDB.getArticles().slice(0, 3));
     };
 

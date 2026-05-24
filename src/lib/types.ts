@@ -16,6 +16,7 @@ export interface Artist {
   curationStatus?: 'Pending' | 'Approved' | 'Declined';
   isDeceased?: boolean;
   dateOfDeath?: string;
+  hits?: number;
 }
 
 export interface Production {

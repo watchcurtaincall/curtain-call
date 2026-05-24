@@ -10,12 +10,14 @@ const FILTERS = ['All Shows', 'Currently Showing', 'Coming Soon', 'Highly Rated'
 
 export default function DiscoveryPage() {
   const [productions, setProductions] = useState<Production[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All Shows');
 
   useEffect(() => {
     const loadData = () => {
       setProductions(ClientDB.getProductions());
+      setLoading(false);
     };
     loadData();
 
@@ -58,8 +60,27 @@ export default function DiscoveryPage() {
         break;
     }
 
+    // Default sorting for All Shows: Coming Soon, Currently Showing, then Past / Concluded
+    if (activeFilter === 'All Shows') {
+      const order = { 'Coming Soon': 0, 'Currently Showing': 1, 'Recently Concluded': 2, 'Past Production': 3 };
+      list.sort((a, b) => {
+        const orderA = order[a.status as keyof typeof order] ?? 99;
+        const orderB = order[b.status as keyof typeof order] ?? 99;
+        return orderA - orderB;
+      });
+    }
+
     return list;
-  }, [query, activeFilter]);
+  }, [productions, query, activeFilter]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-20 min-h-screen flex flex-col items-center justify-center gap-4 bg-zinc-950">
+        <div className="w-10 h-10 border-2 border-zinc-800 border-t-red-600 rounded-full animate-spin" />
+        <span className="text-xs text-zinc-500 font-mono tracking-widest uppercase">Loading Curation...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-10 min-h-screen">

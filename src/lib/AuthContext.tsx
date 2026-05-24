@@ -13,6 +13,9 @@ export interface MockUser {
   points: number;
   badgesUnlocked: number;
   totalBadges: number;
+  handle?: string;
+  bio?: string;
+  location?: string;
 }
 
 const MOCK_USER: MockUser = {
@@ -25,6 +28,9 @@ const MOCK_USER: MockUser = {
   points: 1010,
   badgesUnlocked: 6,
   totalBadges: 14,
+  handle: '@adaeze_obi',
+  bio: 'Theatre lover. Culture archivist.',
+  location: 'Lagos, Nigeria'
 };
 
 interface AuthContextType {
@@ -32,6 +38,7 @@ interface AuthContextType {
   login: (email: string, password?: string) => Promise<void>;
   signUp: (email: string, password?: string, name?: string) => Promise<void>;
   logout: () => void;
+  updateProfile: (updates: { name?: string; handle?: string; bio?: string; location?: string }) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -39,12 +46,26 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   signUp: async () => {},
   logout: () => {},
+  updateProfile: () => {},
 });
+
+// Helper to derive a clean default handle from user full name
+const deriveHandle = (name: string, email: string): string => {
+  const base = name || email.split('@')[0];
+  const cleaned = base
+    .toLowerCase()
+    .replace(/[^a-z0-9_ ]/g, '') // remove special characters
+    .trim()
+    .replace(/\s+/g, '_'); // replace spaces with underscores
+  return '@' + (cleaned || 'user');
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<MockUser | null>(null);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const saved = localStorage.getItem('cc_authed');
     const savedUser = localStorage.getItem('cc_authed_user');
     if (saved === 'true' && savedUser) {
@@ -65,7 +86,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             reviews: 0,
             points: 0,
             badgesUnlocked: 0,
-            totalBadges: 14
+            totalBadges: 14,
+            handle: deriveHandle(name, email),
+            bio: '',
+            location: ''
           };
           setUser(loggedUser);
           localStorage.setItem('cc_authed', 'true');
@@ -86,7 +110,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             reviews: 0,
             points: 0,
             badgesUnlocked: 0,
-            totalBadges: 14
+            totalBadges: 14,
+            handle: deriveHandle(name, email),
+            bio: '',
+            location: ''
           };
           setUser(loggedUser);
           localStorage.setItem('cc_authed', 'true');
@@ -126,7 +153,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           reviews: 0,
           points: 0,
           badgesUnlocked: 0,
-          totalBadges: 14
+          totalBadges: 14,
+          handle: deriveHandle(name, cleanEmail),
+          bio: '',
+          location: ''
         };
       }
     } else {
@@ -141,7 +171,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           reviews: 88,
           points: 2500,
           badgesUnlocked: 10,
-          totalBadges: 14
+          totalBadges: 14,
+          handle: '@watchcurtaincall',
+          bio: 'Curtain Call Administrative Curation Board.',
+          location: 'Lagos, Nigeria'
         };
         ClientDB.addApprovedCriticEmail('watchcurtaincall@gmail.com');
       } else {
@@ -155,7 +188,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           reviews: 0,
           points: 0,
           badgesUnlocked: 0,
-          totalBadges: 14
+          totalBadges: 14,
+          handle: deriveHandle(displayName, cleanEmail),
+          bio: '',
+          location: ''
         };
       }
     }
@@ -178,7 +214,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       reviews: 0,
       points: 0,
       badgesUnlocked: 0,
-      totalBadges: 14
+      totalBadges: 14,
+      handle: deriveHandle(displayName, cleanEmail),
+      bio: '',
+      location: ''
     };
 
     if (supabase && password) {
@@ -258,8 +297,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('cc_authed_user');
   };
 
+  const updateProfile = (updates: { name?: string; handle?: string; bio?: string; location?: string }) => {
+    if (!user) return;
+    const updatedUser = {
+      ...user,
+      ...updates,
+      avatar: (updates.name || user.name).slice(0, 2).toUpperCase()
+    };
+    setUser(updatedUser);
+    localStorage.setItem('cc_authed_user', JSON.stringify(updatedUser));
+
+    // Also trigger custom event to notify profile page
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('cc-profile-updated'));
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, signUp, logout }}>
+    <AuthContext.Provider value={{ user, login, signUp, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

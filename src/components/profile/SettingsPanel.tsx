@@ -32,13 +32,13 @@ function Toggle({ on, onToggle }: { on: boolean; onToggle: () => void }) {
 }
 
 export function SettingsPanel({ onClose }: SettingsPanelProps) {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [visible, setVisible] = useState(false);
   const [section, setSection] = useState<Section>('main');
   const [name, setName] = useState(user?.name || '');
-  const [bio, setBio] = useState('Theatre lover. Culture archivist.');
-  const [location, setLocation] = useState('Lagos, Nigeria');
-  const [handle, setHandle] = useState('@adaeze_obi');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [location, setLocation] = useState(user?.location || '');
+  const [handle, setHandle] = useState(user?.handle || '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [currentPw, setCurrentPw] = useState('');
@@ -59,7 +59,8 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
 
   const handleSave = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 1200));
+    updateProfile({ name, handle, bio, location });
+    await new Promise(r => setTimeout(r, 800));
     setSaving(false); setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };

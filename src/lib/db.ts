@@ -23,6 +23,7 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
   : null;
 
 // Initial Mock Articles fallback
+// Initial Mock Articles fallback
 const MOCK_ARTICLES: Article[] = [
   {
     id: 'art1',
@@ -30,7 +31,8 @@ const MOCK_ARTICLES: Article[] = [
     excerpt: 'How directors like William Benson and Bolanle Austen-Peters are redefining how we consume pre-colonial African history.',
     date: 'May 18, 2026',
     author: 'Curtain Call Editorial',
-    imageUrl: '/images/kings_horseman_poster.png'
+    imageUrl: '/images/kings_horseman_poster.png',
+    content: "Pre-colonial West African history is a rich tapestry of folklore, battle epics, and complex political states. For decades, standard theatrical curricula relied heavily on westernized plays. However, a major renaissance is sweeping through contemporary stage halls in cities like Lagos and Abuja. Master curators and directors are breathing new life into local legends, utilizing native dialogue, live traditional drumming, and glassmorphic multimedia sets to reconstruct historical spectacles.\n\nLeading the charge are directors Wole Benson and Bolanle Austen-Peters, who have staged massive blockbusters such as Oba Ovonramwen and Death and the King's Horseman. These epics are no longer treated as static schoolbook readings. They are reimagined as dynamic, musical, and high-editorial stage spectacles. Audiences are flocking to experience the dramatic weight of pre-colonial empires, political intrigues, and the struggles of kings and spiritual leaders who stood against colonial incursions.\n\nThis renaissance has also ignited a wave of local archiving and digital documentation, ensuring that these theatrical feats are preserved for curators and theatremakers across the globe. Through Curtain Call, we continue to document this living history."
   },
   {
     id: 'art2',
@@ -38,7 +40,8 @@ const MOCK_ARTICLES: Article[] = [
     excerpt: 'The award-winning director breaks down the intense emotional process of staging the critically acclaimed two-hander.',
     date: 'May 12, 2026',
     author: 'Curtain Call Editorial',
-    imageUrl: '/images/kurunmi_poster.png'
+    imageUrl: '/images/kurunmi_poster.png',
+    content: "Joshua Alabi's latest stage production, WATERSIDE, has taken the Nigerian theatre scene by storm. In this behind-the-curtain interview, the award-winning director breaks down the intense emotional journey, casting choices, and creative processes behind the two-hander.\n\n'WATERSIDE is a play about boundaries—both environmental and psychological,' Alabi notes. Set against the backdrop of a coastal fishing community, the play follows two estranged childhood friends who reunite under challenging circumstances. The set features a stunning, minimalist dock surrounded by a thin layer of reflective water, reflecting the characters' volatile psychological states.\n\n'We wanted the audience to feel the wetness, the cold, and the isolation,' Alabi explains. Staging a play that requires actors to perform in water presents massive technical difficulties, from sound capture to body temperature regulation. The technical team designed special waterproof body mics and warm air blowers under the stage to keep the cast safe during long performances.\n\nUltimately, Alabi believes the success of WATERSIDE lies in its raw, unfiltered exploration of regional lore: 'Our stories deserve this level of physical dedication. I hope curators across Africa take the leap to build bolder stages.'"
   },
   {
     id: 'art3',
@@ -46,7 +49,8 @@ const MOCK_ARTICLES: Article[] = [
     excerpt: 'From satirical comedies to full-scale musicals, here is your definitive guide to the Lagos theatre season.',
     date: 'May 05, 2026',
     author: 'Curtain Call Editorial',
-    imageUrl: '/images/baba_segi_poster.png'
+    imageUrl: '/images/baba_segi_poster.png',
+    content: "As the summer season approaches, the Lagos and Abuja theatrical schedules are packing a punch. From dark satirical comedies to full-scale modern musicals, the upcoming lineup showcases the absolute best of our theatrical archives and fresh voices.\n\nHere are the top 5 premieres curated by our editorial board that you must experience live:\n\n1. **The Lion and the Jewel (Reimagined)** - A high-editorial, multimedia musical spin on Wole Soyinka's classic comedy. Set to premiere at the Terra Kulture Arena.\n\n2. **Kurunmi's Last Stand** - An intense historical tragedy depicting the final days of the legendary Yoruba general. It features massive traditional war dances and powerful live drums.\n\n3. **Satire on Broad Street** - A sharp, fast-paced political comedy dissecting financial ambitions in the heart of Lagos' commercial capital.\n\n4. **Whispers of the Lagoon** - A beautiful, sensory-rich romance play set in a delta fishing community, utilizing local dialects and stunning water designs.\n\n5. **Curtains Rise: The Musical** - A full-scale ensemble celebrating the history of Nigerian musical theatre from the early travelling troupes to today's global arenas.\n\nTickets for these anticipated shows are selling fast. Make sure to claim your seats early on Curtain Call!"
   }
 ];
 
@@ -131,7 +135,8 @@ const mapArtistToDb = (a: any) => ({
   curation_status: a.curationStatus || 'Approved',
   is_deceased: a.isDeceased || false,
   date_of_death: a.dateOfDeath || null,
-  decline_reason: a.declineReason || null
+  decline_reason: a.declineReason || null,
+  hits: a.hits || 0
 });
 
 const mapArtistFromDb = (row: any) => ({
@@ -146,7 +151,8 @@ const mapArtistFromDb = (row: any) => ({
   curationStatus: row.curation_status,
   isDeceased: row.is_deceased,
   dateOfDeath: row.date_of_death,
-  declineReason: row.decline_reason || null
+  declineReason: row.decline_reason || null,
+  hits: row.hits || 0
 });
 
 const mapArticleToDb = (art: any) => ({
@@ -513,6 +519,15 @@ export const ClientDB = {
       this.saveArtist(approved);
       const filtered = pending.filter(a => a.id !== id);
       localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(filtered));
+
+      // Trigger notification
+      if (artist.submitterEmail) {
+        this.addNotification(artist.submitterEmail, {
+          type: 'system',
+          title: 'Theatremaker Profile Approved! 🎉',
+          body: `Your submitted profile for "${artist.name}" has been approved and is now live in the directory.`
+        });
+      }
     }
   },
 
@@ -532,6 +547,15 @@ export const ClientDB = {
 
       // Sync status
       syncToCloud('artists', mapArtistToDb(declined));
+
+      // Trigger notification
+      if (artist.submitterEmail) {
+        this.addNotification(artist.submitterEmail, {
+          type: 'system',
+          title: 'Theatremaker Profile Declined ⚠',
+          body: `Your submitted profile for "${artist.name}" was declined: ${reason || 'Does not meet guidelines.'}`
+        });
+      }
     }
   },
 
@@ -561,6 +585,15 @@ export const ClientDB = {
       this.saveProduction(approved);
       const filtered = pending.filter(p => p.id !== id);
       localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(filtered));
+
+      // Trigger notification
+      if (play.submitterEmail) {
+        this.addNotification(play.submitterEmail, {
+          type: 'system',
+          title: 'Playbill Listing Approved! 🎉',
+          body: `Your playbill listing for "${play.title}" has been approved and is now live on Curtain Call.`
+        });
+      }
     }
   },
 
@@ -580,6 +613,15 @@ export const ClientDB = {
 
       // Sync status
       syncToCloud('productions', mapProductionToDb(declined));
+
+      // Trigger notification
+      if (play.submitterEmail) {
+        this.addNotification(play.submitterEmail, {
+          type: 'system',
+          title: 'Playbill Listing Declined ⚠',
+          body: `Your playbill listing for "${play.title}" was declined: ${reason || 'Does not meet guidelines.'}`
+        });
+      }
     }
   },
 
@@ -610,6 +652,15 @@ export const ClientDB = {
       this.saveArticle(approved);
       const filtered = pending.filter(a => a.id !== id);
       localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(filtered));
+
+      // Trigger notification
+      if (article.submitterEmail) {
+        this.addNotification(article.submitterEmail, {
+          type: 'system',
+          title: 'Chronicle Draft Approved! ✍️',
+          body: `Your opinion piece/chronicle "${article.title}" has been approved and published to the feed.`
+        });
+      }
     }
   },
 
@@ -629,6 +680,15 @@ export const ClientDB = {
 
       // Sync status
       syncToCloud('articles', mapArticleToDb(declined));
+
+      // Trigger notification
+      if (article.submitterEmail) {
+        this.addNotification(article.submitterEmail, {
+          type: 'system',
+          title: 'Chronicle Draft Declined ⚠',
+          body: `Your chronicle draft "${article.title}" was declined: ${reason || 'Does not meet guidelines.'}`
+        });
+      }
     }
   },
 
@@ -802,6 +862,13 @@ export const ClientDB = {
     const req = updated.find(w => w.id === id);
     if (req) {
       syncToCloud('withdrawals', req);
+
+      // Trigger notification to the withdrawer!
+      this.addNotification(req.email, {
+        type: 'system',
+        title: 'Withdrawal Approved! 💸',
+        body: `Your withdrawal of ₦${req.amount.toLocaleString()} to ${req.bankName} has been approved and successfully processed.`
+      });
     }
   },
 
@@ -814,6 +881,180 @@ export const ClientDB = {
     const req = updated.find(w => w.id === id);
     if (req) {
       syncToCloud('withdrawals', req);
+
+      // Trigger notification to the withdrawer!
+      this.addNotification(req.email, {
+        type: 'system',
+        title: 'Withdrawal Declined ⚠',
+        body: `Your withdrawal of ₦${req.amount.toLocaleString()} was declined: ${reason || 'Information mismatch.'}`
+      });
+    }
+  },
+
+  // ── TICKETS DATABASE ──
+  getTickets(): any[] {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem('curtain_tickets');
+    return stored ? JSON.parse(stored) : [];
+  },
+
+  purchaseTicket(ticket: any): void {
+    if (typeof window === 'undefined') return;
+    const current = this.getTickets();
+    const newTicket = {
+      ...ticket,
+      id: ticket.id || `tkt_${Date.now()}`,
+      timestamp: ticket.timestamp || Date.now(),
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    };
+    const updated = [newTicket, ...current];
+    localStorage.setItem('curtain_tickets', JSON.stringify(updated));
+
+    // Find the production to get the submitter's email
+    const prod = this.getProductionById(ticket.productionId);
+    if (prod && prod.submitterEmail) {
+      // Trigger a notification to the producer!
+      const commission = ticket.price * 0.05;
+      const netEarnings = ticket.price - commission;
+      this.addNotification(prod.submitterEmail, {
+        type: 'ticket_sale',
+        title: 'New ticket sale 🎟️',
+        body: `1 ${ticket.tier} ticket sold for "${prod.title}". Net: ₦${netEarnings.toLocaleString()} (Commission: ₦${commission.toLocaleString()}).`
+      });
+    }
+
+    // Sync to cloud tickets table
+    syncToCloud('tickets', newTicket);
+  },
+
+  // ── NOTIFICATIONS DATABASE ──
+  getNotifications(email: string): any[] {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem('curtain_notifications');
+    let list = stored ? JSON.parse(stored) : [];
+    
+    // Fallback for adaeze@example.com if empty
+    if (list.length === 0 && email.toLowerCase() === 'adaeze@example.com') {
+      const adaezeNotifs = [
+        {
+          id: 'n1', email: 'adaeze@example.com', type: 'ticket_sale' as const, read: false,
+          title: 'New ticket sale',
+          body: '2 General tickets sold for Motherland The Musical – Jun 14.',
+          time: '10 min ago', timestamp: Date.now() - 10 * 60 * 1000
+        },
+        {
+          id: 'n2', email: 'adaeze@example.com', type: 'ticket_sale' as const, read: false,
+          title: 'New ticket sale',
+          body: '1 VIP ticket sold for Motherland The Musical – Jun 15.',
+          time: '43 min ago', timestamp: Date.now() - 43 * 60 * 1000
+        },
+        {
+          id: 'n3', email: 'adaeze@example.com', type: 'badge' as const, read: false,
+          title: 'Badge Unlocked',
+          body: 'You unlocked the "Voice of the Stage" badge for writing 10 reviews.',
+          time: '2 hours ago', timestamp: Date.now() - 2 * 60 * 60 * 1000
+        },
+        {
+          id: 'n4', email: 'adaeze@example.com', type: 'review' as const, read: true,
+          title: 'New review on your production',
+          body: 'Sarah K. gave WATERSIDE a 10/10 — "Mind-blowing performance."',
+          time: '1 day ago', timestamp: Date.now() - 24 * 60 * 60 * 1000
+        },
+        {
+          id: 'n5', email: 'adaeze@example.com', type: 'critic' as const, read: true,
+          title: 'Critic review posted',
+          body: 'The Lagos Review gave WATERSIDE 92% — "A brilliant exploration of Niger Delta folklore."',
+          time: '2 days ago', timestamp: Date.now() - 48 * 60 * 60 * 1000
+        },
+        {
+          id: 'n6', email: 'adaeze@example.com', type: 'system' as const, read: true,
+          title: 'Payout processed',
+          body: '₦42,800 has been sent to your GT Bank account ending in 4821.',
+          time: '6 days ago', timestamp: Date.now() - 6 * 24 * 60 * 60 * 1000
+        }
+      ];
+      localStorage.setItem('curtain_notifications', JSON.stringify(adaezeNotifs));
+      return adaezeNotifs;
+    }
+    
+    return list.filter((n: any) => n.email.toLowerCase() === email.toLowerCase());
+  },
+
+  addNotification(email: string, notif: { type: 'ticket_sale' | 'badge' | 'review' | 'system' | 'critic'; title: string; body: string }): void {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('curtain_notifications');
+    const list = stored ? JSON.parse(stored) : [];
+    const newNotif = {
+      ...notif,
+      id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      email: email.toLowerCase(),
+      read: false,
+      time: 'Just now',
+      timestamp: Date.now()
+    };
+    const updated = [newNotif, ...list];
+    localStorage.setItem('curtain_notifications', JSON.stringify(updated));
+
+    // Custom dispatch to trigger UI sync
+    window.dispatchEvent(new Event('cc-db-synced'));
+
+    // Sync to cloud
+    syncToCloud('notifications', newNotif);
+  },
+
+  markNotificationAsRead(id: string): void {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('curtain_notifications');
+    if (!stored) return;
+    const list = JSON.parse(stored);
+    const updated = list.map((n: any) => n.id === id ? { ...n, read: true } : n);
+    localStorage.setItem('curtain_notifications', JSON.stringify(updated));
+    window.dispatchEvent(new Event('cc-db-synced'));
+
+    // Sync to cloud
+    if (supabase) {
+      supabase.from('notifications').update({ read: true }).eq('id', id)
+        .then(({ error }) => {
+          if (error) console.error('[Supabase Sync] Notification update failed:', error);
+        });
+    }
+  },
+
+  markAllNotificationsAsRead(email: string): void {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('curtain_notifications');
+    if (!stored) return;
+    const list = JSON.parse(stored);
+    const updated = list.map((n: any) => n.email.toLowerCase() === email.toLowerCase() ? { ...n, read: true } : n);
+    localStorage.setItem('curtain_notifications', JSON.stringify(updated));
+    window.dispatchEvent(new Event('cc-db-synced'));
+
+    // Sync to cloud
+    if (supabase) {
+      supabase.from('notifications').update({ read: true }).eq('email', email.toLowerCase())
+        .then(({ error }) => {
+          if (error) console.error('[Supabase Sync] Notification update all failed:', error);
+        });
+    }
+  },
+
+  // ── ARTIST HITS TRACKING ──
+  incrementArtistHits(id: string): void {
+    if (typeof window === 'undefined') return;
+    const artists = this.getArtists();
+    const index = artists.findIndex(a => a.id === id);
+    if (index !== -1) {
+      const artist = artists[index];
+      const updatedArtist = {
+        ...artist,
+        hits: (artist.hits || 0) + 1
+      };
+      const updatedList = [...artists];
+      updatedList[index] = updatedArtist;
+      localStorage.setItem(ARTISTS_KEY, JSON.stringify(updatedList));
+
+      // Replicate to cloud
+      syncToCloud('artists', mapArtistToDb(updatedArtist));
     }
   },
 
@@ -926,6 +1167,26 @@ export const syncFromSupabase = async () => {
       const { data: withdrawals } = await supabase.from('withdrawals').select('*');
       if (withdrawals) {
         localStorage.setItem('curtain_withdrawals', JSON.stringify(withdrawals));
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // 8. Pull tickets
+    try {
+      const { data: tickets } = await supabase.from('tickets').select('*');
+      if (tickets) {
+        localStorage.setItem('curtain_tickets', JSON.stringify(tickets));
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // 9. Pull notifications
+    try {
+      const { data: notifications } = await supabase.from('notifications').select('*');
+      if (notifications) {
+        localStorage.setItem('curtain_notifications', JSON.stringify(notifications));
       }
     } catch (e) {
       // ignore

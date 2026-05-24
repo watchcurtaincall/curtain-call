@@ -45,14 +45,82 @@ export default function ProfilePage() {
     if (typeof window === 'undefined') return;
     const handleSync = () => setSyncCount(prev => prev + 1);
     window.addEventListener('cc-db-synced', handleSync);
-    return () => window.removeEventListener('cc-db-synced', handleSync);
+    window.addEventListener('cc-profile-updated', handleSync);
+    return () => {
+      window.removeEventListener('cc-db-synced', handleSync);
+      window.removeEventListener('cc-profile-updated', handleSync);
+    };
   }, []);
 
   useEffect(() => {
     setAllPlays(ClientDB.getProductions());
   }, [tab, syncCount]);
-  
-  const WALLET_BALANCE = 84600;
+
+  // ── DYNAMIC WALLET CALCULATIONS ──
+  const [walletMetrics, setWalletMetrics] = useState({
+    available: 0,
+    totalEarned: 0,
+    withdrawn: 0,
+    transactions: [] as any[]
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    const userPlays = allPlays.filter(p => p.submitterEmail === user.email);
+    const userPlayIds = userPlays.map(p => p.id);
+    
+    // Fetch real database records
+    const dbTickets = ClientDB.getTickets();
+    const dbWithdrawals = ClientDB.getWithdrawals();
+    
+    // Filter tickets sold for their plays
+    const userTickets = dbTickets.filter(t => userPlayIds.includes(t.productionId));
+    const grossEarnings = userTickets.reduce((acc, t) => acc + t.price, 0);
+    const totalEarned = grossEarnings * 0.95; // 5% platform fee deducted
+    
+    // Filter withdrawals requested by them
+    const userWithdrawals = dbWithdrawals.filter(w => w.email.toLowerCase() === user.email.toLowerCase());
+    const approvedWithdrawals = userWithdrawals.filter(w => w.status === 'Approved');
+    const totalWithdrawn = approvedWithdrawals.reduce((acc, w) => acc + w.amount, 0);
+    
+    const pendingWithdrawals = userWithdrawals.filter(w => w.status === 'Pending');
+    const totalPending = pendingWithdrawals.reduce((acc, w) => acc + w.amount, 0);
+    
+    const available = Math.max(0, totalEarned - totalWithdrawn - totalPending);
+    
+    // Combine and sort transactions chronologically
+    const transactions = [
+      ...userTickets.map(t => ({
+        label: `Ticket sale — ${t.productionTitle} (${t.tier})`,
+        amount: `+₦${t.price.toLocaleString()}`,
+        date: t.date || 'Recently',
+        positive: true,
+        timestamp: t.timestamp || 0
+      })),
+      ...userWithdrawals.map(w => ({
+        label: `Withdrawal to ${w.bankName} ····${w.accountNumber.slice(-4)}`,
+        amount: `−₦${w.amount.toLocaleString()}`,
+        date: w.timestamp ? w.timestamp.split(' ')[0] : 'Recently',
+        positive: false,
+        timestamp: w.id ? Number(w.id.replace('w_req_', '')) : 0
+      }))
+    ].sort((a, b) => b.timestamp - a.timestamp);
+    
+    setWalletMetrics({
+      available,
+      totalEarned,
+      withdrawn: totalWithdrawn,
+      transactions
+    });
+  }, [user, allPlays, syncCount]);
+
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const notifs = ClientDB.getNotifications(user.email);
+    setUnreadNotifications(notifs.filter(n => !n.read).length);
+  }, [user, syncCount]);
 
   // Pull and merge user submissions dynamically
   useEffect(() => {
@@ -182,7 +250,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-zinc-950">
-      {showWithdraw && <WithdrawModal availableBalance={WALLET_BALANCE} onClose={() => setShowWithdraw(false)} />}
+      {showWithdraw && <WithdrawModal availableBalance={walletMetrics.available} onClose={() => setShowWithdraw(false)} />}
       {showNotifs   && <NotificationsPanel onClose={() => setShowNotifs(false)} />}
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
 
@@ -214,7 +282,9 @@ export default function ProfilePage() {
               </div>
               <div>
                 <h1 className="text-2xl font-serif font-bold text-white">{user.name}</h1>
+                {user.handle && <p className="text-red-400 text-xs font-mono mt-0.5">{user.handle}</p>}
                 <p className="text-zinc-500 text-sm mt-0.5">Member since {user.joinDate}</p>
+                {user.bio && <p className="text-zinc-455 text-xs mt-1.5 max-w-sm italic">"{user.bio}"</p>}
                 <div className="flex items-center gap-1.5 mt-2">
                   <span className="text-[10px] bg-red-600/20 text-red-400 border border-red-600/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
                     Audience
@@ -234,7 +304,9 @@ export default function ProfilePage() {
                 className="relative p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors text-zinc-400 hover:text-white"
               >
                 <Bell className="h-4 w-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border border-zinc-900" />
+                {unreadNotifications > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border border-zinc-900" />
+                )}
               </button>
               <button
                 onClick={() => setShowSettings(true)}
@@ -415,7 +487,7 @@ export default function ProfilePage() {
 
                   <div className="mb-6">
                     <p className="text-xs text-zinc-500 mb-1">Available Balance</p>
-                    <p className="text-4xl font-serif font-bold text-white">₦{WALLET_BALANCE.toLocaleString()}.<span className="text-2xl text-zinc-500">00</span></p>
+                    <p className="text-4xl font-serif font-bold text-white">₦{walletMetrics.available.toLocaleString()}.<span className="text-2xl text-zinc-500">00</span></p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 mb-5">
@@ -424,14 +496,14 @@ export default function ProfilePage() {
                         <TrendingUp className="h-3 w-3 text-green-500" />
                         <p className="text-[10px] text-zinc-500">Total Earned</p>
                       </div>
-                      <p className="text-lg font-bold font-serif text-white">₦127,400</p>
+                      <p className="text-lg font-bold font-serif text-white">₦{walletMetrics.totalEarned.toLocaleString()}</p>
                     </div>
                     <div className="bg-zinc-800/40 rounded-xl p-3 border border-white/5">
                       <div className="flex items-center gap-1 mb-0.5">
                         <ArrowUpRight className="h-3 w-3 text-blue-400" />
                         <p className="text-[10px] text-zinc-500">Withdrawn</p>
                       </div>
-                      <p className="text-lg font-bold font-serif text-white">₦42,800</p>
+                      <p className="text-lg font-bold font-serif text-white">₦{walletMetrics.withdrawn.toLocaleString()}</p>
                     </div>
                   </div>
 
@@ -447,19 +519,19 @@ export default function ProfilePage() {
                 <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6">
                   <h3 className="font-serif font-bold text-white mb-4 text-sm">Recent Transactions</h3>
                   <div className="flex flex-col divide-y divide-white/5">
-                    {[
-                      { label: 'Ticket sales — WATERSIDE (Night 2)', amount: '+₦38,000', date: 'May 18', positive: true },
-                      { label: 'Ticket sales — WATERSIDE (Night 1)', amount: '+₦46,400', date: 'May 17', positive: true },
-                      { label: 'Withdrawal to GT Bank ···4821',      amount: '−₦42,800', date: 'May 15', positive: false },
-                    ].map((tx, i) => (
-                      <div key={i} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-                        <div>
-                          <p className="text-xs text-white leading-tight">{tx.label}</p>
-                          <p className="text-[10px] text-zinc-600 mt-0.5">{tx.date}</p>
+                    {walletMetrics.transactions.length === 0 ? (
+                      <p className="text-xs text-zinc-500 py-3 text-center">No transaction records found.</p>
+                    ) : (
+                      walletMetrics.transactions.slice(0, 10).map((tx, i) => (
+                        <div key={i} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                          <div>
+                            <p className="text-xs text-white leading-tight">{tx.label}</p>
+                            <p className="text-[10px] text-zinc-600 mt-0.5">{tx.date}</p>
+                          </div>
+                          <span className={`text-xs font-bold ${tx.positive ? 'text-green-400' : 'text-zinc-400'}`}>{tx.amount}</span>
                         </div>
-                        <span className={`text-xs font-bold ${tx.positive ? 'text-green-400' : 'text-zinc-400'}`}>{tx.amount}</span>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
 
