@@ -25,6 +25,12 @@ interface TicketTier {
   capacity: string;
 }
 
+interface CastCrewMember {
+  name: string;
+  role: string;
+  category: 'Creative' | 'Cast' | 'Technical';
+}
+
 interface FormData {
   title: string;
   genre: string;
@@ -38,6 +44,7 @@ interface FormData {
   accountNumber: string;
   bankName: string;
   posterUrl: string;
+  castAndCrew: CastCrewMember[];
 }
 
 const GENRES = ['Musical', 'Drama', 'Comedy', 'Historical Epic', 'Spoken Word', 'Dance Theatre', 'Opera', 'Experimental'];
@@ -98,7 +105,31 @@ export default function CreateProductionPage() {
     tiers: [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '' }],
     accountName: '', accountNumber: '', bankName: '',
     posterUrl: '',
+    castAndCrew: [],
   });
+
+  const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberRole, setNewMemberRole] = useState('');
+  const [newMemberCategory, setNewMemberCategory] = useState<'Creative' | 'Cast' | 'Technical'>('Cast');
+
+  const addCastMember = () => {
+    if (!newMemberName.trim() || !newMemberRole.trim()) return;
+    set('castAndCrew', [
+      ...(form.castAndCrew || []),
+      {
+        name: newMemberName.trim(),
+        role: newMemberRole.trim(),
+        category: newMemberCategory
+      }
+    ]);
+    setNewMemberName('');
+    setNewMemberRole('');
+    setNewMemberCategory('Cast');
+  };
+
+  const removeCastMember = (idx: number) => {
+    set('castAndCrew', (form.castAndCrew || []).filter((_, i) => i !== idx));
+  };
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -157,7 +188,14 @@ export default function CreateProductionPage() {
   const handlePublish = async () => {
     try {
       const firstDate = form.dates[0]?.date || '';
-      const newPlayId = `p_created_${Date.now()}`;
+      
+      // Generate highly professional, human-readable SEO link slug
+      const slug = form.title
+        .toLowerCase()
+        .replace(/[^a-z0-9_ ]/g, '')
+        .trim()
+        .replace(/\s+/g, '-');
+      const newPlayId = `${slug || 'play'}-${Date.now().toString().slice(-4)}`;
       
       const newPlay = {
         id: newPlayId,
@@ -168,8 +206,8 @@ export default function CreateProductionPage() {
         venue: form.venue,
         status: 'Coming Soon' as const,
         posterUrl: form.posterUrl || '/images/default_poster.png',
-        criticScore: 92,
-        audienceScore: 9.0,
+        criticScore: null,
+        audienceScore: null,
         totalReviews: 0,
         galleryImages: form.posterUrl ? [form.posterUrl] : [],
         submitterEmail: user?.email || '',
@@ -181,7 +219,7 @@ export default function CreateProductionPage() {
           price: t.price,
           capacity: t.capacity
         })),
-        castAndCrew: [],
+        castAndCrew: form.castAndCrew || [],
       };
 
       ClientDB.saveProduction(newPlay);
@@ -267,6 +305,7 @@ export default function CreateProductionPage() {
                 accountNumber: '',
                 bankName: '',
                 posterUrl: '',
+                castAndCrew: [],
               });
             }}
             className="flex-1 bg-zinc-900 border border-white/10 text-white font-bold py-4 rounded-2xl hover:bg-zinc-800 transition-colors text-sm"
@@ -392,6 +431,62 @@ export default function CreateProductionPage() {
                   )}
                 </div>
               )}
+            </Field>
+
+            <Field label="Cast & Crew (Playbill)">
+              <div className="flex flex-col gap-3 bg-zinc-900/40 border border-white/5 rounded-2xl p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input
+                    value={newMemberName}
+                    onChange={e => setNewMemberName(e.target.value)}
+                    placeholder="Name (e.g. John Doe)"
+                    className={inputCls}
+                  />
+                  <input
+                    value={newMemberRole}
+                    onChange={e => setNewMemberRole(e.target.value)}
+                    placeholder="Role (e.g. Kurunmi, Director)"
+                    className={inputCls}
+                  />
+                  <select
+                    value={newMemberCategory}
+                    onChange={e => setNewMemberCategory(e.target.value as any)}
+                    className={`${inputCls} bg-zinc-950 text-white`}
+                  >
+                    <option value="Cast">Cast (Actor)</option>
+                    <option value="Creative">Creative (Director, Writer)</option>
+                    <option value="Technical">Technical (Lights, Sound)</option>
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={addCastMember}
+                  className="bg-white/10 hover:bg-white/15 text-white text-xs font-bold py-2.5 rounded-xl border border-white/5 transition-all"
+                >
+                  Add Cast/Crew Member
+                </button>
+
+                {form.castAndCrew && form.castAndCrew.length > 0 && (
+                  <div className="flex flex-col gap-1.5 mt-2 max-h-40 overflow-y-auto pr-1">
+                    {form.castAndCrew.map((member, idx) => (
+                      <div key={idx} className="flex justify-between items-center bg-zinc-950/60 border border-white/5 px-3 py-1.5 rounded-lg text-xs">
+                        <div>
+                          <strong className="text-white">{member.name}</strong>
+                          <span className="text-zinc-400 font-medium"> as {member.role}</span>
+                          <span className="text-[9px] text-red-400 uppercase tracking-widest font-mono ml-2">({member.category})</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeCastMember(idx)}
+                          className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </Field>
           </div>
         )}

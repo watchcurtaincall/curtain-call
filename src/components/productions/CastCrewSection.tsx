@@ -24,6 +24,12 @@ export function CastCrewSection({ artists, productionTitle, production }: CastCr
       };
     }
 
+    // Only allow seeded fallback credits for mock/seeded plays
+    const isMockPlay = production?.id && /^p\d+$/.test(production.id);
+    if (!isMockPlay) {
+      return { creative: [], cast: [], technical: [] };
+    }
+
     const isMotherland = productionTitle.toLowerCase().includes('motherland');
     const isWaterside = productionTitle.toLowerCase().includes('waterside');
     const isOba = productionTitle.toLowerCase().includes('oba') || productionTitle.toLowerCase().includes('ovonramwen');
@@ -131,11 +137,17 @@ export function CastCrewSection({ artists, productionTitle, production }: CastCr
         </button>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        {matchedPreviewArtists.map((artist, idx) => (
-          <ArtistCard key={artist.id || idx} artist={artist} />
-        ))}
-      </div>
+      {matchedPreviewArtists.length === 0 ? (
+        <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-8 text-center text-zinc-500 text-xs font-mono backdrop-blur-md">
+          🎬 No cast or crew playbill credits listed yet.
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {matchedPreviewArtists.map((artist, idx) => (
+            <ArtistCard key={artist.id || idx} artist={artist} />
+          ))}
+        </div>
+      )}
 
       {/* Full Credits Modal */}
       {showModal && (

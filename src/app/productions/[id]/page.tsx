@@ -114,7 +114,7 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-2">
                 <div className="bg-red-600 rounded-full h-10 w-10 flex items-center justify-center font-bold text-sm shadow-lg shadow-red-600/30 shrink-0">
-                  {production.criticScore}%
+                  {production.criticScore !== null ? `${production.criticScore}%` : '--'}
                 </div>
                 <div className="leading-tight">
                   <div className="text-xs font-semibold text-white">Critic Score</div>
@@ -126,7 +126,7 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
 
               <div className="flex items-center gap-2">
                 <div className="bg-zinc-800 border border-white/10 rounded-full h-10 w-10 flex items-center justify-center font-bold text-sm shrink-0">
-                  {production.audienceScore}
+                  {production.audienceScore !== null ? production.audienceScore : '--'}
                 </div>
                 <div className="leading-tight">
                   <div className="text-xs font-semibold text-white flex items-center gap-1">

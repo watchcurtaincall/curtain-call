@@ -122,6 +122,18 @@ export default function ProfilePage() {
     setUnreadNotifications(notifs.filter(n => !n.read).length);
   }, [user, syncCount]);
 
+  const handleEndShow = (id: string) => {
+    const play = allPlays.find(p => p.id === id);
+    if (play) {
+      const updatedPlay = {
+        ...play,
+        status: 'Recently Concluded' as const
+      };
+      ClientDB.saveProduction(updatedPlay);
+      setSyncCount(prev => prev + 1);
+    }
+  };
+
   // Pull and merge user submissions dynamically
   useEffect(() => {
     if (!user) return;
@@ -284,7 +296,7 @@ export default function ProfilePage() {
                 <h1 className="text-2xl font-serif font-bold text-white">{user.name}</h1>
                 {user.handle && <p className="text-red-400 text-xs font-mono mt-0.5">{user.handle}</p>}
                 <p className="text-zinc-500 text-sm mt-0.5">Member since {user.joinDate}</p>
-                {user.bio && <p className="text-zinc-455 text-xs mt-1.5 max-w-sm italic">"{user.bio}"</p>}
+                {user.bio && <p className="text-zinc-400 text-xs mt-1.5 max-w-sm italic">"{user.bio}"</p>}
                 <div className="flex items-center gap-1.5 mt-2">
                   <span className="text-[10px] bg-red-600/20 text-red-400 border border-red-600/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
                     Audience
@@ -463,7 +475,17 @@ export default function ProfilePage() {
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).map(p => (
-                        <ProductionCard key={p.id} production={p} />
+                        <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl">
+                          <div className="flex-1">
+                            <ProductionCard production={p} />
+                          </div>
+                          <button
+                            onClick={() => handleEndShow(p.id)}
+                            className="w-full bg-zinc-900/80 hover:bg-red-950/20 text-zinc-400 hover:text-red-400 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase mt-1 shrink-0"
+                          >
+                            End Show
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}

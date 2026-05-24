@@ -28,9 +28,9 @@ const MOCK_USER: MockUser = {
   points: 1010,
   badgesUnlocked: 6,
   totalBadges: 14,
-  handle: '@adaeze_obi',
-  bio: 'Theatre lover. Culture archivist.',
-  location: 'Lagos, Nigeria'
+  handle: 'adaeze_obi',
+  bio: '',
+  location: ''
 };
 
 interface AuthContextType {
@@ -134,6 +134,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password?: string) => {
     let loggedUser = MOCK_USER;
     const cleanEmail = email.trim().toLowerCase();
+
+    if (cleanEmail === 'watchcurtaincall@gmail.com') {
+      loggedUser = {
+        name: 'Watch Curtain Call Admin',
+        email: 'watchcurtaincall@gmail.com',
+        avatar: 'WCC',
+        joinDate: 'May 2026',
+        ratings: 120,
+        reviews: 88,
+        points: 2500,
+        badgesUnlocked: 10,
+        totalBadges: 14,
+        handle: '@watchcurtaincall',
+        bio: 'Curtain Call Administrative Curation Board.',
+        location: 'Lagos, Nigeria'
+      };
+      ClientDB.addApprovedCriticEmail('watchcurtaincall@gmail.com');
+      setUser(loggedUser);
+      localStorage.setItem('cc_authed', 'true');
+      localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
+      return;
+    }
 
     if (supabase && password) {
       const { data, error } = await supabase.auth.signInWithPassword({
