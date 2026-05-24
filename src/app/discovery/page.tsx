@@ -14,7 +14,15 @@ export default function DiscoveryPage() {
   const [activeFilter, setActiveFilter] = useState('All Shows');
 
   useEffect(() => {
-    setProductions(ClientDB.getProductions());
+    const loadData = () => {
+      setProductions(ClientDB.getProductions());
+    };
+    loadData();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cc-db-synced', loadData);
+      return () => window.removeEventListener('cc-db-synced', loadData);
+    }
   }, []);
 
   const results = useMemo(() => {

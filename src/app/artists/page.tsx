@@ -12,7 +12,15 @@ export default function ArtistsDirectoryPage() {
 
   // Load dynamically from the ClientDB on mount
   useEffect(() => {
-    setArtists(ClientDB.getArtists());
+    const loadData = () => {
+      setArtists(ClientDB.getArtists());
+    };
+    loadData();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cc-db-synced', loadData);
+      return () => window.removeEventListener('cc-db-synced', loadData);
+    }
   }, []);
 
   return (

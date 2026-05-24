@@ -17,9 +17,18 @@ export default function Home() {
 
   // Dynamically load data from client-side active database on mount
   useEffect(() => {
-    setProductions(ClientDB.getProductions());
-    setTrendingPeople(ClientDB.getArtists().slice(0, 6));
-    setRecentArticles(ClientDB.getArticles().slice(0, 3));
+    const loadData = () => {
+      setProductions(ClientDB.getProductions());
+      setTrendingPeople(ClientDB.getArtists().slice(0, 6));
+      setRecentArticles(ClientDB.getArticles().slice(0, 3));
+    };
+
+    loadData();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cc-db-synced', loadData);
+      return () => window.removeEventListener('cc-db-synced', loadData);
+    }
   }, []);
 
   // Sort and filter productions for different categories

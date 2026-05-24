@@ -854,6 +854,9 @@ export const syncFromSupabase = async () => {
     }
 
     console.log('[Curtain Call Database] Sync successfully completed with Supabase cloud!');
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('cc-db-synced'));
+    }
   } catch (err) {
     console.error('[Supabase Sync] Pull error:', err);
   }

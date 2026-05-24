@@ -38,11 +38,19 @@ export default function ProfilePage() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
   const [allPlays, setAllPlays] = useState<Production[]>([]);
+  const [syncCount, setSyncCount] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleSync = () => setSyncCount(prev => prev + 1);
+    window.addEventListener('cc-db-synced', handleSync);
+    return () => window.removeEventListener('cc-db-synced', handleSync);
+  }, []);
+
+  useEffect(() => {
     setAllPlays(ClientDB.getProductions());
-  }, [tab]);
+  }, [tab, syncCount]);
   
   const WALLET_BALANCE = 84600;
 
@@ -95,7 +103,7 @@ export default function ProfilePage() {
 
     const merged = [...pendingArtists, ...pendingPlays, ...pendingArticles, ...approvedArtists, ...approvedPlays, ...approvedArticles, ...declined];
     setUserSubmissions(merged);
-  }, [user, tab]);
+  }, [user, tab, syncCount]);
 
   if (!user) {
     return (

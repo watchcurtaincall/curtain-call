@@ -10,7 +10,15 @@ export default function EditorialPage() {
   const [articles, setArticles] = useState<Article[]>([]);
 
   useEffect(() => {
-    setArticles(ClientDB.getArticles());
+    const loadData = () => {
+      setArticles(ClientDB.getArticles());
+    };
+    loadData();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cc-db-synced', loadData);
+      return () => window.removeEventListener('cc-db-synced', loadData);
+    }
   }, []);
 
   return (

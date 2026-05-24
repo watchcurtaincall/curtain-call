@@ -14,7 +14,15 @@ export default function DocumentedPlaysPage() {
 
   // Load dynamically from the ClientDB on mount
   useEffect(() => {
-    setProductions(ClientDB.getProductions());
+    const loadData = () => {
+      setProductions(ClientDB.getProductions());
+    };
+    loadData();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cc-db-synced', loadData);
+      return () => window.removeEventListener('cc-db-synced', loadData);
+    }
   }, []);
 
   // Filter productions dynamically

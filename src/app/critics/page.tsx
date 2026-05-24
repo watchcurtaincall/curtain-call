@@ -9,11 +9,22 @@ import { Production } from '@/lib/types';
 
 export default function CriticsHubPage() {
   const [productions, setProductions] = useState<Production[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+
   useEffect(() => {
-    setProductions(ClientDB.getProductions());
+    const loadData = () => {
+      setProductions(ClientDB.getProductions());
+      setReviews(ClientDB.getReviews());
+    };
+    loadData();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cc-db-synced', loadData);
+      return () => window.removeEventListener('cc-db-synced', loadData);
+    }
   }, []);
 
-  const criticReviews = MOCK_REVIEWS.filter(r => r.type === 'Critic');
+  const criticReviews = reviews.filter(r => r.type === 'Critic');
 
   return (
     <div className="container mx-auto px-4 py-12 min-h-screen">
