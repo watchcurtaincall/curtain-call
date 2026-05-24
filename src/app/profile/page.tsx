@@ -198,7 +198,7 @@ export default function ProfilePage() {
   );
 
   // Dynamic point system logic - attach points to each step
-  const validatedDone = true; 
+  const validatedDone = user.bio ? user.bio.trim().length > 0 : false; 
   const ratedCount = user.email === 'adaeze@example.com' ? user.ratings : userReviews.length;
   const reviewsCount = user.email === 'adaeze@example.com' ? user.reviews : userReviews.length;
 
@@ -225,12 +225,12 @@ export default function ProfilePage() {
     { id: 3,  name: "Critic's Eye",        Icon: Target,     desc: 'Rate 10 productions',                   points: 100, unlocked: ratedCount >= 10,     color: 'text-blue-400 bg-blue-500/10 border-blue-500/25' },
     { id: 4,  name: 'Season Ticket',       Icon: Ticket,     desc: 'Add 5 shows to watchlist',              points: 100, unlocked: watchlist.length >= 5, color: 'text-green-400 bg-green-500/10 border-green-500/25' },
     { id: 5,  name: 'Voice of the Stage',  Icon: Mic2,       desc: 'Write 10 reviews',                      points: 150, unlocked: reviewsCount >= 10,     color: 'text-pink-400 bg-pink-500/10 border-pink-500/25' },
-    { id: 6,  name: 'Curtain Raiser',      Icon: Drama,      desc: 'Attend your first verified show',        points: 100, unlocked: true,                  color: 'text-red-400 bg-red-500/10 border-red-500/25' },
+    { id: 6,  name: 'Curtain Raiser',      Icon: Drama,      desc: 'Attend your first verified show',        points: 100, unlocked: ClientDB.getTickets().some(t => t.buyerEmail === user.email), color: 'text-red-400 bg-red-500/10 border-red-500/25' },
     { id: 7,  name: 'Prolific Reviewer',   Icon: FileText,   desc: 'Write 50 reviews',                      points: 200, unlocked: reviewsCount >= 50,     color: 'text-orange-400 bg-orange-500/10 border-orange-500/25' },
     { id: 8,  name: 'Top Critic',          Icon: Trophy,     desc: 'Reach 500 points',                      points: 250, unlocked: points >= 500,        color: 'text-amber-500 bg-amber-500/10 border-amber-500/25' },
     { id: 9,  name: 'Cultural Archivist',  Icon: Library,    desc: 'Review historical productions',         points: 150, unlocked: reviewsCount >= 3,      color: 'text-sky-400 bg-sky-500/10 border-sky-500/25' },
     { id: 10, name: 'Trendsetter',         Icon: Zap,        desc: 'Review show in first week',             points: 150, unlocked: reviewsCount >= 5,      color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/25' },
-    { id: 11, name: 'Social Stage',        Icon: Users,      desc: 'Get 10 followers',                      points: 100, unlocked: true,                  color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/25' },
+    { id: 11, name: 'Social Stage',        Icon: Users,      desc: 'Get 10 followers',                      points: 100, unlocked: false,                  color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/25' },
     { id: 12, name: 'Grand Reviewer',      Icon: Crown,      desc: 'Write 100 reviews',                     points: 300, unlocked: reviewsCount >= 100,    color: 'text-red-500 bg-red-500/10 border-red-500/25' },
     { id: 13, name: 'Patron of the Arts',  Icon: Sparkles,   desc: 'Reach 1000 points',                     points: 500, unlocked: points >= 1000,       color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25' },
     { id: 14, name: 'Legend',              Icon: Shield,     desc: 'Complete all other badges',             points: 1000,unlocked: points >= 1000,       color: 'text-rose-500 bg-rose-500/10 border-rose-500/25' },

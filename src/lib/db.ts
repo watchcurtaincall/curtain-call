@@ -1115,7 +1115,11 @@ export const syncFromSupabase = async () => {
       const pending = mapped.filter(p => p.curationStatus === 'Pending');
       
       if (approved.length > 0) {
-        localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify(approved));
+        const currentLocal = JSON.parse(localStorage.getItem(PRODUCTIONS_KEY) || '[]');
+        const localOnly = currentLocal.filter((localItem: any) => 
+          !approved.some(cloudItem => cloudItem.id === localItem.id)
+        );
+        localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([...approved, ...localOnly]));
       }
       localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(pending));
     }
@@ -1128,7 +1132,11 @@ export const syncFromSupabase = async () => {
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
       
       if (approved.length > 0) {
-        localStorage.setItem(ARTISTS_KEY, JSON.stringify(approved));
+        const currentLocal = JSON.parse(localStorage.getItem(ARTISTS_KEY) || '[]');
+        const localOnly = currentLocal.filter((localItem: any) => 
+          !approved.some(cloudItem => cloudItem.id === localItem.id)
+        );
+        localStorage.setItem(ARTISTS_KEY, JSON.stringify([...approved, ...localOnly]));
       }
       localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(pending));
     }
@@ -1141,7 +1149,11 @@ export const syncFromSupabase = async () => {
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
 
       if (approved.length > 0) {
-        localStorage.setItem(ARTICLES_KEY, JSON.stringify(approved));
+        const currentLocal = JSON.parse(localStorage.getItem(ARTICLES_KEY) || '[]');
+        const localOnly = currentLocal.filter((localItem: any) => 
+          !approved.some(cloudItem => cloudItem.id === localItem.id)
+        );
+        localStorage.setItem(ARTICLES_KEY, JSON.stringify([...approved, ...localOnly]));
       }
       localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(pending));
     }
