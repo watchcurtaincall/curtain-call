@@ -7,7 +7,7 @@ import { Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function SignupPage() {
-  const { login, loginWithGoogle } = useAuth();
+  const { signUp, loginWithGoogle } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -41,8 +41,13 @@ export default function SignupPage() {
     }
 
     // Register and log in
-    login(email.trim(), password, name.trim());
-    router.push('/profile');
+    try {
+      await signUp(email.trim(), password, name.trim());
+      router.push('/profile');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Registration failed.');
+      setLoading(false);
+    }
   };
 
   const handleGoogleClick = async () => {

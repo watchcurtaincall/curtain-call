@@ -29,14 +29,16 @@ const MOCK_USER: MockUser = {
 
 interface AuthContextType {
   user: MockUser | null;
-  login: (email: string, password?: string, name?: string) => void;
+  login: (email: string, password?: string) => Promise<void>;
+  signUp: (email: string, password?: string, name?: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  login: () => {},
+  login: async () => {},
+  signUp: async () => {},
   loginWithGoogle: async () => {},
   logout: () => {},
 });
@@ -104,77 +106,149 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = (email: string, password?: string, name?: string) => {
+  const login = async (email: string, password?: string) => {
     let loggedUser = MOCK_USER;
     const cleanEmail = email.trim().toLowerCase();
 
-    if (cleanEmail === 'watchcurtaincall@gmail.com') {
-      loggedUser = {
-        name: 'Watch Curtain Call Admin',
-        email: 'watchcurtaincall@gmail.com',
-        avatar: 'WCC',
-        joinDate: 'May 2026',
-        ratings: 120,
-        reviews: 88,
-        points: 2500,
-        badgesUnlocked: 10,
-        totalBadges: 14
-      };
+    if (supabase && password) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail,
+        password
+      });
+      if (error) throw error;
       
-      ClientDB.addApprovedCriticEmail('watchcurtaincall@gmail.com');
+      if (data?.user) {
+        const name = data.user.user_metadata?.full_name || cleanEmail.split('@')[0];
+        loggedUser = {
+          name,
+          email: cleanEmail,
+          avatar: name.slice(0, 2).toUpperCase(),
+          joinDate: 'May 2026',
+          ratings: 0,
+          reviews: 0,
+          points: 0,
+          badgesUnlocked: 0,
+          totalBadges: 14
+        };
+      }
     } else {
-      const displayName = name || email.split('@')[0];
-      loggedUser = {
-        name: displayName,
-        email: email,
-        avatar: displayName.slice(0, 2).toUpperCase(),
-        joinDate: 'May 2026',
-        ratings: 0,
-        reviews: 0,
-        points: 0,
-        badgesUnlocked: 0,
-        totalBadges: 14
-      };
+      // Local Simulation Fallback
+      if (cleanEmail === 'watchcurtaincall@gmail.com') {
+        loggedUser = {
+          name: 'Watch Curtain Call Admin',
+          email: 'watchcurtaincall@gmail.com',
+          avatar: 'WCC',
+          joinDate: 'May 2026',
+          ratings: 120,
+          reviews: 88,
+          points: 2500,
+          badgesUnlocked: 10,
+          totalBadges: 14
+        };
+        ClientDB.addApprovedCriticEmail('watchcurtaincall@gmail.com');
+      } else {
+        const displayName = cleanEmail.split('@')[0];
+        loggedUser = {
+          name: displayName,
+          email: cleanEmail,
+          avatar: displayName.slice(0, 2).toUpperCase(),
+          joinDate: 'May 2026',
+          ratings: 0,
+          reviews: 0,
+          points: 0,
+          badgesUnlocked: 0,
+          totalBadges: 14
+        };
+      }
     }
     
     setUser(loggedUser);
     localStorage.setItem('cc_authed', 'true');
     localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
+  };
 
-    // Dynamic Welcome Email Notification via Resend
+  const signUp = async (email: string, password?: string, name?: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const displayName = name || email.split('@')[0];
+    
+    let loggedUser = {
+      name: displayName,
+      email: cleanEmail,
+      avatar: displayName.slice(0, 2).toUpperCase(),
+      joinDate: 'May 2026',
+      ratings: 0,
+      reviews: 0,
+      points: 0,
+      badgesUnlocked: 0,
+      totalBadges: 14
+    };
+
+    if (supabase && password) {
+      const { data, error } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: {
+          data: {
+            full_name: displayName
+          }
+        }
+      });
+      if (error) throw error;
+      
+      if (data?.user) {
+        loggedUser.email = data.user.email || cleanEmail;
+      }
+    }
+
+    setUser(loggedUser);
+    localStorage.setItem('cc_authed', 'true');
+    localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
+
+    // Send Welcome Email ONLY on new signups!
     const welcomeHtml = `
-      <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
-          <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+      <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+        <div style="text-align: center; margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px;">
+          <span style="font-size: 26px; font-weight: bold; letter-spacing: 3px; color: #ef4444; font-family: serif; text-transform: uppercase;">CURTAIN CALL</span>
+          <p style="color: #a1a1aa; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px;">The Front Row for African Theatre</p>
         </div>
         
-        <h2 style="font-family: serif; color: #ffffff; font-size: 22px; margin-top: 0;">Welcome to the Stage, ${loggedUser.name}!</h2>
+        <h2 style="font-family: serif; color: #ffffff; font-size: 24px; margin-top: 0; text-align: center; font-weight: bold;">Welcome to the Stage, ${displayName}! 🎭</h2>
         
-        <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
-          We are absolutely thrilled to welcome you to <strong>Curtain Call</strong>. You have successfully created your digital profile. As a valued member of our growing community, you can now:
+        <p style="color: #d4d4d8; font-size: 15px; line-height: 1.7; text-align: center;">
+          We are absolutely thrilled to welcome you to the continent's premier digital home for theatre culture. You have successfully created your digital profile.
         </p>
+
+        <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 30px 0;"></div>
         
-        <ul style="color: #d4d4d8; font-size: 15px; line-height: 1.6; padding-left: 20px;">
-          <li style="margin-bottom: 10px;">Submit and claim your theatrical Playbills and Production credits.</li>
-          <li style="margin-bottom: 10px;">Apply for Approved Critic status to publish official reviews.</li>
-          <li style="margin-bottom: 10px;">Publish chronicles, reviews, and editorial opinion pieces.</li>
+        <h3 style="font-family: serif; color: #ffffff; font-size: 18px; margin-top: 0; font-weight: bold;">🌟 What is Curtain Call?</h3>
+        <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; margin-bottom: 25px;">
+          Curtain Call is a premium living archive and database dedicated to preserving, amplifying, and reviewing regional African stages, playbills, opinion pieces, and theatremaker histories.
+        </p>
+
+        <h3 style="font-family: serif; color: #ffffff; font-size: 18px; margin-top: 0; font-weight: bold;">⚡ What can you do on the app?</h3>
+        <ul style="color: #d4d4d8; font-size: 14px; line-height: 1.8; padding-left: 20px; margin-bottom: 30px;">
+          <li style="margin-bottom: 12px;">🎟️ <strong>Buy & Manage Tickets</strong>: Discover live theatrical productions in your city, purchase gate entries securely via Paystack, and receive immediate admissions vouchers directly to your inbox.</li>
+          <li style="margin-bottom: 12px;">📁 <strong>Claim/Submit Playbills</strong>: Submit and build your digital playbills, cast rosters, and crew directory credits directly from your producer dashboard.</li>
+          <li style="margin-bottom: 12px;">✍️ <strong>Write Stage Chronicles</strong>: Publish opinion pieces, theatrical analyses, and essays to be featured on our main editorial chronicle feed.</li>
+          <li style="margin-bottom: 12px;">✒️ <strong>Review Plays & Rate</strong>: Share your reviews as an audience member. If you are an active journalist or critic, apply for <strong>Verified Critic</strong> status to publish official grades!</li>
         </ul>
         
-        <div style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin: 30px 0; text-align: center;">
-          <p style="color: #a1a1aa; font-size: 13px; margin: 0 0 10px 0;">Your Account Details:</p>
-          <p style="color: #ffffff; font-size: 16px; font-weight: bold; margin: 0 0 5px 0;">${loggedUser.email}</p>
+        <div style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 30px;">
+          <p style="color: #a1a1aa; font-size: 12px; margin: 0 0 8px 0;">Your Registered Account Email:</p>
+          <code style="font-size: 14px; color: #22c55e; font-family: monospace; font-weight: bold; background: rgba(34,197,94,0.08); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(34,197,94,0.15);">${cleanEmail}</code>
         </div>
         
-        <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
-          If you did not initiate this registration, please ignore this message. Welcome aboard!
+        <p style="color: #a1a1aa; font-size: 12px; line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px; margin-top: 35px; text-align: center;">
+          If you have any questions or need curator assistance with listing claims, simply reply directly to this email! Welcome aboard.
           <br/><br/>
           Sincerely,<br/>
-          <strong>The Curtain Call Curation Team</strong>
+          <strong>The Curtain Call Curation Board</strong>
         </p>
       </div>
     `;
-    ClientDB.sendEmail(loggedUser.email, 'Welcome to Curtain Call! 🎭', welcomeHtml);
+    ClientDB.sendEmail(cleanEmail, 'Welcome to Curtain Call! 🎭', welcomeHtml).catch(err => {
+      console.error('Welcome email delivery failed:', err);
+    });
   };
 
   const loginWithGoogle = async () => {
@@ -191,10 +265,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err: any) {
         console.error('[Supabase Google Sign-In Error]:', err.message);
         // Clean fallback
-        login('watchcurtaincall@gmail.com', '', 'Curtain Call Admin');
+        login('watchcurtaincall@gmail.com', '');
       }
     } else {
-      login('watchcurtaincall@gmail.com', '', 'Curtain Call Admin');
+      login('watchcurtaincall@gmail.com', '');
     }
   };
 
@@ -208,7 +282,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, login, signUp, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

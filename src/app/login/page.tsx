@@ -38,8 +38,13 @@ export default function LoginPage() {
       }
     }
 
-    login(enteredEmail, enteredPassword);
-    router.push('/profile');
+    try {
+      await login(enteredEmail, enteredPassword);
+      router.push('/profile');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Invalid email or password.');
+      setLoading(false);
+    }
   };
 
   const handleGoogleClick = async () => {
@@ -79,7 +84,6 @@ export default function LoginPage() {
                 <input
                   type="email"
                   name="email"
-                  defaultValue="adaeze@example.com"
                   placeholder="name@example.com"
                   className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
                   required
@@ -97,7 +101,6 @@ export default function LoginPage() {
                 <input
                   type="password"
                   name="password"
-                  defaultValue="password"
                   placeholder="••••••••"
                   className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
                   required

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/AuthContext';
 import { ClientDB } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
 import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail } from 'lucide-react';
@@ -10,6 +12,9 @@ import Image from 'next/image';
 type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'settings';
 
 export default function AdminDashboardPage() {
+  const { user } = useAuth();
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>('queue');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -111,8 +116,33 @@ export default function AdminDashboardPage() {
   };
 
   useEffect(() => {
-    loadQueues();
-  }, [refreshTrigger]);
+    if (typeof window === 'undefined') return;
+    
+    const authed = localStorage.getItem('cc_authed') === 'true';
+    const authedUser = localStorage.getItem('cc_authed_user');
+    
+    if (!authed || !authedUser) {
+      router.push('/login');
+      return;
+    }
+    
+    try {
+      const parsedUser = JSON.parse(authedUser);
+      if (parsedUser.email.toLowerCase() !== 'watchcurtaincall@gmail.com') {
+        router.push('/profile');
+        return;
+      }
+      setIsAuthorized(true);
+    } catch (e) {
+      router.push('/login');
+    }
+  }, [user, router]);
+
+  useEffect(() => {
+    if (isAuthorized) {
+      loadQueues();
+    }
+  }, [refreshTrigger, isAuthorized]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -652,6 +682,15 @@ export default function AdminDashboardPage() {
   };
 
   const pendingTotal = pendingArtists.length + pendingPlays.length + pendingArticles.length + pendingCritics.length;
+
+  if (!isAuthorized) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4 text-white">
+        <div className="w-10 h-10 rounded-full border-t-2 border-red-500 animate-spin" />
+        <p className="text-zinc-500 text-xs font-mono tracking-widest uppercase">VERIFYING ADMINISTRATIVE ACCESS...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-12 min-h-screen bg-zinc-950 text-white">
