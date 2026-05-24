@@ -4,7 +4,7 @@ import { useState, useEffect, use } from 'react';
 import { ClientDB } from '@/lib/db';
 import { Artist } from '@/lib/types';
 import Link from 'next/link';
-import { ArrowLeft, Globe, LayoutGrid, List, Link as LinkIcon, Camera, User } from 'lucide-react';
+import { ArrowLeft, Globe, LayoutGrid, List, Link as LinkIcon, Camera, User, Share2, Check } from 'lucide-react';
 import { ProductionCard } from '@/components/shared/ProductionCard';
 import { ImageLightbox } from '@/components/shared/ImageLightbox';
 import { ArtistBioSection } from '@/components/artists/ArtistBioSection';
@@ -12,6 +12,15 @@ import { ArtistBioSection } from '@/components/artists/ArtistBioSection';
 export default function ArtistPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [artist, setArtist] = useState<Artist | null>(null);
+  const [shared, setShared] = useState(false);
+
+  const handleShare = () => {
+    if (typeof window === 'undefined') return;
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    setShared(true);
+    setTimeout(() => setShared(false), 2500);
+  };
 
   // Load dynamically from the ClientDB on mount using the page param ID
   useEffect(() => {
@@ -100,7 +109,7 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
             bio={artist.bio || `${artist.name} is a renowned ${artist.roleType.toLowerCase()} based in Lagos, Nigeria. With a rich history of contributions to the Nigerian theatre ecosystem, their work explores themes of tradition, modernity, and the human condition.`}
           />
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <button
               onClick={toggleFollow}
               className={`px-6 py-2.5 rounded-full font-bold transition-all text-sm tracking-wide ${
@@ -110,6 +119,22 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
               }`}
             >
               {isFollowing ? '✓ Following' : 'Follow Artist'}
+            </button>
+            <button
+              onClick={handleShare}
+              className="px-6 py-2.5 rounded-full font-bold transition-all text-sm tracking-wide bg-zinc-900 hover:bg-zinc-800 text-white border border-white/10 flex items-center justify-center gap-1.5 group"
+            >
+              {shared ? (
+                <>
+                  <Check className="h-4 w-4 text-green-500 animate-scale-up" />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors" />
+                  <span>Share</span>
+                </>
+              )}
             </button>
             <div className="flex items-center gap-3 text-zinc-400">
               <Link href="#" className="hover:text-white transition-colors p-2 bg-zinc-900 rounded-full">

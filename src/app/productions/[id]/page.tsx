@@ -6,7 +6,7 @@ import { Production } from '@/lib/types';
 import { MOCK_REVIEWS } from '@/lib/mock';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, MapPin, Clock, Ticket, ArrowLeft } from 'lucide-react';
+import { Star, MapPin, Clock, Ticket, ArrowLeft, Share2, Check } from 'lucide-react';
 import { ProductionReviews } from '@/components/productions/ProductionReviews';
 import { WatchlistButton } from '@/components/productions/WatchlistButton';
 import { PhotoGallery } from '@/components/productions/PhotoGallery';
@@ -16,6 +16,15 @@ import { ImageLightbox } from '@/components/shared/ImageLightbox';
 export default function ProductionPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [production, setProduction] = useState<Production | null>(null);
+  const [shared, setShared] = useState(false);
+
+  const handleShare = () => {
+    if (typeof window === 'undefined') return;
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    setShared(true);
+    setTimeout(() => setShared(false), 2500);
+  };
 
   // Load dynamically from the ClientDB on mount
   useEffect(() => {
@@ -153,6 +162,22 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
             </Link>
           )}
           <WatchlistButton productionId={production.id} />
+          <button
+            onClick={handleShare}
+            className="bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white px-6 py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 text-base group"
+          >
+            {shared ? (
+              <>
+                <Check className="h-5 w-5 text-green-500 animate-scale-up" />
+                <span>Link Copied!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="h-5 w-5 text-zinc-400 group-hover:text-white transition-colors" />
+                <span>Share</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
