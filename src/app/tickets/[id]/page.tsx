@@ -67,6 +67,19 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     const recipient = email || 'guest@curtaincall.ng';
     const purchasedTickets: { reference: string; gatePass: string }[] = [];
 
+    // Auto-record buyer in the admin directory (profiles & newsletter subscribers)
+    try {
+      ClientDB.saveProfile({
+        email: recipient.toLowerCase(),
+        name: recipient.split('@')[0],
+        joinDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        isVerified: true
+      });
+      ClientDB.subscribeToNewsletter(recipient);
+    } catch (e) {
+      console.error('[Capture Buyer] Failed to save guest details:', e);
+    }
+
     for (let i = 0; i < quantity; i++) {
       const ticketRef = quantity > 1 ? `${reference}-${i + 1}` : reference;
       const gatePass = `CC-${ticketRef.substring(0, 6).toUpperCase()}`;

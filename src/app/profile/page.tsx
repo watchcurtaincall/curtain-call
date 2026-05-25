@@ -645,12 +645,20 @@ export default function ProfilePage() {
                           <div className="flex-1">
                             <ProductionCard production={p} />
                           </div>
-                          <button
-                            onClick={() => handleEndShow(p.id)}
-                            className="w-full bg-zinc-900/80 hover:bg-red-950/20 text-zinc-400 hover:text-red-400 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase mt-1 shrink-0"
-                          >
-                            End Show
-                          </button>
+                          <div className="flex gap-2 mt-1 shrink-0">
+                            <Link
+                              href={`/create?edit=${p.id}`}
+                              className="flex-1 bg-zinc-900/80 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase text-center flex items-center justify-center gap-1"
+                            >
+                              <PenSquare className="h-3 w-3 text-red-400" /> Edit
+                            </Link>
+                            <button
+                              onClick={() => handleEndShow(p.id)}
+                              className="flex-1 bg-zinc-900/80 hover:bg-red-950/20 text-zinc-400 hover:text-red-400 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase flex items-center justify-center gap-1"
+                            >
+                              End Show
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -674,12 +682,20 @@ export default function ProfilePage() {
                           <div className="flex-1">
                             <ProductionCard production={p} />
                           </div>
-                          <button
-                            onClick={() => handleDeleteDraft(p.id)}
-                            className="w-full bg-zinc-900/80 hover:bg-red-950/20 text-red-450 hover:text-red-400 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase flex items-center justify-center gap-1 mt-1 shrink-0"
-                          >
-                            <Trash2 className="h-3 w-3" /> Delete Draft
-                          </button>
+                          <div className="flex gap-2 mt-1 shrink-0">
+                            <Link
+                              href={`/create?edit=${p.id}`}
+                              className="flex-1 bg-zinc-900/80 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase text-center flex items-center justify-center gap-1"
+                            >
+                              <PenSquare className="h-3 w-3 text-red-400" /> Edit
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteDraft(p.id)}
+                              className="flex-1 bg-zinc-900/80 hover:bg-red-950/20 text-red-450 hover:text-red-400 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase flex items-center justify-center gap-1"
+                            >
+                              <Trash2 className="h-3 w-3" /> Delete
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -778,7 +794,17 @@ export default function ProfilePage() {
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
                   {allPlays.filter(p => p.submitterEmail === user.email && (p.status === 'Past Production' || p.status === 'Recently Concluded')).map(p => (
-                    <ProductionCard key={p.id} production={p} />
+                    <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl">
+                      <div className="flex-1">
+                        <ProductionCard production={p} />
+                      </div>
+                      <Link
+                        href={`/create?edit=${p.id}`}
+                        className="w-full bg-zinc-900/80 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase text-center flex items-center justify-center gap-1 mt-1 shrink-0"
+                      >
+                        <PenSquare className="h-3.5 w-3.5 text-red-400" /> Edit Details
+                      </Link>
+                    </div>
                   ))}
                 </div>
               )}

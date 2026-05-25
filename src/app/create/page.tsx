@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import {
   ChevronRight, ChevronLeft, Check, MapPin, Calendar,
@@ -62,9 +62,11 @@ function formatDate(d: string) {
 }
 
 // ─── Main Component ──────────────────────────────────────
-export default function CreateProductionPage() {
+function CreateProductionForm() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('edit');
   const [step, setStep] = useState(0);
   const [published, setPublished] = useState(false);
   const [createdProductionId, setCreatedProductionId] = useState('');
@@ -74,6 +76,7 @@ export default function CreateProductionPage() {
   const [banks, setBanks] = useState<Bank[]>([]);
   const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
   const [resolvedName, setResolvedName] = useState('');
+  const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
     if (user && !user.isVerified) {
@@ -114,6 +117,53 @@ export default function CreateProductionPage() {
     posterUrl: '',
     castAndCrew: [],
   });
+
+  // Edit Mode Loader
+  useEffect(() => {
+    if (editId && user) {
+      const prod = ClientDB.getProductionById(editId) as any;
+      if (prod) {
+        if (prod.submitterEmail && user.email && prod.submitterEmail.toLowerCase() === user.email.toLowerCase()) {
+          setIsEditMode(true);
+          
+          const tiers = prod.ticketTiers ? prod.ticketTiers.map((t: any) => ({
+            id: t.id || crypto.randomUUID(),
+            name: t.name || '',
+            price: String(t.price) || '',
+            capacity: String(t.capacity) || ''
+          })) : [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '' }];
+
+          const dates = prod.showDate ? [{ date: prod.showDate, time: '19:00' }] : [{ date: '', time: '19:00' }];
+
+          setForm({
+            title: prod.title || '',
+            genre: prod.genre || '',
+            synopsis: prod.synopsis || '',
+            venue: prod.venue || '',
+            city: prod.city || 'Lagos',
+            address: prod.address || '',
+            dates: dates,
+            tiers: tiers,
+            accountName: prod.accountName || '',
+            accountNumber: prod.accountNumber || '',
+            bankName: prod.bankName || '',
+            posterUrl: prod.posterUrl || '',
+            castAndCrew: prod.castAndCrew || []
+          });
+
+          if (prod.bankName && banks.length > 0) {
+            const bank = banks.find((b: any) => b.name.toLowerCase() === prod.bankName.toLowerCase()) || null;
+            setSelectedBank(bank);
+          }
+          if (prod.accountName) {
+            setResolvedName(prod.accountName);
+          }
+        } else {
+          router.push('/profile');
+        }
+      }
+    }
+  }, [editId, user, banks, router]);
 
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberRole, setNewMemberRole] = useState('');
@@ -204,19 +254,22 @@ export default function CreateProductionPage() {
         .trim()
         .replace(/\s+/g, '-');
       const newPlayId = `${slug || 'play'}-${Date.now().toString().slice(-4)}`;
+      const targetId = isEditMode && editId ? editId : newPlayId;
+
+      const existingProd = isEditMode && editId ? ClientDB.getProductionById(editId) : null;
       
       const newPlay = {
-        id: newPlayId,
+        id: targetId,
         title: form.title,
         synopsis: form.synopsis,
         genre: form.genre,
-        runtime: '120 mins',
+        runtime: existingProd?.runtime || '120 mins',
         venue: form.venue,
-        status: 'Coming Soon' as const,
+        status: existingProd ? existingProd.status : ('Coming Soon' as const),
         posterUrl: form.posterUrl || '/images/default_poster.png',
-        criticScore: null,
-        audienceScore: null,
-        totalReviews: 0,
+        criticScore: existingProd ? existingProd.criticScore : null,
+        audienceScore: existingProd ? existingProd.audienceScore : null,
+        totalReviews: existingProd ? existingProd.totalReviews : 0,
         galleryImages: form.posterUrl ? [form.posterUrl] : [],
         submitterEmail: user?.email || '',
         curationStatus: 'Approved' as const,
@@ -231,7 +284,7 @@ export default function CreateProductionPage() {
       };
 
       ClientDB.saveProduction(newPlay);
-      setCreatedProductionId(newPlayId);
+      setCreatedProductionId(targetId);
       setPublished(true);
     } catch (err) {
       console.error('Failed to publish production:', err);
@@ -247,19 +300,22 @@ export default function CreateProductionPage() {
         ? form.title.toLowerCase().replace(/[^a-z0-9_ ]/g, '').trim().replace(/\s+/g, '-')
         : 'draft';
       const newPlayId = `${slug}-${Date.now().toString().slice(-4)}`;
+      const targetId = isEditMode && editId ? editId : newPlayId;
+
+      const existingProd = isEditMode && editId ? ClientDB.getProductionById(editId) : null;
       
       const newPlay = {
-        id: newPlayId,
+        id: targetId,
         title: form.title || 'Untitled Draft',
         synopsis: form.synopsis || 'No synopsis added yet.',
         genre: form.genre || 'Drama',
-        runtime: '120 mins',
+        runtime: existingProd?.runtime || '120 mins',
         venue: form.venue || 'No venue set',
         status: 'Draft' as const,
         posterUrl: form.posterUrl || '',
-        criticScore: null,
-        audienceScore: null,
-        totalReviews: 0,
+        criticScore: existingProd ? existingProd.criticScore : null,
+        audienceScore: existingProd ? existingProd.audienceScore : null,
+        totalReviews: existingProd ? existingProd.totalReviews : 0,
         galleryImages: form.posterUrl ? [form.posterUrl] : [],
         submitterEmail: user?.email || '',
         curationStatus: 'Approved' as const, // Drafts are pre-approved but private
@@ -274,7 +330,7 @@ export default function CreateProductionPage() {
       };
 
       ClientDB.saveProduction(newPlay);
-      setCreatedProductionId(newPlayId);
+      setCreatedProductionId(targetId);
       setPublished(true);
     } catch (err) {
       console.error('Failed to save draft:', err);
@@ -389,7 +445,9 @@ export default function CreateProductionPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex-1">
-            <h1 className="text-base font-serif font-bold text-white">Create Production</h1>
+            <h1 className="text-base font-serif font-bold text-white">
+              {isEditMode ? 'Edit Production' : 'Create Production'}
+            </h1>
             <p className="text-xs text-zinc-500">Step {step + 1} of {STEPS.length} — {STEPS[step]}</p>
           </div>
         </div>
@@ -912,6 +970,18 @@ export default function CreateProductionPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CreateProductionPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500 font-mono text-xs">
+        <span className="animate-pulse">Loading wizard...</span>
+      </div>
+    }>
+      <CreateProductionForm />
+    </Suspense>
   );
 }
 
