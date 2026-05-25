@@ -21,14 +21,23 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
 
   // Load dynamically from the ClientDB on mount
   useEffect(() => {
-    const fetched = ClientDB.getProductionById(resolvedParams.id);
-    if (fetched) {
-      setProduction(fetched);
-    } else {
-      const list = ClientDB.getProductions();
-      if (list.length > 0) {
-        setProduction(list[0]);
+    const loadData = () => {
+      const fetched = ClientDB.getProductionById(resolvedParams.id);
+      if (fetched) {
+        setProduction(fetched);
+      } else {
+        const list = ClientDB.getProductions();
+        if (list.length > 0) {
+          setProduction(list[0]);
+        }
       }
+    };
+
+    loadData();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('cc-db-synced', loadData);
+      return () => window.removeEventListener('cc-db-synced', loadData);
     }
   }, [resolvedParams.id]);
 

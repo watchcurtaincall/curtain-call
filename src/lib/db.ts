@@ -1587,9 +1587,7 @@ export const syncFromSupabase = async () => {
 
 // Auto-trigger background cloud sync pull in client context
 if (typeof window !== 'undefined') {
-  setTimeout(() => {
-    syncFromSupabase();
-  }, 1000);
+  syncFromSupabase();
 }
 
 // Robust, high-precision sorting utility to order plays and artists by date added descending (newest first)
