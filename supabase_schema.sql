@@ -164,4 +164,36 @@ ALTER TABLE newsletter_subscribers DISABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT TRUE;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS verification_code TEXT;
 
+-- ── 9. TICKETS TABLE ──
+CREATE TABLE IF NOT EXISTS tickets (
+    id TEXT PRIMARY KEY,
+    production_id TEXT NOT NULL REFERENCES productions(id) ON DELETE CASCADE,
+    production_title TEXT NOT NULL,
+    buyer_email TEXT NOT NULL,
+    tier TEXT NOT NULL,
+    price NUMERIC NOT NULL,
+    reference TEXT NOT NULL,
+    gate_pass TEXT NOT NULL,
+    date TEXT NOT NULL,
+    timestamp BIGINT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ── 10. WITHDRAWALS TABLE ──
+CREATE TABLE IF NOT EXISTS withdrawals (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL,
+    amount NUMERIC NOT NULL,
+    bank_name TEXT NOT NULL,
+    account_number TEXT NOT NULL,
+    account_name TEXT NOT NULL,
+    status TEXT DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Declined')),
+    decline_reason TEXT,
+    timestamp TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE tickets DISABLE ROW LEVEL SECURITY;
+ALTER TABLE withdrawals DISABLE ROW LEVEL SECURITY;
+
 
