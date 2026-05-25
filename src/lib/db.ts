@@ -918,13 +918,14 @@ export const ClientDB = {
       const updated = [...list, email.toLowerCase()];
       localStorage.setItem('curtain_approved_critic_emails', JSON.stringify(updated));
 
-      // Sync email whitelist
-      if (supabase) {
-        supabase.from('approved_critics').upsert({ email: email.toLowerCase() })
-          .then(({ error }) => {
-            if (error) console.error('[Supabase Sync] Whitelist save failed:', error);
-          });
-      }
+      // Sync email whitelist via secure backend API (bypassing browser RLS)
+      fetch('/api/approved-critics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.toLowerCase() })
+      }).catch(err => {
+        console.error('[ClientDB] Failed to sync approved critic email to server:', err);
+      });
     }
   },
 
@@ -941,13 +942,14 @@ export const ClientDB = {
     const updated = list.filter((e: string) => e.toLowerCase() !== email.toLowerCase());
     localStorage.setItem('curtain_approved_critic_emails', JSON.stringify(updated));
 
-    // Sync to Supabase
-    if (supabase) {
-      supabase.from('approved_critics').delete().eq('email', email.toLowerCase())
-        .then(({ error }) => {
-          if (error) console.error('[Supabase Sync] Whitelist delete failed:', error);
-        });
-    }
+    // Sync deletion via secure backend API (bypassing browser RLS)
+    fetch('/api/approved-critics', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.toLowerCase() })
+    }).catch(err => {
+      console.error('[ClientDB] Failed to remove approved critic email from server:', err);
+    });
   },
 
   // ── REVIEWS STORAGE & DYNAMIC SCORE COMPUTATION ──
@@ -1314,11 +1316,22 @@ export const syncFromSupabase = async () => {
       localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pending));
     }
 
-    // 6. Pull approved critic emails whitelist
-    const { data: whitelist } = await supabase.from('approved_critics').select('email').neq('email', 'cache_bust_' + Date.now() + '@example.com');
-    if (whitelist) {
-      const emails = whitelist.map(w => w.email.toLowerCase());
-      localStorage.setItem('curtain_approved_critic_emails', JSON.stringify(emails));
+    // 6. Pull approved critic emails whitelist via secure API route (bypassing browser RLS)
+    try {
+      const res = await fetch('/api/approved-critics');
+      if (res.ok) {
+        const emails = await res.json();
+        const defaultApproved = [
+          'critic@example.com',
+          'editor@example.com',
+          'verify@example.com',
+          'adaeze@example.com'
+        ];
+        const merged = Array.from(new Set([...defaultApproved, ...emails.map((e: string) => e.toLowerCase())]));
+        localStorage.setItem('curtain_approved_critic_emails', JSON.stringify(merged));
+      }
+    } catch (e) {
+      console.error('[Supabase Sync] Failed to fetch approved critics from API:', e);
     }
 
     // 7. Pull withdrawals
