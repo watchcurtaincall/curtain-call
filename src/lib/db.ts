@@ -268,6 +268,24 @@ const mapTicketFromDb = (row: any) => ({
 // ── BACKGROUND CLOUD REPLICATION ENGINE ──
 
 const syncToCloud = async (table: string, dbItem: any): Promise<void> => {
+  if (table === 'tickets' || table === 'withdrawals') {
+    try {
+      const res = await fetch(`/api/${table}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dbItem)
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error(`[API Sync] Upsert failed for table ${table}:`, errData.error || res.statusText);
+      }
+      return;
+    } catch (err) {
+      console.error(`[API Sync] Server error on ${table}:`, err);
+      return;
+    }
+  }
+
   if (!supabase) return;
   try {
     const { error } = await supabase.from(table).upsert(dbItem);
@@ -1419,7 +1437,12 @@ export const syncFromSupabase = async () => {
 
     // 7. Pull & Sync Withdrawals (Two-Way Self-Healing Sync)
     try {
-      const { data: remoteWithdrawals } = await supabase.from('withdrawals').select('*').neq('id', 'cache_bust_' + Date.now());
+      let remoteWithdrawals: any[] | null = null;
+      const res = await fetch('/api/withdrawals');
+      if (res.ok) {
+        remoteWithdrawals = await res.json();
+      }
+      
       if (remoteWithdrawals) {
         const localWithdrawals = JSON.parse(localStorage.getItem('curtain_withdrawals') || '[]');
         
@@ -1443,7 +1466,12 @@ export const syncFromSupabase = async () => {
 
     // 8. Pull & Sync Tickets (Two-Way Self-Healing Sync)
     try {
-      const { data: remoteTickets } = await supabase.from('tickets').select('*').neq('id', 'cache_bust_' + Date.now());
+      let remoteTickets: any[] | null = null;
+      const res = await fetch('/api/tickets');
+      if (res.ok) {
+        remoteTickets = await res.json();
+      }
+
       if (remoteTickets) {
         const mappedRemote = remoteTickets.map(mapTicketFromDb);
         const localTickets = JSON.parse(localStorage.getItem('curtain_tickets') || '[]').map(mapTicketFromDb);
