@@ -268,53 +268,34 @@ const mapTicketFromDb = (row: any) => ({
 // ── BACKGROUND CLOUD REPLICATION ENGINE ──
 
 const syncToCloud = async (table: string, dbItem: any): Promise<void> => {
-  if (table === 'tickets' || table === 'withdrawals') {
-    try {
-      const res = await fetch(`/api/${table}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dbItem)
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error(`[API Sync] Upsert failed for table ${table}:`, errData.error || res.statusText);
-      }
-      return;
-    } catch (err) {
-      console.error(`[API Sync] Server error on ${table}:`, err);
-      return;
-    }
-  }
-
-  if (!supabase) return;
   try {
-    const { error } = await supabase.from(table).upsert(dbItem);
-    if (error) {
-      console.error(`[Supabase Sync] Upsert failed for table ${table}:`, error);
-      // Self-Healing Schema Fallback: If column does not exist in remote schema, strip it and retry
-      if (error.code === 'PGRST204' && error.message && error.message.includes('schema cache')) {
-        const match = error.message.match(/Could not find the '([^']+)' column/);
-        if (match && match[1]) {
-          const colName = match[1];
-          console.warn(`[Supabase Sync Fallback] Stripping missing column '${colName}' and retrying upsert...`);
-          const stripped = { ...dbItem };
-          delete stripped[colName];
-          return await syncToCloud(table, stripped);
-        }
-      }
+    const res = await fetch('/api/sync-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table, dbItem })
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      console.error(`[API Sync] Upsert failed for table ${table}:`, errData.error || res.statusText);
     }
   } catch (err) {
-    console.error(`[Supabase Sync] Server error on ${table}:`, err);
+    console.error(`[API Sync] Server error on ${table}:`, err);
   }
 };
 
 const deleteFromCloud = async (table: string, id: string) => {
-  if (!supabase) return;
   try {
-    const { error } = await supabase.from(table).delete().eq('id', id);
-    if (error) console.error(`[Supabase Sync] Delete failed for table ${table}:`, error);
+    const res = await fetch('/api/sync-data', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table, id })
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      console.error(`[API Sync] Delete failed for table ${table}:`, errData.error || res.statusText);
+    }
   } catch (err) {
-    console.error(`[Supabase Sync] Delete server error on ${table}:`, err);
+    console.error(`[API Sync] Delete server error on ${table}:`, err);
   }
 };
 

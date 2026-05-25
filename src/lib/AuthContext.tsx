@@ -104,6 +104,27 @@ const sendOTP = async (email: string, name: string, code: string) => {
   }
 };
 
+const fetchVerificationStatusFromServer = async (email: string): Promise<boolean> => {
+  try {
+    const res = await fetch(`/api/sync-data?email=${encodeURIComponent(email.toLowerCase())}`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.userProfile) {
+        return data.userProfile.is_verified === true;
+      }
+    }
+  } catch (err) {
+    console.error('[AuthContext] Error fetching verification status:', err);
+  }
+  return false;
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<MockUser | null>(null);
 
@@ -136,12 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           let isAlreadyVerified = isWhitelisted;
           
           if (supabase && !isAlreadyVerified) {
-            const { data: prof } = await supabase.from('profiles').select('is_verified').eq('email', email.toLowerCase()).maybeSingle();
-            if (prof) {
-              isAlreadyVerified = prof.is_verified === true;
-            } else {
-              isAlreadyVerified = false;
-            }
+            isAlreadyVerified = await fetchVerificationStatusFromServer(email);
           }
 
           const loggedUser = {
@@ -174,12 +190,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           let isAlreadyVerified = isWhitelisted;
           
           if (supabase && !isAlreadyVerified) {
-            const { data: prof } = await supabase.from('profiles').select('is_verified').eq('email', email.toLowerCase()).maybeSingle();
-            if (prof) {
-              isAlreadyVerified = prof.is_verified === true;
-            } else {
-              isAlreadyVerified = false;
-            }
+            isAlreadyVerified = await fetchVerificationStatusFromServer(email);
           }
 
           const loggedUser = {
@@ -308,12 +319,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Fetch profile from database to get the local isVerified flag
     let isAlreadyVerified = loggedUser.isVerified === true;
     if (!isAlreadyVerified && supabase) {
-      try {
-        const { data: prof } = await supabase.from('profiles').select('is_verified').eq('email', cleanEmail).maybeSingle();
-        if (prof && prof.is_verified === true) {
-          isAlreadyVerified = true;
-        }
-      } catch (e) {}
+      isAlreadyVerified = await fetchVerificationStatusFromServer(cleanEmail);
     }
     
     // Fallback to local storage profiles if Supabase query did not resolve

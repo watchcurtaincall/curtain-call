@@ -37,7 +37,8 @@ export async function GET(request: Request) {
       ticketsRes,
       notificationsRes,
       subscribersRes,
-      profilesRes
+      profilesRes,
+      userProfileRes
     ] = await Promise.all([
       // 1. productions
       supabaseServer.from('productions').select('*'),
@@ -60,7 +61,9 @@ export async function GET(request: Request) {
       // 10. subscribers (only for admin)
       isAdmin ? supabaseServer.from('newsletter_subscribers').select('email, created_at') : Promise.resolve({ data: [] }),
       // 11. profiles (only for admin)
-      isAdmin ? supabaseServer.from('profiles').select('*') : Promise.resolve({ data: [] })
+      isAdmin ? supabaseServer.from('profiles').select('*') : Promise.resolve({ data: [] }),
+      // 12. user profile verification status check
+      email ? supabaseServer.from('profiles').select('is_verified').eq('email', email).maybeSingle() : Promise.resolve({ data: null })
     ]);
 
     // Handle and report errors on the server side
@@ -92,7 +95,8 @@ export async function GET(request: Request) {
         isVerified: p.is_verified ?? true,
         verificationCode: p.verification_code || undefined,
         createdAt: p.created_at
-      })) : []
+      })) : [],
+      userProfile: userProfileRes?.data || null
     }, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
@@ -102,7 +106,87 @@ export async function GET(request: Request) {
     });
 
   } catch (err: any) {
-    console.error('[API Sync Data] Exception:', err);
+    console.error('[API Sync Data] GET Exception:', err);
+    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+// POST: Securely upsert any database item using Supabase Service Role client, bypassing client RLS
+export async function POST(request: Request) {
+  if (!supabaseServer) {
+    return NextResponse.json({ error: 'Supabase service client not configured' }, { status: 500 });
+  }
+
+  try {
+    const body = await request.json();
+    const { table, dbItem } = body;
+
+    if (!table || !dbItem) {
+      return NextResponse.json({ error: 'Missing table or dbItem parameter' }, { status: 400 });
+    }
+
+    const { data, error } = await supabaseServer
+      .from(table)
+      .upsert(dbItem)
+      .select();
+
+    if (error) {
+      console.error(`[API Sync Data] Upsert error on table ${table}:`, error);
+
+      // Self-Healing Schema Cache Fallback: If column doesn't exist, strip and retry
+      if (error.code === 'PGRST204' && error.message && error.message.includes('schema cache')) {
+        const match = error.message.match(/Could not find the '([^']+)' column/);
+        if (match && match[1]) {
+          const colName = match[1];
+          console.warn(`[API Sync Data Fallback] Stripping missing column '${colName}' and retrying upsert...`);
+          const stripped = { ...dbItem };
+          delete stripped[colName];
+          
+          const retryRes = await supabaseServer.from(table).upsert(stripped).select();
+          if (retryRes.error) {
+            return NextResponse.json({ error: retryRes.error.message }, { status: 500 });
+          }
+          return NextResponse.json({ success: true, data: retryRes.data?.[0] });
+        }
+      }
+
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data: data?.[0] });
+  } catch (err: any) {
+    console.error('[API Sync Data] POST Exception:', err);
+    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+// DELETE: Securely delete a record using Supabase Service Role client, bypassing client RLS
+export async function DELETE(request: Request) {
+  if (!supabaseServer) {
+    return NextResponse.json({ error: 'Supabase service client not configured' }, { status: 500 });
+  }
+
+  try {
+    const body = await request.json();
+    const { table, id } = body;
+
+    if (!table || !id) {
+      return NextResponse.json({ error: 'Missing table or id parameter' }, { status: 400 });
+    }
+
+    const { error } = await supabaseServer
+      .from(table)
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error(`[API Sync Data] Delete error on table ${table}:`, error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error('[API Sync Data] DELETE Exception:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }

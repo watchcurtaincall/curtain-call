@@ -103,6 +103,10 @@ export function VerificationGuard({ children }: { children: React.ReactNode }) {
 
             <p className="text-sm text-zinc-300 mb-6 leading-relaxed">
               We've dispatched a **4-digit confirmation code** to your registered email address. Please input the code below to unlock the platform.
+              <br />
+              <span className="text-xs text-zinc-500 block mt-2">
+                ✉️ Don't see it? Please **check your spam or junk folder**.
+              </span>
             </p>
 
             {errorMsg && (

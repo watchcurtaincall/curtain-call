@@ -295,6 +295,10 @@ export default function ProfilePage() {
                 <h2 className="font-serif font-bold text-white text-lg">Confirm your email address</h2>
                 <p className="text-xs text-zinc-400 mt-2 px-2 leading-relaxed">
                   We sent a 4-digit verification code to <span className="text-zinc-200 font-bold font-mono">{user.email}</span>. Please enter it below to unlock the platform:
+                  <br />
+                  <span className="text-[11px] text-zinc-500 block mt-2">
+                    ✉️ Don't see the email? Please **check your spam or junk folder**.
+                  </span>
                 </p>
               </div>
 
