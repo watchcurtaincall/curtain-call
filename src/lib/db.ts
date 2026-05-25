@@ -689,6 +689,15 @@ export const ClientDB = {
 
     // Sync to cloud
     syncToCloud('artists', mapArtistToDb(submission));
+
+    // Trigger in-app notification
+    if (artist.submitterEmail) {
+      this.addNotification(artist.submitterEmail, {
+        type: 'system',
+        title: 'Artist Profile Submitted! 🎭',
+        body: `Your submission for "${artist.name}" was received and is pending curatorial review.`
+      });
+    }
   },
 
   approveArtist(id: string): void {
@@ -755,6 +764,15 @@ export const ClientDB = {
 
     // Sync
     syncToCloud('productions', mapProductionToDb(submission));
+
+    // Trigger in-app notification
+    if (play.submitterEmail) {
+      this.addNotification(play.submitterEmail, {
+        type: 'system',
+        title: 'Playbill Listing Submitted! 🎭',
+        body: `Your stage playbill "${play.title}" has been successfully queued for curatorial review.`
+      });
+    }
   },
 
   approvePlay(id: string): void {
@@ -822,6 +840,15 @@ export const ClientDB = {
 
     // Sync
     syncToCloud('articles', mapArticleToDb(submission));
+
+    // Trigger in-app notification
+    if (article.submitterEmail) {
+      this.addNotification(article.submitterEmail, {
+        type: 'system',
+        title: 'Chronicle Article Drafted! ✍️',
+        body: `Your draft "${article.title}" has been submitted and queued for editorial board review.`
+      });
+    }
   },
 
   approveArticle(id: string): void {
@@ -903,6 +930,15 @@ export const ClientDB = {
 
     // Sync to cloud
     syncToCloud('critic_applications', mapCriticAppToDb(newApp));
+
+    // Trigger in-app notification
+    if (app.email) {
+      this.addNotification(app.email, {
+        type: 'critic',
+        title: 'Application Received! 🛡️',
+        body: 'Your Verified Critic application has been submitted and is pending curatorial review.'
+      });
+    }
   },
 
   approveCriticApplication(id: string): void {
@@ -1111,6 +1147,15 @@ export const ClientDB = {
 
     // Sync to cloud withdrawals table
     syncToCloud('withdrawals', req);
+
+    // Trigger in-app notification
+    if (req.email) {
+      this.addNotification(req.email, {
+        type: 'system',
+        title: 'Withdrawal Requested 💸',
+        body: `Your withdrawal request of ₦${req.amount.toLocaleString()} to ${req.bankName} is pending admin approval.`
+      });
+    }
   },
 
   approveWithdrawal(id: string): void {
@@ -1557,13 +1602,40 @@ export const syncFromSupabase = async () => {
         localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pendingCritics));
       }
     } else {
-      // Security/Privacy: clear signups/subscribers and pending queues for non-admin users!
+      // Security/Privacy: Keep only this user's own submissions in their browser's localStorage!
+      // This preserves their tracker queues while preventing other users' data from leaking.
+      if (email) {
+        const cleanEmail = email.toLowerCase();
+        
+        // 1. Plays
+        const localPendingPlays = JSON.parse(localStorage.getItem(PENDING_PLAYS_KEY) || '[]');
+        const ownPendingPlays = localPendingPlays.filter((p: any) => p.submitterEmail && p.submitterEmail.toLowerCase() === cleanEmail);
+        localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(ownPendingPlays));
+
+        // 2. Artists
+        const localPendingArtists = JSON.parse(localStorage.getItem(PENDING_ARTISTS_KEY) || '[]');
+        const ownPendingArtists = localPendingArtists.filter((a: any) => a.submitterEmail && a.submitterEmail.toLowerCase() === cleanEmail);
+        localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(ownPendingArtists));
+
+        // 3. Articles
+        const localPendingArticles = JSON.parse(localStorage.getItem(PENDING_ARTICLES_KEY) || '[]');
+        const ownPendingArticles = localPendingArticles.filter((a: any) => a.submitterEmail && a.submitterEmail.toLowerCase() === cleanEmail);
+        localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(ownPendingArticles));
+
+        // 4. Critics
+        const localPendingCritics = JSON.parse(localStorage.getItem(PENDING_CRITICS_KEY) || '[]');
+        const ownPendingCritics = localPendingCritics.filter((c: any) => c.email && c.email.toLowerCase() === cleanEmail);
+        localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(ownPendingCritics));
+      } else {
+        localStorage.removeItem(PENDING_ARTISTS_KEY);
+        localStorage.removeItem(PENDING_PLAYS_KEY);
+        localStorage.removeItem(PENDING_ARTICLES_KEY);
+        localStorage.removeItem(PENDING_CRITICS_KEY);
+      }
+
+      // Security/Privacy: completely clear signups/subscribers lists for non-admin users!
       localStorage.removeItem('curtain_user_profiles');
       localStorage.removeItem('curtain_newsletter_subscribers');
-      localStorage.removeItem(PENDING_ARTISTS_KEY);
-      localStorage.removeItem(PENDING_PLAYS_KEY);
-      localStorage.removeItem(PENDING_ARTICLES_KEY);
-      localStorage.removeItem(PENDING_CRITICS_KEY);
     }
 
     localStorage.setItem('cc_last_sync_time', Date.now().toString());
