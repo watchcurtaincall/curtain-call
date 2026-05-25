@@ -113,7 +113,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem('cc_authed');
     const savedUser = localStorage.getItem('cc_authed_user');
     if (saved === 'true' && savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        const parsed = JSON.parse(savedUser);
+        const defaultVerified = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'];
+        if (parsed && defaultVerified.includes(parsed.email.toLowerCase()) && !parsed.isVerified) {
+          parsed.isVerified = true;
+          localStorage.setItem('cc_authed_user', JSON.stringify(parsed));
+        }
+        setUser(parsed);
+      } catch (e) {
+        setUser(JSON.parse(savedUser));
+      }
     }
 
     if (supabase) {
@@ -216,7 +226,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         totalBadges: 14,
         handle: '@watchcurtaincall',
         bio: 'Curtain Call Administrative Curation Board.',
-        location: 'Lagos, Nigeria'
+        location: 'Lagos, Nigeria',
+        isVerified: true
       };
       ClientDB.addApprovedCriticEmail('watchcurtaincall@gmail.com');
       setUser(loggedUser);
