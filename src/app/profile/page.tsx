@@ -235,6 +235,10 @@ export default function ProfilePage() {
         const ok = await verifyCode(otpCode.trim());
         if (ok) {
           setOtpSuccess(true);
+          
+          // Trigger immediate database sync to pull newly verified critic whitelist!
+          syncFromSupabase();
+          
           setTimeout(() => {
             setSyncCount(prev => prev + 1);
           }, 1500);
