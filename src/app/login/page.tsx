@@ -42,7 +42,11 @@ export default function LoginPage() {
       await login(enteredEmail, enteredPassword);
       router.push('/profile');
     } catch (err: any) {
-      setErrorMsg(err.message || 'Invalid email or password.');
+      let msg = err.message || 'Invalid email or password.';
+      if (msg.toLowerCase().includes('confirm')) {
+        msg = 'Your email has not been confirmed yet. Please check your inbox for a verification link, or log into your Supabase Dashboard -> Authentication -> Providers -> Email, and toggle "Confirm email" to OFF. This disables email confirmations completely so you can log in instantly!';
+      }
+      setErrorMsg(msg);
       setLoading(false);
     }
   };
