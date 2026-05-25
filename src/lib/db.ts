@@ -870,6 +870,37 @@ export const ClientDB = {
       const filtered = pending.filter(a => a.id !== id);
       localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(filtered));
 
+      // 1. Add in-app notification
+      this.addNotification(app.email, {
+        type: 'critic',
+        title: 'Verified Critic Approved! 🎭',
+        body: 'Congratulations! Your Verified Critic status has been approved. You can now post official ratings.'
+      });
+
+      // 2. Dispatch congratulatory email
+      const welcomeHtml = `
+        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <span style="font-size: 24px; font-weight: bold; color: #ffffff; font-family: Georgia, serif;">Curtain Call Curation</span>
+            <div style="height: 2px; width: 60px; background-color: #dc2626; margin: 15px auto 0;"></div>
+          </div>
+          <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; font-family: Georgia, serif; margin-bottom: 15px;">Congratulations, ${app.name}!</h2>
+          <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
+            Your application to become a **Verified Critic** has been approved by the Curtain Call curation board!
+          </p>
+          <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 25px;">
+            <p style="font-size: 13px; color: #f4f4f5; font-weight: bold; margin: 0 0 5px;">Verified Email Account:</p>
+            <code style="font-size: 13px; color: #22c55e; font-family: monospace;">${app.email}</code>
+          </div>
+          <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center;">
+            You can now post official professional scores and reviews across the plays archive.
+          </p>
+        </div>
+      `;
+      this.sendEmail(app.email, 'Curtain Call: Verified Critic Approved! 🎭', welcomeHtml).catch(err => {
+        console.error('[Sync] Failed to send critic approval email:', err);
+      });
+
       // Sync approved app status to cloud
       syncToCloud('critic_applications', mapCriticAppToDb(approvedApp));
     }
@@ -884,6 +915,30 @@ export const ClientDB = {
       this.saveDeclinedSubmission(declined);
       const filtered = pending.filter(a => a.id !== id);
       localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(filtered));
+
+      // 1. Add in-app notification
+      this.addNotification(app.email, {
+        type: 'system',
+        title: 'Critic Application Status 🎭',
+        body: 'We have reviewed your application and are unable to verify your critic status at this time.'
+      });
+
+      // 2. Dispatch email rejection
+      const rejectionHtml = `
+        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <span style="font-size: 24px; font-weight: bold; color: #ffffff; font-family: Georgia, serif;">Curtain Call Curation</span>
+            <div style="height: 2px; width: 60px; background-color: #dc2626; margin: 15px auto 0;"></div>
+          </div>
+          <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; font-family: Georgia, serif; margin-bottom: 15px;">Hello, ${app.name}</h2>
+          <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
+            Thank you for applying to be a Verified Critic. After reviewing your application, we are unable to approve your critic status at this time.
+          </p>
+        </div>
+      `;
+      this.sendEmail(app.email, 'Curtain Call: Critic Application Status 🎭', rejectionHtml).catch(err => {
+        console.error('[Sync] Failed to send critic rejection email:', err);
+      });
 
       // Sync declined critic app status
       syncToCloud('critic_applications', mapCriticAppToDb(declined));

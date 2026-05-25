@@ -121,6 +121,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           const email = session.user.email || '';
           const name = session.user.user_metadata?.full_name || email.split('@')[0];
+          const isEmailConfirmed = !!session.user.email_confirmed_at;
+          
+          const profilesList = ClientDB.getSignups();
+          const existingProfile = profilesList.find((p: any) => p.email.toLowerCase() === email.toLowerCase());
+          const isAlreadyVerified = isEmailConfirmed === true || (existingProfile && existingProfile.isVerified === true) || ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
+
           const loggedUser = {
             name,
             email,
@@ -133,7 +139,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             totalBadges: 14,
             handle: deriveHandle(name, email),
             bio: '',
-            location: ''
+            location: '',
+            isVerified: isAlreadyVerified
           };
           setUser(loggedUser);
           localStorage.setItem('cc_authed', 'true');
@@ -145,6 +152,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           const email = session.user.email || '';
           const name = session.user.user_metadata?.full_name || email.split('@')[0];
+          const isEmailConfirmed = !!session.user.email_confirmed_at;
+          
+          const profilesList = ClientDB.getSignups();
+          const existingProfile = profilesList.find((p: any) => p.email.toLowerCase() === email.toLowerCase());
+          const isAlreadyVerified = isEmailConfirmed === true || (existingProfile && existingProfile.isVerified === true) || ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
+
           const loggedUser = {
             name,
             email,
@@ -157,7 +170,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             totalBadges: 14,
             handle: deriveHandle(name, email),
             bio: '',
-            location: ''
+            location: '',
+            isVerified: isAlreadyVerified
           };
           setUser(loggedUser);
           localStorage.setItem('cc_authed', 'true');
