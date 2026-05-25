@@ -72,10 +72,11 @@ export default function AdminDashboardPage() {
 
   // Manage tab local states
   const [manageSearch, setManageSearch] = useState('');
-  const [manageSubTab, setManageSubTab] = useState<'people' | 'plays' | 'critics'>('people');
+  const [manageSubTab, setManageSubTab] = useState<'people' | 'plays' | 'critics' | 'blogs'>('people');
   const [verifiedCritics, setVerifiedCritics] = useState<string[]>([]);
   const [editingArtist, setEditingArtist] = useState<Artist | null>(null);
   const [editingPlay, setEditingPlay] = useState<Production | null>(null);
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [editMemberName, setEditMemberName] = useState('');
   const [editMemberRole, setEditMemberRole] = useState('');
   const [editMemberCategory, setEditMemberCategory] = useState<'Creative' | 'Cast' | 'Technical'>('Cast');
@@ -774,6 +775,35 @@ export default function AdminDashboardPage() {
     showToast(`Successfully updated play bill details for "${editingPlay.title}"!`);
     setEditingPlay(null);
     setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleSaveEditArticle = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingArticle) return;
+    ClientDB.saveArticle(editingArticle);
+    showToast(`Successfully updated chronicle "${editingArticle.title}"!`);
+    setEditingArticle(null);
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleDeleteArticle = (id: string, title: string) => {
+    if (confirm(`Are you sure you want to permanently delete the chronicle "${title}"? This cannot be undone.`)) {
+      ClientDB.deleteArticle(id);
+      showToast(`Permanently deleted chronicle "${title}".`);
+      setRefreshTrigger(prev => prev + 1);
+    }
+  };
+
+  const handleEditArticleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingArticle) return;
+    try {
+      const compressed = await ClientDB.compressImage(file, 800, 0.6);
+      setEditingArticle({ ...editingArticle, imageUrl: compressed });
+      showToast('New cover image loaded successfully!');
+    } catch (err) {
+      showToast('Failed to compress cover image', 'error');
+    }
   };
 
   // Upload a file and compress it to base64, then update the artist headshot
@@ -2279,6 +2309,14 @@ This file was retrieved from the Curtain Call Curation Vault.
                 >
                   <Award className="h-3.5 w-3.5" /> Critics ({verifiedCritics.length})
                 </button>
+                <button
+                  onClick={() => setManageSubTab('blogs')}
+                  className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 ${
+                    manageSubTab === 'blogs' ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <BookOpen className="h-3.5 w-3.5" /> Blogs ({ClientDB.getArticles().length})
+                </button>
               </div>
 
               {/* Search Bar */}
@@ -2478,6 +2516,68 @@ This file was retrieved from the Curtain Call Curation Vault.
                           >
                             <Skull className="h-3.5 w-3.5" /> Revoke Status
                           </button>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {manageSubTab === 'blogs' && (
+              <div className="grid grid-cols-1 gap-4 animate-fade-up">
+                {(() => {
+                  const filtered = ClientDB.getArticles().filter(a => 
+                    a.title.toLowerCase().includes(manageSearch.toLowerCase()) ||
+                    a.author.toLowerCase().includes(manageSearch.toLowerCase())
+                  );
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-12 text-center text-zinc-500 font-mono text-xs">
+                        No matching chronicle articles/blogs found.
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {filtered.map(article => (
+                        <div key={article.id} className="bg-zinc-900 border border-white/5 rounded-3xl p-5 flex gap-4 items-start shadow-xl relative overflow-hidden group">
+                          <div className="relative w-16 h-16 rounded-2xl overflow-hidden shrink-0 border border-white/10 bg-zinc-950 flex items-center justify-center">
+                            {article.imageUrl ? (
+                              <img
+                                src={article.imageUrl}
+                                alt={article.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <BookOpen className="h-6 w-6 text-zinc-600" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-serif font-bold text-white truncate text-base">{article.title}</h3>
+                            <p className="text-xs text-red-400 font-bold uppercase tracking-widest mt-0.5">{article.author}</p>
+                            <p className="text-[10px] text-zinc-500 font-mono mt-1">Date: {article.date || 'Today'}</p>
+                            <p className="text-[11px] text-zinc-400 line-clamp-2 mt-2 leading-relaxed">{article.excerpt || 'No excerpt provided.'}</p>
+                            
+                            <div className="flex items-center gap-2 mt-4 flex-wrap">
+                              <button
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingArticle(article); }}
+                                className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
+                              >
+                                <Edit className="h-3 w-3" /> Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteArticle(article.id, article.title); }}
+                                className="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 hover:border-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
+                              >
+                                <Trash2 className="h-3 w-3" /> Delete
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -2977,6 +3077,122 @@ This file was retrieved from the Curtain Call Curation Vault.
                   type="button"
                   onClick={() => setEditingPlay(null)}
                   className="bg-zinc-950 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* EDIT ARTICLE MODAL */}
+        {editingArticle && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <form
+              onSubmit={handleSaveEditArticle}
+              className="relative w-full max-w-xl bg-zinc-900 border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl max-h-[90vh] overflow-y-auto flex flex-col gap-5 animate-scale-up"
+            >
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-red-500" />
+                  <h3 className="font-serif font-bold text-lg text-white">Edit Chronicle Article</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditingArticle(null)}
+                  className="text-zinc-500 hover:text-white p-1"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Chronicle Title</label>
+                <input
+                  type="text"
+                  required
+                  value={editingArticle.title}
+                  onChange={e => setEditingArticle({ ...editingArticle, title: e.target.value })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Author</label>
+                <input
+                  type="text"
+                  required
+                  value={editingArticle.author}
+                  onChange={e => setEditingArticle({ ...editingArticle, author: e.target.value })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Excerpt / Summary</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={editingArticle.excerpt}
+                  onChange={e => setEditingArticle({ ...editingArticle, excerpt: e.target.value })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-red-500 transition-colors resize-none placeholder:text-zinc-600"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Full Markdown Content</label>
+                <textarea
+                  required
+                  rows={6}
+                  value={editingArticle.content || ''}
+                  onChange={e => setEditingArticle({ ...editingArticle, content: e.target.value })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-red-500 transition-colors resize-y placeholder:text-zinc-600 font-mono"
+                />
+              </div>
+
+              {/* Cover Image Block */}
+              <div className="bg-zinc-950 border border-white/5 rounded-2xl p-4 flex gap-4 items-center">
+                <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-white/10 bg-zinc-900 flex items-center justify-center">
+                  {editingArticle.imageUrl ? (
+                    <img src={editingArticle.imageUrl} alt="preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <BookOpen className="h-6 w-6 text-zinc-600" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider">Dossier Cover Image</p>
+                  <div className="flex gap-2 mt-2">
+                    <label className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer transition-all">
+                      <ImagePlus className="h-3 w-3" /> Upload File
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleEditArticleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Or paste cover URL..."
+                      value={(editingArticle.imageUrl || '').startsWith('data:') ? '' : (editingArticle.imageUrl || '')}
+                      onChange={e => setEditingArticle({ ...editingArticle, imageUrl: e.target.value })}
+                      className="flex-1 bg-zinc-900 border border-white/5 rounded-lg px-2.5 py-1 text-[10px] text-white focus:outline-none focus:border-red-500 transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end border-t border-white/5 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setEditingArticle(null)}
+                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
                 >
                   Cancel
                 </button>

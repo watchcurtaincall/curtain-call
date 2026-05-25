@@ -666,11 +666,28 @@ export const ClientDB = {
   saveArticle(article: Article): void {
     if (typeof window === 'undefined') return;
     const articles = this.getArticles();
-    const updated = [article, ...articles];
+    const index = articles.findIndex(a => a.id === article.id);
+    let updated;
+    if (index !== -1) {
+      updated = [...articles];
+      updated[index] = article;
+    } else {
+      updated = [article, ...articles];
+    }
     localStorage.setItem(ARTICLES_KEY, JSON.stringify(updated));
 
     // Sync to cloud
     syncToCloud('articles', mapArticleToDb(article));
+  },
+
+  deleteArticle(id: string): void {
+    if (typeof window === 'undefined') return;
+    const articles = this.getArticles();
+    const updated = articles.filter(a => a.id !== id);
+    localStorage.setItem(ARTICLES_KEY, JSON.stringify(updated));
+
+    // Sync delete
+    deleteFromCloud('articles', id);
   },
 
   // ── CMS PENDING SUBMISSIONS QUEUE ──
