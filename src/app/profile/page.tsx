@@ -12,7 +12,7 @@ import {
   Star, Bookmark, PenLine, Award, CheckCircle, Circle,
   LogOut, Settings, Bell, ChevronRight, Lock,
   PenSquare, Target, Ticket, Mic2, Drama,
-  FileText, Trophy, Library, Zap, Users, Crown, Sparkles, Shield,
+  FileText, Trophy, Library, Zap, Users, Crown, Sparkles, Shield, ShieldCheck,
   Plus, Wallet, TrendingUp, ArrowUpRight, BookOpen, AlertCircle, Trash2
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/producer/WithdrawModal';
@@ -309,9 +309,15 @@ export default function ProfilePage() {
                 <p className="text-zinc-500 text-sm mt-0.5">Member since {user.joinDate}</p>
                 {user.bio && <p className="text-zinc-400 text-xs mt-1.5 max-w-sm italic">"{user.bio}"</p>}
                 <div className="flex items-center gap-1.5 mt-2">
-                  <span className="text-[10px] bg-red-600/20 text-red-400 border border-red-600/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
-                    Audience
-                  </span>
+                  {ClientDB.isApprovedCritic(user.email) ? (
+                    <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-semibold flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3" /> Verified Critic
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-red-600/20 text-red-400 border border-red-600/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                      Audience
+                    </span>
+                  )}
                   {userSubmissions.length > 0 && (
                     <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold flex items-center gap-1">
                       Contributor

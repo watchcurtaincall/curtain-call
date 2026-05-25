@@ -221,6 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(loggedUser);
     localStorage.setItem('cc_authed', 'true');
     localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
+    ClientDB.saveProfile(loggedUser);
   };
 
   const signUp = async (email: string, password?: string, name?: string) => {
@@ -262,6 +263,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(loggedUser);
     localStorage.setItem('cc_authed', 'true');
     localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
+    ClientDB.saveProfile(loggedUser);
 
     // Send Welcome Email ONLY on new signups!
     const welcomeHtml = `

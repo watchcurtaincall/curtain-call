@@ -355,12 +355,20 @@ export const ClientDB = {
     if (typeof window === 'undefined') return { success: false, message: 'Server-side call' };
     const key = 'curtain_newsletter_subscribers';
     const current = JSON.parse(localStorage.getItem(key) || '[]');
-    if (current.includes(email)) {
+    if (current.includes(email.toLowerCase())) {
       return { success: true, message: 'Already subscribed' };
     }
     
-    current.push(email);
+    current.push(email.toLowerCase());
     localStorage.setItem(key, JSON.stringify(current));
+
+    // Sync to Supabase
+    if (supabase) {
+      supabase.from('newsletter_subscribers').upsert({ email: email.toLowerCase() })
+        .then(({ error }) => {
+          if (error) console.error('[Supabase Sync] Newsletter save failed:', error);
+        });
+    }
 
     // Send Welcome Email
     const subject = "Welcome to Curtain Call | The Front Row Seat";
@@ -401,9 +409,71 @@ export const ClientDB = {
     return { success: true, message: 'Subscribed successfully' };
   },
 
+  unsubscribeNewsletter(email: string): void {
+    if (typeof window === 'undefined') return;
+    const key = 'curtain_newsletter_subscribers';
+    const current = JSON.parse(localStorage.getItem(key) || '[]');
+    const updated = current.filter((e: string) => e.toLowerCase() !== email.toLowerCase());
+    localStorage.setItem(key, JSON.stringify(updated));
+
+    if (supabase) {
+      supabase.from('newsletter_subscribers').delete().eq('email', email.toLowerCase())
+        .then(({ error }) => {
+          if (error) console.error('[Supabase Sync] Newsletter delete failed:', error);
+        });
+    }
+  },
+
   getNewsletterSubscribers(): string[] {
     if (typeof window === 'undefined') return [];
     return JSON.parse(localStorage.getItem('curtain_newsletter_subscribers') || '[]');
+  },
+
+  // ── USER PROFILES / SIGNUPS ENGINE ──
+  saveProfile(profile: any): void {
+    if (typeof window === 'undefined') return;
+    const key = 'curtain_user_profiles';
+    const current = JSON.parse(localStorage.getItem(key) || '[]');
+    const exists = current.find((p: any) => p.email.toLowerCase() === profile.email.toLowerCase());
+    let updated = [...current];
+    if (exists) {
+      updated = current.map((p: any) => p.email.toLowerCase() === profile.email.toLowerCase() ? { ...p, ...profile } : p);
+    } else {
+      updated.push(profile);
+    }
+    localStorage.setItem(key, JSON.stringify(updated));
+
+    if (supabase) {
+      supabase.from('profiles').upsert({
+        email: profile.email.toLowerCase(),
+        name: profile.name,
+        handle: profile.handle || null,
+        location: profile.location || null,
+        join_date: profile.joinDate || 'May 2026'
+      }).then(({ error }) => {
+        if (error) console.error('[Supabase Sync] Profile save failed:', error);
+      });
+    }
+  },
+
+  getSignups(): any[] {
+    if (typeof window === 'undefined') return [];
+    return JSON.parse(localStorage.getItem('curtain_user_profiles') || '[]');
+  },
+
+  deleteSignup(email: string): void {
+    if (typeof window === 'undefined') return;
+    const key = 'curtain_user_profiles';
+    const current = JSON.parse(localStorage.getItem(key) || '[]');
+    const updated = current.filter((p: any) => p.email.toLowerCase() !== email.toLowerCase());
+    localStorage.setItem(key, JSON.stringify(updated));
+
+    if (supabase) {
+      supabase.from('profiles').delete().eq('email', email.toLowerCase())
+        .then(({ error }) => {
+          if (error) console.error('[Supabase Sync] Profile delete failed:', error);
+        });
+    }
   },
 
   // ── ARTISTS DATABASE ──
@@ -1252,6 +1322,34 @@ export const syncFromSupabase = async () => {
       const { data: notifications } = await supabase.from('notifications').select('*').neq('id', 'cache_bust_' + Date.now());
       if (notifications && notifications.length > 0) {
         localStorage.setItem('curtain_notifications', JSON.stringify(notifications));
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // 10. Pull profiles
+    try {
+      const { data: profiles } = await supabase.from('profiles').select('*');
+      if (profiles && profiles.length > 0) {
+        const mapped = profiles.map(p => ({
+          name: p.name,
+          email: p.email,
+          handle: p.handle,
+          location: p.location,
+          joinDate: p.join_date || 'May 2026'
+        }));
+        localStorage.setItem('curtain_user_profiles', JSON.stringify(mapped));
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // 11. Pull newsletter subscribers
+    try {
+      const { data: subscribers } = await supabase.from('newsletter_subscribers').select('*');
+      if (subscribers && subscribers.length > 0) {
+        const emails = subscribers.map(s => s.email.toLowerCase());
+        localStorage.setItem('curtain_newsletter_subscribers', JSON.stringify(emails));
       }
     } catch (e) {
       // ignore

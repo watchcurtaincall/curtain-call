@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { ClientDB, syncFromSupabase } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
-import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote } from 'lucide-react';
+import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'settings' | 'withdrawals';
+type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'settings' | 'withdrawals' | 'subscribers';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
@@ -18,6 +18,28 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('queue');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const exportToCSV = (data: any[], filename: string, headers: string[]) => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += headers.join(",") + "\n";
+    
+    data.forEach(row => {
+      const line = headers.map(header => {
+        const val = row[header] || '';
+        return `"${String(val).replace(/"/g, '""')}"`;
+      }).join(",");
+      csvContent += line + "\n";
+    });
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(`Exported ${filename} successfully!`);
+  };
   
   // Custom Rejection Reason and Email Logs States
   const [declineItem, setDeclineItem] = useState<{ id: string; name: string; type: 'artist' | 'play' | 'article' | 'critic' | 'withdrawal'; email: string } | null>(null);
@@ -56,6 +78,8 @@ export default function AdminDashboardPage() {
   const [pendingPlays, setPendingPlays] = useState<Production[]>([]);
   const [pendingArticles, setPendingArticles] = useState<Article[]>([]);
   const [pendingCritics, setPendingCritics] = useState<any[]>([]);
+  const [subscribers, setSubscribers] = useState<string[]>([]);
+  const [signups, setSignups] = useState<any[]>([]);
 
   // Blog publishing state
   const [blogForm, setBlogForm] = useState({
@@ -112,6 +136,8 @@ export default function AdminDashboardPage() {
     setPendingArticles(ClientDB.getPendingArticles());
     setPendingCritics(ClientDB.getPendingCritics());
     setWithdrawals(ClientDB.getWithdrawals());
+    setSubscribers(ClientDB.getNewsletterSubscribers());
+    setSignups(ClientDB.getSignups());
     if (typeof window !== 'undefined') {
       setEmailLogs(ClientDB.getEmailLogs());
     }
@@ -894,6 +920,19 @@ export default function AdminDashboardPage() {
             }`}
           >
             <Globe className="h-4 w-4" /> Domain & Emails
+          </button>
+          <button
+            onClick={() => setActiveTab('subscribers')}
+            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'subscribers' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <Users className="h-4 w-4" /> Subscribers & Signups
+            {(subscribers.length > 0 || signups.length > 0) && (
+              <span className="text-[9px] font-mono bg-zinc-950 text-red-400 px-2 py-0.5 rounded-full border border-red-500/10">
+                {subscribers.length + signups.length}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -2792,6 +2831,142 @@ export default function AdminDashboardPage() {
                   </table>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ── SUBSCRIBERS & SIGNUPS PANEL ────────────────────────────── */}
+        {activeTab === 'subscribers' && (
+          <div className="flex flex-col gap-8 animate-fade-up">
+            <div className="grid md:grid-cols-2 gap-8">
+              
+              {/* NEWSLETTER SUBSCRIBERS */}
+              <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
+                
+                <div className="flex items-center justify-between border-b border-white/5 pb-5 mb-6 shrink-0">
+                  <div>
+                    <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+                      <Mail className="h-5 w-5 text-red-500" /> Newsletter Subscribers ({subscribers.length})
+                    </h2>
+                    <p className="text-zinc-500 text-xs mt-1">Weekly theatre chronicle circular whitelist.</p>
+                  </div>
+                  {subscribers.length > 0 && (
+                    <button
+                      onClick={() => {
+                        const csvData = subscribers.map(email => ({ email }));
+                        exportToCSV(csvData, 'newsletter_subscribers.csv', ['email']);
+                      }}
+                      className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Export
+                    </button>
+                  )}
+                </div>
+
+                {subscribers.length === 0 ? (
+                  <div className="bg-zinc-950 border border-white/5 rounded-3xl p-12 text-center text-zinc-500 font-mono text-xs flex-1 flex items-center justify-center min-h-[300px]">
+                    No newsletter subscriptions found.
+                  </div>
+                ) : (
+                  <div className="overflow-y-auto max-h-[500px] [scrollbar-width:none] flex-1">
+                    <div className="flex flex-col gap-2.5">
+                      {subscribers.map((email, idx) => (
+                        <div key={idx} className="bg-zinc-950/50 border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <span className="text-[10px] font-mono text-zinc-500 block uppercase tracking-wider">Subscriber #{idx + 1}</span>
+                            <span className="text-white font-mono text-sm block truncate mt-0.5">{email}</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Remove ${email} from newsletter list?`)) {
+                                ClientDB.unsubscribeNewsletter(email);
+                                setSubscribers(ClientDB.getNewsletterSubscribers());
+                                showToast(`Unsubscribed ${email} successfully!`, 'error');
+                              }
+                            }}
+                            className="text-zinc-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-xl transition-all shrink-0"
+                            title="Unsubscribe"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* USER SIGNUPS */}
+              <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
+                
+                <div className="flex items-center justify-between border-b border-white/5 pb-5 mb-6 shrink-0">
+                  <div>
+                    <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+                      <User className="h-5 w-5 text-red-500" /> Platform Signups ({signups.length})
+                    </h2>
+                    <p className="text-zinc-500 text-xs mt-1">Registered audience & contributor profiles.</p>
+                  </div>
+                  {signups.length > 0 && (
+                    <button
+                      onClick={() => {
+                        exportToCSV(signups, 'platform_signups.csv', ['name', 'email', 'handle', 'location', 'joinDate']);
+                      }}
+                      className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Export
+                    </button>
+                  )}
+                </div>
+
+                {signups.length === 0 ? (
+                  <div className="bg-zinc-950 border border-white/5 rounded-3xl p-12 text-center text-zinc-500 font-mono text-xs flex-1 flex items-center justify-center min-h-[300px]">
+                    No registered user profiles found.
+                  </div>
+                ) : (
+                  <div className="overflow-y-auto max-h-[500px] [scrollbar-width:none] flex-1">
+                    <div className="flex flex-col gap-2.5">
+                      {signups.map((profile, idx) => (
+                        <div key={idx} className="bg-zinc-950/50 border border-white/5 rounded-2xl p-4 flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-serif font-bold text-base truncate">{profile.name}</span>
+                              {ClientDB.isApprovedCritic(profile.email) && (
+                                <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider shrink-0 flex items-center gap-0.5">
+                                  Critic
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-zinc-400 text-xs block font-mono mt-0.5 truncate">{profile.email}</span>
+                            {profile.handle && (
+                              <span className="text-red-400 text-[10px] block font-mono mt-1">{profile.handle}</span>
+                            )}
+                            {profile.location && (
+                              <span className="text-zinc-500 text-[10px] block mt-0.5">📍 {profile.location}</span>
+                            )}
+                            <span className="text-zinc-600 text-[9px] font-mono block mt-1">Joined {profile.joinDate}</span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to permanently delete profile for ${profile.name}?`)) {
+                                ClientDB.deleteSignup(profile.email);
+                                setSignups(ClientDB.getSignups());
+                                showToast(`Deleted profile for ${profile.name}`, 'error');
+                              }
+                            }}
+                            className="text-zinc-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-xl transition-all shrink-0 self-center"
+                            title="Delete User"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
             </div>
           </div>
         )}
