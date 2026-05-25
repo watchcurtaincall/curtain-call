@@ -37,6 +37,15 @@ Timestamp: ${new Date().toISOString()}
       });
     }
 
+    // Plain-text alternative generator to maximize email deliverability and bypass spam filters
+    const textAlternative = html
+      ? html
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // strip style tags
+          .replace(/<[^>]+>/g, ' ') // strip HTML tags
+          .replace(/\s+/g, ' ') // collapse whitespaces
+          .trim()
+      : '';
+
     // Call the real Resend API endpoint
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -45,10 +54,11 @@ Timestamp: ${new Date().toISOString()}
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Curtain Call <notifications@curtaincall.com.ng>', // onboarding@resend.dev if custom domain is not yet active in Resend
+        from: 'Curtain Call <notifications@curtaincall.com.ng>',
         to: Array.isArray(to) ? to : [to],
         subject,
         html,
+        text: textAlternative,
       }),
     });
 

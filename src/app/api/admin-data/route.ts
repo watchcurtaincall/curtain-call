@@ -145,6 +145,20 @@ export async function DELETE(request: Request) {
 
       return NextResponse.json({ success: true, message: `Subscriber ${emailLower} removed.` });
     } else if (type === 'signup') {
+      // 1. De-register user account from Supabase Auth to enable fresh re-testing of signups
+      const { data: usersData, error: listError } = await supabaseServer.auth.admin.listUsers();
+      if (!listError && usersData?.users) {
+        const authUser = usersData.users.find(u => u.email?.toLowerCase() === emailLower);
+        if (authUser) {
+          console.log('[API Admin Data] Purging user from Supabase Auth:', authUser.id);
+          const { error: authDelError } = await supabaseServer.auth.admin.deleteUser(authUser.id);
+          if (authDelError) {
+            console.error('[API Admin Data] Supabase Auth delete failed:', authDelError);
+          }
+        }
+      }
+
+      // 2. Delete database profile from profiles table
       const { error } = await supabaseServer
         .from('profiles')
         .delete()
@@ -155,7 +169,7 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
 
-      return NextResponse.json({ success: true, message: `Profile for ${emailLower} deleted.` });
+      return NextResponse.json({ success: true, message: `Profile and Auth account for ${emailLower} successfully deleted.` });
     } else {
       return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 });
     }

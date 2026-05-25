@@ -131,14 +131,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           const email = session.user.email || '';
           const name = session.user.user_metadata?.full_name || email.split('@')[0];
-          const isEmailConfirmed = !!session.user.email_confirmed_at;
           
-          let isAlreadyVerified = isEmailConfirmed === true || ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
+          const isWhitelisted = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
+          let isAlreadyVerified = isWhitelisted;
           
           if (supabase && !isAlreadyVerified) {
             const { data: prof } = await supabase.from('profiles').select('is_verified').eq('email', email.toLowerCase()).maybeSingle();
-            if (prof && prof.is_verified === true) {
-              isAlreadyVerified = true;
+            if (prof) {
+              isAlreadyVerified = prof.is_verified === true;
+            } else {
+              isAlreadyVerified = false;
             }
           }
 
@@ -167,14 +169,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           const email = session.user.email || '';
           const name = session.user.user_metadata?.full_name || email.split('@')[0];
-          const isEmailConfirmed = !!session.user.email_confirmed_at;
           
-          let isAlreadyVerified = isEmailConfirmed === true || ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
+          const isWhitelisted = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
+          let isAlreadyVerified = isWhitelisted;
           
           if (supabase && !isAlreadyVerified) {
             const { data: prof } = await supabase.from('profiles').select('is_verified').eq('email', email.toLowerCase()).maybeSingle();
-            if (prof && prof.is_verified === true) {
-              isAlreadyVerified = true;
+            if (prof) {
+              isAlreadyVerified = prof.is_verified === true;
+            } else {
+              isAlreadyVerified = false;
             }
           }
 
