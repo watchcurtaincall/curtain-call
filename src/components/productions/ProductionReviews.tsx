@@ -28,8 +28,8 @@ export function ProductionReviews({ reviews, productionTitle, productionId, stat
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showCriticModal, setShowCriticModal] = useState(false);
 
-  const criticReviews = reviews.filter(r => r.type === 'Critic');
-  const audienceReviews = reviews.filter(r => r.type === 'Audience');
+  const criticReviews = reviews.filter(r => r.type && r.type.toLowerCase() === 'critic');
+  const audienceReviews = reviews.filter(r => r.type && r.type.toLowerCase() === 'audience');
   const isCritic = user ? ClientDB.isApprovedCritic(user.email) : false;
 
   return (

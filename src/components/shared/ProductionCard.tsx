@@ -43,12 +43,12 @@ export function ProductionCard({ production }: { production: Production }) {
 
         {/* Score chips */}
         <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5">
-          {production.criticScore && production.criticScore > 0 ? (
+          {production.criticScore !== null && production.criticScore !== undefined && Number(production.criticScore) > 0 ? (
             <div className="flex items-center bg-red-600/90 backdrop-blur-sm px-2 py-0.5 rounded-full text-[11px] font-bold text-white">
               {production.criticScore}%
             </div>
           ) : null}
-          {production.audienceScore && production.audienceScore > 0 ? (
+          {production.audienceScore !== null && production.audienceScore !== undefined && Number(production.audienceScore) > 0 ? (
             <div className="flex items-center gap-1 bg-black/70 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/10 text-[11px] font-bold text-white">
               <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
               {production.audienceScore}

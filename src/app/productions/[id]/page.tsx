@@ -44,8 +44,8 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
 
   // Load and count Critic vs Audience reviews dynamically to prevent lumping together
   const allReviews = ClientDB.getReviews().filter(r => r.productionId === production.id);
-  const criticReviewsCount = allReviews.filter(r => r.type === 'Critic').length;
-  const audienceReviewsCount = allReviews.filter(r => r.type === 'Audience').length;
+  const criticReviewsCount = allReviews.filter(r => r.type && r.type.toLowerCase() === 'critic').length;
+  const audienceReviewsCount = allReviews.filter(r => r.type && r.type.toLowerCase() === 'audience').length;
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-950">

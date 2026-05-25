@@ -540,20 +540,16 @@ export const ClientDB = {
     }
     return list.map((p: any) => {
       // Dynamic Sanitizer: If this is a custom play (ID is not p1..p10 mock format),
-      // dynamically reset or calculate critic and audience scores from the reviews list
+      // dynamically recalculate or preserve critic and audience scores from the reviews list
       const isMock = p.id && /^p\d+$/.test(p.id);
       if (!isMock) {
         const storedReviews = localStorage.getItem('curtain_call_reviews');
         const reviewsList = storedReviews ? JSON.parse(storedReviews) : [];
         const prodReviews = reviewsList.filter((r: any) => r.productionId === p.id);
         
-        if (prodReviews.length === 0) {
-          p.criticScore = null;
-          p.audienceScore = null;
-          p.totalReviews = 0;
-        } else {
-          const critics = prodReviews.filter((r: any) => r.type === 'Critic');
-          const audience = prodReviews.filter((r: any) => r.type === 'Audience');
+        if (prodReviews.length > 0) {
+          const critics = prodReviews.filter((r: any) => r.type && r.type.toLowerCase() === 'critic');
+          const audience = prodReviews.filter((r: any) => r.type && r.type.toLowerCase() === 'audience');
           
           if (critics.length > 0) {
             const sum = critics.reduce((acc: number, r: any) => acc + r.rating, 0);
