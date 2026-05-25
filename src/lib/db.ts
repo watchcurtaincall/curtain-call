@@ -1417,22 +1417,47 @@ export const syncFromSupabase = async () => {
       console.error('[Supabase Sync] Failed to fetch approved critics from API:', e);
     }
 
-    // 7. Pull withdrawals
+    // 7. Pull & Sync Withdrawals (Two-Way Self-Healing Sync)
     try {
-      const { data: withdrawals } = await supabase.from('withdrawals').select('*').neq('id', 'cache_bust_' + Date.now());
-      if (withdrawals) {
-        localStorage.setItem('curtain_withdrawals', JSON.stringify(withdrawals));
+      const { data: remoteWithdrawals } = await supabase.from('withdrawals').select('*').neq('id', 'cache_bust_' + Date.now());
+      if (remoteWithdrawals) {
+        const localWithdrawals = JSON.parse(localStorage.getItem('curtain_withdrawals') || '[]');
+        
+        // Find local withdrawals that aren't on the server yet
+        const unsynced = localWithdrawals.filter((lw: any) => !remoteWithdrawals.some((rw: any) => rw.id === lw.id));
+        
+        for (const req of unsynced) {
+          console.log('[Two-Way Sync] Uploading unsynced local withdrawal request:', req.id);
+          await syncToCloud('withdrawals', req);
+        }
+        
+        const finalRemote = unsynced.length > 0
+          ? [ ...unsynced, ...remoteWithdrawals ]
+          : remoteWithdrawals;
+          
+        localStorage.setItem('curtain_withdrawals', JSON.stringify(finalRemote));
       }
     } catch (e) {
       // ignore
     }
 
-    // 8. Pull tickets
+    // 8. Pull & Sync Tickets (Two-Way Self-Healing Sync)
     try {
-      const { data: tickets } = await supabase.from('tickets').select('*').neq('id', 'cache_bust_' + Date.now());
-      if (tickets) {
-        const mapped = tickets.map(mapTicketFromDb);
-        localStorage.setItem('curtain_tickets', JSON.stringify(mapped));
+      const { data: remoteTickets } = await supabase.from('tickets').select('*').neq('id', 'cache_bust_' + Date.now());
+      if (remoteTickets) {
+        const mappedRemote = remoteTickets.map(mapTicketFromDb);
+        const localTickets = JSON.parse(localStorage.getItem('curtain_tickets') || '[]').map(mapTicketFromDb);
+        
+        // Find local tickets that are not present in remote database
+        const unsynced = localTickets.filter((lt: any) => !mappedRemote.some((rt: any) => rt.id === lt.id || rt.reference === lt.reference));
+        
+        for (const tkt of unsynced) {
+          console.log('[Two-Way Sync] Uploading unsynced local ticket purchase:', tkt.id);
+          await syncToCloud('tickets', mapTicketToDb(tkt));
+        }
+        
+        const finalTickets = [ ...unsynced, ...mappedRemote ];
+        localStorage.setItem('curtain_tickets', JSON.stringify(finalTickets));
       }
     } catch (e) {
       // ignore
