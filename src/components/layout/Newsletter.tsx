@@ -8,6 +8,7 @@ export function Newsletter() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [alreadySubscribed, setAlreadySubscribed] = useState(false);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,9 +16,14 @@ export function Newsletter() {
     setLoading(true);
 
     try {
-      ClientDB.subscribeToNewsletter(email);
-      setSubscribed(true);
-      setEmail('');
+      const res = await ClientDB.subscribeToNewsletter(email);
+      if (res.success) {
+        setAlreadySubscribed(!!res.alreadySubscribed);
+        setSubscribed(true);
+        setEmail('');
+      } else {
+        alert(res.message || 'Subscription failed. Please try again.');
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -40,8 +46,14 @@ export function Newsletter() {
             <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-3">
               <CheckCircle2 className="h-6 w-6 text-green-500" />
             </div>
-            <p className="text-sm font-semibold text-white">You're Subscribed!</p>
-            <p className="text-xs text-zinc-500 mt-1">Check your inbox for your welcoming Front Row Seat ticket!</p>
+            <p className="text-sm font-semibold text-white">
+              {alreadySubscribed ? "You're already subscribed!" : "You're Subscribed!"}
+            </p>
+            <p className="text-xs text-zinc-500 mt-1">
+              {alreadySubscribed
+                ? "No new welcome email was dispatched since your address is already whitelisted on our Front Row Seat newsletter list."
+                : "Check your inbox for your welcoming Front Row Seat ticket!"}
+            </p>
           </div>
         ) : (
           <form className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto" onSubmit={handleSubscribe}>

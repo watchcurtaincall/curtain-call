@@ -14,6 +14,7 @@ export default function Home() {
   const [productions, setProductions] = useState<Production[]>([]);
   const [trendingPeople, setTrendingPeople] = useState<Artist[]>([]);
   const [recentArticles, setRecentArticles] = useState<any[]>([]);
+  const [featuredHighlights, setFeaturedHighlights] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +28,10 @@ export default function Home() {
       setProductions(sortItemsByDateAdded(ClientDB.getProductions()));
       const sortedArtists = ClientDB.getArtists().sort((a, b) => (b.hits || 0) - (a.hits || 0));
       setTrendingPeople(sortedArtists.slice(0, 6));
-      setRecentArticles(ClientDB.getArticles().slice(0, 3));
+      
+      const allArticles = ClientDB.getArticles();
+      setRecentArticles(allArticles.slice(0, 3));
+      setFeaturedHighlights(allArticles.length > 3 ? allArticles.slice(3, 6) : allArticles.slice(0, 3));
       
       // If we have completed a sync previously, we bypass the loading phase entirely to load in 0ms!
       if (hasSyncedBefore) {
@@ -115,24 +119,6 @@ export default function Home() {
     .filter(p => p.audienceScore !== null && p.status !== 'Draft')
     .sort((a, b) => (b.audienceScore || 0) - (a.audienceScore || 0))
     .slice(0, 5);
-
-  const featuredArticles = [
-    {
-      id: 'feat1',
-      title: 'Top 10 Documented African Plays You Must Experience Online',
-      views: '4.2k reads'
-    },
-    {
-      id: 'feat2',
-      title: 'From Screen to Stage: Why Film Performers are Flocking to Live Theatres',
-      views: '3.8k reads'
-    },
-    {
-      id: 'feat3',
-      title: 'Understanding the Critic Scoring System: Rotten Tomatoes vs Curtain Call',
-      views: '2.9k reads'
-    }
-  ];
 
   return (
     <div className="flex flex-col gap-16 pb-24">
@@ -307,7 +293,7 @@ export default function Home() {
                   </div>
                   
                   <Link 
-                    href={`/editorial?read=${article.id}`} 
+                    href={`/editorial/${article.id}`} 
                     className="inline-flex items-center gap-1 text-[11px] font-bold text-zinc-400 group-hover:text-white uppercase tracking-wider mt-4 transition-colors"
                   >
                     Read Chronicle <ArrowRight className="h-3 w-3" />
@@ -328,20 +314,32 @@ export default function Home() {
               </div>
 
               <div className="flex flex-col gap-4 divide-y divide-white/5">
-                {featuredArticles.map((feat, index) => (
-                  <div key={feat.id} className={`${index > 0 ? 'pt-4' : ''} group`}>
-                    <span className="text-[10px] font-bold text-red-500/80 tracking-widest font-mono uppercase">
-                      Chronicle #{index + 1}
-                    </span>
-                    <Link 
-                      href="/editorial"
-                      className="block font-serif text-sm font-bold text-zinc-300 group-hover:text-white transition-colors leading-snug mt-1 line-clamp-2"
-                    >
-                      {feat.title}
-                    </Link>
-                    <span className="text-[9px] text-zinc-500 mt-1 block uppercase font-medium">{feat.views}</span>
-                  </div>
-                ))}
+                {featuredHighlights.map((feat, index) => {
+                  const getViews = (id: string) => {
+                    const map: Record<string, string> = {
+                      art1: '4.2k reads',
+                      art2: '3.8k reads',
+                      art3: '2.9k reads',
+                    };
+                    return map[id] || '1.8k reads';
+                  };
+                  return (
+                    <div key={feat.id} className={`${index > 0 ? 'pt-4' : ''} group`}>
+                      <span className="text-[10px] font-bold text-red-500/80 tracking-widest font-mono uppercase">
+                        Chronicle #{index + 1}
+                      </span>
+                      <Link 
+                        href={`/editorial/${feat.id}`}
+                        className="block font-serif text-sm font-bold text-zinc-300 group-hover:text-white transition-colors leading-snug mt-1 line-clamp-2"
+                      >
+                        {feat.title}
+                      </Link>
+                      <span className="text-[9px] text-zinc-500 mt-1 block uppercase font-medium">
+                        {getViews(feat.id)}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="bg-zinc-950 border border-white/5 rounded-2xl p-4 mt-2">

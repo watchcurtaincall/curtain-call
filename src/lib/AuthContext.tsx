@@ -157,6 +157,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const isWhitelisted = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
           let isAlreadyVerified = isWhitelisted;
           
+          if (!isAlreadyVerified) {
+            // Check if local storage user matches and is verified to prevent OTP flashing
+            const savedUser = localStorage.getItem('cc_authed_user');
+            if (savedUser) {
+              try {
+                const parsed = JSON.parse(savedUser);
+                if (parsed.email?.toLowerCase() === email.toLowerCase() && parsed.isVerified === true) {
+                  isAlreadyVerified = true;
+                }
+              } catch (e) {}
+            }
+          }
+          
           if (supabase && !isAlreadyVerified) {
             isAlreadyVerified = await fetchVerificationStatusFromServer(email);
           }
@@ -189,6 +202,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           const isWhitelisted = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
           let isAlreadyVerified = isWhitelisted;
+          
+          if (!isAlreadyVerified) {
+            // Check if local storage user matches and is verified to prevent OTP flashing
+            const savedUser = localStorage.getItem('cc_authed_user');
+            if (savedUser) {
+              try {
+                const parsed = JSON.parse(savedUser);
+                if (parsed.email?.toLowerCase() === email.toLowerCase() && parsed.isVerified === true) {
+                  isAlreadyVerified = true;
+                }
+              } catch (e) {}
+            }
+          }
           
           if (supabase && !isAlreadyVerified) {
             isAlreadyVerified = await fetchVerificationStatusFromServer(email);

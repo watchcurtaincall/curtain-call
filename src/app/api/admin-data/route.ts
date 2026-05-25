@@ -203,9 +203,26 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Missing email' }, { status: 400 });
       }
       
+      const emailClean = email.toLowerCase().trim();
+      
+      // Check if email already exists in subscribers
+      const { data: existing, error: findError } = await supabaseServer
+        .from('newsletter_subscribers')
+        .select('email')
+        .eq('email', emailClean)
+        .maybeSingle();
+        
+      if (findError) {
+        console.error('[API Admin Data] Error checking existing subscriber:', findError);
+      }
+      
+      if (existing) {
+        return NextResponse.json({ success: true, alreadySubscribed: true, message: 'Already subscribed' });
+      }
+      
       const { error } = await supabaseServer
         .from('newsletter_subscribers')
-        .upsert({ email: email.toLowerCase() });
+        .upsert({ email: emailClean });
 
       if (error) {
         console.error('[API Admin Data] Upsert subscriber failed:', error);
