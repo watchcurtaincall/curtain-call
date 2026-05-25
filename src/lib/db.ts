@@ -928,6 +928,28 @@ export const ClientDB = {
     }
   },
 
+  removeApprovedCriticEmail(email: string): void {
+    if (typeof window === 'undefined') return;
+    const defaultApproved = [
+      'critic@example.com',
+      'editor@example.com',
+      'verify@example.com',
+      'adaeze@example.com'
+    ];
+    const stored = localStorage.getItem('curtain_approved_critic_emails');
+    const list = stored ? JSON.parse(stored) : defaultApproved;
+    const updated = list.filter((e: string) => e.toLowerCase() !== email.toLowerCase());
+    localStorage.setItem('curtain_approved_critic_emails', JSON.stringify(updated));
+
+    // Sync to Supabase
+    if (supabase) {
+      supabase.from('approved_critics').delete().eq('email', email.toLowerCase())
+        .then(({ error }) => {
+          if (error) console.error('[Supabase Sync] Whitelist delete failed:', error);
+        });
+    }
+  },
+
   // ── REVIEWS STORAGE & DYNAMIC SCORE COMPUTATION ──
   getReviews(): any[] {
     if (typeof window === 'undefined') return MOCK_REVIEWS;
@@ -1279,14 +1301,14 @@ export const syncFromSupabase = async () => {
 
     // 4. Pull reviews
     const { data: revs } = await supabase.from('reviews').select('*').neq('id', 'cache_bust_' + Date.now());
-    if (revs && revs.length > 0) {
+    if (revs) {
       const mapped = revs.map(mapReviewFromDb);
       localStorage.setItem(REVIEWS_KEY, JSON.stringify(mapped));
     }
 
     // 5. Pull critic applications
     const { data: apps } = await supabase.from('critic_applications').select('*').neq('id', 'cache_bust_' + Date.now());
-    if (apps && apps.length > 0) {
+    if (apps) {
       const mapped = apps.map(mapCriticAppFromDb);
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
       localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pending));
@@ -1294,7 +1316,7 @@ export const syncFromSupabase = async () => {
 
     // 6. Pull approved critic emails whitelist
     const { data: whitelist } = await supabase.from('approved_critics').select('email').neq('email', 'cache_bust_' + Date.now() + '@example.com');
-    if (whitelist && whitelist.length > 0) {
+    if (whitelist) {
       const emails = whitelist.map(w => w.email.toLowerCase());
       localStorage.setItem('curtain_approved_critic_emails', JSON.stringify(emails));
     }
@@ -1302,7 +1324,7 @@ export const syncFromSupabase = async () => {
     // 7. Pull withdrawals
     try {
       const { data: withdrawals } = await supabase.from('withdrawals').select('*').neq('id', 'cache_bust_' + Date.now());
-      if (withdrawals && withdrawals.length > 0) {
+      if (withdrawals) {
         localStorage.setItem('curtain_withdrawals', JSON.stringify(withdrawals));
       }
     } catch (e) {
@@ -1312,7 +1334,7 @@ export const syncFromSupabase = async () => {
     // 8. Pull tickets
     try {
       const { data: tickets } = await supabase.from('tickets').select('*').neq('id', 'cache_bust_' + Date.now());
-      if (tickets && tickets.length > 0) {
+      if (tickets) {
         localStorage.setItem('curtain_tickets', JSON.stringify(tickets));
       }
     } catch (e) {
@@ -1322,7 +1344,7 @@ export const syncFromSupabase = async () => {
     // 9. Pull notifications
     try {
       const { data: notifications } = await supabase.from('notifications').select('*').neq('id', 'cache_bust_' + Date.now());
-      if (notifications && notifications.length > 0) {
+      if (notifications) {
         localStorage.setItem('curtain_notifications', JSON.stringify(notifications));
       }
     } catch (e) {
@@ -1332,7 +1354,7 @@ export const syncFromSupabase = async () => {
     // 10. Pull profiles
     try {
       const { data: profiles } = await supabase.from('profiles').select('*');
-      if (profiles && profiles.length > 0) {
+      if (profiles) {
         const mapped = profiles.map(p => ({
           name: p.name,
           email: p.email,
@@ -1351,7 +1373,7 @@ export const syncFromSupabase = async () => {
     // 11. Pull newsletter subscribers
     try {
       const { data: subscribers } = await supabase.from('newsletter_subscribers').select('*');
-      if (subscribers && subscribers.length > 0) {
+      if (subscribers) {
         const emails = subscribers.map(s => s.email.toLowerCase());
         localStorage.setItem('curtain_newsletter_subscribers', JSON.stringify(emails));
       }

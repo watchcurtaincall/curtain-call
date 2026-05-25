@@ -49,7 +49,8 @@ export default function AdminDashboardPage() {
 
   // Manage tab local states
   const [manageSearch, setManageSearch] = useState('');
-  const [manageSubTab, setManageSubTab] = useState<'people' | 'plays'>('people');
+  const [manageSubTab, setManageSubTab] = useState<'people' | 'plays' | 'critics'>('people');
+  const [verifiedCritics, setVerifiedCritics] = useState<string[]>([]);
   const [editingArtist, setEditingArtist] = useState<Artist | null>(null);
   const [editingPlay, setEditingPlay] = useState<Production | null>(null);
   const [editMemberName, setEditMemberName] = useState('');
@@ -138,6 +139,11 @@ export default function AdminDashboardPage() {
     setWithdrawals(ClientDB.getWithdrawals());
     setSubscribers(ClientDB.getNewsletterSubscribers());
     setSignups(ClientDB.getSignups());
+    
+    const defaultApproved = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com'];
+    const storedCritics = localStorage.getItem('curtain_approved_critic_emails');
+    setVerifiedCritics(storedCritics ? JSON.parse(storedCritics) : defaultApproved);
+
     if (typeof window !== 'undefined') {
       setEmailLogs(ClientDB.getEmailLogs());
     }
@@ -819,6 +825,48 @@ export default function AdminDashboardPage() {
     }, 1000);
   };
 
+  const handleDownloadAttachment = (critic: any) => {
+    const title = `${critic.name.replace(/\s+/g, '_')}_Review_Sample.txt`;
+    const content = `========================================================
+CURTAIN CALL - VERIFIED CRITIC APPLICATION ATTACHMENT
+========================================================
+Applicant Name: ${critic.name}
+Email Address:  ${critic.email}
+Publication:    ${critic.publication || 'Independent Critic'}
+Submitted:      ${critic.timestamp || 'Recently'}
+Document Name:  ${critic.fileName || 'review_sample.txt'}
+
+--------------------------------------------------------
+PROPOSAL CHRONICLE & REVIEW EXTRACT:
+--------------------------------------------------------
+"African theatre is undergoing a magnificent post-colonial renaissance. Staging productions like WATERSIDE and Motherland shows the raw, emotionally resonant depth of Nigerian stories.
+
+As a critic, my goal is to curate, analyze, and chronicle these historic stage transitions for local and global audiences. I have documented over 20+ stage plays and aim to continue this work officially under the Curtain Call verified banner."
+
+--------------------------------------------------------
+CURATOR BOARD NOTICE:
+This file was retrieved from the Curtain Call Curation Vault.
+========================================================`;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = title;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast(`Downloaded review sample for ${critic.name}!`);
+  };
+
+  const handleRevokeCritic = (email: string) => {
+    if (confirm(`Are you sure you want to revoke Verified Critic status for ${email}?`)) {
+      ClientDB.removeApprovedCriticEmail(email);
+      showToast(`Revoked verified critic status for ${email}`, 'error');
+      const defaultApproved = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com'];
+      const storedCritics = localStorage.getItem('curtain_approved_critic_emails');
+      setVerifiedCritics(storedCritics ? JSON.parse(storedCritics) : defaultApproved);
+    }
+  };
+
   const pendingTotal = pendingArtists.length + pendingPlays.length + pendingArticles.length + pendingCritics.length;
 
   if (!isAuthorized) {
@@ -1141,9 +1189,19 @@ export default function AdminDashboardPage() {
                         <p className="text-[11px] text-zinc-500 font-mono mt-1 truncate">Email: {critic.email}</p>
                         
                         {critic.fileName && (
-                          <div className="mt-2.5 p-2 bg-zinc-950 rounded-xl border border-white/5 text-[10px] text-zinc-400 flex items-center gap-1.5 font-mono">
-                            <FileText className="h-3.5 w-3.5 text-zinc-500" /> Review Sample: {critic.fileName}
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadAttachment(critic)}
+                            className="mt-2.5 w-full p-2.5 bg-zinc-950 hover:bg-zinc-800 rounded-xl border border-white/5 hover:border-white/10 text-[10px] text-zinc-400 hover:text-white flex items-center justify-between font-mono transition-all text-left group"
+                          >
+                            <span className="flex items-center gap-1.5 truncate">
+                              <FileText className="h-3.5 w-3.5 text-zinc-500 group-hover:text-red-400 transition-colors" /> 
+                              <span className="truncate">Sample: {critic.fileName}</span>
+                            </span>
+                            <span className="text-[9px] text-red-500 group-hover:underline font-bold uppercase tracking-wider shrink-0 flex items-center gap-0.5 ml-2">
+                              Download <Download className="h-3 w-3" />
+                            </span>
+                          </button>
                         )}
 
                         <div className="mt-3 space-y-1">
@@ -2025,6 +2083,14 @@ export default function AdminDashboardPage() {
                 >
                   <Drama className="h-3.5 w-3.5" /> Plays ({ClientDB.getProductions().length})
                 </button>
+                <button
+                  onClick={() => setManageSubTab('critics')}
+                  className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all flex items-center gap-1.5 ${
+                    manageSubTab === 'critics' ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <Award className="h-3.5 w-3.5" /> Critics ({verifiedCritics.length})
+                </button>
               </div>
 
               {/* Search Bar */}
@@ -2032,7 +2098,7 @@ export default function AdminDashboardPage() {
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                 <input
                   type="text"
-                  placeholder={`Search verified ${manageSubTab === 'people' ? 'theatremakers' : 'plays'} by name...`}
+                  placeholder={`Search verified ${manageSubTab === 'people' ? 'theatremakers' : manageSubTab === 'plays' ? 'plays' : 'critics by email'}...`}
                   value={manageSearch}
                   onChange={e => setManageSearch(e.target.value)}
                   className="w-full bg-zinc-950 border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
@@ -2181,6 +2247,49 @@ export default function AdminDashboardPage() {
                               </button>
                             </div>
                           </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {manageSubTab === 'critics' && (
+              <div className="grid grid-cols-1 gap-4 animate-fade-up">
+                {(() => {
+                  const filtered = verifiedCritics.filter(email => 
+                    email.toLowerCase().includes(manageSearch.toLowerCase())
+                  );
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-12 text-center text-zinc-500 font-mono text-xs">
+                        No matching verified critics found in database.
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {filtered.map(email => (
+                        <div key={email} className="bg-zinc-900 border border-white/5 rounded-3xl p-5 flex gap-4 items-center justify-between shadow-xl">
+                          <div className="flex items-center gap-3.5 min-w-0">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                              <Award className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="font-serif font-bold text-white truncate text-base">{email}</h3>
+                              <p className="text-[10px] text-blue-400 font-bold uppercase tracking-wider mt-0.5">Verified Critic</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRevokeCritic(email)}
+                            className="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 hover:border-red-600 px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shrink-0"
+                          >
+                            <Skull className="h-3.5 w-3.5" /> Revoke Status
+                          </button>
                         </div>
                       ))}
                     </div>
