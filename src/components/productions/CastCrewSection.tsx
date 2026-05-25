@@ -142,7 +142,7 @@ export function CastCrewSection({ artists, productionTitle, production }: CastCr
           🎬 No cast or crew playbill credits listed yet.
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-2 gap-x-4 gap-y-6">
           {matchedPreviewArtists.map((artist, idx) => (
             <ArtistCard key={artist.id || idx} artist={artist} />
           ))}
