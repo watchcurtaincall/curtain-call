@@ -86,7 +86,8 @@ const mapProductionToDb = (p: any) => {
     curation_status: p.curationStatus || 'Approved',
     cast_and_crew: p.castAndCrew || [],
     show_date: p.showDate || null,
-    decline_reason: p.declineReason || null
+    decline_reason: p.declineReason || null,
+    created_at: p.createdAt || null
   };
 };
 
@@ -127,7 +128,8 @@ const mapProductionFromDb = (row: any) => {
     castAndCrew: row.cast_and_crew || [],
     showDate: row.show_date,
     declineReason: row.decline_reason || null,
-    ticketTiers: ticketTiers.length > 0 ? ticketTiers : undefined
+    ticketTiers: ticketTiers.length > 0 ? ticketTiers : undefined,
+    createdAt: row.created_at || null
   };
 };
 
@@ -144,7 +146,8 @@ const mapArtistToDb = (a: any) => ({
   is_deceased: a.isDeceased || false,
   date_of_death: a.dateOfDeath || null,
   decline_reason: a.declineReason || null,
-  hits: a.hits || 0
+  hits: a.hits || 0,
+  created_at: a.createdAt || null
 });
 
 const mapArtistFromDb = (row: any) => ({
@@ -160,7 +163,8 @@ const mapArtistFromDb = (row: any) => ({
   isDeceased: row.is_deceased,
   dateOfDeath: row.date_of_death,
   declineReason: row.decline_reason || null,
-  hits: row.hits || 0
+  hits: row.hits || 0,
+  createdAt: row.created_at || null
 });
 
 const mapArticleToDb = (art: any) => ({
@@ -1408,4 +1412,28 @@ if (typeof window !== 'undefined') {
   setTimeout(() => {
     syncFromSupabase();
   }, 1000);
+}
+
+// Robust, high-precision sorting utility to order plays and artists by date added descending (newest first)
+export function sortItemsByDateAdded<T extends { id: string; createdAt?: string | null }>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    // 1. Compare by createdAt timestamp if available
+    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    if (timeA !== timeB) {
+      return timeB - timeA; // Newer first
+    }
+    
+    // 2. Fallback: Parse timestamp from dynamic custom IDs like 'pending_play_1779...'
+    const matchA = a.id.match(/\d{10,}/);
+    const matchB = b.id.match(/\d{10,}/);
+    if (matchA && matchB) {
+      return parseInt(matchB[0], 10) - parseInt(matchA[0], 10);
+    }
+    if (matchA) return -1; // custom items with timestamp go before mock items
+    if (matchB) return 1;
+    
+    // 3. Stable lexicographical fallback (mock items p10, p9, etc.)
+    return b.id.localeCompare(a.id);
+  });
 }

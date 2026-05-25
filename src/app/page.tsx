@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { TrendingUp, BookOpen, Calendar, ArrowRight } from 'lucide-react';
 
-import { ClientDB, syncFromSupabase } from '@/lib/db';
+import { ClientDB, syncFromSupabase, sortItemsByDateAdded } from '@/lib/db';
 import { Production, Artist } from '@/lib/types';
 import { useState, useEffect } from 'react';
 
@@ -18,7 +18,8 @@ export default function Home() {
   // Dynamically load data from client-side active database on mount
   useEffect(() => {
     const loadData = () => {
-      setProductions(ClientDB.getProductions());
+      // Sort plays by date added so newly added plays appear at the top!
+      setProductions(sortItemsByDateAdded(ClientDB.getProductions()));
       const sortedArtists = ClientDB.getArtists().sort((a, b) => (b.hits || 0) - (a.hits || 0));
       setTrendingPeople(sortedArtists.slice(0, 6));
       setRecentArticles(ClientDB.getArticles().slice(0, 3));

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { ClientDB } from '@/lib/db';
+import { ClientDB, sortItemsByDateAdded } from '@/lib/db';
 import { Production } from '@/lib/types';
 import { ProductionCard } from '@/components/shared/ProductionCard';
 import { Search, Filter, X } from 'lucide-react';
@@ -13,10 +13,18 @@ export default function DiscoveryPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('All Shows');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20; // 2 columns * 10 rows = 20 items per page
+
+  // Reset pagination on query or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, activeFilter]);
 
   useEffect(() => {
     const loadData = () => {
-      setProductions(ClientDB.getProductions().filter(p => p.status !== 'Draft'));
+      // Sort plays by date added so newly added plays appear at the top!
+      setProductions(sortItemsByDateAdded(ClientDB.getProductions().filter(p => p.status !== 'Draft')));
       setLoading(false);
     };
     loadData();
@@ -60,14 +68,9 @@ export default function DiscoveryPage() {
         break;
     }
 
-    // Default sorting for All Shows: Coming Soon, Currently Showing, then Past / Concluded
-    if (activeFilter === 'All Shows') {
-      const order = { 'Coming Soon': 0, 'Currently Showing': 1, 'Recently Concluded': 2, 'Past Production': 3 };
-      list.sort((a, b) => {
-        const orderA = order[a.status as keyof typeof order] ?? 99;
-        const orderB = order[b.status as keyof typeof order] ?? 99;
-        return orderA - orderB;
-      });
+    // Ensure all lists (except Highly Rated) are explicitly sorted by date added descending (newest first)
+    if (activeFilter !== 'Highly Rated') {
+      list = sortItemsByDateAdded(list);
     }
 
     return list;
@@ -137,10 +140,40 @@ export default function DiscoveryPage() {
           <p className="text-xs text-zinc-600 mb-6 uppercase tracking-wider">
             {results.length} production{results.length !== 1 ? 's' : ''}{query ? ` for "${query}"` : ''}
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-            {results.map(p => (
-              <ProductionCard key={p.id} production={p} />
-            ))}
+          <div className="flex flex-col gap-10">
+            {/* Strict 2-column grid to keep listings extremely neat and organized */}
+            <div className="grid grid-cols-2 gap-6">
+              {results
+                .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                .map(p => (
+                  <ProductionCard key={p.id} production={p} />
+                ))}
+            </div>
+
+            {/* Premium Glassmorphic Pagination Controls */}
+            {Math.ceil(results.length / itemsPerPage) > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-6 bg-zinc-900/60 border border-white/5 p-3 rounded-2xl max-w-xs mx-auto backdrop-blur-xl shadow-2xl">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  className="px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white disabled:opacity-30 disabled:hover:bg-zinc-800 disabled:cursor-not-allowed transition-all border border-white/5"
+                >
+                  Prev
+                </button>
+                <span className="text-[10px] text-zinc-400 font-mono uppercase tracking-widest font-semibold">
+                  Page {currentPage} of {Math.ceil(results.length / itemsPerPage)}
+                </span>
+                <button
+                  type="button"
+                  disabled={currentPage === Math.ceil(results.length / itemsPerPage)}
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(results.length / itemsPerPage), p + 1))}
+                  className="px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white disabled:opacity-30 disabled:hover:bg-zinc-800 disabled:cursor-not-allowed transition-all border border-white/5"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         </>
       ) : (

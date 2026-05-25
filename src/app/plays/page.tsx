@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ClientDB, syncFromSupabase } from '@/lib/db';
+import { ClientDB, syncFromSupabase, sortItemsByDateAdded } from '@/lib/db';
 import { Production } from '@/lib/types';
 import { ProductionCard } from '@/components/shared/ProductionCard';
 import { Search, PlusCircle, Drama, Info, FileText } from 'lucide-react';
@@ -11,11 +11,19 @@ export default function DocumentedPlaysPage() {
   const [productions, setProductions] = useState<Production[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20; // 2 items per row, 10 rows
+
+  // Reset pagination on query or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedGenre]);
 
   // Load dynamically from the ClientDB on mount
   useEffect(() => {
     const loadData = () => {
-      setProductions(ClientDB.getProductions().filter(p => p.status !== 'Draft'));
+      // Sort plays by date added so newly added plays appear at the top!
+      setProductions(sortItemsByDateAdded(ClientDB.getProductions().filter(p => p.status !== 'Draft')));
     };
     loadData();
     
@@ -113,10 +121,40 @@ export default function DocumentedPlaysPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {filteredProductions.map(production => (
-            <ProductionCard key={production.id} production={production} />
-          ))}
+        <div className="flex flex-col gap-10">
+          {/* Strict 2-column grid to keep listings extremely neat and organized */}
+          <div className="grid grid-cols-2 gap-6">
+            {filteredProductions
+              .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+              .map(production => (
+                <ProductionCard key={production.id} production={production} />
+              ))}
+          </div>
+
+          {/* Premium Glassmorphic Pagination Controls */}
+          {Math.ceil(filteredProductions.length / itemsPerPage) > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-6 bg-zinc-900/60 border border-white/5 p-3 rounded-2xl max-w-xs mx-auto backdrop-blur-xl shadow-2xl">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                className="px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white disabled:opacity-30 disabled:hover:bg-zinc-800 disabled:cursor-not-allowed transition-all border border-white/5"
+              >
+                Prev
+              </button>
+              <span className="text-[10px] text-zinc-400 font-mono uppercase tracking-widest font-semibold">
+                Page {currentPage} of {Math.ceil(filteredProductions.length / itemsPerPage)}
+              </span>
+              <button
+                type="button"
+                disabled={currentPage === Math.ceil(filteredProductions.length / itemsPerPage)}
+                onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredProductions.length / itemsPerPage), p + 1))}
+                className="px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white disabled:opacity-30 disabled:hover:bg-zinc-800 disabled:cursor-not-allowed transition-all border border-white/5"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       )}
 
