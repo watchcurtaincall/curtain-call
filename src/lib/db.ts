@@ -239,6 +239,32 @@ const mapReviewFromDb = (row: any) => ({
   date: row.date
 });
 
+const mapTicketToDb = (t: any) => ({
+  id: t.id,
+  production_id: t.productionId,
+  production_title: t.productionTitle,
+  buyer_email: t.buyerEmail,
+  tier: t.tier,
+  price: t.price,
+  reference: t.reference,
+  gate_pass: t.gatePass,
+  date: t.date,
+  timestamp: t.timestamp
+});
+
+const mapTicketFromDb = (row: any) => ({
+  id: row.id,
+  productionId: row.production_id || row.productionId,
+  productionTitle: row.production_title || row.productionTitle,
+  buyerEmail: row.buyer_email || row.buyerEmail,
+  tier: row.tier,
+  price: Number(row.price) || 0,
+  reference: row.reference,
+  gatePass: row.gate_pass || row.gatePass,
+  date: row.date,
+  timestamp: Number(row.timestamp) || Date.now()
+});
+
 // ── BACKGROUND CLOUD REPLICATION ENGINE ──
 
 const syncToCloud = async (table: string, dbItem: any): Promise<void> => {
@@ -1136,7 +1162,7 @@ export const ClientDB = {
     }
 
     // Sync to cloud tickets table
-    syncToCloud('tickets', newTicket);
+    syncToCloud('tickets', mapTicketToDb(newTicket));
   },
 
   // ── NOTIFICATIONS DATABASE ──
@@ -1405,7 +1431,8 @@ export const syncFromSupabase = async () => {
     try {
       const { data: tickets } = await supabase.from('tickets').select('*').neq('id', 'cache_bust_' + Date.now());
       if (tickets) {
-        localStorage.setItem('curtain_tickets', JSON.stringify(tickets));
+        const mapped = tickets.map(mapTicketFromDb);
+        localStorage.setItem('curtain_tickets', JSON.stringify(mapped));
       }
     } catch (e) {
       // ignore

@@ -15,7 +15,13 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [selectedTier, setSelectedTier] = useState({ name: 'General Admission', price: 5000 });
-  const [successData, setSuccessData] = useState<{ reference: string; tier: string } | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [successData, setSuccessData] = useState<{
+    reference: string;
+    tier: string;
+    quantity: number;
+    tickets: { reference: string; gatePass: string }[];
+  } | null>(null);
 
   useEffect(() => {
     if (user?.email && !email) {
@@ -58,26 +64,33 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       ];
 
   const handlePaymentSuccess = async (reference: string) => {
+    const recipient = email || 'guest@curtaincall.ng';
+    const purchasedTickets: { reference: string; gatePass: string }[] = [];
+
+    for (let i = 0; i < quantity; i++) {
+      const ticketRef = quantity > 1 ? `${reference}-${i + 1}` : reference;
+      const gatePass = `CC-${ticketRef.substring(0, 6).toUpperCase()}`;
+      purchasedTickets.push({ reference: ticketRef, gatePass });
+
+      if (production) {
+        ClientDB.purchaseTicket({
+          productionId: production.id,
+          productionTitle: production.title,
+          buyerEmail: recipient,
+          tier: selectedTier.name,
+          price: selectedTier.price,
+          reference: ticketRef,
+          gatePass
+        });
+      }
+    }
+
     setSuccessData({
       reference,
       tier: selectedTier.name,
+      quantity,
+      tickets: purchasedTickets
     });
-
-    const recipient = email || 'guest@curtaincall.ng';
-    const gatePass = `CC-${reference.substring(0, 6).toUpperCase()}`;
-
-    // Record ticket purchase in Hybrid DB
-    if (production) {
-      ClientDB.purchaseTicket({
-        productionId: production.id,
-        productionTitle: production.title,
-        buyerEmail: recipient,
-        tier: selectedTier.name,
-        price: selectedTier.price,
-        reference,
-        gatePass
-      });
-    }
 
     // Send Ticket Email via Resend
     const subject = `Your Curtain Call Admission Pass: ${production?.title || 'Theatre Ticket'}`;
@@ -88,6 +101,13 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       day: 'numeric'
     }) : 'Scheduled Date';
 
+    const ticketRows = purchasedTickets.map((t, idx) => `
+      <tr style="border-top: 1px dashed rgba(255,255,255,0.08);">
+        <td style="padding: 12px 0; font-size: 13px; color: #a1a1aa;">Pass #${idx + 1} (${selectedTier.name})</td>
+        <td style="padding: 12px 0; font-size: 13px; color: #22c55e; text-align: right; font-weight: bold; font-family: monospace;">${t.gatePass}</td>
+      </tr>
+    `).join('');
+
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
         <div style="text-align: center; margin-bottom: 30px;">
@@ -96,12 +116,12 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
         </div>
         
         <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center;">
-          Your seat has been reserved. Present this digital pass at the gates.
+          Your seats have been reserved. Present the digital passes at the gates.
         </p>
         
         <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
           <div style="margin-bottom: 20px;">
-            <span style="font-size: 9px; color: #dc2626; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Admit One (1)</span>
+            <span style="font-size: 9px; color: #dc2626; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Admit ${quantity} Person${quantity > 1 ? 's' : ''}</span>
             <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; margin: 4px 0 0; font-family: Georgia, serif;">${production?.title}</h2>
           </div>
           
@@ -113,21 +133,19 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
               <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${showDateFormatted}</td>
             </tr>
             <tr>
-              <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Tier</td>
-              <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${selectedTier.name}</td>
-            </tr>
-            <tr>
               <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Venue</td>
               <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${production?.venue}</td>
             </tr>
             <tr>
-              <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Reference</td>
-              <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-family: monospace;">${reference}</td>
+              <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Total Paid</td>
+              <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold; font-family: monospace; font-size: 13px;">₦${(selectedTier.price * quantity).toLocaleString()}</td>
             </tr>
-            <tr>
-              <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Gate Pass</td>
-              <td style="padding: 8px 0; font-size: 12px; color: #22c55e; text-align: right; font-weight: bold; font-family: monospace;">${gatePass}</td>
-            </tr>
+          </table>
+
+          <div style="border-top: 1px dashed #27272a; margin: 20px 0;"></div>
+          <h3 style="font-size: 12px; color: #ffffff; text-transform: uppercase; font-weight: bold; margin-bottom: 10px; font-family: Georgia, serif;">Admissions Gate Passes:</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            ${ticketRows}
           </table>
         </div>
 
@@ -165,57 +183,61 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             Ticket Confirmed!
           </h1>
           <p className="text-xs text-zinc-500 mb-6">
-            Your admission pass has been secured and sent to <span className="text-zinc-300 font-semibold">{email || 'guest@curtaincall.ng'}</span>.
+            Your {successData.quantity} admission pass{successData.quantity > 1 ? 'es have' : ' has'} been secured and sent to <span className="text-zinc-300 font-semibold">{email || 'guest@curtaincall.ng'}</span>.
           </p>
 
-          {/* Ticket Card Pass UI */}
-          <div className="bg-zinc-950 border border-white/5 rounded-2xl p-6 text-left relative overflow-hidden mb-6">
-            <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-green-500/5 rounded-full blur-xl" />
-            
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono">Admission Pass</span>
-                <h3 className="text-base font-serif font-bold text-white truncate max-w-[200px] mt-0.5">
-                  {production.title}
-                </h3>
-              </div>
-              <span className="text-[10px] font-bold text-green-400 bg-green-600/10 px-2 py-0.5 rounded border border-green-500/20 font-mono">
-                PAID
-              </span>
-            </div>
+          {/* Stacks of Admission Passes UI */}
+          <div className="flex flex-col gap-4 overflow-y-auto max-h-[380px] pr-2 [scrollbar-width:none] mb-6">
+            {successData.tickets.map((t, index) => (
+              <div key={index} className="bg-zinc-950 border border-white/5 rounded-2xl p-5 text-left relative overflow-hidden shrink-0">
+                <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-green-500/5 rounded-full blur-xl" />
+                
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono">Pass #{index + 1} of {successData.quantity}</span>
+                    <h3 className="text-sm font-serif font-bold text-white truncate max-w-[200px] mt-0.5">
+                      {production.title}
+                    </h3>
+                  </div>
+                  <span className="text-[9px] font-bold text-green-400 bg-green-600/10 px-2 py-0.5 rounded border border-green-500/20 font-mono">
+                    ADMIT ONE
+                  </span>
+                </div>
 
-            <div className="border-t border-dashed border-white/10 my-4" />
+                <div className="border-t border-dashed border-white/10 my-3" />
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Tier</span>
-                <span className="text-xs text-zinc-200 font-semibold">{successData.tier}</span>
-              </div>
-              <div>
-                <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Event Date</span>
-                <span className="text-xs text-zinc-200 font-semibold">
-                  {production.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Scheduled'}
-                </span>
-              </div>
-            </div>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Tier</span>
+                    <span className="text-xs text-zinc-200 font-semibold">{successData.tier}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Event Date</span>
+                    <span className="text-xs text-zinc-200 font-semibold">
+                      {production.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Scheduled'}
+                    </span>
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Venue</span>
-                <span className="text-xs text-zinc-200 font-semibold truncate block" title={production.venue}>{production.venue}</span>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Venue</span>
+                    <span className="text-xs text-zinc-200 font-semibold truncate block" title={production.venue}>{production.venue}</span>
+                  </div>
+                  <div>
+                    <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Gate Pass / Ref</span>
+                    <span className="text-xs text-green-400 font-mono font-bold flex items-center gap-1">
+                      <QrCode className="h-3.5 w-3.5" /> {t.gatePass}
+                    </span>
+                    <span className="text-[8px] text-zinc-500 font-mono block mt-0.5">Ref: {t.reference}</span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Gate Pass / Ref</span>
-                <span className="text-xs text-green-400 font-mono font-bold flex items-center gap-1">
-                  <QrCode className="h-3.5 w-3.5" /> CC-{successData.reference.substring(0, 6).toUpperCase()}
-                </span>
-                <span className="text-[9px] text-zinc-500 font-mono block mt-0.5">Ref: {successData.reference.substring(0, 10)}...</span>
-              </div>
-            </div>
+            ))}
           </div>
 
           <p className="text-[10px] text-zinc-500 leading-relaxed mb-6 font-mono">
-            PRESENT THIS DIGITAL PASS OR REFERENCE CODE AT THE VENUE GATE.
+            PRESENT THESE DIGITAL PASSES OR REFERENCE CODES AT THE VENUE GATE.
           </p>
 
           <Link
@@ -290,13 +312,31 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
               </div>
             </div>
 
+            {/* Quantity Selector */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+                Quantity (Max 10)
+              </label>
+              <select
+                value={quantity}
+                onChange={e => setQuantity(Number(e.target.value))}
+                className="w-full bg-zinc-950 border border-white/5 focus:border-red-500 rounded-xl px-4 py-3 text-sm text-white focus:outline-none transition-colors"
+              >
+                {[...Array(10)].map((_, i) => (
+                  <option key={i + 1} value={i + 1}>
+                    {i + 1} ticket{i > 0 ? 's' : ''} — ₦{((i + 1) * selectedTier.price).toLocaleString()}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Paystack Checkout Button Container */}
             <div className="mt-2">
               <PaystackButton
                 productionTitle={production.title}
                 productionId={production.id}
                 tierName={selectedTier.name}
-                priceNGN={selectedTier.price}
+                priceNGN={selectedTier.price * quantity}
                 userEmail={email || 'guest@curtaincall.ng'}
                 onSuccess={handlePaymentSuccess}
                 className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 text-sm shadow-xl disabled:opacity-40 disabled:cursor-not-allowed"

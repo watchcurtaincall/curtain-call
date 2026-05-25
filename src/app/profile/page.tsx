@@ -109,8 +109,8 @@ export default function ProfilePage() {
     // Combine and sort transactions chronologically
     const transactions = [
       ...userTickets.map(t => ({
-        label: `Ticket sale — ${t.productionTitle} (${t.tier})`,
-        amount: `+₦${t.price.toLocaleString()}`,
+        label: `Ticket sale — ${t.productionTitle} (${t.tier}) (Net after 5% fee)`,
+        amount: `+₦${(t.price * 0.95).toLocaleString()}`,
         date: t.date || 'Recently',
         positive: true,
         timestamp: t.timestamp || 0
