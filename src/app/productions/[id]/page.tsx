@@ -42,6 +42,11 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
     );
   }
 
+  // Load and count Critic vs Audience reviews dynamically to prevent lumping together
+  const allReviews = ClientDB.getReviews().filter(r => r.productionId === production.id);
+  const criticReviewsCount = allReviews.filter(r => r.type === 'Critic').length;
+  const audienceReviewsCount = allReviews.filter(r => r.type === 'Audience').length;
+
   return (
     <div className="flex flex-col min-h-screen bg-zinc-950">
 
@@ -120,7 +125,9 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
                 </div>
                 <div className="leading-tight">
                   <div className="text-xs font-semibold text-white">Critic Score</div>
-                  <div className="text-[10px] text-zinc-500">Verified</div>
+                  <div className="text-[10px] text-zinc-500">
+                    {criticReviewsCount} {criticReviewsCount === 1 ? 'rating' : 'ratings'}
+                  </div>
                 </div>
               </div>
 
@@ -134,7 +141,9 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
                   <div className="text-xs font-semibold text-white flex items-center gap-1">
                     Audience <Star className="h-2.5 w-2.5 fill-yellow-500 text-yellow-500" />
                   </div>
-                  <div className="text-[10px] text-zinc-500">{production.totalReviews} ratings</div>
+                  <div className="text-[10px] text-zinc-500">
+                    {audienceReviewsCount} {audienceReviewsCount === 1 ? 'rating' : 'ratings'}
+                  </div>
                 </div>
               </div>
             </div>
