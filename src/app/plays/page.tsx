@@ -122,8 +122,8 @@ export default function DocumentedPlaysPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-10">
-          {/* Strict 2-column grid, constrained on desktop to prevent overly large cards */}
-          <div className="grid grid-cols-2 gap-6 max-w-4xl mx-auto w-full">
+          {/* Grid layout: 2 columns on mobile, scaling to 5 columns on desktop viewports */}
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 w-full">
             {filteredProductions
               .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
               .map(production => (
