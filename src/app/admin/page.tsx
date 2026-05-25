@@ -40,7 +40,30 @@ export default function AdminDashboardPage() {
     document.body.removeChild(link);
     showToast(`Exported ${filename} successfully!`);
   };
-  
+  const getUserBalance = (email: string) => {
+    if (!email) return 0;
+    const emailLower = email.toLowerCase();
+    const allPlays = ClientDB.getProductions();
+    const userPlays = allPlays.filter(p => p.submitterEmail?.toLowerCase() === emailLower);
+    const userPlayIds = userPlays.map(p => p.id);
+    
+    const dbTickets = ClientDB.getTickets();
+    const dbWithdrawals = ClientDB.getWithdrawals();
+    
+    const userTickets = dbTickets.filter(t => userPlayIds.includes(t.productionId));
+    const grossEarnings = userTickets.reduce((acc, t) => acc + t.price, 0);
+    const totalEarned = grossEarnings * 0.95;
+    
+    const userWithdrawals = dbWithdrawals.filter(w => w.email.toLowerCase() === emailLower);
+    const approvedWithdrawals = userWithdrawals.filter(w => w.status === 'Approved');
+    const totalWithdrawn = approvedWithdrawals.reduce((acc, w) => acc + w.amount, 0);
+    
+    const pendingWithdrawals = userWithdrawals.filter(w => w.status === 'Pending');
+    const totalPending = pendingWithdrawals.reduce((acc, w) => acc + w.amount, 0);
+    
+    return Math.max(0, totalEarned - totalWithdrawn - totalPending);
+  };
+
   // Custom Rejection Reason and Email Logs States
   const [declineItem, setDeclineItem] = useState<{ id: string; name: string; type: 'artist' | 'play' | 'article' | 'critic' | 'withdrawal'; email: string } | null>(null);
   const [declineReason, setDeclineReason] = useState('');
@@ -1308,7 +1331,7 @@ This file was retrieved from the Curtain Call Curation Vault.
                         </div>
 
                         {/* Middle box: account details */}
-                        <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Beneficiary Name</p>
                             <p className="text-sm font-bold text-white mt-1 font-serif">{req.accountName}</p>
@@ -1320,6 +1343,15 @@ This file was retrieved from the Curtain Call Curation Vault.
                             </p>
                             <p className="text-xs text-zinc-500 font-mono mt-0.5">{req.accountNumber}</p>
                           </div>
+                          <div>
+                            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Current Wallet Balance</p>
+                            <p className="text-sm font-bold text-emerald-400 mt-1">
+                              ₦{getUserBalance(req.email).toLocaleString()}
+                            </p>
+                            <p className="text-[10px] text-zinc-500 mt-0.5 font-mono">
+                              Before req: ₦{(getUserBalance(req.email) + req.amount).toLocaleString()}
+                            </p>
+                          </div>
                         </div>
 
                         {/* Bottom Actions */}
@@ -1329,7 +1361,7 @@ This file was retrieved from the Curtain Call Curation Vault.
                             onClick={() => handleApproveWithdrawal(req.id, req.amount, req.accountName, req.bankName, req.email)}
                             className="flex-1 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 hover:border-emerald-600 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md"
                           >
-                            <Check className="h-4 w-4" /> Approve Transfer
+                            <Check className="h-4 w-4" /> Mark as Paid
                           </button>
                           <button
                             type="button"
@@ -1349,7 +1381,7 @@ This file was retrieved from the Curtain Call Curation Vault.
             <div className="lg:col-span-5 flex flex-col gap-6">
               <div className="pb-4 border-b border-white/5">
                 <h3 className="font-serif font-bold text-xl">Payout History</h3>
-                <p className="text-zinc-500 text-xs mt-0.5">Chronological log of processed disbursements</p>
+                <p className="text-zinc-500 text-xs mt-0.5">Chronological log of processed disbursements (Last 7)</p>
               </div>
 
               {withdrawals.filter(w => w.status !== 'Pending').length === 0 ? (
@@ -1360,6 +1392,7 @@ This file was retrieved from the Curtain Call Curation Vault.
                 <div className="flex flex-col gap-3.5 max-h-[70vh] overflow-y-auto pr-1">
                   {withdrawals
                     .filter(w => w.status !== 'Pending')
+                    .slice(0, 7)
                     .map(req => (
                       <div
                         key={req.id}

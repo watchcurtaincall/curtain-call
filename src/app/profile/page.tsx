@@ -750,12 +750,12 @@ export default function ProfilePage() {
 
                 {/* Recent Transactions */}
                 <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6">
-                  <h3 className="font-serif font-bold text-white mb-4 text-sm">Recent Transactions</h3>
+                  <h3 className="font-serif font-bold text-white mb-4 text-sm">Recent Transactions (Last 7)</h3>
                   <div className="flex flex-col divide-y divide-white/5">
                     {walletMetrics.transactions.length === 0 ? (
                       <p className="text-xs text-zinc-500 py-3 text-center">No transaction records found.</p>
                     ) : (
-                      walletMetrics.transactions.slice(0, 10).map((tx, i) => (
+                      walletMetrics.transactions.slice(0, 7).map((tx, i) => (
                         <div key={i} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                           <div>
                             <p className="text-xs text-white leading-tight">{tx.label}</p>
