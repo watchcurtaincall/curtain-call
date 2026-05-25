@@ -47,7 +47,7 @@ export default function SignupPage() {
     } catch (err: any) {
       let msg = err.message || 'Registration failed.';
       if (msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('exceeded')) {
-        msg = 'Signup rate limit exceeded by Supabase. To bypass this entirely, please log into your Supabase Dashboard -> Authentication -> Providers -> Email, and toggle "Confirm email" to OFF. This allows instant account creation without verification delays!';
+        msg = 'Signup request rate limit exceeded. Please wait a moment and try again, or contact support.';
       }
       setErrorMsg(msg);
       setLoading(false);

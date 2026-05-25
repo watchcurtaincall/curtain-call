@@ -44,7 +44,7 @@ export default function LoginPage() {
     } catch (err: any) {
       let msg = err.message || 'Invalid email or password.';
       if (msg.toLowerCase().includes('confirm')) {
-        msg = 'Your email has not been confirmed yet. Please check your inbox for a verification link, or log into your Supabase Dashboard -> Authentication -> Providers -> Email, and toggle "Confirm email" to OFF. This disables email confirmations completely so you can log in instantly!';
+        msg = 'Your email address has not been confirmed yet. Please verify your inbox for the confirmation code, or try signing in again.';
       }
       setErrorMsg(msg);
       setLoading(false);
