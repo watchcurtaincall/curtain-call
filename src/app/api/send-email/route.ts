@@ -5,7 +5,19 @@ export async function POST(request: Request) {
     const { to, subject, html } = await request.json();
     const resendApiKey = process.env.RESEND_API_KEY;
 
-    console.log(`[Resend Email Sender] Preparing email to ${to}: "${subject}"`);
+    // Dynamic extraction of verification OTP code for absolute visibility in server terminal logs
+    const codeMatch = html.match(/>(\d{4})<\/span>/) || html.match(/>\s*(\d{4})\s*</) || html.match(/\b(\d{4})\b/);
+    const extractedCode = codeMatch ? codeMatch[1] : 'N/A';
+
+    console.log(`
+============================================================
+🎭 [CURTAIN CALL EMAIL DISPATCHER]
+To: ${to}
+Subject: "${subject}"
+Verification Code: ${extractedCode}
+Timestamp: ${new Date().toISOString()}
+============================================================
+`);
 
     // Dynamic verification of Resend API key
     if (!resendApiKey || resendApiKey === 're_your_resend_api_key_here') {
@@ -19,6 +31,7 @@ export async function POST(request: Request) {
           to,
           subject,
           html,
+          code: extractedCode,
           sentAt: new Date().toISOString()
         }
       });

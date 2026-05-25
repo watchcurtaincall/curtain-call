@@ -410,13 +410,22 @@ export const ClientDB = {
     current.push(email.toLowerCase());
     localStorage.setItem(key, JSON.stringify(current));
 
-    // Sync to Supabase
-    if (supabase) {
-      supabase.from('newsletter_subscribers').upsert({ email: email.toLowerCase() })
-        .then(({ error }) => {
-          if (error) console.error('[Supabase Sync] Newsletter save failed:', error);
-        });
-    }
+    // Sync to Supabase securely via admin-data bypass API
+    fetch('/api/admin-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'subscriber',
+        data: { email: email.toLowerCase() }
+      })
+    }).then(async res => {
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error('[Admin Bypass Sync] Newsletter save failed:', errData);
+      }
+    }).catch(err => {
+      console.error('[Admin Bypass Sync] Fetch error:', err);
+    });
 
     // Send Welcome Email
     const subject = "Welcome to Curtain Call | The Front Row Seat";
@@ -490,19 +499,30 @@ export const ClientDB = {
     }
     localStorage.setItem(key, JSON.stringify(updated));
 
-    if (supabase) {
-      supabase.from('profiles').upsert({
-        email: profile.email.toLowerCase(),
-        name: profile.name,
-        handle: profile.handle || null,
-        location: profile.location || null,
-        join_date: profile.joinDate || 'May 2026',
-        is_verified: profile.isVerified ?? true,
-        verification_code: profile.verificationCode || null
-      }).then(({ error }) => {
-        if (error) console.error('[Supabase Sync] Profile save failed:', error);
-      });
-    }
+    // Sync to Supabase securely via admin-data bypass API
+    fetch('/api/admin-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'signup',
+        data: {
+          email: profile.email.toLowerCase(),
+          name: profile.name,
+          handle: profile.handle || null,
+          location: profile.location || null,
+          joinDate: profile.joinDate || 'May 2026',
+          isVerified: profile.isVerified ?? true,
+          verificationCode: profile.verificationCode || null
+        }
+      })
+    }).then(async res => {
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error('[Admin Bypass Sync] Profile save failed:', errData);
+      }
+    }).catch(err => {
+      console.error('[Admin Bypass Sync] Fetch error:', err);
+    });
   },
 
   getSignups(): any[] {

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { ClientDB, syncFromSupabase } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
-import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download } from 'lucide-react';
+import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -212,6 +212,37 @@ export default function AdminDashboardPage() {
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
+  };
+
+  const verifySignupUser = async (profile: any) => {
+    if (!confirm(`Mark ${profile.name} (${profile.email}) as verified?`)) return;
+    
+    try {
+      const res = await fetch('/api/admin-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'signup',
+          data: {
+            email: profile.email.toLowerCase(),
+            name: profile.name,
+            handle: profile.handle || null,
+            location: profile.location || null,
+            joinDate: profile.joinDate || 'May 2026',
+            isVerified: true,
+            verificationCode: null
+          }
+        })
+      });
+
+      if (!res.ok) throw new Error('API server returned error');
+
+      showToast(`Successfully verified profile for ${profile.name}!`);
+      await syncFromSupabase();
+    } catch (err) {
+      console.error('[Admin Verification Error]:', err);
+      showToast('Failed to verify user profile.', 'error');
+    }
   };
 
   // Submit rejection modal confirmation
@@ -2997,41 +3028,74 @@ This file was retrieved from the Curtain Call Curation Vault.
                 ) : (
                   <div className="overflow-y-auto max-h-[500px] [scrollbar-width:none] flex-1">
                     <div className="flex flex-col gap-2.5">
-                      {signups.map((profile, idx) => (
-                        <div key={idx} className="bg-zinc-950/50 border border-white/5 rounded-2xl p-4 flex items-start justify-between gap-4">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-white font-serif font-bold text-base truncate">{profile.name}</span>
-                              {ClientDB.isApprovedCritic(profile.email) && (
-                                <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider shrink-0 flex items-center gap-0.5">
-                                  Critic
-                                </span>
+                      {signups.map((profile, idx) => {
+                        const criticActive = ClientDB.isApprovedCritic(profile.email);
+                        const isVerified = profile.isVerified ?? true;
+
+                        return (
+                          <div key={idx} className="bg-zinc-950/50 border border-white/5 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-white font-serif font-bold text-base truncate">{profile.name}</span>
+                                {criticActive && (
+                                  <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider shrink-0">
+                                    Critic
+                                  </span>
+                                )}
+                                {isVerified ? (
+                                  <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider shrink-0 flex items-center gap-0.5">
+                                    <ShieldCheck className="h-3 w-3" /> Verified
+                                  </span>
+                                ) : (
+                                  <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider shrink-0 flex items-center gap-0.5" title={`Unconfirmed user registration. Verification code: ${profile.verificationCode || 'N/A'}`}>
+                                    <ShieldAlert className="h-3 w-3" /> Unverified
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-zinc-400 text-xs block font-mono mt-0.5 truncate">{profile.email}</span>
+                              
+                              {!isVerified && profile.verificationCode && (
+                                <div className="mt-2 flex items-center gap-1.5 text-zinc-400 text-[10px] font-mono bg-zinc-900 px-2.5 py-1 rounded-lg w-max border border-white/5">
+                                  <span>OTP Code:</span>
+                                  <strong className="text-red-400 tracking-wider">{profile.verificationCode}</strong>
+                                </div>
                               )}
+                              
+                              <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[10px] text-zinc-500 font-mono">
+                                {profile.handle && <span className="text-red-400/80">{profile.handle}</span>}
+                                {profile.location && <span>📍 {profile.location}</span>}
+                                <span>Joined {profile.joinDate}</span>
+                              </div>
                             </div>
-                            <span className="text-zinc-400 text-xs block font-mono mt-0.5 truncate">{profile.email}</span>
-                            {profile.handle && (
-                              <span className="text-red-400 text-[10px] block font-mono mt-1">{profile.handle}</span>
-                            )}
-                            {profile.location && (
-                              <span className="text-zinc-500 text-[10px] block mt-0.5">📍 {profile.location}</span>
-                            )}
-                            <span className="text-zinc-600 text-[9px] font-mono block mt-1">Joined {profile.joinDate}</span>
+                            
+                            <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                              {!isVerified && (
+                                <button
+                                  onClick={() => verifySignupUser(profile)}
+                                  className="bg-green-600 hover:bg-green-500 text-white font-bold text-xs px-3 py-2 rounded-xl transition-all shadow-md flex items-center gap-1"
+                                  title="Approve verification manually"
+                                >
+                                  <ShieldCheck className="h-3.5 w-3.5" />
+                                  <span>Verify</span>
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Are you sure you want to permanently delete profile for ${profile.name}?`)) {
+                                    ClientDB.deleteSignup(profile.email);
+                                    setSignups(ClientDB.getSignups());
+                                    showToast(`Deleted profile for ${profile.name}`, 'error');
+                                  }
+                                }}
+                                className="text-zinc-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-xl transition-all"
+                                title="Delete User"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
-                          <button
-                            onClick={() => {
-                              if (confirm(`Are you sure you want to permanently delete profile for ${profile.name}?`)) {
-                                ClientDB.deleteSignup(profile.email);
-                                setSignups(ClientDB.getSignups());
-                                showToast(`Deleted profile for ${profile.name}`, 'error');
-                              }
-                            }}
-                            className="text-zinc-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-xl transition-all shrink-0 self-center"
-                            title="Delete User"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}

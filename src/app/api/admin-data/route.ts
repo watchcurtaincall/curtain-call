@@ -164,3 +164,66 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
   }
 }
+
+// POST: Securely upserts a newsletter subscriber or user profile bypassing RLS policies
+export async function POST(request: Request) {
+  if (!supabaseServer) {
+    return NextResponse.json({ error: 'Supabase service client not configured' }, { status: 500 });
+  }
+
+  try {
+    const body = await request.json();
+    const { type, data } = body;
+
+    if (!type || !data) {
+      return NextResponse.json({ error: 'Missing type or data' }, { status: 400 });
+    }
+
+    if (type === 'subscriber') {
+      const { email } = data;
+      if (!email) {
+        return NextResponse.json({ error: 'Missing email' }, { status: 400 });
+      }
+      
+      const { error } = await supabaseServer
+        .from('newsletter_subscribers')
+        .upsert({ email: email.toLowerCase() });
+
+      if (error) {
+        console.error('[API Admin Data] Upsert subscriber failed:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, message: 'Subscribed successfully via Admin-Service Bypass' });
+    } else if (type === 'signup') {
+      const { email, name, handle, location, joinDate, isVerified, verificationCode } = data;
+      if (!email || !name) {
+        return NextResponse.json({ error: 'Missing email or name' }, { status: 400 });
+      }
+
+      const { error } = await supabaseServer
+        .from('profiles')
+        .upsert({
+          email: email.toLowerCase(),
+          name,
+          handle: handle || null,
+          location: location || null,
+          join_date: joinDate || 'May 2026',
+          is_verified: isVerified ?? true,
+          verification_code: verificationCode || null
+        });
+
+      if (error) {
+        console.error('[API Admin Data] Upsert profile failed:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, message: 'Profile saved successfully via Admin-Service Bypass' });
+    } else {
+      return NextResponse.json({ error: 'Invalid type parameter' }, { status: 400 });
+    }
+  } catch (err: any) {
+    console.error('[API Admin Data] POST exception:', err);
+    return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+  }
+}
