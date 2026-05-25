@@ -282,7 +282,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
               </p>
             </div>
 
-            {/* Email Address Input */}
+             {/* Email Address Input */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                 <Mail className="h-3 w-3" /> Email Address (For Ticket Delivery)
@@ -293,8 +293,22 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-red-500 transition-colors"
+                className={`w-full bg-zinc-950 border rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-colors ${
+                  email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+                    ? 'border-red-500/50 focus:border-red-500'
+                    : 'border-white/5 focus:border-red-500'
+                }`}
               />
+              {email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && (
+                <span className="text-[10px] text-red-500 font-mono">
+                  ⚠ Please enter a valid email address.
+                </span>
+              )}
+              {!email && (
+                <span className="text-[10px] text-zinc-500 font-mono">
+                  ℹ Email address is required to unlock secure checkout.
+                </span>
+              )}
             </div>
 
             {/* Tier Selector */}
@@ -350,7 +364,8 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                 productionId={production.id}
                 tierName={selectedTier.name}
                 priceNGN={selectedTier.price * quantity}
-                userEmail={email || 'guest@curtaincall.ng'}
+                userEmail={email}
+                disabled={!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
                 onSuccess={handlePaymentSuccess}
                 className="w-full bg-white text-black font-bold py-4 rounded-xl hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 text-sm shadow-xl disabled:opacity-40 disabled:cursor-not-allowed"
               />

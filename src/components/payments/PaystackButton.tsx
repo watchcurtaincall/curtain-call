@@ -12,6 +12,7 @@ interface PaystackButtonProps {
   userEmail?: string;
   onSuccess?: (ref: string) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 export function PaystackButton({
@@ -22,6 +23,7 @@ export function PaystackButton({
   userEmail = 'guest@curtaincall.ng',
   onSuccess,
   className,
+  disabled,
 }: PaystackButtonProps) {
   const [loaded, setLoaded] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -58,7 +60,7 @@ export function PaystackButton({
   return (
     <button
       onClick={handlePay}
-      disabled={!loaded || paying}
+      disabled={!loaded || paying || disabled}
       className={className || 'flex items-center gap-2 bg-white text-black font-bold px-6 py-3 rounded-xl hover:bg-zinc-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'}
     >
       {paying
