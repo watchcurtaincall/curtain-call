@@ -13,7 +13,7 @@ const supabaseServer = (supabaseUrl && supabaseServiceKey)
     })
   : null;
 
-// GET: Returns all newsletter subscribers and user profiles
+// GET: Returns all newsletter subscribers, user profiles, and all pending queues (bypassing client-side RLS)
 export async function GET() {
   if (!supabaseServer) {
     return NextResponse.json({ error: 'Supabase service client not configured' }, { status: 500 });
@@ -52,9 +52,53 @@ export async function GET() {
       verificationCode: p.verification_code || undefined
     }));
 
+    // 3. Fetch Pending Plays / Productions
+    const { data: pendingPlays, error: playErr } = await supabaseServer
+      .from('productions')
+      .select('*')
+      .eq('curation_status', 'Pending');
+
+    if (playErr) {
+      console.error('[API Admin Data] Error fetching pending plays:', playErr);
+    }
+
+    // 4. Fetch Pending Artists
+    const { data: pendingArtists, error: artistErr } = await supabaseServer
+      .from('artists')
+      .select('*')
+      .eq('curation_status', 'Pending');
+
+    if (artistErr) {
+      console.error('[API Admin Data] Error fetching pending artists:', artistErr);
+    }
+
+    // 5. Fetch Pending Articles
+    const { data: pendingArticles, error: articleErr } = await supabaseServer
+      .from('articles')
+      .select('*')
+      .eq('curation_status', 'Pending');
+
+    if (articleErr) {
+      console.error('[API Admin Data] Error fetching pending articles:', articleErr);
+    }
+
+    // 6. Fetch Pending Critics / Applications
+    const { data: pendingCritics, error: criticErr } = await supabaseServer
+      .from('critic_applications')
+      .select('*')
+      .eq('curation_status', 'Pending');
+
+    if (criticErr) {
+      console.error('[API Admin Data] Error fetching pending critics:', criticErr);
+    }
+
     return NextResponse.json({
       subscribers: subscriberEmails,
-      signups: mappedProfiles
+      signups: mappedProfiles,
+      pendingPlays: pendingPlays || [],
+      pendingArtists: pendingArtists || [],
+      pendingArticles: pendingArticles || [],
+      pendingCritics: pendingCritics || []
     });
   } catch (err: any) {
     console.error('[API Admin Data] GET exception:', err);

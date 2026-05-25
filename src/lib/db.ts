@@ -1366,6 +1366,18 @@ export const ClientDB = {
 // ── CLOUD PULL AND CACHE SYNC MECHANISM ──
 export const syncFromSupabase = async () => {
   if (!supabase) return;
+
+  let isAdmin = false;
+  try {
+    if (typeof window !== 'undefined') {
+      const savedUser = localStorage.getItem('cc_authed_user');
+      if (savedUser) {
+        const email = JSON.parse(savedUser).email || '';
+        isAdmin = email.toLowerCase() === 'watchcurtaincall@gmail.com';
+      }
+    }
+  } catch (e) {}
+
   try {
     // 1. Pull productions
     const { data: prods } = await supabase.from('productions').select('*').neq('id', 'cache_bust_' + Date.now());
@@ -1377,7 +1389,10 @@ export const syncFromSupabase = async () => {
       const currentLocal = JSON.parse(localStorage.getItem(PRODUCTIONS_KEY) || '[]');
       const drafts = currentLocal.filter((p: any) => p.status === 'Draft');
       localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([...approved, ...drafts]));
-      localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(pending));
+      
+      if (!isAdmin) {
+        localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(pending));
+      }
     }
 
     // 2. Pull artists
@@ -1388,7 +1403,10 @@ export const syncFromSupabase = async () => {
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
       
       localStorage.setItem(ARTISTS_KEY, JSON.stringify(approved));
-      localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(pending));
+      
+      if (!isAdmin) {
+        localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(pending));
+      }
     }
 
     // 3. Pull articles
@@ -1399,7 +1417,10 @@ export const syncFromSupabase = async () => {
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
 
       localStorage.setItem(ARTICLES_KEY, JSON.stringify(approved));
-      localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(pending));
+      
+      if (!isAdmin) {
+        localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(pending));
+      }
     }
 
     // 4. Pull reviews
@@ -1414,7 +1435,10 @@ export const syncFromSupabase = async () => {
     if (apps) {
       const mapped = apps.map(mapCriticAppFromDb);
       const pending = mapped.filter(a => a.curationStatus === 'Pending');
-      localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pending));
+      
+      if (!isAdmin) {
+        localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pending));
+      }
     }
 
     // 6. Pull approved critic emails whitelist via secure API route (bypassing browser RLS)
@@ -1510,35 +1534,46 @@ export const syncFromSupabase = async () => {
       // ignore
     }
 
-    // 10. Pull profiles & newsletter subscribers ONLY if the logged in user is the administrator
-    let isAdmin = false;
-    try {
-      const savedUser = localStorage.getItem('cc_authed_user');
-      if (savedUser) {
-        const email = JSON.parse(savedUser).email || '';
-        isAdmin = email.toLowerCase() === 'watchcurtaincall@gmail.com';
-      }
-    } catch (e) {}
-
+    // 10. Pull profiles, newsletter subscribers, and all pending queues ONLY if the logged in user is the administrator
     if (isAdmin) {
       try {
         const res = await fetch('/api/admin-data');
         if (res.ok) {
-          const { subscribers, signups } = await res.json();
+          const { subscribers, signups, pendingPlays, pendingArtists, pendingArticles, pendingCritics } = await res.json();
           if (subscribers) {
             localStorage.setItem('curtain_newsletter_subscribers', JSON.stringify(subscribers));
           }
           if (signups) {
             localStorage.setItem('curtain_user_profiles', JSON.stringify(signups));
           }
+          if (pendingPlays) {
+            const mapped = pendingPlays.map(mapProductionFromDb);
+            localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(mapped));
+          }
+          if (pendingArtists) {
+            const mapped = pendingArtists.map(mapArtistFromDb);
+            localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(mapped));
+          }
+          if (pendingArticles) {
+            const mapped = pendingArticles.map(mapArticleFromDb);
+            localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(mapped));
+          }
+          if (pendingCritics) {
+            const mapped = pendingCritics.map(mapCriticAppFromDb);
+            localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(mapped));
+          }
         }
       } catch (e) {
-        console.error('[Supabase Sync] Failed to fetch admin subscribers/signups data:', e);
+        console.error('[Supabase Sync] Failed to fetch admin pending/signups data:', e);
       }
     } else {
-      // Security/Privacy: clear signups/subscribers for non-admin users!
+      // Security/Privacy: clear signups/subscribers and pending queues for non-admin users!
       localStorage.removeItem('curtain_user_profiles');
       localStorage.removeItem('curtain_newsletter_subscribers');
+      localStorage.removeItem(PENDING_ARTISTS_KEY);
+      localStorage.removeItem(PENDING_PLAYS_KEY);
+      localStorage.removeItem(PENDING_ARTICLES_KEY);
+      localStorage.removeItem(PENDING_CRITICS_KEY);
     }
 
     console.log('[Curtain Call Database] Sync successfully completed with Supabase cloud!');
