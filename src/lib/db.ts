@@ -1449,13 +1449,19 @@ export const syncFromSupabase = async () => {
     if (data.productions) {
       const mappedRemote = data.productions.map(mapProductionFromDb);
       const approved = mappedRemote.filter((p: any) => p.curationStatus === 'Approved');
-      const pendingRemote = mappedRemote.filter((p: any) => p.curationStatus === 'Pending');
       
       const currentLocal = JSON.parse(localStorage.getItem(PRODUCTIONS_KEY) || '[]');
       const drafts = currentLocal.filter((p: any) => p.status === 'Draft');
       localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([...approved, ...drafts]));
       
       if (!isAdmin) {
+        const cleanEmail = email ? email.toLowerCase() : '';
+        const pendingRemote = mappedRemote.filter((p: any) => 
+          p.curationStatus === 'Pending' && 
+          p.submitterEmail && 
+          p.submitterEmail.toLowerCase() === cleanEmail
+        );
+        
         const localPending = JSON.parse(localStorage.getItem(PENDING_PLAYS_KEY) || '[]');
         const unsynced = localPending.filter((lp: any) => !mappedRemote.some((rp: any) => rp.id === lp.id));
         for (const req of unsynced) {
@@ -1471,11 +1477,29 @@ export const syncFromSupabase = async () => {
     if (data.artists) {
       const mappedRemote = data.artists.map(mapArtistFromDb);
       const approved = mappedRemote.filter((a: any) => a.curationStatus === 'Approved');
-      const pendingRemote = mappedRemote.filter((a: any) => a.curationStatus === 'Pending');
       
-      localStorage.setItem(ARTISTS_KEY, JSON.stringify(approved));
+      // Hits Max Merge Policy to prevent view count rollbacks
+      const localArtists = JSON.parse(localStorage.getItem(ARTISTS_KEY) || '[]');
+      const mergedApproved = approved.map((remoteArtist: any) => {
+        const localArtist = localArtists.find((la: any) => la.id === remoteArtist.id);
+        if (localArtist) {
+          return {
+            ...remoteArtist,
+            hits: Math.max(localArtist.hits || 0, remoteArtist.hits || 0)
+          };
+        }
+        return remoteArtist;
+      });
+      localStorage.setItem(ARTISTS_KEY, JSON.stringify(mergedApproved));
       
       if (!isAdmin) {
+        const cleanEmail = email ? email.toLowerCase() : '';
+        const pendingRemote = mappedRemote.filter((a: any) => 
+          a.curationStatus === 'Pending' && 
+          a.submitterEmail && 
+          a.submitterEmail.toLowerCase() === cleanEmail
+        );
+        
         const localPending = JSON.parse(localStorage.getItem(PENDING_ARTISTS_KEY) || '[]');
         const unsynced = localPending.filter((la: any) => !mappedRemote.some((ra: any) => ra.id === la.id));
         for (const req of unsynced) {
@@ -1491,11 +1515,17 @@ export const syncFromSupabase = async () => {
     if (data.articles) {
       const mappedRemote = data.articles.map(mapArticleFromDb);
       const approved = mappedRemote.filter((a: any) => a.curationStatus === 'Approved');
-      const pendingRemote = mappedRemote.filter((a: any) => a.curationStatus === 'Pending');
 
       localStorage.setItem(ARTICLES_KEY, JSON.stringify(approved));
       
       if (!isAdmin) {
+        const cleanEmail = email ? email.toLowerCase() : '';
+        const pendingRemote = mappedRemote.filter((a: any) => 
+          a.curationStatus === 'Pending' && 
+          a.submitterEmail && 
+          a.submitterEmail.toLowerCase() === cleanEmail
+        );
+        
         const localPending = JSON.parse(localStorage.getItem(PENDING_ARTICLES_KEY) || '[]');
         const unsynced = localPending.filter((la: any) => !mappedRemote.some((ra: any) => ra.id === la.id));
         for (const req of unsynced) {
@@ -1516,9 +1546,10 @@ export const syncFromSupabase = async () => {
     // 5. Process Critic Applications
     if (data.criticApplications) {
       const mapped = data.criticApplications.map(mapCriticAppFromDb);
-      const pending = mapped.filter((a: any) => a.curationStatus === 'Pending');
       
       if (!isAdmin) {
+        const cleanEmail = email ? email.toLowerCase() : '';
+        const pending = mapped.filter((a: any) => a.curationStatus === 'Pending' && a.email && a.email.toLowerCase() === cleanEmail);
         localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pending));
       }
     }
@@ -1547,11 +1578,13 @@ export const syncFromSupabase = async () => {
         await syncToCloud('withdrawals', req);
       }
       
-      const finalRemote = unsynced.length > 0
-        ? [ ...unsynced, ...data.withdrawals ]
-        : data.withdrawals;
-        
-      localStorage.setItem('curtain_withdrawals', JSON.stringify(finalRemote));
+      let finalRemote = data.withdrawals;
+      if (!isAdmin) {
+        const cleanEmail = email ? email.toLowerCase() : '';
+        finalRemote = data.withdrawals.filter((w: any) => w.email && w.email.toLowerCase() === cleanEmail);
+      }
+      
+      localStorage.setItem('curtain_withdrawals', JSON.stringify([...unsynced, ...finalRemote]));
     }
 
     // 8. Pull & Sync Tickets (Two-Way Self-Healing Sync)
@@ -1567,7 +1600,20 @@ export const syncFromSupabase = async () => {
         await syncToCloud('tickets', mapTicketToDb(tkt));
       }
       
-      const finalTickets = [ ...unsynced, ...mappedRemote ];
+      let finalRemote = mappedRemote;
+      if (!isAdmin) {
+        const cleanEmail = email ? email.toLowerCase() : '';
+        const userPlayIds = (data.productions || [])
+          .filter((p: any) => p.submitter_email && p.submitter_email.toLowerCase() === cleanEmail)
+          .map((p: any) => p.id);
+        
+        finalRemote = mappedRemote.filter((t: any) => 
+          (t.buyerEmail && t.buyerEmail.toLowerCase() === cleanEmail) ||
+          userPlayIds.includes(t.productionId)
+        );
+      }
+      
+      const finalTickets = [ ...unsynced, ...finalRemote ];
       localStorage.setItem('curtain_tickets', JSON.stringify(finalTickets));
     }
 
@@ -1603,37 +1649,6 @@ export const syncFromSupabase = async () => {
         localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pendingCritics));
       }
     } else {
-      // Security/Privacy: Keep only this user's own submissions in their browser's localStorage!
-      // This preserves their tracker queues while preventing other users' data from leaking.
-      if (email) {
-        const cleanEmail = email.toLowerCase();
-        
-        // 1. Plays
-        const localPendingPlays = JSON.parse(localStorage.getItem(PENDING_PLAYS_KEY) || '[]');
-        const ownPendingPlays = localPendingPlays.filter((p: any) => p.submitterEmail && p.submitterEmail.toLowerCase() === cleanEmail);
-        localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(ownPendingPlays));
-
-        // 2. Artists
-        const localPendingArtists = JSON.parse(localStorage.getItem(PENDING_ARTISTS_KEY) || '[]');
-        const ownPendingArtists = localPendingArtists.filter((a: any) => a.submitterEmail && a.submitterEmail.toLowerCase() === cleanEmail);
-        localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(ownPendingArtists));
-
-        // 3. Articles
-        const localPendingArticles = JSON.parse(localStorage.getItem(PENDING_ARTICLES_KEY) || '[]');
-        const ownPendingArticles = localPendingArticles.filter((a: any) => a.submitterEmail && a.submitterEmail.toLowerCase() === cleanEmail);
-        localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(ownPendingArticles));
-
-        // 4. Critics
-        const localPendingCritics = JSON.parse(localStorage.getItem(PENDING_CRITICS_KEY) || '[]');
-        const ownPendingCritics = localPendingCritics.filter((c: any) => c.email && c.email.toLowerCase() === cleanEmail);
-        localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(ownPendingCritics));
-      } else {
-        localStorage.removeItem(PENDING_ARTISTS_KEY);
-        localStorage.removeItem(PENDING_PLAYS_KEY);
-        localStorage.removeItem(PENDING_ARTICLES_KEY);
-        localStorage.removeItem(PENDING_CRITICS_KEY);
-      }
-
       // Security/Privacy: completely clear signups/subscribers lists for non-admin users!
       localStorage.removeItem('curtain_user_profiles');
       localStorage.removeItem('curtain_newsletter_subscribers');

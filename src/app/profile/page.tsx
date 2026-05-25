@@ -84,7 +84,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) return;
-    const userPlays = allPlays.filter(p => p.submitterEmail === user.email);
+    const userPlays = allPlays.filter(p => p.submitterEmail?.toLowerCase() === user.email.toLowerCase());
     const userPlayIds = userPlays.map(p => p.id);
     
     // Fetch real database records
@@ -162,37 +162,37 @@ export default function ProfilePage() {
   // Pull and merge user submissions dynamically
   useEffect(() => {
     if (!user) return;
-    const email = user.email;
+    const emailLower = user.email.toLowerCase();
 
     // 1. Pending Submissions
     const pendingArtists = ClientDB.getPendingArtists()
-      .filter(a => a.submitterEmail === email)
+      .filter(a => a.submitterEmail?.toLowerCase() === emailLower)
       .map(item => ({ ...item, contentType: 'Theatremaker Profile', status: 'Pending', icon: Users }));
 
     const pendingPlays = ClientDB.getPendingPlays()
-      .filter(p => p.submitterEmail === email)
+      .filter(p => p.submitterEmail?.toLowerCase() === emailLower)
       .map(item => ({ ...item, contentType: 'Playbill Listing', status: 'Pending', icon: Drama }));
 
     const pendingArticles = ClientDB.getPendingArticles()
-      .filter(a => a.submitterEmail === email)
+      .filter(a => a.submitterEmail?.toLowerCase() === emailLower)
       .map(item => ({ ...item, contentType: 'Blog Draft', status: 'Pending', icon: BookOpen }));
 
     // 2. Approved Submissions
     const approvedArtists = ClientDB.getArtists()
-      .filter(a => a.submitterEmail === email && a.curationStatus === 'Approved')
+      .filter(a => a.submitterEmail?.toLowerCase() === emailLower && a.curationStatus === 'Approved')
       .map(item => ({ ...item, contentType: 'Theatremaker Profile', status: 'Approved', icon: Users }));
 
     const approvedPlays = ClientDB.getProductions()
-      .filter(p => p.submitterEmail === email && p.curationStatus === 'Approved')
+      .filter(p => p.submitterEmail?.toLowerCase() === emailLower && p.curationStatus === 'Approved')
       .map(item => ({ ...item, contentType: 'Playbill Listing', status: 'Approved', icon: Drama }));
 
     const approvedArticles = ClientDB.getArticles()
-      .filter(a => a.submitterEmail === email && a.curationStatus === 'Approved')
+      .filter(a => a.submitterEmail?.toLowerCase() === emailLower && a.curationStatus === 'Approved')
       .map(item => ({ ...item, contentType: 'Blog Draft', status: 'Approved', icon: BookOpen }));
 
     // 3. Declined Submissions
     const declined = ClientDB.getDeclinedSubmissions()
-      .filter(d => d.submitterEmail === email)
+      .filter(d => d.submitterEmail?.toLowerCase() === emailLower)
       .map(item => {
         let type = 'Theatremaker Profile';
         let icon = Users;
@@ -208,7 +208,7 @@ export default function ProfilePage() {
 
     // 4. Withdrawal Submissions
     const withdrawalsList = ClientDB.getWithdrawals()
-      .filter(w => w.email.toLowerCase() === email.toLowerCase())
+      .filter(w => w.email.toLowerCase() === emailLower)
       .map(item => ({
         id: item.id || `w_${Date.now()}`,
         name: `Cash-out: ₦${item.amount.toLocaleString()} to ${item.bankName}`,
@@ -391,9 +391,9 @@ export default function ProfilePage() {
   // Calculate dynamic user-specific reviews
   const dbReviews = ClientDB.getReviews();
   const userReviews = dbReviews.filter(r => 
-    r.submitterEmail === user.email || 
+    (r.submitterEmail && r.submitterEmail.toLowerCase() === user.email.toLowerCase()) || 
     r.author.toLowerCase() === user.name.toLowerCase() || 
-    (user.email === 'adaeze@example.com' && r.type === 'Audience')
+    (user.email.toLowerCase() === 'adaeze@example.com' && r.type === 'Audience')
   );
 
   // Dynamic point system logic - attach points to each step
@@ -424,7 +424,7 @@ export default function ProfilePage() {
     { id: 3,  name: "Critic's Eye",        Icon: Target,     desc: 'Rate 10 productions',                   points: 100, unlocked: ratedCount >= 10,     color: 'text-blue-400 bg-blue-500/10 border-blue-500/25' },
     { id: 4,  name: 'Season Ticket',       Icon: Ticket,     desc: 'Add 5 shows to watchlist',              points: 100, unlocked: watchlist.length >= 5, color: 'text-green-400 bg-green-500/10 border-green-500/25' },
     { id: 5,  name: 'Voice of the Stage',  Icon: Mic2,       desc: 'Write 10 reviews',                      points: 150, unlocked: reviewsCount >= 10,     color: 'text-pink-400 bg-pink-500/10 border-pink-500/25' },
-    { id: 6,  name: 'Curtain Raiser',      Icon: Drama,      desc: 'Attend your first verified show',        points: 100, unlocked: ClientDB.getTickets().some(t => t.buyerEmail === user.email), color: 'text-red-400 bg-red-500/10 border-red-500/25' },
+    { id: 6,  name: 'Curtain Raiser',      Icon: Drama,      desc: 'Attend your first verified show',        points: 100, unlocked: ClientDB.getTickets().some(t => t.buyerEmail?.toLowerCase() === user.email.toLowerCase()), color: 'text-red-400 bg-red-500/10 border-red-500/25' },
     { id: 7,  name: 'Prolific Reviewer',   Icon: FileText,   desc: 'Write 50 reviews',                      points: 200, unlocked: reviewsCount >= 50,     color: 'text-orange-400 bg-orange-500/10 border-orange-500/25' },
     { id: 8,  name: 'Top Critic',          Icon: Trophy,     desc: 'Reach 500 points',                      points: 250, unlocked: points >= 500,        color: 'text-amber-500 bg-amber-500/10 border-amber-500/25' },
     { id: 9,  name: 'Cultural Archivist',  Icon: Library,    desc: 'Review historical productions',         points: 150, unlocked: reviewsCount >= 3,      color: 'text-sky-400 bg-sky-500/10 border-sky-500/25' },
