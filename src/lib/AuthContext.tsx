@@ -210,6 +210,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (data?.user) {
         const name = data.user.user_metadata?.full_name || cleanEmail.split('@')[0];
+        const isEmailConfirmed = !!data.user.email_confirmed_at;
+        
         loggedUser = {
           name,
           email: cleanEmail,
@@ -222,7 +224,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           totalBadges: 14,
           handle: deriveHandle(name, cleanEmail),
           bio: '',
-          location: ''
+          location: '',
+          isVerified: isEmailConfirmed // Capture official Supabase confirmation status!
         };
       }
     } else {
@@ -240,7 +243,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           totalBadges: 14,
           handle: '@watchcurtaincall',
           bio: 'Curtain Call Administrative Curation Board.',
-          location: 'Lagos, Nigeria'
+          location: 'Lagos, Nigeria',
+          isVerified: true
         };
         ClientDB.addApprovedCriticEmail('watchcurtaincall@gmail.com');
       } else {
@@ -262,14 +266,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     
-    // Fetch profile from database to get the isVerified flag
+    // Fetch profile from database to get the local isVerified flag
     const profilesList = ClientDB.getSignups();
     const existingProfile = profilesList.find((p: any) => p.email.toLowerCase() === cleanEmail);
-    if (existingProfile) {
+    
+    // The user is already verified if either Supabase auth says so, or if they verified locally previously!
+    const isAlreadyVerified = loggedUser.isVerified === true || (existingProfile && existingProfile.isVerified === true);
+    
+    if (isAlreadyVerified) {
       loggedUser = {
         ...loggedUser,
-        isVerified: existingProfile.isVerified ?? true,
-        verificationCode: existingProfile.verificationCode || undefined
+        isVerified: true,
+        verificationCode: undefined
       };
     } else {
       // Default to unverified for newly logged in users if no profile exists, or true for seed accounts
@@ -284,7 +292,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         verificationCode: code
       };
       
-      // Send code if not verified
+      // Send code if not verified and code is generated
       if (!isVerified && code) {
         sendOTP(cleanEmail, loggedUser.name, code);
       }
