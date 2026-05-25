@@ -141,8 +141,8 @@ export default function DiscoveryPage() {
             {results.length} production{results.length !== 1 ? 's' : ''}{query ? ` for "${query}"` : ''}
           </p>
           <div className="flex flex-col gap-10">
-            {/* Strict 2-column grid to keep listings extremely neat and organized */}
-            <div className="grid grid-cols-2 gap-6">
+            {/* Strict 2-column grid, constrained on desktop to prevent overly large cards */}
+            <div className="grid grid-cols-2 gap-6 max-w-4xl mx-auto w-full">
               {results
                 .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
                 .map(p => (
