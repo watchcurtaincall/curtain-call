@@ -206,7 +206,30 @@ export default function ProfilePage() {
         return { ...item, contentType: type, status: 'Declined', icon };
       });
 
-    const merged = [...pendingArtists, ...pendingPlays, ...pendingArticles, ...approvedArtists, ...approvedPlays, ...approvedArticles, ...declined];
+    // 4. Withdrawal Submissions
+    const withdrawalsList = ClientDB.getWithdrawals()
+      .filter(w => w.email.toLowerCase() === email.toLowerCase())
+      .map(item => ({
+        id: item.id || `w_${Date.now()}`,
+        name: `Cash-out: ₦${item.amount.toLocaleString()} to ${item.bankName}`,
+        title: `Cash-out: ₦${item.amount.toLocaleString()} to ${item.bankName}`,
+        bio: `Account: ····${item.accountNumber.slice(-4)}`,
+        contentType: 'Withdrawal Request',
+        status: item.status, // 'Pending' | 'Approved' | 'Declined'
+        declineReason: item.declineReason || null,
+        icon: Wallet
+      }));
+
+    const merged = [
+      ...pendingArtists, 
+      ...pendingPlays, 
+      ...pendingArticles, 
+      ...approvedArtists, 
+      ...approvedPlays, 
+      ...approvedArticles, 
+      ...declined,
+      ...withdrawalsList
+    ];
     setUserSubmissions(merged);
   }, [user, tab, syncCount]);
 
