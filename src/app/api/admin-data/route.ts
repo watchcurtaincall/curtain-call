@@ -26,14 +26,17 @@ export async function GET() {
     // 1. Fetch newsletter subscribers
     const { data: subscribers, error: subErr } = await supabaseServer
       .from('newsletter_subscribers')
-      .select('email');
+      .select('email, created_at');
 
     if (subErr) {
       console.error('[API Admin Data] Error fetching subscribers:', subErr);
       return NextResponse.json({ error: subErr.message }, { status: 500 });
     }
 
-    const subscriberEmails = (subscribers || []).map(s => s.email.toLowerCase());
+    const subscriberEmails = (subscribers || []).map(s => ({
+      email: s.email.toLowerCase(),
+      createdAt: s.created_at
+    }));
 
     // 2. Fetch profiles
     const { data: profiles, error: profErr } = await supabaseServer
@@ -52,7 +55,8 @@ export async function GET() {
       location: p.location,
       joinDate: p.join_date || 'May 2026',
       isVerified: p.is_verified ?? true,
-      verificationCode: p.verification_code || undefined
+      verificationCode: p.verification_code || undefined,
+      createdAt: p.created_at
     }));
 
     // 3. Fetch Pending Plays / Productions

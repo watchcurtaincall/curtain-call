@@ -58,7 +58,7 @@ export async function GET(request: Request) {
       // 9. notifications
       email ? supabaseServer.from('notifications').select('*').eq('email', email).order('timestamp', { ascending: false }) : Promise.resolve({ data: [] }),
       // 10. subscribers (only for admin)
-      isAdmin ? supabaseServer.from('newsletter_subscribers').select('email') : Promise.resolve({ data: [] }),
+      isAdmin ? supabaseServer.from('newsletter_subscribers').select('email, created_at') : Promise.resolve({ data: [] }),
       // 11. profiles (only for admin)
       isAdmin ? supabaseServer.from('profiles').select('*') : Promise.resolve({ data: [] })
     ]);
@@ -79,7 +79,10 @@ export async function GET(request: Request) {
       withdrawals: withdrawalsRes.data || [],
       tickets: ticketsRes.data || [],
       notifications: notificationsRes.data || [],
-      subscribers: isAdmin ? (subscribersRes.data || []).map((s: any) => s.email.toLowerCase()) : [],
+      subscribers: isAdmin ? (subscribersRes.data || []).map((s: any) => ({
+        email: s.email.toLowerCase(),
+        createdAt: s.created_at
+      })) : [],
       profiles: isAdmin ? (profilesRes.data || []).map((p: any) => ({
         name: p.name,
         email: p.email,
@@ -87,7 +90,8 @@ export async function GET(request: Request) {
         location: p.location,
         joinDate: p.join_date || 'May 2026',
         isVerified: p.is_verified ?? true,
-        verificationCode: p.verification_code || undefined
+        verificationCode: p.verification_code || undefined,
+        createdAt: p.created_at
       })) : []
     }, {
       headers: {

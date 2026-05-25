@@ -470,7 +470,10 @@ export const ClientDB = {
     if (typeof window === 'undefined') return;
     const key = 'curtain_newsletter_subscribers';
     const current = JSON.parse(localStorage.getItem(key) || '[]');
-    const updated = current.filter((e: string) => e.toLowerCase() !== email.toLowerCase());
+    const updated = current.filter((item: any) => {
+      const itemEmail = typeof item === 'string' ? item : item.email;
+      return itemEmail.toLowerCase() !== email.toLowerCase();
+    });
     localStorage.setItem(key, JSON.stringify(updated));
 
     fetch(`/api/admin-data?type=subscriber&email=${encodeURIComponent(email)}`, {

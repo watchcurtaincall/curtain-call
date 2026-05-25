@@ -102,7 +102,7 @@ export default function AdminDashboardPage() {
   const [pendingPlays, setPendingPlays] = useState<Production[]>([]);
   const [pendingArticles, setPendingArticles] = useState<Article[]>([]);
   const [pendingCritics, setPendingCritics] = useState<any[]>([]);
-  const [subscribers, setSubscribers] = useState<string[]>([]);
+  const [subscribers, setSubscribers] = useState<any[]>([]);
   const [signups, setSignups] = useState<any[]>([]);
 
   // Blog publishing state
@@ -1029,6 +1029,63 @@ This file was retrieved from the Curtain Call Curation Vault.
               </span>
             )}
           </button>
+        </div>
+      </div>
+
+      {/* ── HIGH-FIDELITY KPI METRIC CARDS ── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5 relative overflow-hidden group hover:border-white/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+              <Users className="h-5 w-5 text-red-500" />
+            </div>
+            <div>
+              <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider block">Registered Users</span>
+              <strong className="text-2xl font-serif font-bold text-white mt-0.5 block">{signups.length}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5 relative overflow-hidden group hover:border-white/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+              <Mail className="h-5 w-5 text-blue-500" />
+            </div>
+            <div>
+              <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider block">Subscribers</span>
+              <strong className="text-2xl font-serif font-bold text-white mt-0.5 block">{subscribers.length}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5 relative overflow-hidden group hover:border-white/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+              <ShieldAlert className="h-5 w-5 text-amber-500" />
+            </div>
+            <div>
+              <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider block">Pending Queue</span>
+              <strong className="text-2xl font-serif font-bold text-white mt-0.5 block">{pendingTotal}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5 relative overflow-hidden group hover:border-white/10 transition-all duration-300">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+              <Banknote className="h-5 w-5 text-emerald-500" />
+            </div>
+            <div>
+              <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider block">Cash-out Requests</span>
+              <strong className="text-2xl font-serif font-bold text-white mt-0.5 block">
+                {withdrawals.filter(w => w.status === 'Pending').length}
+              </strong>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2955,8 +3012,12 @@ This file was retrieved from the Curtain Call Curation Vault.
                   {subscribers.length > 0 && (
                     <button
                       onClick={() => {
-                        const csvData = subscribers.map(email => ({ email }));
-                        exportToCSV(csvData, 'newsletter_subscribers.csv', ['email']);
+                        const csvData = subscribers.map(item => {
+                          const email = typeof item === 'string' ? item : item.email;
+                          const date = typeof item === 'string' ? 'Unknown' : item.createdAt || 'Unknown';
+                          return { email, subscribed_at: date };
+                        });
+                        exportToCSV(csvData, 'newsletter_subscribers.csv', ['email', 'subscribed_at']);
                       }}
                       className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
                     >
@@ -2972,27 +3033,40 @@ This file was retrieved from the Curtain Call Curation Vault.
                 ) : (
                   <div className="overflow-y-auto max-h-[500px] [scrollbar-width:none] flex-1">
                     <div className="flex flex-col gap-2.5">
-                      {subscribers.map((email, idx) => (
-                        <div key={idx} className="bg-zinc-950/50 border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-4">
-                          <div className="min-w-0">
-                            <span className="text-[10px] font-mono text-zinc-500 block uppercase tracking-wider">Subscriber #{idx + 1}</span>
-                            <span className="text-white font-mono text-sm block truncate mt-0.5">{email}</span>
+                      {subscribers.map((item, idx) => {
+                        const email = typeof item === 'string' ? item : item.email;
+                        const dateRaw = typeof item === 'string' ? null : item.createdAt;
+                        const formattedDate = dateRaw
+                          ? new Date(dateRaw).toLocaleDateString(undefined, {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            }) + ' ' + new Date(dateRaw).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          : 'May 2026';
+
+                        return (
+                          <div key={idx} className="bg-zinc-950/50 border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-4">
+                            <div className="min-w-0">
+                              <span className="text-[10px] font-mono text-zinc-500 block uppercase tracking-wider">Subscriber #{idx + 1}</span>
+                              <span className="text-white font-mono text-sm block truncate mt-0.5">{email}</span>
+                              <span className="text-zinc-500 text-[9px] font-mono block mt-1">Subscribed {formattedDate}</span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Remove ${email} from newsletter list?`)) {
+                                  ClientDB.unsubscribeNewsletter(email);
+                                  setSubscribers(ClientDB.getNewsletterSubscribers());
+                                  showToast(`Unsubscribed ${email} successfully!`, 'error');
+                                }
+                              }}
+                              className="text-zinc-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-xl transition-all shrink-0"
+                              title="Unsubscribe"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
                           </div>
-                          <button
-                            onClick={() => {
-                              if (confirm(`Remove ${email} from newsletter list?`)) {
-                                ClientDB.unsubscribeNewsletter(email);
-                                setSubscribers(ClientDB.getNewsletterSubscribers());
-                                showToast(`Unsubscribed ${email} successfully!`, 'error');
-                              }
-                            }}
-                            className="text-zinc-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-xl transition-all shrink-0"
-                            title="Unsubscribe"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -3064,7 +3138,18 @@ This file was retrieved from the Curtain Call Curation Vault.
                               <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[10px] text-zinc-500 font-mono">
                                 {profile.handle && <span className="text-red-400/80">{profile.handle}</span>}
                                 {profile.location && <span>📍 {profile.location}</span>}
-                                <span>Joined {profile.joinDate}</span>
+                                <span>
+                                  Joined{' '}
+                                  {profile.createdAt
+                                    ? new Date(profile.createdAt).toLocaleDateString(undefined, {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                      }) +
+                                      ' ' +
+                                      new Date(profile.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                    : profile.joinDate || 'May 2026'}
+                                </span>
                               </div>
                             </div>
                             
