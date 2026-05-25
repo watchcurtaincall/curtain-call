@@ -106,7 +106,8 @@ const sendOTP = async (email: string, name: string, code: string) => {
 
 const fetchVerificationStatusFromServer = async (email: string): Promise<boolean> => {
   try {
-    const res = await fetch(`/api/sync-data?email=${encodeURIComponent(email.toLowerCase())}`, {
+    const res = await fetch(`/api/sync-data?email=${encodeURIComponent(email.toLowerCase())}&_t=${Date.now()}`, {
+      cache: 'no-store',
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
