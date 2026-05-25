@@ -1401,42 +1401,63 @@ export const syncFromSupabase = async () => {
 
     // 1. Process Productions
     if (data.productions) {
-      const mapped = data.productions.map(mapProductionFromDb);
-      const approved = mapped.filter((p: any) => p.curationStatus === 'Approved');
-      const pending = mapped.filter((p: any) => p.curationStatus === 'Pending');
+      const mappedRemote = data.productions.map(mapProductionFromDb);
+      const approved = mappedRemote.filter((p: any) => p.curationStatus === 'Approved');
+      const pendingRemote = mappedRemote.filter((p: any) => p.curationStatus === 'Pending');
       
       const currentLocal = JSON.parse(localStorage.getItem(PRODUCTIONS_KEY) || '[]');
       const drafts = currentLocal.filter((p: any) => p.status === 'Draft');
       localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([...approved, ...drafts]));
       
       if (!isAdmin) {
-        localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(pending));
+        const localPending = JSON.parse(localStorage.getItem(PENDING_PLAYS_KEY) || '[]');
+        const unsynced = localPending.filter((lp: any) => !mappedRemote.some((rp: any) => rp.id === lp.id));
+        for (const req of unsynced) {
+          console.log('[Two-Way Sync] Uploading unsynced local pending play:', req.id);
+          await syncToCloud('productions', mapProductionToDb(req));
+        }
+        const finalPending = [...unsynced, ...pendingRemote];
+        localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(finalPending));
       }
     }
 
     // 2. Process Artists
     if (data.artists) {
-      const mapped = data.artists.map(mapArtistFromDb);
-      const approved = mapped.filter((a: any) => a.curationStatus === 'Approved');
-      const pending = mapped.filter((a: any) => a.curationStatus === 'Pending');
+      const mappedRemote = data.artists.map(mapArtistFromDb);
+      const approved = mappedRemote.filter((a: any) => a.curationStatus === 'Approved');
+      const pendingRemote = mappedRemote.filter((a: any) => a.curationStatus === 'Pending');
       
       localStorage.setItem(ARTISTS_KEY, JSON.stringify(approved));
       
       if (!isAdmin) {
-        localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(pending));
+        const localPending = JSON.parse(localStorage.getItem(PENDING_ARTISTS_KEY) || '[]');
+        const unsynced = localPending.filter((la: any) => !mappedRemote.some((ra: any) => ra.id === la.id));
+        for (const req of unsynced) {
+          console.log('[Two-Way Sync] Uploading unsynced local pending artist:', req.id);
+          await syncToCloud('artists', mapArtistToDb(req));
+        }
+        const finalPending = [...unsynced, ...pendingRemote];
+        localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(finalPending));
       }
     }
 
     // 3. Process Articles
     if (data.articles) {
-      const mapped = data.articles.map(mapArticleFromDb);
-      const approved = mapped.filter((a: any) => a.curationStatus === 'Approved');
-      const pending = mapped.filter((a: any) => a.curationStatus === 'Pending');
+      const mappedRemote = data.articles.map(mapArticleFromDb);
+      const approved = mappedRemote.filter((a: any) => a.curationStatus === 'Approved');
+      const pendingRemote = mappedRemote.filter((a: any) => a.curationStatus === 'Pending');
 
       localStorage.setItem(ARTICLES_KEY, JSON.stringify(approved));
       
       if (!isAdmin) {
-        localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(pending));
+        const localPending = JSON.parse(localStorage.getItem(PENDING_ARTICLES_KEY) || '[]');
+        const unsynced = localPending.filter((la: any) => !mappedRemote.some((ra: any) => ra.id === la.id));
+        for (const req of unsynced) {
+          console.log('[Two-Way Sync] Uploading unsynced local pending article:', req.id);
+          await syncToCloud('articles', mapArticleToDb(req));
+        }
+        const finalPending = [...unsynced, ...pendingRemote];
+        localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(finalPending));
       }
     }
 
