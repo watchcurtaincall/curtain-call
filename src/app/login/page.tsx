@@ -40,6 +40,14 @@ export default function LoginPage() {
 
     try {
       await login(enteredEmail, enteredPassword);
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        if (redirect) {
+          router.push(redirect);
+          return;
+        }
+      }
       router.push('/profile');
     } catch (err: any) {
       let msg = err.message || 'Invalid email or password.';

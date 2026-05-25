@@ -16,10 +16,23 @@ export default function SubmitPortalPage() {
   const [activeTab, setActiveTab] = useState<SubmitType>('maker');
 
   useEffect(() => {
+    const isAuthed = localStorage.getItem('cc_authed') === 'true';
+    if (!isAuthed) {
+      router.push('/login?redirect=/submit');
+      return;
+    }
     if (user && !user.isVerified) {
       router.push('/profile');
     }
   }, [user, router]);
+
+  useEffect(() => {
+    if (user?.email) {
+      setMakerForm(prev => ({ ...prev, email: prev.email || user.email }));
+      setPlayForm(prev => ({ ...prev, email: prev.email || user.email }));
+      setBlogForm(prev => ({ ...prev, email: prev.email || user.email }));
+    }
+  }, [user]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

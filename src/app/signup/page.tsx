@@ -43,6 +43,14 @@ export default function SignupPage() {
     // Register and log in
     try {
       await signUp(email.trim(), password, name.trim());
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const redirect = params.get('redirect');
+        if (redirect) {
+          router.push(redirect);
+          return;
+        }
+      }
       router.push('/profile');
     } catch (err: any) {
       let msg = err.message || 'Registration failed.';

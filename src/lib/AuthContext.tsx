@@ -117,15 +117,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (supabase) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      supabase.auth.getSession().then(async ({ data: { session } }) => {
         if (session?.user) {
           const email = session.user.email || '';
           const name = session.user.user_metadata?.full_name || email.split('@')[0];
           const isEmailConfirmed = !!session.user.email_confirmed_at;
           
-          const profilesList = ClientDB.getSignups();
-          const existingProfile = profilesList.find((p: any) => p.email.toLowerCase() === email.toLowerCase());
-          const isAlreadyVerified = isEmailConfirmed === true || (existingProfile && existingProfile.isVerified === true) || ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
+          let isAlreadyVerified = isEmailConfirmed === true || ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
+          
+          if (supabase && !isAlreadyVerified) {
+            const { data: prof } = await supabase.from('profiles').select('is_verified').eq('email', email.toLowerCase()).maybeSingle();
+            if (prof && prof.is_verified === true) {
+              isAlreadyVerified = true;
+            }
+          }
 
           const loggedUser = {
             name,
@@ -148,15 +153,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
         if (session?.user) {
           const email = session.user.email || '';
           const name = session.user.user_metadata?.full_name || email.split('@')[0];
           const isEmailConfirmed = !!session.user.email_confirmed_at;
           
-          const profilesList = ClientDB.getSignups();
-          const existingProfile = profilesList.find((p: any) => p.email.toLowerCase() === email.toLowerCase());
-          const isAlreadyVerified = isEmailConfirmed === true || (existingProfile && existingProfile.isVerified === true) || ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
+          let isAlreadyVerified = isEmailConfirmed === true || ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
+          
+          if (supabase && !isAlreadyVerified) {
+            const { data: prof } = await supabase.from('profiles').select('is_verified').eq('email', email.toLowerCase()).maybeSingle();
+            if (prof && prof.is_verified === true) {
+              isAlreadyVerified = true;
+            }
+          }
 
           const loggedUser = {
             name,
@@ -281,11 +291,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     // Fetch profile from database to get the local isVerified flag
-    const profilesList = ClientDB.getSignups();
-    const existingProfile = profilesList.find((p: any) => p.email.toLowerCase() === cleanEmail);
+    let isAlreadyVerified = loggedUser.isVerified === true;
+    if (!isAlreadyVerified && supabase) {
+      try {
+        const { data: prof } = await supabase.from('profiles').select('is_verified').eq('email', cleanEmail).maybeSingle();
+        if (prof && prof.is_verified === true) {
+          isAlreadyVerified = true;
+        }
+      } catch (e) {}
+    }
     
-    // The user is already verified if either Supabase auth says so, or if they verified locally previously!
-    const isAlreadyVerified = loggedUser.isVerified === true || (existingProfile && existingProfile.isVerified === true);
+    // Fallback to local storage profiles if Supabase query did not resolve
+    if (!isAlreadyVerified) {
+      const profilesList = ClientDB.getSignups();
+      const existingProfile = profilesList.find((p: any) => p.email.toLowerCase() === cleanEmail);
+      if (existingProfile && existingProfile.isVerified === true) {
+        isAlreadyVerified = true;
+      }
+    }
     
     if (isAlreadyVerified) {
       loggedUser = {

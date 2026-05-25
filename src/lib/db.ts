@@ -420,12 +420,11 @@ export const ClientDB = {
     const updated = current.filter((e: string) => e.toLowerCase() !== email.toLowerCase());
     localStorage.setItem(key, JSON.stringify(updated));
 
-    if (supabase) {
-      supabase.from('newsletter_subscribers').delete().eq('email', email.toLowerCase())
-        .then(({ error }) => {
-          if (error) console.error('[Supabase Sync] Newsletter delete failed:', error);
-        });
-    }
+    fetch(`/api/admin-data?type=subscriber&email=${encodeURIComponent(email)}`, {
+      method: 'DELETE'
+    }).catch(err => {
+      console.error('[ClientDB] Failed to delete subscriber:', err);
+    });
   },
 
   getNewsletterSubscribers(): string[] {
@@ -474,12 +473,11 @@ export const ClientDB = {
     const updated = current.filter((p: any) => p.email.toLowerCase() !== email.toLowerCase());
     localStorage.setItem(key, JSON.stringify(updated));
 
-    if (supabase) {
-      supabase.from('profiles').delete().eq('email', email.toLowerCase())
-        .then(({ error }) => {
-          if (error) console.error('[Supabase Sync] Profile delete failed:', error);
-        });
-    }
+    fetch(`/api/admin-data?type=signup&email=${encodeURIComponent(email)}`, {
+      method: 'DELETE'
+    }).catch(err => {
+      console.error('[ClientDB] Failed to delete profile signup:', err);
+    });
   },
 
   // ── ARTISTS DATABASE ──
@@ -1212,8 +1210,14 @@ export const ClientDB = {
     // Custom dispatch to trigger UI sync
     window.dispatchEvent(new Event('cc-db-synced'));
 
-    // Sync to cloud
-    syncToCloud('notifications', newNotif);
+    // Sync to cloud via secure API endpoint
+    fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newNotif)
+    }).catch(err => {
+      console.error('[ClientDB] Failed to save notification to cloud:', err);
+    });
   },
 
   markNotificationAsRead(id: string): void {
@@ -1225,13 +1229,12 @@ export const ClientDB = {
     localStorage.setItem('curtain_notifications', JSON.stringify(updated));
     window.dispatchEvent(new Event('cc-db-synced'));
 
-    // Sync to cloud
-    if (supabase) {
-      supabase.from('notifications').update({ read: true }).eq('id', id)
-        .then(({ error }) => {
-          if (error) console.error('[Supabase Sync] Notification update failed:', error);
-        });
-    }
+    // Sync to cloud via secure API endpoint
+    fetch(`/api/notifications?id=${encodeURIComponent(id)}`, {
+      method: 'PUT'
+    }).catch(err => {
+      console.error('[ClientDB] Failed to update notification read status:', err);
+    });
   },
 
   markAllNotificationsAsRead(email: string): void {
@@ -1243,13 +1246,12 @@ export const ClientDB = {
     localStorage.setItem('curtain_notifications', JSON.stringify(updated));
     window.dispatchEvent(new Event('cc-db-synced'));
 
-    // Sync to cloud
-    if (supabase) {
-      supabase.from('notifications').update({ read: true }).eq('email', email.toLowerCase())
-        .then(({ error }) => {
-          if (error) console.error('[Supabase Sync] Notification update all failed:', error);
-        });
-    }
+    // Sync to cloud via secure API endpoint
+    fetch(`/api/notifications?allForEmail=${encodeURIComponent(email)}`, {
+      method: 'PUT'
+    }).catch(err => {
+      console.error('[ClientDB] Failed to mark all notifications as read:', err);
+    });
   },
 
   // ── ARTIST HITS TRACKING ──
@@ -1409,44 +1411,54 @@ export const syncFromSupabase = async () => {
       // ignore
     }
 
-    // 9. Pull notifications
+    // 9. Pull notifications for currently logged in user
     try {
-      const { data: notifications } = await supabase.from('notifications').select('*').neq('id', 'cache_bust_' + Date.now());
-      if (notifications) {
-        localStorage.setItem('curtain_notifications', JSON.stringify(notifications));
+      const savedUser = localStorage.getItem('cc_authed_user');
+      if (savedUser) {
+        const email = JSON.parse(savedUser).email || '';
+        if (email) {
+          const res = await fetch(`/api/notifications?email=${encodeURIComponent(email)}`);
+          if (res.ok) {
+            const notifications = await res.json();
+            localStorage.setItem('curtain_notifications', JSON.stringify(notifications));
+          }
+        }
+      } else {
+        localStorage.removeItem('curtain_notifications');
       }
     } catch (e) {
       // ignore
     }
 
-    // 10. Pull profiles
+    // 10. Pull profiles & newsletter subscribers ONLY if the logged in user is the administrator
+    let isAdmin = false;
     try {
-      const { data: profiles } = await supabase.from('profiles').select('*');
-      if (profiles) {
-        const mapped = profiles.map(p => ({
-          name: p.name,
-          email: p.email,
-          handle: p.handle,
-          location: p.location,
-          joinDate: p.join_date || 'May 2026',
-          isVerified: p.is_verified ?? true,
-          verificationCode: p.verification_code || undefined
-        }));
-        localStorage.setItem('curtain_user_profiles', JSON.stringify(mapped));
+      const savedUser = localStorage.getItem('cc_authed_user');
+      if (savedUser) {
+        const email = JSON.parse(savedUser).email || '';
+        isAdmin = email.toLowerCase() === 'watchcurtaincall@gmail.com';
       }
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
 
-    // 11. Pull newsletter subscribers
-    try {
-      const { data: subscribers } = await supabase.from('newsletter_subscribers').select('*');
-      if (subscribers) {
-        const emails = subscribers.map(s => s.email.toLowerCase());
-        localStorage.setItem('curtain_newsletter_subscribers', JSON.stringify(emails));
+    if (isAdmin) {
+      try {
+        const res = await fetch('/api/admin-data');
+        if (res.ok) {
+          const { subscribers, signups } = await res.json();
+          if (subscribers) {
+            localStorage.setItem('curtain_newsletter_subscribers', JSON.stringify(subscribers));
+          }
+          if (signups) {
+            localStorage.setItem('curtain_user_profiles', JSON.stringify(signups));
+          }
+        }
+      } catch (e) {
+        console.error('[Supabase Sync] Failed to fetch admin subscribers/signups data:', e);
       }
-    } catch (e) {
-      // ignore
+    } else {
+      // Security/Privacy: clear signups/subscribers for non-admin users!
+      localStorage.removeItem('curtain_user_profiles');
+      localStorage.removeItem('curtain_newsletter_subscribers');
     }
 
     console.log('[Curtain Call Database] Sync successfully completed with Supabase cloud!');
