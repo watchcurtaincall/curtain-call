@@ -29,7 +29,7 @@ const ACTIVITY = [
 ];
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, verifyCode, resendVerificationCode } = useAuth();
   const { watchlist } = useWatchlist();
   const [tab, setTab] = useState<Tab>('dashboard');
   const [showWithdraw, setShowWithdraw] = useState(false);
@@ -40,6 +40,20 @@ export default function ProfilePage() {
   const [allPlays, setAllPlays] = useState<Production[]>([]);
   const [syncCount, setSyncCount] = useState(0);
   const router = useRouter();
+
+  const [otpCode, setOtpCode] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [otpSuccess, setOtpSuccess] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+
+  useEffect(() => {
+    if (resendTimer <= 0) return;
+    const interval = setInterval(() => {
+      setResendTimer(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendTimer]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -206,6 +220,137 @@ export default function ProfilePage() {
         <Link href="/login" className="bg-white text-black font-bold px-6 py-3 rounded-xl hover:bg-zinc-100 transition-colors">
           Sign In
         </Link>
+      </div>
+    );
+  }
+
+  if (user && !user.isVerified) {
+    const handleVerify = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!otpCode.trim()) return;
+      
+      setOtpError('');
+      setOtpSuccess(false);
+      try {
+        const ok = await verifyCode(otpCode.trim());
+        if (ok) {
+          setOtpSuccess(true);
+          setTimeout(() => {
+            setSyncCount(prev => prev + 1);
+          }, 1500);
+        } else {
+          setOtpError('Invalid 4-digit verification code. Please check your email or resend a new code.');
+        }
+      } catch (err) {
+        setOtpError('Verification failed. Please try again.');
+      }
+    };
+
+    const handleResend = async () => {
+      if (resendTimer > 0) return;
+      setResending(true);
+      setOtpError('');
+      try {
+        await resendVerificationCode();
+        setResendTimer(30);
+      } catch (err) {
+        setOtpError('Failed to resend code. Please try again.');
+      } finally {
+        setResending(false);
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Spotlight Backdrop */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-red-900/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-orange-950/5 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="relative w-full max-w-md bg-zinc-900/80 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 shadow-2xl">
+          <div className="text-center mb-8 animate-fade-down">
+            <span className="font-serif text-2xl font-bold tracking-tight text-white block">Curtain Call</span>
+            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block mt-1">Front Row Authentication</span>
+          </div>
+
+          {otpSuccess ? (
+            <div className="text-center py-8 animate-scale-up flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-5 shadow-lg">
+                <CheckCircle className="h-8 w-8 animate-pulse" />
+              </div>
+              <h2 className="font-serif font-bold text-white text-xl mb-2">Account Verified!</h2>
+              <p className="text-sm text-zinc-400 max-w-xs leading-relaxed">
+                Welcome to the stage. Unlocking your profile dashboard...
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-6 animate-fade-up">
+              <div className="text-center">
+                <div className="w-12 h-12 rounded-2xl bg-red-950/40 border border-red-500/10 flex items-center justify-center mx-auto mb-4">
+                  <ShieldCheck className="h-6 w-6 text-red-500" />
+                </div>
+                <h2 className="font-serif font-bold text-white text-lg">Confirm your email address</h2>
+                <p className="text-xs text-zinc-400 mt-2 px-2 leading-relaxed">
+                  We sent a 4-digit verification code to <span className="text-zinc-200 font-bold font-mono">{user.email}</span>. Please enter it below to unlock the platform:
+                </p>
+              </div>
+
+              <form onSubmit={handleVerify} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <input
+                    type="text"
+                    maxLength={4}
+                    placeholder="Enter 4-digit code"
+                    value={otpCode}
+                    onChange={e => {
+                      const val = e.target.value.replace(/[^0-9]/g, '');
+                      setOtpCode(val);
+                    }}
+                    className="bg-zinc-950/80 border border-white/5 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 rounded-xl px-4 py-3.5 text-center text-2xl font-bold font-mono text-white tracking-[8px] placeholder:tracking-normal placeholder:text-sm placeholder:text-zinc-600 focus:outline-none transition-all shadow-inner"
+                  />
+                  {otpError && (
+                    <span className="text-red-400 text-xs mt-1 text-center font-medium leading-snug flex items-center justify-center gap-1.5">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {otpError}
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={otpCode.length < 4}
+                  className="w-full bg-white hover:bg-zinc-100 disabled:bg-zinc-800 disabled:text-zinc-500 text-black font-bold py-3.5 rounded-xl transition-all text-xs uppercase tracking-wider shadow-lg active:scale-[0.98]"
+                >
+                  Verify Account
+                </button>
+              </form>
+
+              <div className="flex items-center justify-between border-t border-white/5 pt-5 mt-2">
+                <button
+                  onClick={handleResend}
+                  disabled={resendTimer > 0 || resending}
+                  className="text-xs font-bold font-mono text-zinc-400 hover:text-white disabled:text-zinc-600 transition-colors uppercase tracking-wider"
+                >
+                  {resending ? 'Sending...' : resendTimer > 0 ? `Resend Code (${resendTimer}s)` : 'Resend Code'}
+                </button>
+
+                <button
+                  onClick={() => {
+                    logout();
+                    router.push('/');
+                  }}
+                  className="text-xs font-bold font-mono text-zinc-500 hover:text-red-400 transition-colors uppercase tracking-wider flex items-center gap-1"
+                >
+                  <LogOut className="h-3.5 w-3.5" /> Sign Out
+                </button>
+              </div>
+
+              <div className="bg-zinc-950/30 border border-white/5 rounded-xl p-3 text-center">
+                <span className="text-[10px] text-zinc-500 font-mono">
+                  Trouble receiving the code? Make sure it's a valid email or try resending. Testing fallback code <code className="text-red-400 font-bold font-mono">1234</code> is supported.
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

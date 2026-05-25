@@ -146,6 +146,8 @@ CREATE TABLE IF NOT EXISTS profiles (
     handle TEXT,
     location TEXT,
     join_date TEXT,
+    is_verified BOOLEAN DEFAULT TRUE,
+    verification_code TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -157,4 +159,9 @@ CREATE TABLE IF NOT EXISTS newsletter_subscribers (
 
 ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE newsletter_subscribers DISABLE ROW LEVEL SECURITY;
+
+-- ── Migration: Alter existing profiles table for email verification support ──
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT TRUE;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS verification_code TEXT;
+
 

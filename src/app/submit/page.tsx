@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
+import { useRouter } from 'next/navigation';
 import { ClientDB } from '@/lib/db';
 import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Calendar, Image as ImageIcon, FileText, ArrowLeft, Mail } from 'lucide-react';
 import Link from 'next/link';
@@ -11,7 +12,14 @@ type SubmitType = 'maker' | 'play' | 'blog';
 
 export default function SubmitPortalPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<SubmitType>('maker');
+
+  useEffect(() => {
+    if (user && !user.isVerified) {
+      router.push('/profile');
+    }
+  }, [user, router]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

@@ -449,7 +449,9 @@ export const ClientDB = {
         name: profile.name,
         handle: profile.handle || null,
         location: profile.location || null,
-        join_date: profile.joinDate || 'May 2026'
+        join_date: profile.joinDate || 'May 2026',
+        is_verified: profile.isVerified ?? true,
+        verification_code: profile.verificationCode || null
       }).then(({ error }) => {
         if (error) console.error('[Supabase Sync] Profile save failed:', error);
       });
@@ -1336,7 +1338,9 @@ export const syncFromSupabase = async () => {
           email: p.email,
           handle: p.handle,
           location: p.location,
-          joinDate: p.join_date || 'May 2026'
+          joinDate: p.join_date || 'May 2026',
+          isVerified: p.is_verified ?? true,
+          verificationCode: p.verification_code || undefined
         }));
         localStorage.setItem('curtain_user_profiles', JSON.stringify(mapped));
       }

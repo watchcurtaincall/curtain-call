@@ -9,7 +9,7 @@ import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search,
 import Link from 'next/link';
 import Image from 'next/image';
 
-type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'settings' | 'withdrawals' | 'subscribers';
+type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers';
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
@@ -913,14 +913,7 @@ export default function AdminDashboardPage() {
           >
             <FolderEdit className="h-4 w-4" /> Manage Directory
           </button>
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'settings' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Globe className="h-4 w-4" /> Domain & Emails
-          </button>
+
           <button
             onClick={() => setActiveTab('subscribers')}
             className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
@@ -2686,154 +2679,7 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* ── SETTINGS: DOMAIN & EMAILS PANEL ────────────────────────────── */}
-        {activeTab === 'settings' && (
-          <div className="flex flex-col gap-8 animate-fade-up">
-            <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/5 rounded-full blur-[100px] pointer-events-none" />
-              
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-6">
-                <div>
-                  <h2 className="text-2xl font-serif font-bold text-white flex items-center gap-2">
-                    <Globe className="h-6 w-6 text-red-500" /> Vercel Custom Domain Configuration
-                  </h2>
-                  <p className="text-zinc-400 text-xs mt-1">Point your custom domain host records to Curtain Call's Vercel deployment.</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-green-500 animate-ping" />
-                  <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-3 py-1 rounded-full text-[10px] font-bold font-mono uppercase tracking-wider">
-                    Domain Linked
-                  </span>
-                </div>
-              </div>
 
-              <div className="grid md:grid-cols-2 gap-6 mt-6">
-                <div className="bg-zinc-950/50 border border-white/5 rounded-2xl p-5">
-                  <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider">Apex Domain Configuration</span>
-                  <h3 className="text-white font-serif font-bold text-lg mt-1">curtaincall.com.ng</h3>
-                  <p className="text-zinc-400 text-xs mt-1">Add an A-record at your DNS provider pointing to Curtain Call's routing engine:</p>
-                  
-                  <div className="bg-zinc-950 border border-white/5 rounded-xl p-3 mt-3 flex items-center justify-between text-xs font-mono">
-                    <div>
-                      <span className="text-zinc-500 text-[10px] block">TYPE</span>
-                      <span className="text-white font-bold">A</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-500 text-[10px] block">HOST</span>
-                      <span className="text-white font-bold">@</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-500 text-[10px] block">VALUE</span>
-                      <span className="text-red-400 font-bold">76.76.21.21</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-zinc-950/50 border border-white/5 rounded-2xl p-5">
-                  <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-wider">Subdomain Configuration</span>
-                  <h3 className="text-white font-serif font-bold text-lg mt-1">www.curtaincall.com.ng</h3>
-                  <p className="text-zinc-400 text-xs mt-1">Add a CNAME-record to redirect www traffic to our secure cluster:</p>
-                  
-                  <div className="bg-zinc-950 border border-white/5 rounded-xl p-3 mt-3 flex items-center justify-between text-xs font-mono">
-                    <div>
-                      <span className="text-zinc-500 text-[10px] block">TYPE</span>
-                      <span className="text-white font-bold">CNAME</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-500 text-[10px] block">HOST</span>
-                      <span className="text-white font-bold">www</span>
-                    </div>
-                    <div className="truncate max-w-[150px]">
-                      <span className="text-zinc-500 text-[10px] block">VALUE</span>
-                      <span className="text-red-400 font-bold">cname.vercel-dns.com</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 flex flex-wrap gap-4 items-center justify-between border-t border-white/5 pt-6">
-                <div className="flex items-center gap-3">
-                  <div className="bg-zinc-950 p-2.5 rounded-xl border border-white/5 flex items-center justify-center">
-                    <Mail className="h-5 w-5 text-red-400" />
-                  </div>
-                  <div>
-                    <span className="text-zinc-500 text-[10px] block font-mono">EMAIL NOTIFICATIONS PROVIDER</span>
-                    <span className="text-zinc-200 text-xs font-medium">Resend SMTP Service (notifications@curtaincall.com.ng)</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => showToast('WHOIS Nameserver validation successful! Domain resolution fully certified.')}
-                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
-                >
-                  Verify Live DNS Resolution
-                </button>
-              </div>
-            </div>
-
-            {/* TRANSACTIONAL EMAIL LOGS */}
-            <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
-              <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
-                <div>
-                  <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
-                    <Mail className="h-5 w-5 text-red-500" /> Transactional Outgoing Emails ({emailLogs.length})
-                  </h2>
-                  <p className="text-zinc-400 text-xs mt-1">Real-time trace of emails triggered by automated curation workflows.</p>
-                </div>
-                {emailLogs.length > 0 && (
-                  <button
-                    onClick={() => {
-                      ClientDB.clearEmailLogs();
-                      setEmailLogs([]);
-                      showToast('Transactional email logs wiped.', 'error');
-                    }}
-                    className="text-zinc-500 hover:text-zinc-300 text-xs font-bold font-mono"
-                  >
-                    Clear Logs
-                  </button>
-                )}
-              </div>
-
-              {emailLogs.length === 0 ? (
-                <div className="bg-zinc-950 border border-white/5 rounded-3xl p-12 text-center text-zinc-500 font-mono text-xs">
-                  No transactional email dispatches recorded in this local session.
-                </div>
-              ) : (
-                <div className="overflow-x-auto [scrollbar-width:none]">
-                  <table className="w-full text-left border-collapse text-xs">
-                    <thead>
-                      <tr className="border-b border-white/5 text-zinc-400 font-mono uppercase tracking-wider">
-                        <th className="py-3 px-4">Timestamp</th>
-                        <th className="py-3 px-4">Recipient</th>
-                        <th className="py-3 px-4">Subject</th>
-                        <th className="py-3 px-4">Delivery Mode</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5 font-mono text-zinc-300">
-                      {emailLogs.map((log) => (
-                        <tr key={log.id} className="hover:bg-white/[0.01]">
-                          <td className="py-3 px-4 whitespace-nowrap text-zinc-500">{log.timestamp}</td>
-                          <td className="py-3 px-4 text-zinc-200">{log.to}</td>
-                          <td className="py-3 px-4 max-w-xs truncate text-zinc-100">{log.subject}</td>
-                          <td className="py-3 px-4">
-                            {log.simulated ? (
-                              <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-[10px] font-bold">
-                                Simulated Loopback
-                              </span>
-                            ) : (
-                              <span className="bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded text-[10px] font-bold">
-                                Live Dispatch
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* ── SUBSCRIBERS & SIGNUPS PANEL ────────────────────────────── */}
         {activeTab === 'subscribers' && (

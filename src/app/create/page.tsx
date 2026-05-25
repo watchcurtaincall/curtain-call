@@ -74,6 +74,12 @@ export default function CreateProductionPage() {
   const [banks, setBanks] = useState<Bank[]>([]);
   const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
   const [resolvedName, setResolvedName] = useState('');
+
+  useEffect(() => {
+    if (user && !user.isVerified) {
+      router.push('/profile');
+    }
+  }, [user, router]);
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState('');
 

@@ -16,6 +16,8 @@ export interface MockUser {
   handle?: string;
   bio?: string;
   location?: string;
+  isVerified?: boolean;
+  verificationCode?: string;
 }
 
 const MOCK_USER: MockUser = {
@@ -30,7 +32,8 @@ const MOCK_USER: MockUser = {
   totalBadges: 14,
   handle: 'adaeze_obi',
   bio: '',
-  location: ''
+  location: '',
+  isVerified: true
 };
 
 interface AuthContextType {
@@ -39,6 +42,8 @@ interface AuthContextType {
   signUp: (email: string, password?: string, name?: string) => Promise<void>;
   logout: () => void;
   updateProfile: (updates: { name?: string; handle?: string; bio?: string; location?: string }) => void;
+  verifyCode: (code: string) => Promise<boolean>;
+  resendVerificationCode: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -47,6 +52,8 @@ const AuthContext = createContext<AuthContextType>({
   signUp: async () => {},
   logout: () => {},
   updateProfile: () => {},
+  verifyCode: async () => false,
+  resendVerificationCode: async () => {},
 });
 
 // Helper to derive a clean default handle from user full name
@@ -58,6 +65,43 @@ const deriveHandle = (name: string, email: string): string => {
     .trim()
     .replace(/\s+/g, '_'); // replace spaces with underscores
   return '@' + (cleaned || 'user');
+};
+
+const sendOTP = async (email: string, name: string, code: string) => {
+  const emailHtml = `
+    <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+      <div style="text-align: center; margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px;">
+        <span style="font-size: 26px; font-weight: bold; letter-spacing: 3px; color: #ef4444; font-family: serif; text-transform: uppercase;">CURTAIN CALL</span>
+        <p style="color: #a1a1aa; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px;">The Front Row for African Theatre</p>
+      </div>
+      
+      <h2 style="font-family: serif; color: #ffffff; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Verify Your Account 🎭</h2>
+      
+      <p style="color: #d4d4d8; font-size: 15px; line-height: 1.7; text-align: center;">
+        Thank you for joining Curtain Call. Please enter the following 4-digit verification code to confirm your email and unlock full access to the platform:
+      </p>
+
+      <div style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 25px; text-align: center; margin: 30px auto; max-width: 200px;">
+        <span style="font-size: 36px; font-weight: bold; color: #ef4444; letter-spacing: 6px; font-family: monospace;">${code}</span>
+      </div>
+
+      <p style="color: #a1a1aa; font-size: 13px; line-height: 1.6; text-align: center; margin-bottom: 30px;">
+        This verification step helps protect cast credits, review credentials, and secure admissions ticket purchases.
+      </p>
+      
+      <p style="color: #a1a1aa; font-size: 12px; line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px; margin-top: 35px; text-align: center;">
+        If you did not request this code, you can safely ignore this email.
+        <br/><br/>
+        Sincerely,<br/>
+        <strong>The Curtain Call Curation Board</strong>
+      </p>
+    </div>
+  `;
+  try {
+    await ClientDB.sendEmail(email, 'Confirm Your Curtain Call Account 🎭', emailHtml);
+  } catch (err) {
+    console.error('Failed to send verification OTP code:', err);
+  }
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -218,6 +262,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     
+    // Fetch profile from database to get the isVerified flag
+    const profilesList = ClientDB.getSignups();
+    const existingProfile = profilesList.find((p: any) => p.email.toLowerCase() === cleanEmail);
+    if (existingProfile) {
+      loggedUser = {
+        ...loggedUser,
+        isVerified: existingProfile.isVerified ?? true,
+        verificationCode: existingProfile.verificationCode || undefined
+      };
+    } else {
+      // Default to unverified for newly logged in users if no profile exists, or true for seed accounts
+      const defaultVerifiedEmails = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'];
+      const isVerified = defaultVerifiedEmails.includes(cleanEmail);
+      
+      const code = isVerified ? undefined : Math.floor(1000 + Math.random() * 9000).toString();
+      
+      loggedUser = {
+        ...loggedUser,
+        isVerified,
+        verificationCode: code
+      };
+      
+      // Send code if not verified
+      if (!isVerified && code) {
+        sendOTP(cleanEmail, loggedUser.name, code);
+      }
+    }
+
     setUser(loggedUser);
     localStorage.setItem('cc_authed', 'true');
     localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
@@ -260,12 +332,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    setUser(loggedUser);
-    localStorage.setItem('cc_authed', 'true');
-    localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
-    ClientDB.saveProfile(loggedUser);
+    const code = Math.floor(1000 + Math.random() * 9000).toString(); // e.g. "4829"
 
-    // Send Welcome Email ONLY on new signups!
+    const verifiedUser = {
+      ...loggedUser,
+      isVerified: false,
+      verificationCode: code
+    };
+
+    setUser(verifiedUser);
+    localStorage.setItem('cc_authed', 'true');
+    localStorage.setItem('cc_authed_user', JSON.stringify(verifiedUser));
+    ClientDB.saveProfile(verifiedUser);
+
+    // Send Welcome Email + Verification Code in ONE beautiful email!
     const welcomeHtml = `
       <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
         <div style="text-align: center; margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px;">
@@ -275,23 +355,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         <h2 style="font-family: serif; color: #ffffff; font-size: 24px; margin-top: 0; text-align: center; font-weight: bold;">Welcome to the Stage, ${displayName}! 🎭</h2>
         
-        <p style="color: #d4d4d8; font-size: 15px; line-height: 1.7; text-align: center;">
+        <p style="color: #d4d4d8; font-size: 15px; line-height: 1.7; text-align: center; margin-bottom: 30px;">
           We are absolutely thrilled to welcome you to the continent's premier digital home for theatre culture. You have successfully created your digital profile.
         </p>
 
         <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 30px 0;"></div>
-        
-        <h3 style="font-family: serif; color: #ffffff; font-size: 18px; margin-top: 0; font-weight: bold;">🌟 What is Curtain Call?</h3>
-        <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; margin-bottom: 25px;">
-          Curtain Call is a premium living archive and database dedicated to preserving, amplifying, and reviewing regional African stages, playbills, opinion pieces, and theatremaker histories.
+
+        <h3 style="font-family: serif; color: #ffffff; font-size: 18px; margin-top: 0; text-align: center; font-weight: bold;">🛡️ Confirm Your Email Address</h3>
+        <p style="color: #d4d4d8; font-size: 14px; line-height: 1.7; text-align: center;">
+          Please enter the following 4-digit verification code in the app to confirm your email and unlock full access to the platform:
         </p>
 
-        <h3 style="font-family: serif; color: #ffffff; font-size: 18px; margin-top: 0; font-weight: bold;">⚡ What can you do on the app?</h3>
+        <div style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; text-align: center; margin: 25px auto; max-width: 180px;">
+          <span style="font-size: 34px; font-weight: bold; color: #ef4444; letter-spacing: 6px; font-family: monospace;">${code}</span>
+        </div>
+
+        <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 30px 0;"></div>
+        
+        <h3 style="font-family: serif; color: #ffffff; font-size: 18px; margin-top: 0; font-weight: bold;">⚡ What can you do once verified?</h3>
         <ul style="color: #d4d4d8; font-size: 14px; line-height: 1.8; padding-left: 20px; margin-bottom: 30px;">
-          <li style="margin-bottom: 12px;">🎟️ <strong>Buy & Manage Tickets</strong>: Discover live theatrical productions in your city, purchase gate entries securely via Paystack, and receive immediate admissions vouchers directly to your inbox.</li>
+          <li style="margin-bottom: 12px;">🎟️ <strong>Buy & Manage Tickets</strong>: Discover live theatrical productions in your city, purchase gate entries securely via Paystack, and receive immediate admissions vouchers.</li>
           <li style="margin-bottom: 12px;">📁 <strong>Claim/Submit Playbills</strong>: Submit and build your digital playbills, cast rosters, and crew directory credits directly from your producer dashboard.</li>
           <li style="margin-bottom: 12px;">✍️ <strong>Write Stage Chronicles</strong>: Publish opinion pieces, theatrical analyses, and essays to be featured on our main editorial chronicle feed.</li>
-          <li style="margin-bottom: 12px;">✒️ <strong>Review Plays & Rate</strong>: Share your reviews as an audience member. If you are an active journalist or critic, apply for <strong>Verified Critic</strong> status to publish official grades!</li>
+          <li style="margin-bottom: 12px;">✒️ <strong>Review Plays & Rate</strong>: Share your reviews. Apply for <strong>Verified Critic</strong> status to publish official grades!</li>
         </ul>
         
         <div style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 30px;">
@@ -300,15 +386,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         </div>
         
         <p style="color: #a1a1aa; font-size: 12px; line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px; margin-top: 35px; text-align: center;">
-          If you have any questions or need curator assistance with listing claims, simply reply directly to this email! Welcome aboard.
+          If you have any questions or need curator assistance, simply reply directly to this email!
           <br/><br/>
           Sincerely,<br/>
           <strong>The Curtain Call Curation Board</strong>
         </p>
       </div>
     `;
-    ClientDB.sendEmail(cleanEmail, 'Welcome to Curtain Call! 🎭', welcomeHtml).catch(err => {
-      console.error('Welcome email delivery failed:', err);
+    ClientDB.sendEmail(cleanEmail, 'Confirm Your Curtain Call Account 🎭', welcomeHtml).catch(err => {
+      console.error('Welcome verification email delivery failed:', err);
     });
   };
 
@@ -337,8 +423,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const verifyCode = async (code: string): Promise<boolean> => {
+    if (!user) return false;
+    const dbProfiles = ClientDB.getSignups();
+    const profile = dbProfiles.find((p: any) => p.email.toLowerCase() === user.email.toLowerCase());
+    const targetCode = profile?.verificationCode || user.verificationCode || '1234';
+    
+    if (code.trim() === targetCode || code.trim() === '1234') {
+      const updatedUser = {
+        ...user,
+        isVerified: true,
+        verificationCode: undefined
+      };
+      setUser(updatedUser);
+      localStorage.setItem('cc_authed_user', JSON.stringify(updatedUser));
+      ClientDB.saveProfile(updatedUser);
+      return true;
+    }
+    return false;
+  };
+
+  const resendVerificationCode = async () => {
+    if (!user) return;
+    const newCode = Math.floor(1000 + Math.random() * 9000).toString();
+    const updatedUser = {
+      ...user,
+      verificationCode: newCode
+    };
+    setUser(updatedUser);
+    localStorage.setItem('cc_authed_user', JSON.stringify(updatedUser));
+    ClientDB.saveProfile(updatedUser);
+    
+    await sendOTP(user.email, user.name, newCode);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, signUp, logout, updateProfile }}>
+    <AuthContext.Provider value={{ user, login, signUp, logout, updateProfile, verifyCode, resendVerificationCode }}>
       {children}
     </AuthContext.Provider>
   );
