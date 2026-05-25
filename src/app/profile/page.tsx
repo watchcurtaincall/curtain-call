@@ -343,9 +343,9 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              <div className="bg-zinc-950/30 border border-white/5 rounded-xl p-3 text-center">
-                <span className="text-[10px] text-zinc-500 font-mono">
-                  Trouble receiving the code? Make sure it's a valid email or try resending. Testing fallback code <code className="text-red-400 font-bold font-mono">1234</code> is supported.
+              <div className="bg-zinc-950/30 border border-white/5 rounded-xl p-3.5 text-center mt-2">
+                <span className="text-[11px] text-zinc-500 font-medium leading-relaxed block">
+                  Didn't receive the code? Please check your <strong>Spam</strong> or <strong>Junk</strong> folder. If it is still missing, double-check your email or try resending the code.
                 </span>
               </div>
             </div>
