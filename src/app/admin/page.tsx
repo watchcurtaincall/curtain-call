@@ -1763,7 +1763,7 @@ This file was retrieved from the Curtain Call Curation Vault.
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 relative">
                 <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Playwright</label>
                 <input
                   type="text"
@@ -1773,8 +1773,34 @@ This file was retrieved from the Curtain Call Curation Vault.
                   onChange={e => setPlayForm({ ...playForm, playwright: e.target.value })}
                   className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
                 />
+                {(() => {
+                  const allArtists = ClientDB.getArtists();
+                  const matchingSuggestions = playForm.playwright.trim()
+                    ? allArtists.filter(a => 
+                        a.name.toLowerCase().includes(playForm.playwright.toLowerCase()) &&
+                        a.name.toLowerCase() !== playForm.playwright.toLowerCase()
+                      )
+                    : [];
+                  
+                  if (matchingSuggestions.length === 0) return null;
+
+                  return (
+                    <div className="absolute top-[100%] left-0 w-full bg-zinc-900 border border-white/10 rounded-lg shadow-2xl z-20 mt-1 max-h-36 overflow-y-auto [scrollbar-width:none]">
+                      {matchingSuggestions.map(artist => (
+                        <div
+                          key={artist.id}
+                          onClick={() => setPlayForm({ ...playForm, playwright: artist.name })}
+                          className="px-3 py-2 text-xs hover:bg-red-600 hover:text-white cursor-pointer transition-colors border-b border-white/5 last:border-0 flex items-center justify-between text-left"
+                        >
+                          <span className="font-medium text-white">{artist.name}</span>
+                          <span className="text-[9px] text-zinc-400">{artist.roleType}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 relative">
                 <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Director</label>
                 <input
                   type="text"
@@ -1784,6 +1810,32 @@ This file was retrieved from the Curtain Call Curation Vault.
                   onChange={e => setPlayForm({ ...playForm, director: e.target.value })}
                   className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
                 />
+                {(() => {
+                  const allArtists = ClientDB.getArtists();
+                  const matchingSuggestions = playForm.director.trim()
+                    ? allArtists.filter(a => 
+                        a.name.toLowerCase().includes(playForm.director.toLowerCase()) &&
+                        a.name.toLowerCase() !== playForm.director.toLowerCase()
+                      )
+                    : [];
+                  
+                  if (matchingSuggestions.length === 0) return null;
+
+                  return (
+                    <div className="absolute top-[100%] left-0 w-full bg-zinc-900 border border-white/10 rounded-lg shadow-2xl z-20 mt-1 max-h-36 overflow-y-auto [scrollbar-width:none]">
+                      {matchingSuggestions.map(artist => (
+                        <div
+                          key={artist.id}
+                          onClick={() => setPlayForm({ ...playForm, director: artist.name })}
+                          className="px-3 py-2 text-xs hover:bg-red-600 hover:text-white cursor-pointer transition-colors border-b border-white/5 last:border-0 flex items-center justify-between text-left"
+                        >
+                          <span className="font-medium text-white">{artist.name}</span>
+                          <span className="text-[9px] text-zinc-400">{artist.roleType}</span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Genre Category</label>
