@@ -1365,26 +1365,41 @@ export const ClientDB = {
 
 // ── CLOUD PULL AND CACHE SYNC MECHANISM ──
 export const syncFromSupabase = async () => {
-  if (!supabase) return;
+  if (typeof window === 'undefined') return;
 
+  let email = '';
   let isAdmin = false;
   try {
-    if (typeof window !== 'undefined') {
-      const savedUser = localStorage.getItem('cc_authed_user');
-      if (savedUser) {
-        const email = JSON.parse(savedUser).email || '';
-        isAdmin = email.toLowerCase() === 'watchcurtaincall@gmail.com';
-      }
+    const savedUser = localStorage.getItem('cc_authed_user');
+    if (savedUser) {
+      email = JSON.parse(savedUser).email || '';
+      isAdmin = email.toLowerCase() === 'watchcurtaincall@gmail.com';
     }
   } catch (e) {}
 
   try {
-    // 1. Pull productions
-    const { data: prods } = await supabase.from('productions').select('*').neq('id', 'cache_bust_' + Date.now());
-    if (prods) {
-      const mapped = prods.map(mapProductionFromDb);
-      const approved = mapped.filter(p => p.curationStatus === 'Approved');
-      const pending = mapped.filter(p => p.curationStatus === 'Pending');
+    console.log('[Curtain Call Database] Starting high-speed parallel sync with Supabase cloud...');
+    const url = `/api/sync-data?email=${encodeURIComponent(email)}`;
+    const res = await fetch(url, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
+
+    if (!res.ok) {
+      console.error('[Supabase Sync] Unified sync API failed:', res.statusText);
+      return;
+    }
+
+    const data = await res.json();
+
+    // 1. Process Productions
+    if (data.productions) {
+      const mapped = data.productions.map(mapProductionFromDb);
+      const approved = mapped.filter((p: any) => p.curationStatus === 'Approved');
+      const pending = mapped.filter((p: any) => p.curationStatus === 'Pending');
       
       const currentLocal = JSON.parse(localStorage.getItem(PRODUCTIONS_KEY) || '[]');
       const drafts = currentLocal.filter((p: any) => p.status === 'Draft');
@@ -1395,12 +1410,11 @@ export const syncFromSupabase = async () => {
       }
     }
 
-    // 2. Pull artists
-    const { data: arts } = await supabase.from('artists').select('*').neq('id', 'cache_bust_' + Date.now());
-    if (arts) {
-      const mapped = arts.map(mapArtistFromDb);
-      const approved = mapped.filter(a => a.curationStatus === 'Approved');
-      const pending = mapped.filter(a => a.curationStatus === 'Pending');
+    // 2. Process Artists
+    if (data.artists) {
+      const mapped = data.artists.map(mapArtistFromDb);
+      const approved = mapped.filter((a: any) => a.curationStatus === 'Approved');
+      const pending = mapped.filter((a: any) => a.curationStatus === 'Pending');
       
       localStorage.setItem(ARTISTS_KEY, JSON.stringify(approved));
       
@@ -1409,12 +1423,11 @@ export const syncFromSupabase = async () => {
       }
     }
 
-    // 3. Pull articles
-    const { data: articles } = await supabase.from('articles').select('*').neq('id', 'cache_bust_' + Date.now());
-    if (articles) {
-      const mapped = articles.map(mapArticleFromDb);
-      const approved = mapped.filter(a => a.curationStatus === 'Approved');
-      const pending = mapped.filter(a => a.curationStatus === 'Pending');
+    // 3. Process Articles
+    if (data.articles) {
+      const mapped = data.articles.map(mapArticleFromDb);
+      const approved = mapped.filter((a: any) => a.curationStatus === 'Approved');
+      const pending = mapped.filter((a: any) => a.curationStatus === 'Pending');
 
       localStorage.setItem(ARTICLES_KEY, JSON.stringify(approved));
       
@@ -1423,148 +1436,100 @@ export const syncFromSupabase = async () => {
       }
     }
 
-    // 4. Pull reviews
-    const { data: revs } = await supabase.from('reviews').select('*').neq('id', 'cache_bust_' + Date.now());
-    if (revs) {
-      const mapped = revs.map(mapReviewFromDb);
+    // 4. Process Reviews
+    if (data.reviews) {
+      const mapped = data.reviews.map(mapReviewFromDb);
       localStorage.setItem(REVIEWS_KEY, JSON.stringify(mapped));
     }
 
-    // 5. Pull critic applications
-    const { data: apps } = await supabase.from('critic_applications').select('*').neq('id', 'cache_bust_' + Date.now());
-    if (apps) {
-      const mapped = apps.map(mapCriticAppFromDb);
-      const pending = mapped.filter(a => a.curationStatus === 'Pending');
+    // 5. Process Critic Applications
+    if (data.criticApplications) {
+      const mapped = data.criticApplications.map(mapCriticAppFromDb);
+      const pending = mapped.filter((a: any) => a.curationStatus === 'Pending');
       
       if (!isAdmin) {
         localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pending));
       }
     }
 
-    // 6. Pull approved critic emails whitelist via secure API route (bypassing browser RLS)
-    try {
-      const res = await fetch('/api/approved-critics');
-      if (res.ok) {
-        const emails = await res.json();
-        const defaultApproved = [
-          'critic@example.com',
-          'editor@example.com',
-          'verify@example.com',
-          'adaeze@example.com'
-        ];
-        const merged = Array.from(new Set([...defaultApproved, ...emails.map((e: string) => e.toLowerCase())]));
-        localStorage.setItem('curtain_approved_critic_emails', JSON.stringify(merged));
-      }
-    } catch (e) {
-      console.error('[Supabase Sync] Failed to fetch approved critics from API:', e);
+    // 6. Process Whitelist approved critics
+    if (data.approvedCritics) {
+      const defaultApproved = [
+        'critic@example.com',
+        'editor@example.com',
+        'verify@example.com',
+        'adaeze@example.com'
+      ];
+      const merged = Array.from(new Set([...defaultApproved, ...data.approvedCritics.map((e: string) => e.toLowerCase())]));
+      localStorage.setItem('curtain_approved_critic_emails', JSON.stringify(merged));
     }
 
     // 7. Pull & Sync Withdrawals (Two-Way Self-Healing Sync)
-    try {
-      let remoteWithdrawals: any[] | null = null;
-      const res = await fetch('/api/withdrawals');
-      if (res.ok) {
-        remoteWithdrawals = await res.json();
+    if (data.withdrawals) {
+      const localWithdrawals = JSON.parse(localStorage.getItem('curtain_withdrawals') || '[]');
+      
+      // Find local withdrawals that aren't on the server yet
+      const unsynced = localWithdrawals.filter((lw: any) => !data.withdrawals.some((rw: any) => rw.id === lw.id));
+      
+      for (const req of unsynced) {
+        console.log('[Two-Way Sync] Uploading unsynced local withdrawal request:', req.id);
+        await syncToCloud('withdrawals', req);
       }
       
-      if (remoteWithdrawals) {
-        const localWithdrawals = JSON.parse(localStorage.getItem('curtain_withdrawals') || '[]');
+      const finalRemote = unsynced.length > 0
+        ? [ ...unsynced, ...data.withdrawals ]
+        : data.withdrawals;
         
-        // Find local withdrawals that aren't on the server yet
-        const unsynced = localWithdrawals.filter((lw: any) => !remoteWithdrawals.some((rw: any) => rw.id === lw.id));
-        
-        for (const req of unsynced) {
-          console.log('[Two-Way Sync] Uploading unsynced local withdrawal request:', req.id);
-          await syncToCloud('withdrawals', req);
-        }
-        
-        const finalRemote = unsynced.length > 0
-          ? [ ...unsynced, ...remoteWithdrawals ]
-          : remoteWithdrawals;
-          
-        localStorage.setItem('curtain_withdrawals', JSON.stringify(finalRemote));
-      }
-    } catch (e) {
-      // ignore
+      localStorage.setItem('curtain_withdrawals', JSON.stringify(finalRemote));
     }
 
     // 8. Pull & Sync Tickets (Two-Way Self-Healing Sync)
-    try {
-      let remoteTickets: any[] | null = null;
-      const res = await fetch('/api/tickets');
-      if (res.ok) {
-        remoteTickets = await res.json();
+    if (data.tickets) {
+      const mappedRemote = data.tickets.map(mapTicketFromDb);
+      const localTickets = JSON.parse(localStorage.getItem('curtain_tickets') || '[]').map(mapTicketFromDb);
+      
+      // Find local tickets that are not present in remote database
+      const unsynced = localTickets.filter((lt: any) => !mappedRemote.some((rt: any) => rt.id === lt.id || rt.reference === lt.reference));
+      
+      for (const tkt of unsynced) {
+        console.log('[Two-Way Sync] Uploading unsynced local ticket purchase:', tkt.id);
+        await syncToCloud('tickets', mapTicketToDb(tkt));
       }
-
-      if (remoteTickets) {
-        const mappedRemote = remoteTickets.map(mapTicketFromDb);
-        const localTickets = JSON.parse(localStorage.getItem('curtain_tickets') || '[]').map(mapTicketFromDb);
-        
-        // Find local tickets that are not present in remote database
-        const unsynced = localTickets.filter((lt: any) => !mappedRemote.some((rt: any) => rt.id === lt.id || rt.reference === lt.reference));
-        
-        for (const tkt of unsynced) {
-          console.log('[Two-Way Sync] Uploading unsynced local ticket purchase:', tkt.id);
-          await syncToCloud('tickets', mapTicketToDb(tkt));
-        }
-        
-        const finalTickets = [ ...unsynced, ...mappedRemote ];
-        localStorage.setItem('curtain_tickets', JSON.stringify(finalTickets));
-      }
-    } catch (e) {
-      // ignore
+      
+      const finalTickets = [ ...unsynced, ...mappedRemote ];
+      localStorage.setItem('curtain_tickets', JSON.stringify(finalTickets));
     }
 
-    // 9. Pull notifications for currently logged in user
-    try {
-      const savedUser = localStorage.getItem('cc_authed_user');
-      if (savedUser) {
-        const email = JSON.parse(savedUser).email || '';
-        if (email) {
-          const res = await fetch(`/api/notifications?email=${encodeURIComponent(email)}`);
-          if (res.ok) {
-            const notifications = await res.json();
-            localStorage.setItem('curtain_notifications', JSON.stringify(notifications));
-          }
-        }
-      } else {
-        localStorage.removeItem('curtain_notifications');
-      }
-    } catch (e) {
-      // ignore
+    // 9. Process Notifications
+    if (data.notifications) {
+      localStorage.setItem('curtain_notifications', JSON.stringify(data.notifications));
+    } else if (!email) {
+      localStorage.removeItem('curtain_notifications');
     }
 
-    // 10. Pull profiles, newsletter subscribers, and all pending queues ONLY if the logged in user is the administrator
+    // 10. Process Admin-only data
     if (isAdmin) {
-      try {
-        const res = await fetch('/api/admin-data');
-        if (res.ok) {
-          const { subscribers, signups, pendingPlays, pendingArtists, pendingArticles, pendingCritics } = await res.json();
-          if (subscribers) {
-            localStorage.setItem('curtain_newsletter_subscribers', JSON.stringify(subscribers));
-          }
-          if (signups) {
-            localStorage.setItem('curtain_user_profiles', JSON.stringify(signups));
-          }
-          if (pendingPlays) {
-            const mapped = pendingPlays.map(mapProductionFromDb);
-            localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(mapped));
-          }
-          if (pendingArtists) {
-            const mapped = pendingArtists.map(mapArtistFromDb);
-            localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(mapped));
-          }
-          if (pendingArticles) {
-            const mapped = pendingArticles.map(mapArticleFromDb);
-            localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(mapped));
-          }
-          if (pendingCritics) {
-            const mapped = pendingCritics.map(mapCriticAppFromDb);
-            localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(mapped));
-          }
-        }
-      } catch (e) {
-        console.error('[Supabase Sync] Failed to fetch admin pending/signups data:', e);
+      if (data.subscribers) {
+        localStorage.setItem('curtain_newsletter_subscribers', JSON.stringify(data.subscribers));
+      }
+      if (data.profiles) {
+        localStorage.setItem('curtain_user_profiles', JSON.stringify(data.profiles));
+      }
+      if (data.productions) {
+        const pendingPlays = data.productions.map(mapProductionFromDb).filter((p: any) => p.curationStatus === 'Pending');
+        localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(pendingPlays));
+      }
+      if (data.artists) {
+        const pendingArtists = data.artists.map(mapArtistFromDb).filter((a: any) => a.curationStatus === 'Pending');
+        localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(pendingArtists));
+      }
+      if (data.articles) {
+        const pendingArticles = data.articles.map(mapArticleFromDb).filter((a: any) => a.curationStatus === 'Pending');
+        localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(pendingArticles));
+      }
+      if (data.criticApplications) {
+        const pendingCritics = data.criticApplications.map(mapCriticAppFromDb).filter((c: any) => c.curationStatus === 'Pending');
+        localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pendingCritics));
       }
     } else {
       // Security/Privacy: clear signups/subscribers and pending queues for non-admin users!
@@ -1576,10 +1541,9 @@ export const syncFromSupabase = async () => {
       localStorage.removeItem(PENDING_CRITICS_KEY);
     }
 
-    console.log('[Curtain Call Database] Sync successfully completed with Supabase cloud!');
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('cc-db-synced'));
-    }
+    localStorage.setItem('cc_last_sync_time', Date.now().toString());
+    console.log('[Curtain Call Database] Unified sync successfully completed with Supabase cloud in one round-trip!');
+    window.dispatchEvent(new Event('cc-db-synced'));
   } catch (err) {
     console.error('[Supabase Sync] Pull error:', err);
   }

@@ -740,7 +740,22 @@ export default function SubmitPortalPage() {
                       type="text"
                       placeholder="e.g. Joke Silva"
                       value={newMemberName}
-                      onChange={e => setNewMemberName(e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setNewMemberName(val);
+                        const match = ClientDB.getArtists().find(a => a.name.toLowerCase() === val.trim().toLowerCase());
+                        if (match && match.roleType) {
+                          setNewMemberRole(match.roleType);
+                          const roleLow = match.roleType.toLowerCase();
+                          if (roleLow.includes('director') || roleLow.includes('playwright') || roleLow.includes('producer') || roleLow.includes('designer')) {
+                            setNewMemberCategory('Creative');
+                          } else if (roleLow.includes('manager') || roleLow.includes('crew') || roleLow.includes('technical') || roleLow.includes('engineer')) {
+                            setNewMemberCategory('Technical');
+                          } else {
+                            setNewMemberCategory('Cast');
+                          }
+                        }
+                      }}
                       className="bg-zinc-950 border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
                     />
                     {(() => {

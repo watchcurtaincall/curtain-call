@@ -14,15 +14,25 @@ export default function Home() {
   const [productions, setProductions] = useState<Production[]>([]);
   const [trendingPeople, setTrendingPeople] = useState<Artist[]>([]);
   const [recentArticles, setRecentArticles] = useState<any[]>([]);
+  const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Dynamically load data from client-side active database on mount
   useEffect(() => {
+    setMounted(true);
+    const hasSyncedBefore = localStorage.getItem('cc_last_sync_time');
+
     const loadData = () => {
       // Sort plays by date added so newly added plays appear at the top!
       setProductions(sortItemsByDateAdded(ClientDB.getProductions()));
       const sortedArtists = ClientDB.getArtists().sort((a, b) => (b.hits || 0) - (a.hits || 0));
       setTrendingPeople(sortedArtists.slice(0, 6));
       setRecentArticles(ClientDB.getArticles().slice(0, 3));
+      
+      // If we have completed a sync previously, we bypass the loading phase entirely to load in 0ms!
+      if (hasSyncedBefore) {
+        setLoading(false);
+      }
     };
 
     loadData();
@@ -30,11 +40,64 @@ export default function Home() {
     // Background pull database sync on page load/mount
     syncFromSupabase();
 
+    const handleSync = () => {
+      loadData();
+      setLoading(false);
+    };
+
     if (typeof window !== 'undefined') {
-      window.addEventListener('cc-db-synced', loadData);
-      return () => window.removeEventListener('cc-db-synced', loadData);
+      window.addEventListener('cc-db-synced', handleSync);
+      return () => window.removeEventListener('cc-db-synced', handleSync);
     }
   }, []);
+
+  if (!mounted || loading) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex flex-col gap-16 pb-24">
+        {/* Premium Shimmer Hero Block */}
+        <div className="relative w-full h-[80vh] min-h-[580px] bg-zinc-900/10 animate-pulse flex items-end p-8 md:p-16 border-b border-white/5 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
+          <div className="max-w-2xl w-full flex flex-col gap-4 relative z-10">
+            <div className="h-6 w-32 bg-white/10 rounded-full" />
+            <div className="h-16 w-3/4 bg-white/10 rounded-2xl" />
+            <div className="h-6 w-1/2 bg-white/10 rounded-xl" />
+            <div className="flex gap-3 mt-4">
+              <div className="h-12 w-32 bg-white/10 rounded-full" />
+              <div className="h-12 w-32 bg-white/10 rounded-full" />
+            </div>
+          </div>
+        </div>
+
+        {/* Shimmer Directory Section */}
+        <div className="container mx-auto px-4 flex flex-col gap-6">
+          <div className="h-8 w-48 bg-white/10 rounded-lg animate-pulse" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex flex-col items-center gap-3 animate-pulse">
+                <div className="w-28 h-28 rounded-full bg-white/10" />
+                <div className="h-4 w-20 bg-white/10 rounded-md" />
+                <div className="h-3 w-12 bg-white/10 rounded-md" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Shimmer Grid Section */}
+        <div className="container mx-auto px-4 flex flex-col gap-6">
+          <div className="h-8 w-48 bg-white/10 rounded-lg animate-pulse" />
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex flex-col gap-3 animate-pulse bg-zinc-900/20 border border-white/5 rounded-3xl p-4">
+                <div className="w-full aspect-[2/3] bg-white/10 rounded-2xl" />
+                <div className="h-5 w-3/4 bg-white/10 rounded-md" />
+                <div className="h-4 w-1/2 bg-white/10 rounded-md" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Sort and filter productions for different categories
   const featured = productions.filter(p => p.status !== 'Draft').slice(0, 5); // Take top 5 for hero carousel

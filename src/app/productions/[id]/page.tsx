@@ -17,6 +17,7 @@ import { ShareModal } from '@/components/shared/ShareModal';
 export default function ProductionPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [production, setProduction] = useState<Production | null>(null);
+  const [hasSynced, setHasSynced] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
   // Load dynamically from the ClientDB on mount
@@ -26,22 +27,37 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
       if (fetched) {
         setProduction(fetched);
       } else {
-        const list = ClientDB.getProductions();
-        if (list.length > 0) {
-          setProduction(list[0]);
-        }
+        setProduction(null);
       }
     };
 
     loadData();
 
+    const handleSync = () => {
+      loadData();
+      setHasSynced(true);
+    };
+
     if (typeof window !== 'undefined') {
-      window.addEventListener('cc-db-synced', loadData);
-      return () => window.removeEventListener('cc-db-synced', loadData);
+      window.addEventListener('cc-db-synced', handleSync);
+      return () => window.removeEventListener('cc-db-synced', handleSync);
     }
   }, [resolvedParams.id]);
 
   if (!production) {
+    if (hasSynced) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 px-4 text-center">
+          <h2 className="text-2xl font-serif font-bold text-white mb-2">Playbill Not Found</h2>
+          <p className="text-zinc-400 text-sm max-w-md mb-6">
+            We couldn't find the theatrical specs for this playbill. It may have been retired or you might have used an invalid link.
+          </p>
+          <Link href="/plays" className="text-sm bg-red-600 text-white font-medium px-6 py-2.5 rounded-full hover:bg-red-700 transition-colors">
+            Back to Plays Archive
+          </Link>
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950">
         <div className="text-zinc-500 text-sm font-mono animate-pulse">

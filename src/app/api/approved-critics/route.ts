@@ -64,7 +64,13 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json(Array.from(whitelistedEmails));
+    return NextResponse.json(Array.from(whitelistedEmails), {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
   } catch (err: any) {
     console.error('[API Approved Critics] GET exception:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });

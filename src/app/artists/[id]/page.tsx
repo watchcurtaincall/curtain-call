@@ -13,6 +13,7 @@ import { ShareModal } from '@/components/shared/ShareModal';
 export default function ArtistPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const [artist, setArtist] = useState<Artist | null>(null);
+  const [hasSynced, setHasSynced] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
   // Load dynamically from the ClientDB on mount using the page param ID
@@ -22,20 +23,21 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
       if (fetched) {
         setArtist(fetched);
       } else {
-        // Fallback to first artist if not found
-        const list = ClientDB.getArtists();
-        if (list.length > 0) {
-          setArtist(list[0]);
-        }
+        setArtist(null);
       }
     };
 
     loadData();
     ClientDB.incrementArtistHits(resolvedParams.id);
 
+    const handleSync = () => {
+      loadData();
+      setHasSynced(true);
+    };
+
     if (typeof window !== 'undefined') {
-      window.addEventListener('cc-db-synced', loadData);
-      return () => window.removeEventListener('cc-db-synced', loadData);
+      window.addEventListener('cc-db-synced', handleSync);
+      return () => window.removeEventListener('cc-db-synced', handleSync);
     }
   }, [resolvedParams.id]);
 
@@ -58,6 +60,19 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
   };
 
   if (!artist) {
+    if (hasSynced) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 px-4 text-center">
+          <h2 className="text-2xl font-serif font-bold text-white mb-2">Theatremaker Profile Not Found</h2>
+          <p className="text-zinc-400 text-sm max-w-md mb-6">
+            We couldn't find the profile dossier for this theatremaker. It may have been retired or you might have used an invalid link.
+          </p>
+          <Link href="/artists" className="text-sm bg-red-600 text-white font-medium px-6 py-2.5 rounded-full hover:bg-red-700 transition-colors">
+            Back to Directory
+          </Link>
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950">
         <div className="text-zinc-500 text-sm font-mono animate-pulse">

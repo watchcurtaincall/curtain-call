@@ -102,6 +102,12 @@ export async function GET() {
       pendingArtists: pendingArtists || [],
       pendingArticles: pendingArticles || [],
       pendingCritics: pendingCritics || []
+    }, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
     });
   } catch (err: any) {
     console.error('[API Admin Data] GET exception:', err);

@@ -41,7 +41,13 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(notifications || []);
+    return NextResponse.json(notifications || [], {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
   } catch (err: any) {
     console.error('[API Notifications] GET exception:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });

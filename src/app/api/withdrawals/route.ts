@@ -33,7 +33,13 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json(withdrawals || []);
+    return NextResponse.json(withdrawals || [], {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
   } catch (err: any) {
     console.error('[API Withdrawals] GET exception:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
