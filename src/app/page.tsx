@@ -26,8 +26,31 @@ export default function Home() {
     const loadData = () => {
       // Sort plays by date added so newly added plays appear at the top!
       setProductions(sortItemsByDateAdded(ClientDB.getProductions()));
-      const sortedArtists = ClientDB.getArtists().sort((a, b) => (b.hits || 0) - (a.hits || 0));
-      setTrendingPeople(sortedArtists.slice(0, 6));
+
+      // ── Trending Theatremakers: tiered threshold system ──────────────────
+      // An artist only occupies a rank slot if they meet that slot's minimum
+      // profile-view count. This prevents 1-click appearances on the list.
+      //
+      //  #1  Spotlight   → 15+ views
+      //  #2  Rising      → 12+ views
+      //  #3  Buzzing     →  9+ views
+      //  #4  Notable     →  6+ views
+      //  #5  Emerging    →  4+ views
+      //  #6  On the Radar→  2+ views
+      const TRENDING_THRESHOLDS = [15, 12, 9, 6, 4, 2];
+      const sortedArtists = ClientDB.getArtists()
+        .filter(a => (a.hits || 0) >= TRENDING_THRESHOLDS[TRENDING_THRESHOLDS.length - 1]) // must meet minimum
+        .sort((a, b) => (b.hits || 0) - (a.hits || 0));
+      // Fill each slot only if the ranked artist meets that slot's threshold
+      const trendingSlots: typeof sortedArtists = [];
+      for (let slot = 0; slot < TRENDING_THRESHOLDS.length; slot++) {
+        const minHits = TRENDING_THRESHOLDS[slot];
+        const candidate = sortedArtists[slot];
+        if (candidate && (candidate.hits || 0) >= minHits) {
+          trendingSlots.push(candidate);
+        }
+      }
+      setTrendingPeople(trendingSlots);
       
       const allArticles = ClientDB.getArticles();
       setRecentArticles(allArticles.slice(0, 3));
@@ -125,7 +148,8 @@ export default function Home() {
       {/* Dynamic Hero Carousel displaying latest 5 plays */}
       <HeroCarousel productions={featured} />
 
-      {/* ── TRENDING THEATREMAKERS ── */}
+      {/* ── TRENDING THEATREMAKERS ── Only renders when artists hit threshold */}
+      {trendingPeople.length > 0 && (
       <section className="container mx-auto px-4">
         <div className="flex items-end justify-between gap-4 mb-8 pb-4 border-b border-white/10">
           <div className="flex-1 min-w-0">
@@ -133,7 +157,7 @@ export default function Home() {
               <TrendingUp className="h-5 w-5 text-red-500 shrink-0" />
               Trending Theatremakers
             </h2>
-            <p className="text-zinc-400 text-sm mt-1 truncate">Most searched and visited artist portfolios this week</p>
+            <p className="text-zinc-400 text-sm mt-1 truncate">Ranked by verified profile views — minimum 2 to qualify</p>
           </div>
           <Link href="/artists" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors shrink-0 whitespace-nowrap">
             Explore Directory
@@ -151,7 +175,7 @@ export default function Home() {
                   sizes="112px"
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                {/* Glowing rank overlay */}
+                {/* Rank badge */}
                 <div className="absolute bottom-1 right-1 bg-red-600 border border-white/10 rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
                   #{index + 1}
                 </div>
@@ -160,10 +184,16 @@ export default function Home() {
                 {artist.name}
               </h3>
               <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-wider">{artist.roleType.split(' / ')[0]}</p>
+              {/* Profile view count — visible proof they earned this spot */}
+              <p className="text-[10px] text-zinc-600 mt-1 font-mono">
+                {(artist.hits || 0).toLocaleString()} views
+              </p>
             </Link>
           ))}
         </div>
       </section>
+      )}
+
 
       {/* Currently Showing Section */}
       <section className="container mx-auto px-4">
