@@ -388,6 +388,28 @@ const mapTicketFromDb = (row: any) => ({
   timestamp: Number(row.timestamp) || Date.now()
 });
 
+const mapWithdrawalToDb = (w: any) => ({
+  id: w.id,
+  email: w.email,
+  amount: w.amount,
+  bank_name: w.bankName || w.bank_name,
+  account_number: w.accountNumber || w.account_number,
+  account_name: w.accountName || w.account_name,
+  status: w.status,
+  timestamp: w.timestamp
+});
+
+const mapWithdrawalFromDb = (row: any) => ({
+  id: row.id,
+  email: row.email,
+  amount: Number(row.amount) || 0,
+  bankName: row.bank_name || row.bankName,
+  accountNumber: row.account_number || row.accountNumber,
+  accountName: row.account_name || row.accountName,
+  status: row.status,
+  timestamp: row.timestamp
+});
+
 // ── BACKGROUND CLOUD REPLICATION ENGINE ──
 
 const syncToCloud = async (table: string, dbItem: any): Promise<void> => {
@@ -1395,7 +1417,7 @@ export const ClientDB = {
   getWithdrawals(): any[] {
     if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('curtain_withdrawals');
-    return stored ? JSON.parse(stored) : [];
+    return stored ? JSON.parse(stored).map(mapWithdrawalFromDb) : [];
   },
 
   submitWithdrawal(req: any): void {
@@ -1405,7 +1427,7 @@ export const ClientDB = {
     localStorage.setItem('curtain_withdrawals', JSON.stringify(updated));
 
     // Sync to cloud withdrawals table
-    syncToCloud('withdrawals', req);
+    syncToCloud('withdrawals', mapWithdrawalToDb(req));
 
     // Trigger in-app notification
     if (req.email) {
@@ -1425,7 +1447,7 @@ export const ClientDB = {
 
     const req = updated.find(w => w.id === id);
     if (req) {
-      syncToCloud('withdrawals', req);
+      syncToCloud('withdrawals', mapWithdrawalToDb(req));
 
       // Trigger notification to the withdrawer!
       this.addNotification(req.email, {
@@ -1444,7 +1466,7 @@ export const ClientDB = {
 
     const req = updated.find(w => w.id === id);
     if (req) {
-      syncToCloud('withdrawals', req);
+      syncToCloud('withdrawals', mapWithdrawalToDb(req));
 
       // Trigger notification to the withdrawer!
       this.addNotification(req.email, {
@@ -1859,20 +1881,21 @@ export const syncFromSupabase = async () => {
 
     // 7. Pull & Sync Withdrawals (Two-Way Self-Healing Sync)
     if (data.withdrawals) {
-      const localWithdrawals = JSON.parse(localStorage.getItem('curtain_withdrawals') || '[]');
+      const localWithdrawals = JSON.parse(localStorage.getItem('curtain_withdrawals') || '[]').map(mapWithdrawalFromDb);
+      const mappedRemote = data.withdrawals.map(mapWithdrawalFromDb);
       
       // Find local withdrawals that aren't on the server yet
-      const unsynced = localWithdrawals.filter((lw: any) => !data.withdrawals.some((rw: any) => rw.id === lw.id));
+      const unsynced = localWithdrawals.filter((lw: any) => !mappedRemote.some((rw: any) => rw.id === lw.id));
       
       for (const req of unsynced) {
         console.log('[Two-Way Sync] Uploading unsynced local withdrawal request:', req.id);
-        await syncToCloud('withdrawals', req);
+        await syncToCloud('withdrawals', mapWithdrawalToDb(req));
       }
       
-      let finalRemote = data.withdrawals;
+      let finalRemote = mappedRemote;
       if (!isAdmin) {
         const cleanEmail = email ? email.toLowerCase() : '';
-        finalRemote = data.withdrawals.filter((w: any) => w.email && w.email.toLowerCase() === cleanEmail);
+        finalRemote = mappedRemote.filter((w: any) => w.email && w.email.toLowerCase() === cleanEmail);
       }
       
       localStorage.setItem('curtain_withdrawals', JSON.stringify([...unsynced, ...finalRemote]));
