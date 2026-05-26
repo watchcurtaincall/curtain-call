@@ -37,20 +37,10 @@ export default function Home() {
       //  #4  Notable     →  6+ views
       //  #5  Emerging    →  4+ views
       //  #6  On the Radar→  2+ views
-      const TRENDING_THRESHOLDS = [10, 8, 6, 4, 2, 1];
       const sortedArtists = ClientDB.getArtists()
-        .filter(a => (a.hits || 0) >= 1) // must meet minimum
-        .sort((a, b) => (b.hits || 0) - (a.hits || 0));
-      // Fill each slot only if the ranked artist meets that slot's threshold
-      const trendingSlots: typeof sortedArtists = [];
-      for (let slot = 0; slot < TRENDING_THRESHOLDS.length; slot++) {
-        const minHits = TRENDING_THRESHOLDS[slot];
-        const candidate = sortedArtists[slot];
-        if (candidate && (candidate.hits || 0) >= minHits) {
-          trendingSlots.push(candidate);
-        }
-      }
-      setTrendingPeople(trendingSlots);
+        .sort((a, b) => (b.hits || 0) - (a.hits || 0))
+        .slice(0, 6);
+      setTrendingPeople(sortedArtists);
       
       const allArticles = ClientDB.getArticles();
       setRecentArticles(allArticles.slice(0, 3));
@@ -184,10 +174,6 @@ export default function Home() {
                 {artist.name}
               </h3>
               <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-wider">{artist.roleType.split(' / ')[0]}</p>
-              {/* Profile view count — visible proof they earned this spot */}
-              <p className="text-[10px] text-zinc-600 mt-1 font-mono">
-                {(artist.hits || 0).toLocaleString()} views
-              </p>
             </Link>
           ))}
         </div>
