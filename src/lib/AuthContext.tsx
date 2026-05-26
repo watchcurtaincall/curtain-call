@@ -14,6 +14,7 @@ export interface MockUser {
   badgesUnlocked: number;
   totalBadges: number;
   handle?: string;
+  username?: string;
   bio?: string;
   location?: string;
   isVerified?: boolean;
@@ -31,6 +32,7 @@ const MOCK_USER: MockUser = {
   badgesUnlocked: 6,
   totalBadges: 14,
   handle: 'adaeze_obi',
+  username: 'adaeze_obi',
   bio: '',
   location: '',
   isVerified: true
@@ -39,9 +41,9 @@ const MOCK_USER: MockUser = {
 interface AuthContextType {
   user: MockUser | null;
   login: (email: string, password?: string) => Promise<void>;
-  signUp: (email: string, password?: string, name?: string) => Promise<void>;
+  signUp: (email: string, password?: string, name?: string, username?: string) => Promise<void>;
   logout: () => void;
-  updateProfile: (updates: { name?: string; handle?: string; bio?: string; location?: string }) => void;
+  updateProfile: (updates: { name?: string; handle?: string; username?: string; bio?: string; location?: string }) => void;
   verifyCode: (code: string) => Promise<boolean>;
   resendVerificationCode: () => Promise<void>;
 }
@@ -186,6 +188,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
           }
 
+          const existingProfile = ClientDB.getSignups().find(p => p.email.toLowerCase() === email.toLowerCase());
+          const customHandle = existingProfile?.handle || existingProfile?.username || deriveHandle(name, email);
+          const customUsername = existingProfile?.username || (existingProfile?.handle && !existingProfile.handle.startsWith('@') ? existingProfile.handle : undefined);
+
           const loggedUser = {
             name,
             email,
@@ -196,9 +202,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             points: 0,
             badgesUnlocked: 0,
             totalBadges: 14,
-            handle: deriveHandle(name, email),
-            bio: '',
-            location: '',
+            handle: customHandle,
+            username: customUsername,
+            bio: existingProfile?.bio || '',
+            location: existingProfile?.location || '',
             isVerified: isAlreadyVerified
           };
           setUser(loggedUser);
@@ -244,6 +251,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
           }
 
+          const existingProfile = ClientDB.getSignups().find(p => p.email.toLowerCase() === email.toLowerCase());
+          const customHandle = existingProfile?.handle || existingProfile?.username || deriveHandle(name, email);
+          const customUsername = existingProfile?.username || (existingProfile?.handle && !existingProfile.handle.startsWith('@') ? existingProfile.handle : undefined);
+
           const loggedUser = {
             name,
             email,
@@ -254,9 +265,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             points: 0,
             badgesUnlocked: 0,
             totalBadges: 14,
-            handle: deriveHandle(name, email),
-            bio: '',
-            location: '',
+            handle: customHandle,
+            username: customUsername,
+            bio: existingProfile?.bio || '',
+            location: existingProfile?.location || '',
             isVerified: isAlreadyVerified
           };
           setUser(loggedUser);
@@ -413,7 +425,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ClientDB.saveProfile(loggedUser);
   };
 
-  const signUp = async (email: string, password?: string, name?: string) => {
+  const signUp = async (email: string, password?: string, name?: string, username?: string) => {
     const cleanEmail = email.trim().toLowerCase();
     
     // Check if account already exists to avoid spamming welcome emails and overwriting active sessions
@@ -425,6 +437,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const displayName = name || email.split('@')[0];
+    const userHandle = username && username.trim() ? username.trim() : deriveHandle(displayName, cleanEmail);
     
     let loggedUser = {
       name: displayName,
@@ -436,7 +449,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       points: 0,
       badgesUnlocked: 0,
       totalBadges: 14,
-      handle: deriveHandle(displayName, cleanEmail),
+      handle: userHandle,
+      username: username && username.trim() ? username.trim() : undefined,
       bio: '',
       location: ''
     };
@@ -447,7 +461,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
         options: {
           data: {
-            full_name: displayName
+            full_name: displayName,
+            handle: userHandle
           }
         }
       });

@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, Eye, EyeOff, AtSign } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
+import { ClientDB } from '@/lib/db';
 
 export default function SignupPage() {
   const { signUp } = useAuth();
@@ -15,6 +16,7 @@ export default function SignupPage() {
   
   // Registration form inputs
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -30,6 +32,30 @@ export default function SignupPage() {
       setLoading(false);
       return;
     }
+    
+    // Optional username uniqueness check
+    if (username.trim()) {
+      const cleanUsername = username.trim().toLowerCase();
+      // Username validation: letters, numbers, underscores only
+      if (!/^[a-z0-9_]+$/i.test(cleanUsername)) {
+        setErrorMsg('Username can only contain letters, numbers, and underscores.');
+        setLoading(false);
+        return;
+      }
+      
+      const existingProfiles = ClientDB.getSignups();
+      const usernameExists = existingProfiles.some(p => {
+        const u = p.username || (p.handle && !p.handle.startsWith('@') ? p.handle : '');
+        return u.toLowerCase() === cleanUsername || (p.handle && p.handle.toLowerCase() === cleanUsername);
+      });
+      
+      if (usernameExists) {
+        setErrorMsg('This username is already taken. Please choose another one.');
+        setLoading(false);
+        return;
+      }
+    }
+
     if (!email.trim()) {
       setErrorMsg('Please enter your email address.');
       setLoading(false);
@@ -43,7 +69,7 @@ export default function SignupPage() {
 
     // Register and log in
     try {
-      await signUp(email.trim(), password, name.trim());
+      await signUp(email.trim(), password, name.trim(), username.trim() || undefined);
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         const redirect = params.get('redirect');
@@ -96,6 +122,26 @@ export default function SignupPage() {
                   className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
                 />
               </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-sm font-medium text-zinc-300">Username</label>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-wider">Optional</span>
+              </div>
+              <div className="relative">
+                <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                <input 
+                  type="text" 
+                  placeholder="theatrefan"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all text-sm"
+                />
+              </div>
+              <p className="text-[11px] text-zinc-500 mt-1.5 leading-relaxed">
+                If set, this name will show up on reviews instead of your real name to protect your privacy.
+              </p>
             </div>
 
             <div>

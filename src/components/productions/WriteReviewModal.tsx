@@ -38,7 +38,7 @@ export function WriteReviewModal({ productionTitle, productionId, reviewType = '
 
     ClientDB.saveReview({
       productionId,
-      author: user?.name || 'Anonymous User',
+      author: user?.username || user?.name || 'Anonymous User',
       rating: rating * 10,
       content: body,
       type: reviewType,

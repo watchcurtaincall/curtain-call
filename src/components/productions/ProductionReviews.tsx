@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Star, ShieldCheck, PenLine, Lock } from 'lucide-react';
+import { Star, ShieldCheck, PenLine, Lock, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { WriteReviewModal } from './WriteReviewModal';
 import { ProductionStatus } from '@/lib/types';
@@ -14,6 +14,7 @@ interface Review {
   rating: number;
   content: string;
   type: string;
+  headline?: string;
   date?: string;
 }
 
@@ -27,10 +28,94 @@ export function ProductionReviews({ reviews, productionTitle, productionId, stat
   const [activeTab, setActiveTab] = useState<'critic' | 'audience'>('critic');
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showCriticModal, setShowCriticModal] = useState(false);
+  
+  // UX states for truncation and pagination
+  const [expandedReviews, setExpandedReviews] = useState<Record<string, boolean>>({});
+  const [showAllReviewsModal, setShowAllReviewsModal] = useState(false);
+  const [modalReviewsType, setModalReviewsType] = useState<'critic' | 'audience'>('critic');
 
   const criticReviews = reviews.filter(r => r.type && r.type.toLowerCase() === 'critic');
   const audienceReviews = reviews.filter(r => r.type && r.type.toLowerCase() === 'audience');
   const isCritic = user ? ClientDB.isApprovedCritic(user.email) : false;
+
+  const toggleReviewExpand = (reviewId: string) => {
+    setExpandedReviews(prev => ({ ...prev, [reviewId]: !prev[reviewId] }));
+  };
+
+  const openAllReviewsModal = (type: 'critic' | 'audience') => {
+    setModalReviewsType(type);
+    setShowAllReviewsModal(true);
+  };
+
+  const CHAR_LIMIT = 180;
+
+  // Single reusable component to render each individual review card
+  const ReviewCard = ({ review }: { review: Review }) => {
+    const isExpanded = expandedReviews[review.id] || false;
+    const isLong = review.content.length > CHAR_LIMIT;
+    const displayText = isLong && !isExpanded 
+      ? `${review.content.slice(0, CHAR_LIMIT)}...` 
+      : review.content;
+
+    return (
+      <div className="p-5 rounded-2xl bg-zinc-900 border border-white/5 shadow-md hover:border-white/10 transition-colors">
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center font-semibold text-xs text-zinc-300">
+              {review.type.toLowerCase() === 'critic' ? (
+                <PenLine className="h-3.5 w-3.5 text-zinc-400" />
+              ) : (
+                review.author.charAt(0).toUpperCase()
+              )}
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-white flex items-center gap-1">
+                {review.author}
+                {review.type.toLowerCase() === 'critic' && (
+                  <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />
+                )}
+              </div>
+              <div className="text-[10px] text-zinc-500">
+                {review.type.toLowerCase() === 'critic' ? 'Verified Critic' : (review.date || 'Recently')}
+              </div>
+            </div>
+          </div>
+          {review.type.toLowerCase() === 'critic' ? (
+            <span className="text-xs font-bold text-red-500 bg-red-600/10 px-2.5 py-1 rounded-full border border-red-600/20">
+              {review.rating}%
+            </span>
+          ) : (
+            <div className="flex items-center gap-1 text-xs font-bold text-white bg-zinc-800 px-2.5 py-1 rounded-full">
+              <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+              {parseFloat((review.rating / 10).toFixed(1))}
+            </div>
+          )}
+        </div>
+
+        {/* ── Headline Display ── */}
+        {review.headline && review.headline.trim() && (
+          <h4 className="text-sm font-bold text-white mb-1.5 font-sans leading-tight">
+            {review.headline}
+          </h4>
+        )}
+
+        {/* Content with truncation and premium expand toggle */}
+        <p className="text-zinc-400 text-sm leading-relaxed whitespace-pre-line">
+          {review.type.toLowerCase() === 'critic' ? `"${displayText}"` : displayText}
+        </p>
+
+        {isLong && (
+          <button
+            type="button"
+            onClick={() => toggleReviewExpand(review.id)}
+            className="text-[11px] font-bold text-red-400 hover:text-red-300 transition-colors mt-2 uppercase tracking-wider block"
+          >
+            {isExpanded ? 'Show Less' : 'Read Full Review'}
+          </button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -50,6 +135,37 @@ export function ProductionReviews({ reviews, productionTitle, productionId, stat
           onClose={() => setShowCriticModal(false)}
         />
       )}
+
+      {/* ── FULL SCREEN REVIEW LIST OVERLAY MODAL ── */}
+      {showAllReviewsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="relative w-full max-w-2xl bg-zinc-950 border border-white/10 rounded-3xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-white/10 shrink-0">
+              <div>
+                <span className="text-[10px] text-zinc-500 uppercase tracking-widest block font-bold mb-0.5">Full Stack Feed</span>
+                <h3 className="text-lg font-serif font-bold text-white">
+                  {modalReviewsType === 'critic' ? 'Critic Reviews' : 'Audience Reviews'} — {productionTitle}
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowAllReviewsModal(false)}
+                className="p-2 text-zinc-500 hover:text-white transition-colors rounded-xl bg-zinc-900 border border-white/5"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Scrollable list */}
+            <div className="p-6 overflow-y-auto space-y-4 flex-1">
+              {(modalReviewsType === 'critic' ? criticReviews : audienceReviews).map(review => (
+                <ReviewCard key={review.id} review={review} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tab Headers */}
       <div className="flex gap-0 border-b border-white/10 mb-8">
         {(['critic', 'audience'] as const).map(tab => (
@@ -114,30 +230,26 @@ export function ProductionReviews({ reviews, productionTitle, productionId, stat
               {criticReviews.length === 0 ? (
                 <p className="text-center text-zinc-600 py-10 text-sm">No critic reviews yet.</p>
               ) : (
-                criticReviews.map(review => (
-                  <div key={review.id} className="p-5 rounded-2xl bg-zinc-900 border border-white/5">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center">
-                          <PenLine className="h-3.5 w-3.5 text-zinc-400" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-white flex items-center gap-1">
-                            {review.author}
-                            <ShieldCheck className="h-3.5 w-3.5 text-blue-500" />
-                          </div>
-                          <div className="text-[11px] text-zinc-600">Verified Critic</div>
-                        </div>
-                      </div>
-                      <span className="text-sm font-bold text-red-500 bg-red-600/10 px-2.5 py-1 rounded-full border border-red-600/20">
-                        {review.rating}%
-                      </span>
-                    </div>
-                    <p className="text-zinc-400 text-sm leading-relaxed italic">
-                      "{review.content}"
-                    </p>
+                <>
+                  {/* paginated list of maximum 7 visible items */}
+                  <div className="space-y-4">
+                    {criticReviews.slice(0, 7).map(review => (
+                      <ReviewCard key={review.id} review={review} />
+                    ))}
                   </div>
-                ))
+
+                  {/* see more trigger if exceeds 7 */}
+                  {criticReviews.length > 7 && (
+                    <button
+                      type="button"
+                      onClick={() => openAllReviewsModal('critic')}
+                      className="w-full mt-4 flex items-center justify-center gap-2 bg-zinc-900/80 border border-white/5 hover:border-white/10 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold py-4 rounded-2xl transition-all text-xs uppercase tracking-wider"
+                    >
+                      Read More Reviews ({criticReviews.length - 7} hidden)
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}
@@ -201,28 +313,26 @@ export function ProductionReviews({ reviews, productionTitle, productionId, stat
                   No audience reviews yet — be the first.
                 </p>
               ) : (
-                audienceReviews.map(review => (
-                  <div key={review.id} className="p-5 rounded-2xl bg-zinc-900 border border-white/5">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center font-semibold text-sm text-zinc-300">
-                          {review.author.charAt(0)}
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-white">{review.author}</div>
-                          <div className="text-[11px] text-zinc-600">{review.date || 'Recently'}</div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 text-sm font-bold text-white bg-zinc-800 px-2.5 py-1 rounded-full">
-                        <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
-                        {parseFloat((review.rating / 10).toFixed(1))}
-                      </div>
-                    </div>
-                    <p className="text-zinc-400 text-sm leading-relaxed">
-                      {review.content}
-                    </p>
+                <>
+                  {/* paginated list of maximum 7 visible items */}
+                  <div className="space-y-4">
+                    {audienceReviews.slice(0, 7).map(review => (
+                      <ReviewCard key={review.id} review={review} />
+                    ))}
                   </div>
-                ))
+
+                  {/* see more trigger if exceeds 7 */}
+                  {audienceReviews.length > 7 && (
+                    <button
+                      type="button"
+                      onClick={() => openAllReviewsModal('audience')}
+                      className="w-full mt-4 flex items-center justify-center gap-2 bg-zinc-900/80 border border-white/5 hover:border-white/10 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold py-4 rounded-2xl transition-all text-xs uppercase tracking-wider"
+                    >
+                      Read More Reviews ({audienceReviews.length - 7} hidden)
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}

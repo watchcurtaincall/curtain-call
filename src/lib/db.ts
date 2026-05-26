@@ -580,10 +580,14 @@ export const ClientDB = {
     const current = JSON.parse(localStorage.getItem(key) || '[]');
     const exists = current.find((p: any) => p.email.toLowerCase() === profile.email.toLowerCase());
     let updated = [...current];
+    const profileToSave = {
+      ...profile,
+      username: profile.username || (profile.handle && !profile.handle.startsWith('@') ? profile.handle : undefined)
+    };
     if (exists) {
-      updated = current.map((p: any) => p.email.toLowerCase() === profile.email.toLowerCase() ? { ...p, ...profile } : p);
+      updated = current.map((p: any) => p.email.toLowerCase() === profile.email.toLowerCase() ? { ...p, ...profileToSave } : p);
     } else {
-      updated.push(profile);
+      updated.push(profileToSave);
     }
     localStorage.setItem(key, JSON.stringify(updated));
 
@@ -596,7 +600,7 @@ export const ClientDB = {
         data: {
           email: profile.email.toLowerCase(),
           name: profile.name,
-          handle: profile.handle || null,
+          handle: profileToSave.username || profileToSave.handle || null,
           location: profile.location || null,
           joinDate: profile.joinDate || 'May 2026',
           isVerified: profile.isVerified ?? true,
