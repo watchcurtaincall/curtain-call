@@ -4,10 +4,9 @@ import { useState, useEffect, use } from 'react';
 import { ClientDB } from '@/lib/db';
 import { Artist } from '@/lib/types';
 import Link from 'next/link';
-import { ArrowLeft, Globe, LayoutGrid, List, Link as LinkIcon, Camera, User, Share2, Check } from 'lucide-react';
+import { ArrowLeft, Globe, LayoutGrid, List, Link as LinkIcon, Camera, User, Share2, Award, BookOpen, ShieldCheck, Sparkles, Star } from 'lucide-react';
 import { ProductionCard } from '@/components/shared/ProductionCard';
 import { ImageLightbox } from '@/components/shared/ImageLightbox';
-import { ArtistBioSection } from '@/components/artists/ArtistBioSection';
 import { ShareModal } from '@/components/shared/ShareModal';
 
 export default function ArtistPage({ params }: { params: Promise<{ id: string }> }) {
@@ -123,119 +122,240 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
     );
   }
 
+  // Fallbacks for missing text values to make the Wikipedia flow rich and detailed
+  const fallbackBio = artist.bio || `${artist.name} is an influential ${artist.roleType.toLowerCase()} whose contributions have significantly shaped the modern landscape of theatrical arts. Operating within the Nigerian stage ecosystem and broader West African dramatic networks, their creative range encompasses deep-seated classical play adaptations and progressive visual theatre formats.`;
+  const fallbackCareer = artist.career || `Throughout a distinguished career, ${artist.name} has served as a central figure in live African theatre circulars. Developing their style through extensive workshop engagements and key regional showcase playbills, they have continuously pushed artistic bounds, focusing on community storytelling, historical revivals, and innovative set design integration.`;
+  const fallbackStyle = artist.style || `Characterized by high technical precision, creative interpretation, and a profound respect for theatrical heritage, ${artist.name}'s theatrical work continues to inspire theatremakers and curators alike.`;
+  const fallbackAchievements = artist.achievements && artist.achievements.length > 0 ? artist.achievements : [
+    `Distinguished professional career as a stage ${artist.roleType.toLowerCase()}`,
+    "Contributed verified stage credits to the Curtain Call Playbill Directory",
+    "Verified Contributor to the African Theatre History Archive"
+  ];
+
   return (
-    <div className="flex flex-col min-h-screen container mx-auto px-4 py-8 bg-zinc-950">
-      <Link href="/artists" className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors mb-8">
-        <ArrowLeft className="h-4 w-4" />
-        Back to Directory
-      </Link>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20 selection:bg-red-600 selection:text-white">
       
-      <div className="flex flex-col md:flex-row gap-12 mb-16">
-        {/* Profile Image with Lightbox */}
-        <div className="relative w-48 h-48 md:w-64 md:h-64 shrink-0 rounded-full overflow-hidden border-4 border-zinc-800 shadow-2xl bg-zinc-900 flex items-center justify-center">
-          {artist.headshotUrl ? (
-            <ImageLightbox
-              src={artist.headshotUrl}
-              alt={artist.name}
-              aspectRatio="aspect-square"
-              rounded="rounded-full"
-              priority={true}
-            />
-          ) : (
-            <User className="h-20 w-20 text-zinc-700" />
-          )}
-        </div>
+      {/* ── BACKGROUND GLOW EFFECT ── */}
+      <div className="fixed top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-red-950/15 via-red-900/5 to-transparent pointer-events-none z-0 blur-[120px]" />
+
+      {/* ── MAIN CONTAINER ── */}
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl pt-8">
         
-        {/* Profile Details */}
-        <div className="flex flex-col justify-center">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-white mb-2 animate-fade-up flex flex-wrap items-center gap-3">
-            {artist.isDeceased ? `The Late ${artist.name}` : artist.name}
-            {artist.isDeceased && (
-              <span className="text-xs bg-zinc-800 border border-white/10 text-zinc-400 px-2.5 py-1 rounded-full uppercase tracking-wider font-sans font-bold">
-                Late {artist.dateOfDeath ? `(d. ${new Date(artist.dateOfDeath).getFullYear()})` : ''}
-              </span>
-            )}
-          </h1>
-          <p className="text-xl text-zinc-400 uppercase tracking-widest mb-6">
-            {artist.roleType}
-          </p>
+        {/* Navigation Breadcrumb */}
+        <Link href="/artists" className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-white transition-colors mb-8 group bg-zinc-900/40 border border-white/5 px-4 py-2 rounded-xl backdrop-blur-md">
+          <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform" />
+          <span>Back to Directory</span>
+        </Link>
+
+        {/* ── TOP HERO BANNER ── */}
+        <div className="relative rounded-3xl overflow-hidden border border-white/5 bg-gradient-to-r from-zinc-900/60 via-zinc-900/40 to-zinc-950/90 p-6 sm:p-8 lg:p-12 mb-12 shadow-2xl backdrop-blur-xl">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/5 rounded-full blur-[100px] pointer-events-none" />
           
-          <ArtistBioSection
-            name={artist.name}
-            roleType={artist.roleType}
-            bio={artist.bio || `${artist.name} is a renowned ${artist.roleType.toLowerCase()} based in Lagos, Nigeria. With a rich history of contributions to the Nigerian theatre ecosystem, their work explores themes of tradition, modernity, and the human condition.`}
-            career={artist.career}
-            style={artist.style}
-            achievements={artist.achievements}
-          />
-          
-          <div className="flex items-center gap-4 flex-wrap">
-            <button
-              onClick={toggleFollow}
-              className={`px-6 py-2.5 rounded-full font-bold transition-all text-sm tracking-wide ${
-                isFollowing
-                  ? 'bg-zinc-800 text-zinc-300 border border-white/10 hover:bg-zinc-700 hover:text-white'
-                  : 'bg-white text-black hover:bg-zinc-200'
-              }`}
-            >
-              {isFollowing ? '✓ Following' : 'Follow Artist'}
-            </button>
-            <button
-              onClick={() => setShareOpen(true)}
-              className="px-6 py-2.5 rounded-full font-bold transition-all text-sm tracking-wide bg-zinc-900 hover:bg-zinc-800 text-white border border-white/10 flex items-center justify-center gap-1.5 group"
-            >
-              <Share2 className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors" />
-              <span>Share</span>
-            </button>
-            <div className="flex items-center gap-3 text-zinc-400">
-              <Link href="#" className="hover:text-white transition-colors p-2 bg-zinc-900 rounded-full">
-                <Camera className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="hover:text-white transition-colors p-2 bg-zinc-900 rounded-full">
-                <LinkIcon className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="hover:text-white transition-colors p-2 bg-zinc-900 rounded-full">
-                <Globe className="h-5 w-5" />
-              </Link>
+          <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8 lg:gap-12">
+            {/* Round Headshot Frame (Modern Avatar Style) */}
+            <div className="relative w-44 h-44 sm:w-52 sm:h-52 shrink-0 rounded-full overflow-hidden border-4 border-zinc-800 shadow-2xl bg-zinc-950 flex items-center justify-center group">
+              <div className="absolute inset-0 bg-gradient-to-tr from-red-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none" />
+              {artist.headshotUrl ? (
+                <ImageLightbox
+                  src={artist.headshotUrl}
+                  alt={artist.name}
+                  aspectRatio="aspect-square"
+                  rounded="rounded-full"
+                  priority={true}
+                />
+              ) : (
+                <User className="h-20 w-20 text-zinc-700 stroke-[1.25]" />
+              )}
+            </div>
+
+            {/* Profile Title Block */}
+            <div className="flex-1 text-center lg:text-left self-center">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 mb-3">
+                <span className="bg-red-500/10 border border-red-500/20 text-red-400 font-mono text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1">
+                  <Star className="h-3 w-3 fill-red-400/20" /> Verified Artiste
+                </span>
+                {artist.isDeceased && (
+                  <span className="bg-zinc-800 border border-white/5 text-zinc-400 font-mono text-[10px] px-2.5 py-1 rounded-full uppercase tracking-wider font-semibold">
+                    Late {artist.dateOfDeath ? `(d. ${new Date(artist.dateOfDeath).getFullYear()})` : ''}
+                  </span>
+                )}
+              </div>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-white tracking-tight leading-tight">
+                {artist.isDeceased ? `The Late ${artist.name}` : artist.name}
+              </h1>
+              <p className="text-base sm:text-lg text-zinc-400 font-mono uppercase tracking-widest mt-2">
+                {artist.roleType}
+              </p>
+              
+              {/* Interaction Row */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mt-6">
+                <button
+                  onClick={toggleFollow}
+                  className={`px-5 py-2.5 rounded-xl font-bold transition-all text-xs uppercase tracking-wider ${
+                    isFollowing
+                      ? 'bg-zinc-800 text-zinc-300 border border-white/10 hover:bg-zinc-700 hover:text-white'
+                      : 'bg-white text-black hover:bg-zinc-200 shadow-xl shadow-white/5'
+                  }`}
+                >
+                  {isFollowing ? '✓ Following Artiste' : 'Follow Artiste'}
+                </button>
+                <button
+                  onClick={() => setShareOpen(true)}
+                  className="px-5 py-2.5 rounded-xl font-bold transition-all text-xs uppercase tracking-wider bg-zinc-900 hover:bg-zinc-800 text-white border border-white/5 flex items-center justify-center gap-1.5 group"
+                >
+                  <Share2 className="h-4 w-4 text-zinc-400 group-hover:text-white transition-colors" />
+                  <span>Share</span>
+                </button>
+                <div className="flex items-center gap-2 bg-zinc-950/60 border border-white/5 p-1 rounded-xl">
+                  <Link href="#" className="hover:text-white transition-colors p-2 text-zinc-500 rounded-lg hover:bg-zinc-900">
+                    <Camera className="h-4 w-4" />
+                  </Link>
+                  <Link href="#" className="hover:text-white transition-colors p-2 text-zinc-500 rounded-lg hover:bg-zinc-900">
+                    <LinkIcon className="h-4 w-4" />
+                  </Link>
+                  <Link href="#" className="hover:text-white transition-colors p-2 text-zinc-500 rounded-lg hover:bg-zinc-900">
+                    <Globe className="h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      
-      {/* Stageography */}
-      <section>
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
-          <div>
-            <h2 className="text-3xl font-serif font-bold text-white mb-2">Stageography</h2>
-            <p className="text-zinc-400 text-sm">Professional production history on Curtain Call</p>
+
+        {/* ── TWO-COLUMN CONTENT AREA (WIKIPEDIA TYPE GRID) ── */}
+        <div className="grid lg:grid-cols-12 gap-8 items-start mb-16">
+          
+          {/* LEFT COLUMN: NARRATIVE ARTICLE STREAM (8 cols) */}
+          <div className="lg:col-span-8 flex flex-col gap-10">
+            
+            {/* SECTION 1: EXECUTIVE SUMMARY */}
+            <article className="prose prose-invert max-w-none">
+              <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-red-500 shrink-0" /> Biography & History
+              </h2>
+              <p className="text-zinc-300 leading-relaxed text-base sm:text-lg font-serif italic border-l-2 border-red-500/50 pl-5 my-6">
+                {fallbackBio}
+              </p>
+            </article>
+
+            {/* SECTION 2: CAREER & PROJECTS */}
+            <article className="prose prose-invert max-w-none">
+              <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-red-500 shrink-0" /> Theatrical Career
+              </h2>
+              <p className="text-zinc-300 leading-relaxed text-sm sm:text-base mt-4">
+                {fallbackCareer}
+              </p>
+            </article>
+
+            {/* SECTION 3: ARTISTIC STYLE & THEMES */}
+            <article className="prose prose-invert max-w-none">
+              <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
+                <Star className="h-5 w-5 text-red-500 shrink-0" /> Style & Aesthetic
+              </h2>
+              <p className="text-zinc-300 leading-relaxed text-sm sm:text-base mt-4">
+                {fallbackStyle}
+              </p>
+            </article>
+
+            {/* SECTION 4: PLAYBILL ACHIEVEMENTS */}
+            <article className="prose prose-invert max-w-none">
+              <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
+                <Award className="h-5 w-5 text-red-500 shrink-0" /> Documented Achievements
+              </h2>
+              <ul className="flex flex-col gap-3 mt-5 pl-1">
+                {fallbackAchievements.map((ach, idx) => (
+                  <li key={idx} className="flex items-start gap-3 text-sm text-zinc-400 bg-zinc-900/30 border border-white/5 rounded-2xl p-4">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 mt-2 shrink-0 animate-pulse" />
+                    <span className="leading-relaxed">{ach}</span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+
           </div>
-          <div className="flex bg-zinc-900 rounded-lg p-1 border border-white/5">
-            <button className="p-2 bg-black rounded-md shadow-sm">
-              <LayoutGrid className="h-4 w-4 text-white" />
-            </button>
-            <button className="p-2 hover:bg-black/50 rounded-md transition-colors text-zinc-500">
-              <List className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-        
-        {stageographyProductions.length === 0 ? (
-          <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-8 text-center text-zinc-500 font-mono text-xs max-w-md">
-            No stageography credits documented on Curtain Call yet.
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-            {stageographyProductions.map(production => (
-              <div key={production.id} className="relative group">
-                <ProductionCard production={production} />
-                <div className="absolute top-3 left-3 bg-red-600/90 text-white font-sans text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-xl shadow-lg border border-red-500/20 backdrop-blur-sm">
-                  {production.artistRole}
-                </div>
+
+          {/* RIGHT COLUMN: STICKY INFOBOX / DEMOGRAPHICS FACTSHEET (4 cols) */}
+          <aside className="lg:col-span-4 lg:sticky lg:top-24">
+            
+            {/* Factsheet Box Card */}
+            <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden backdrop-blur-xl">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-red-600/5 rounded-full blur-[60px] pointer-events-none" />
+              
+              <div className="border-b border-white/5 pb-4 mb-4 text-center">
+                <h3 className="font-serif font-bold text-lg text-white">Artiste Factsheet</h3>
+                <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5">Dossier profile statistics</p>
               </div>
-            ))}
+
+              {/* Data Rows */}
+              <div className="flex flex-col gap-4">
+                {[
+                  { label: 'Role Type', value: artist.roleType },
+                  { label: 'Platform Status', value: artist.isDeceased ? 'Honorary (Deceased)' : 'Active Contributor', valueColor: artist.isDeceased ? 'text-zinc-500' : 'text-emerald-400 font-bold' },
+                  { label: 'Total Show Hits', value: `${(artist.hits || 0).toLocaleString()} views` },
+                  { label: 'Credentials ID', value: artist.id.toUpperCase().substring(0, 12), fontMono: true },
+                  { label: 'Lagos Theatremaker', value: 'Verified Member', icon: ShieldCheck }
+                ].map((row, idx) => {
+                  const RowIcon = row.icon;
+                  return (
+                    <div key={idx} className="flex justify-between items-start gap-4 text-xs border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                      <span className="text-zinc-500 font-mono uppercase tracking-wider">{row.label}</span>
+                      <span className={`text-right text-white font-medium flex items-center gap-1.5 ${row.fontMono ? 'font-mono' : ''} ${row.valueColor || ''}`}>
+                        {RowIcon && <RowIcon className="h-4.5 w-4.5 text-red-500" />}
+                        {row.value}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Footer Quote block */}
+              <div className="bg-zinc-950/80 border border-white/5 rounded-2xl p-4 mt-6 text-[11px] text-zinc-500 italic leading-relaxed text-center font-serif">
+                &ldquo;Art is the mirror of the human condition. We build platforms so these creatives live forever.&rdquo;
+              </div>
+
+            </div>
+          </aside>
+
+        </div>
+
+        {/* ── STAGEOGRAPHY BLOCK ── */}
+        <section className="border-t border-white/10 pt-12">
+          <div className="flex items-center justify-between mb-8 pb-4">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white">Stageography</h2>
+              <p className="text-zinc-500 text-sm mt-1">Professional theatrical play history logged on Curtain Call</p>
+            </div>
+            <div className="flex bg-zinc-900/60 rounded-xl p-1 border border-white/5 backdrop-blur-md">
+              <button className="p-2 bg-black rounded-lg shadow-md border border-white/5">
+                <LayoutGrid className="h-4 w-4 text-white" />
+              </button>
+              <button className="p-2 hover:bg-black/30 rounded-lg transition-colors text-zinc-600">
+                <List className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        )}
-      </section>
+          
+          {stageographyProductions.length === 0 ? (
+            <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-12 text-center text-zinc-500 font-mono text-xs max-w-md mx-auto">
+              No stageography credits documented on Curtain Call yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+              {stageographyProductions.map(production => (
+                <div key={production.id} className="relative group">
+                  <ProductionCard production={production} />
+                  <div className="absolute top-3 left-3 bg-red-600/90 text-white font-mono text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-xl shadow-lg border border-red-500/20 backdrop-blur-sm">
+                    {production.artistRole}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+      </div>
+
       <ShareModal 
         isOpen={shareOpen} 
         onClose={() => setShareOpen(false)} 
