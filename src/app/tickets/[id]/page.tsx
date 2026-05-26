@@ -185,7 +185,8 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
 
     for (let i = 0; i < quantity; i++) {
       const ticketRef = quantity > 1 ? `${reference}-${i + 1}` : reference;
-      const gatePass = `CC-${ticketRef.substring(0, 6).toUpperCase()}`;
+      const randDigits = Math.floor(100 + Math.random() * 900);
+      const gatePass = `CC-${randDigits}`;
       purchasedTickets.push({ reference: ticketRef, gatePass });
 
       if (production) {

@@ -317,7 +317,7 @@ export function Navbar() {
       {/* Mobile fullscreen menu */}
       {isMenuOpen && (
         <div className="md:hidden fixed inset-0 top-16 z-40 bg-zinc-950/98 backdrop-blur-xl flex flex-col">
-          <nav className="flex flex-col px-6 pt-8 gap-1">
+          <nav className="flex flex-col px-6 pt-4 gap-1">
             {NAV_LINKS.map(({ href, label }) => {
               const active = pathname === href;
               return (
@@ -337,7 +337,7 @@ export function Navbar() {
                       close();
                     }
                   }}
-                  className={`py-4 text-2xl font-serif font-bold border-b border-white/5 transition-colors ${
+                  className={`py-2.5 text-lg font-serif font-bold border-b border-white/5 transition-colors ${
                     active ? 'text-white' : 'text-zinc-400 hover:text-white'
                   }`}
                 >
@@ -347,7 +347,7 @@ export function Navbar() {
             })}
           </nav>
 
-          <div className="px-6 mt-auto pb-12 pt-8">
+          <div className="px-6 mt-auto pb-6 pt-4">
             {user ? (
               <div className="flex flex-col gap-4">
                 <Link

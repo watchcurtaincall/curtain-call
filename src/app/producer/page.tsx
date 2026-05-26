@@ -166,7 +166,7 @@ export default function ProducerDashboardPage() {
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-serif font-bold text-white">Welcome, {user.name.split(' ')[0]}</h1>
-                <p className="text-xs text-zinc-400 mt-1">Listed Playbills, Sales and Smart Wallet Hub</p>
+                <p className="text-xs text-zinc-400 mt-1">Manage your shows, sales, and wallets</p>
               </div>
             </div>
 
@@ -546,14 +546,7 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
             <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5">Admissions verification terminal</p>
           </div>
 
-          {/* Scanner Simulation Box */}
-          <div className="relative aspect-video rounded-2xl border border-white/10 bg-zinc-950 overflow-hidden mb-6 flex flex-col items-center justify-center p-6 text-center">
-            <div className="scanline-effect" />
-            <QrCode className="h-16 w-16 text-zinc-700 stroke-[1.25] mb-2 animate-pulse" />
-            <p className="text-xs text-zinc-500 font-mono max-w-xs leading-relaxed">
-              SCANNER CAMERA ACTIVE.<br />Type the Guest's Gate Pass ID or Paystack Reference below to validate.
-            </p>
-          </div>
+
 
           <form onSubmit={handleValidate} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
