@@ -84,7 +84,12 @@ export function WriteReviewModal({ productionTitle, productionId, reviewType = '
                 </p>
               </div>
               <button
-                onClick={onClose}
+                onClick={() => {
+                  onClose();
+                  if (typeof window !== 'undefined') {
+                    window.location.reload();
+                  }
+                }}
                 className="mt-2 bg-white text-black font-bold px-8 py-3 rounded-xl hover:bg-zinc-100 transition-colors text-sm"
               >
                 Done

@@ -46,6 +46,12 @@ export default function SubmitPortalPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (isSubmitted && typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [isSubmitted]);
+
   // Form states - Artist / Theatremaker
   const [makerForm, setMakerForm] = useState({
     name: '',
