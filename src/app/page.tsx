@@ -112,13 +112,13 @@ export default function Home() {
   const highestRatedCritics = productions
     .filter(p => p.criticScore !== null && p.status !== 'Draft')
     .sort((a, b) => (b.criticScore || 0) - (a.criticScore || 0))
-    .slice(0, 5);
+    .slice(0, 4);
 
   // "Audience Favorites"
   const highestRatedAudience = productions
     .filter(p => p.audienceScore !== null && p.status !== 'Draft')
     .sort((a, b) => (b.audienceScore || 0) - (a.audienceScore || 0))
-    .slice(0, 5);
+    .slice(0, 4);
 
   return (
     <div className="flex flex-col gap-16 pb-24">
@@ -214,7 +214,7 @@ export default function Home() {
             <p className="text-zinc-400 text-sm mt-1">The highest reviewed productions by verified critics</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6 px-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 px-4">
           {highestRatedCritics.map(production => (
             <ProductionCard key={production.id} production={production} />
           ))}
@@ -229,7 +229,7 @@ export default function Home() {
             <p className="text-zinc-400 text-sm mt-1">Must-see shows beloved by theatregoers</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {highestRatedAudience.map(production => (
             <ProductionCard key={production.id} production={production} />
           ))}

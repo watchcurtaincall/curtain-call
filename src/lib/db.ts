@@ -93,6 +93,9 @@ const mapProductionToDb = (p: any) => {
   if (p.ticketTiers) {
     gallery.push(JSON.stringify({ __ticketTiers: p.ticketTiers }));
   }
+  if (p.productionType) {
+    gallery.push(JSON.stringify({ __productionType: p.productionType }));
+  }
   return {
     id: p.id,
     title: p.title,
@@ -119,6 +122,7 @@ const mapProductionToDb = (p: any) => {
 const mapProductionFromDb = (row: any) => {
   const galleryImages: string[] = [];
   let ticketTiers: any[] = [];
+  let productionType: 'Student' | 'Professional' = 'Professional';
   
   if (row.gallery_images && Array.isArray(row.gallery_images)) {
     row.gallery_images.forEach((item: any) => {
@@ -129,10 +133,33 @@ const mapProductionFromDb = (row: any) => {
         } catch (e) {
           // ignore
         }
+      } else if (typeof item === 'string' && item.startsWith('{"__productionType":')) {
+        try {
+          const parsed = JSON.parse(item);
+          productionType = parsed.__productionType;
+        } catch (e) {
+          // ignore
+        }
       } else {
         galleryImages.push(item);
       }
     });
+  }
+
+  let parsedCreatedAt = row.created_at || null;
+  if (!parsedCreatedAt) {
+    const match = row.id?.match(/(\d{10,})/);
+    if (match) {
+      try {
+        const timestamp = parseInt(match[0], 10);
+        if (!isNaN(timestamp) && timestamp > 0) {
+          const scaleTimestamp = timestamp < 9999999999 ? timestamp * 1000 : timestamp;
+          parsedCreatedAt = new Date(scaleTimestamp).toISOString();
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
   }
 
   return {
@@ -155,7 +182,8 @@ const mapProductionFromDb = (row: any) => {
     showDate: row.show_date,
     declineReason: row.decline_reason || null,
     ticketTiers: ticketTiers.length > 0 ? ticketTiers : undefined,
-    createdAt: row.created_at || null
+    productionType,
+    createdAt: parsedCreatedAt
   };
 };
 
@@ -190,6 +218,22 @@ const mapArtistFromDb = (row: any) => {
   delete socialLinks.__style;
   delete socialLinks.__achievements;
 
+  let parsedCreatedAt = row.created_at || null;
+  if (!parsedCreatedAt) {
+    const match = row.id?.match(/(\d{10,})/);
+    if (match) {
+      try {
+        const timestamp = parseInt(match[0], 10);
+        if (!isNaN(timestamp) && timestamp > 0) {
+          const scaleTimestamp = timestamp < 9999999999 ? timestamp * 1000 : timestamp;
+          parsedCreatedAt = new Date(scaleTimestamp).toISOString();
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
+
   return {
     id: row.id,
     name: row.name,
@@ -204,7 +248,7 @@ const mapArtistFromDb = (row: any) => {
     dateOfDeath: row.date_of_death,
     declineReason: row.decline_reason || null,
     hits: row.hits || 0,
-    createdAt: row.created_at || null,
+    createdAt: parsedCreatedAt,
     scenography: social.__scenography || [],
     career: social.__career || '',
     style: social.__style || '',

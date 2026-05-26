@@ -48,9 +48,9 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
     if (hasSynced) {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-950 px-4 text-center">
-          <h2 className="text-2xl font-serif font-bold text-white mb-2">Playbill Not Found</h2>
+          <h2 className="text-2xl font-serif font-bold text-white mb-2">Play Not Found</h2>
           <p className="text-zinc-400 text-sm max-w-md mb-6">
-            We couldn't find the theatrical specs for this playbill. It may have been retired or you might have used an invalid link.
+            We couldn't find the theatrical specs for this play. It may have been retired or you might have used an invalid link.
           </p>
           <Link href="/plays" className="text-sm bg-red-600 text-white font-medium px-6 py-2.5 rounded-full hover:bg-red-700 transition-colors">
             Back to Plays Archive
@@ -61,7 +61,7 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-950">
         <div className="text-zinc-500 text-sm font-mono animate-pulse">
-          Loading production playbill specs...
+          Loading production play specs...
         </div>
       </div>
     );
@@ -130,6 +130,15 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
               }`}>
                 {production.status}
               </span>
+              {production.productionType && (
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-widest ${
+                  production.productionType === 'Student'
+                    ? 'bg-blue-600/20 text-blue-400 border border-blue-600/40 shadow-sm'
+                    : 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/40 shadow-sm'
+                }`}>
+                  {production.productionType} Production
+                </span>
+              )}
               <span className="text-zinc-500 text-xs flex items-center gap-1">
                 <Clock className="h-3 w-3" /> {production.runtime}
               </span>

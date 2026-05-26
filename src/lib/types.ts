@@ -30,6 +30,7 @@ export interface Production {
   slug?: string;        // Clean URL slug e.g. "saro-the-musical" — used as the URL path segment
   createdAt?: string;   // ISO timestamp for reliable newest-first sorting
   title: string;
+  productionType?: 'Student' | 'Professional';
   synopsis: string;
   genre: string;
   runtime: string;

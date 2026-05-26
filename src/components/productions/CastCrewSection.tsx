@@ -139,7 +139,7 @@ export function CastCrewSection({ artists, productionTitle, production }: CastCr
 
       {matchedPreviewArtists.length === 0 ? (
         <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-8 text-center text-zinc-500 text-xs font-mono backdrop-blur-md">
-          🎬 No cast or crew playbill credits listed yet.
+          🎬 No cast or crew credits listed yet.
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-2 gap-x-4 gap-y-6">
@@ -161,7 +161,7 @@ export function CastCrewSection({ artists, productionTitle, production }: CastCr
             <div className="flex items-center justify-between px-6 py-5 border-b border-white/5 bg-zinc-900/50">
               <div>
                 <h3 className="font-serif font-bold text-white text-lg flex items-center gap-2">
-                  <Award className="h-5 w-5 text-red-500" /> Complete Playbill & Credits
+                  <Award className="h-5 w-5 text-red-500" /> Complete Roster & Credits
                 </h3>
                 <p className="text-xs text-zinc-500 mt-0.5">{productionTitle}</p>
               </div>
@@ -227,7 +227,7 @@ export function CastCrewSection({ artists, productionTitle, production }: CastCr
 
             {/* Footer with a theatre credit note */}
             <div className="px-6 py-4 border-t border-white/5 bg-zinc-900/30 text-center flex items-center justify-center gap-1.5 text-xs text-zinc-600">
-              <ShieldCheck className="h-3.5 w-3.5 text-zinc-600" /> Officially registered Playbill credits. Handcrafted with <Heart className="h-3 w-3 text-red-500/50 fill-red-500/20" /> on Curtain Call.
+              <ShieldCheck className="h-3.5 w-3.5 text-zinc-600" /> Officially registered play credits. Handcrafted with <Heart className="h-3 w-3 text-red-500/50 fill-red-500/20" /> on Curtain Call.
             </div>
 
           </div>

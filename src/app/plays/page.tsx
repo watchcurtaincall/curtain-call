@@ -111,7 +111,7 @@ export default function DocumentedPlaysPage() {
           <Drama className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
           <h3 className="font-serif font-bold text-white text-lg mb-1">No Documented Plays Found</h3>
           <p className="text-sm text-zinc-500 leading-relaxed mb-6">
-            We couldn&apos;t find any plays matching &ldquo;{searchQuery}&rdquo;. Help us fill our archives by submitting this playbill.
+            We couldn&apos;t find any plays matching &ldquo;{searchQuery}&rdquo;. Help us fill our archives by submitting this play.
           </p>
           <Link
             href="/submit"

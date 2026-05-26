@@ -221,7 +221,8 @@ export default function AdminDashboardPage() {
     venue: '',
     year: '2026',
     status: 'Coming Soon' as 'Currently Showing' | 'Coming Soon' | 'Past Production',
-    showDate: ''
+    showDate: '',
+    productionType: 'Professional' as 'Student' | 'Professional'
   });
   const [genreSelect, setGenreSelect] = useState('Drama');
   const [customGenre, setCustomGenre] = useState('');
@@ -977,14 +978,15 @@ export default function AdminDashboardPage() {
       galleryImages: playGallery,
       castAndCrew: castMembers.length > 0 ? castMembers : undefined,
       showDate: playForm.showDate || undefined,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      productionType: playForm.productionType
     };
 
     setTimeout(() => {
       ClientDB.saveProduction(newPlay);
       setLoading(false);
       showToast(`Stage production "${playForm.title}" directly published to database!`);
-      setPlayForm({ title: '', playwright: '', director: '', synopsis: '', venue: '', year: '2026', status: 'Coming Soon', showDate: '' });
+      setPlayForm({ title: '', playwright: '', director: '', synopsis: '', venue: '', year: '2026', status: 'Coming Soon', showDate: '', productionType: 'Professional' });
       setGenreSelect('Drama');
       setCustomGenre('');
       setCastMembers([]);
@@ -2111,7 +2113,7 @@ This file was retrieved from the Curtain Call Curation Vault.
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Status</label>
                 <select
@@ -2122,6 +2124,17 @@ This file was retrieved from the Curtain Call Curation Vault.
                   <option value="Coming Soon">Coming Soon</option>
                   <option value="Currently Showing">Currently Showing</option>
                   <option value="Past Production">Past Production</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Production Type</label>
+                <select
+                  value={playForm.productionType}
+                  onChange={e => setPlayForm({ ...playForm, productionType: e.target.value as any })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
+                >
+                  <option value="Professional">Professional Production</option>
+                  <option value="Student">Student Production</option>
                 </select>
               </div>
               <div className="flex flex-col gap-1.5">
@@ -2137,10 +2150,10 @@ This file was retrieved from the Curtain Call Curation Vault.
               </div>
             </div>
 
-            {/* Dynamic Playbill Cast & Crew Builder */}
+            {/* Dynamic Cast & Crew Credits Builder */}
             <div className="flex flex-col gap-3 bg-zinc-950/40 border border-white/5 rounded-2xl p-5">
               <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
-                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Dynamic Playbill Cast & Crew</label>
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Cast & Crew Credits</label>
                 <span className="text-[9px] font-mono uppercase bg-zinc-900 border border-white/5 text-zinc-400 px-2 py-0.5 rounded">
                   {castMembers.length} Credits Added
                 </span>
@@ -2170,7 +2183,7 @@ This file was retrieved from the Curtain Call Curation Vault.
               {/* Form to add single member */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="flex flex-col gap-1 relative">
-                  <label className="text-[10px] text-zinc-500 uppercase font-semibold">Member Name</label>
+                  <label className="text-[10px] text-zinc-500 uppercase font-semibold">Artist's Name</label>
                   <input
                     type="text"
                     placeholder="e.g. Joke Silva"
@@ -2223,10 +2236,10 @@ This file was retrieved from the Curtain Call Curation Vault.
                                 }
                               }
                             }}
-                            className="px-3 py-2 text-xs hover:bg-red-600 hover:text-white cursor-pointer transition-colors border-b border-white/5 last:border-0 flex items-center justify-between"
+                            className="px-3 py-2 text-xs hover:bg-red-600 hover:text-white cursor-pointer transition-colors border-b border-white/5 last:border-0 flex items-center justify-between text-left"
                           >
-                            <span className="font-medium text-white group-hover:text-white">{artist.name}</span>
-                            <span className="text-[9px] text-zinc-400 group-hover:text-red-200">{artist.roleType}</span>
+                            <span className="font-medium text-white">{artist.name}</span>
+                            <span className="text-[9px] text-zinc-400">{artist.roleType}</span>
                           </div>
                         ))}
                       </div>
@@ -2234,17 +2247,17 @@ This file was retrieved from the Curtain Call Curation Vault.
                   })()}
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] text-zinc-500 uppercase font-semibold">Billing Role</label>
+                  <label className="text-[10px] text-zinc-500 uppercase font-semibold">Role / Character Name</label>
                   <input
                     type="text"
-                    placeholder="e.g. Lead Actress"
+                    placeholder="e.g. Sidi / Lead Actress"
                     value={newMemberRole}
                     onChange={e => setNewMemberRole(e.target.value)}
                     className="bg-zinc-950 border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] text-zinc-500 uppercase font-semibold">Billing Category</label>
+                  <label className="text-[10px] text-zinc-500 uppercase font-semibold">Group</label>
                   <select
                     value={newMemberCategory}
                     onChange={e => setNewMemberCategory(e.target.value as any)}
@@ -2932,7 +2945,7 @@ This file was retrieved from the Curtain Call Curation Vault.
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Play Lifecycle Status</label>
                   <select
@@ -2945,6 +2958,17 @@ This file was retrieved from the Curtain Call Curation Vault.
                     <option value="Recently Concluded">Recently Concluded</option>
                     <option value="Past Production">Past Production</option>
                     <option value="Draft">Draft</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Production Type</label>
+                  <select
+                    value={editingPlay.productionType || 'Professional'}
+                    onChange={e => setEditingPlay({ ...editingPlay, productionType: e.target.value as any })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23666%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:0.65rem_auto] bg-[right_1rem_center] bg-no-repeat"
+                  >
+                    <option value="Professional">Professional</option>
+                    <option value="Student">Student</option>
                   </select>
                 </div>
                 <div className="flex flex-col gap-1.5">
@@ -3060,10 +3084,10 @@ This file was retrieved from the Curtain Call Curation Vault.
                 </div>
               </div>
 
-              {/* Dynamic Playbill Cast & Crew Builder (EDIT MODE) */}
+              {/* Dynamic Cast & Crew Credits Builder (EDIT MODE) */}
               <div className="flex flex-col gap-3 bg-zinc-950/40 border border-white/5 rounded-2xl p-5">
                 <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
-                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Dynamic Playbill Cast & Crew</label>
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Cast & Crew Credits</label>
                   <span className="text-[9px] font-mono uppercase bg-zinc-900 border border-white/5 text-zinc-400 px-2 py-0.5 rounded">
                     {(editingPlay.castAndCrew || []).length} Credits
                   </span>
@@ -3098,7 +3122,7 @@ This file was retrieved from the Curtain Call Curation Vault.
                 {/* Form to add single member in EDIT MODE */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="flex flex-col gap-1 relative">
-                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Member Name</label>
+                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Artist's Name</label>
                     <input
                       type="text"
                       placeholder="e.g. Joke Silva"
@@ -3162,17 +3186,17 @@ This file was retrieved from the Curtain Call Curation Vault.
                     })()}
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Billing Role</label>
+                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Role / Character Name</label>
                     <input
                       type="text"
-                      placeholder="e.g. Lead Actress"
+                      placeholder="e.g. Sidi / Lead Actress"
                       value={editMemberRole}
                       onChange={e => setEditMemberRole(e.target.value)}
                       className="bg-zinc-950 border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Billing Category</label>
+                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Group</label>
                     <select
                       value={editMemberCategory}
                       onChange={e => setEditMemberCategory(e.target.value as any)}
@@ -3196,7 +3220,7 @@ This file was retrieved from the Curtain Call Curation Vault.
                   }}
                   className="bg-zinc-800 hover:bg-zinc-700 border border-white/5 text-zinc-300 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider transition-colors"
                 >
-                  Add Playbill Credit
+                  Add Credit
                 </button>
               </div>
 

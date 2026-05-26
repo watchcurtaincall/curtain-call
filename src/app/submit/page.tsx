@@ -74,7 +74,8 @@ export default function SubmitPortalPage() {
     year: '2026',
     email: user?.email || '',
     status: 'Coming Soon' as 'Currently Showing' | 'Coming Soon' | 'Past Production',
-    showDate: ''
+    showDate: '',
+    productionType: 'Professional' as 'Student' | 'Professional'
   });
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
@@ -252,7 +253,8 @@ export default function SubmitPortalPage() {
       submitterEmail: playForm.email || user?.email || 'guest@curtaincall.com',
       curationStatus: 'Pending' as const,
       showDate: playForm.showDate || undefined,
-      castAndCrew: castMembers.length > 0 ? castMembers : undefined
+      castAndCrew: castMembers.length > 0 ? castMembers : undefined,
+      productionType: playForm.productionType
     };
 
     setTimeout(() => {
@@ -316,7 +318,8 @@ export default function SubmitPortalPage() {
                   year: '2026',
                   email: user?.email || '',
                   status: 'Coming Soon',
-                  showDate: ''
+                  showDate: '',
+                  productionType: 'Professional'
                 });
                 setBlogForm({ title: '', category: 'Critique', excerpt: '', content: '', email: user?.email || '' });
                 setHeadshotPreview(null);
@@ -775,7 +778,7 @@ export default function SubmitPortalPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Year Staged</label>
                   <input
@@ -797,6 +800,17 @@ export default function SubmitPortalPage() {
                     <option value="Coming Soon">Coming Soon</option>
                     <option value="Currently Showing">Currently Showing</option>
                     <option value="Past Production">Past Production</option>
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Production Type</label>
+                  <select
+                    value={playForm.productionType}
+                    onChange={e => setPlayForm({ ...playForm, productionType: e.target.value as any })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
+                  >
+                    <option value="Professional">Professional Production</option>
+                    <option value="Student">Student Production</option>
                   </select>
                 </div>
               </div>
@@ -899,10 +913,10 @@ export default function SubmitPortalPage() {
                 )}
               </div>
 
-              {/* Dynamic Playbill Cast & Crew Builder */}
+              {/* Dynamic Cast & Crew Credits Builder */}
               <div className="flex flex-col gap-3 bg-zinc-950/40 border border-white/5 rounded-2xl p-5">
                 <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
-                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Dynamic Playbill Cast & Crew</label>
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Cast & Crew Credits</label>
                   <span className="text-[9px] font-mono uppercase bg-zinc-900 border border-white/5 text-zinc-400 px-2 py-0.5 rounded">
                     {castMembers.length} Credits Added
                   </span>
@@ -932,7 +946,7 @@ export default function SubmitPortalPage() {
                 {/* Form to add single member */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="flex flex-col gap-1 relative">
-                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Member Name</label>
+                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Artist's Name</label>
                     <input
                       type="text"
                       placeholder="e.g. Joke Silva"
@@ -996,17 +1010,17 @@ export default function SubmitPortalPage() {
                     })()}
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Billing Role</label>
+                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Role / Character Name</label>
                     <input
                       type="text"
-                      placeholder="e.g. Lead Actress"
+                      placeholder="e.g. Sidi / Lead Actress"
                       value={newMemberRole}
                       onChange={e => setNewMemberRole(e.target.value)}
                       className="bg-zinc-950 border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
                     />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Billing Group</label>
+                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Group</label>
                     <div className="flex gap-2">
                       <select
                         value={newMemberCategory}

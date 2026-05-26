@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Send, CheckCircle2 } from 'lucide-react';
 import { ClientDB } from '@/lib/db';
+import Link from 'next/link';
 
 export function Newsletter() {
   const [email, setEmail] = useState('');
@@ -79,7 +80,7 @@ export function Newsletter() {
         )}
         
         <p className="text-zinc-600 text-xs mt-4">
-          By subscribing, you agree to our Privacy Policy. We won't spam you.
+          By subscribing, you agree to our <Link href="/privacy" className="underline hover:text-white transition-colors">Privacy Policy</Link>. We won't spam you.
         </p>
       </div>
     </section>
