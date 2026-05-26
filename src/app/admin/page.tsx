@@ -1619,7 +1619,7 @@ This file was retrieved from the Curtain Call Curation Vault.
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleRejectCritic(critic.id, critic.name)}
+                          onClick={() => handleRejectCritic(critic.id, critic.name, critic.email)}
                           className="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 hover:border-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-all"
                         >
                           <Trash2 className="h-3.5 w-3.5" /> Decline

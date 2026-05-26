@@ -224,8 +224,6 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       </tr>
     `).join('');
 
-    const downloadUrl = typeof window !== 'undefined' ? `${window.location.origin}/tickets/${production?.id}?ref=${reference}` : '';
-
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
         <div style="text-align: center; margin-bottom: 25px;">
@@ -236,10 +234,6 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
         <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 20px;">
           Your seats have been reserved. Present the digital passes at the gates.
         </p>
-
-        <div style="text-align: center; margin-bottom: 30px;">
-          <a href="${downloadUrl}" style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-size: 13px; display: inline-block; font-family: sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">📥 Download PDF Ticket Pass</a>
-        </div>
         
         <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
           <div style="margin-bottom: 20px;">
