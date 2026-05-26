@@ -122,15 +122,11 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
     );
   }
 
-  // Fallbacks for missing text values to make the Wikipedia flow rich and detailed
-  const fallbackBio = artist.bio || `${artist.name} is an influential ${artist.roleType.toLowerCase()} whose contributions have significantly shaped the modern landscape of theatrical arts. Operating within the Nigerian stage ecosystem and broader West African dramatic networks, their creative range encompasses deep-seated classical play adaptations and progressive visual theatre formats.`;
-  const fallbackCareer = artist.career || `Throughout a distinguished career, ${artist.name} has served as a central figure in live African theatre circulars. Developing their style through extensive workshop engagements and key regional showcase playbills, they have continuously pushed artistic bounds, focusing on community storytelling, historical revivals, and innovative set design integration.`;
-  const fallbackStyle = artist.style || `Characterized by high technical precision, creative interpretation, and a profound respect for theatrical heritage, ${artist.name}'s theatrical work continues to inspire theatremakers and curators alike.`;
-  const fallbackAchievements = artist.achievements && artist.achievements.length > 0 ? artist.achievements : [
-    `Distinguished professional career as a stage ${artist.roleType.toLowerCase()}`,
-    "Contributed verified stage credits to the Curtain Call Playbill Directory",
-    "Verified Contributor to the African Theatre History Archive"
-  ];
+  // Fallbacks or real values for biography sections
+  const showBio = artist.bio || '';
+  const showCareer = artist.career || '';
+  const showStyle = artist.style || '';
+  const showAchievements = artist.achievements && artist.achievements.length > 0 ? artist.achievements : [];
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20 selection:bg-red-600 selection:text-white">
@@ -228,50 +224,58 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
           {/* LEFT COLUMN: NARRATIVE ARTICLE STREAM (8 cols) */}
           <div className="lg:col-span-8 flex flex-col gap-10">
             
-            {/* SECTION 1: EXECUTIVE SUMMARY */}
-            <article className="prose prose-invert max-w-none">
-              <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-red-500 shrink-0" /> Biography & History
-              </h2>
-              <p className="text-zinc-300 leading-relaxed text-base sm:text-lg font-serif italic border-l-2 border-red-500/50 pl-5 my-6">
-                {fallbackBio}
-              </p>
-            </article>
+            {/* SECTION 1: EXECUTIVE SUMMARY / BIOGRAPHY */}
+            {showBio && (
+              <article className="prose prose-invert max-w-none">
+                <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
+                  <BookOpen className="h-5 w-5 text-red-500 shrink-0" /> Biography & History
+                </h2>
+                <p className="text-zinc-300 leading-relaxed text-base sm:text-lg font-serif italic border-l-2 border-red-500/50 pl-5 my-6">
+                  {showBio}
+                </p>
+              </article>
+            )}
 
             {/* SECTION 2: CAREER & PROJECTS */}
-            <article className="prose prose-invert max-w-none">
-              <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-red-500 shrink-0" /> Theatrical Career
-              </h2>
-              <p className="text-zinc-300 leading-relaxed text-sm sm:text-base mt-4">
-                {fallbackCareer}
-              </p>
-            </article>
+            {showCareer && (
+              <article className="prose prose-invert max-w-none">
+                <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-red-500 shrink-0" /> Theatrical Career
+                </h2>
+                <p className="text-zinc-300 leading-relaxed text-sm sm:text-base mt-4">
+                  {showCareer}
+                </p>
+              </article>
+            )}
 
             {/* SECTION 3: ARTISTIC STYLE & THEMES */}
-            <article className="prose prose-invert max-w-none">
-              <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
-                <Star className="h-5 w-5 text-red-500 shrink-0" /> Style & Aesthetic
-              </h2>
-              <p className="text-zinc-300 leading-relaxed text-sm sm:text-base mt-4">
-                {fallbackStyle}
-              </p>
-            </article>
+            {showStyle && (
+              <article className="prose prose-invert max-w-none">
+                <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
+                  <Star className="h-5 w-5 text-red-500 shrink-0" /> Style & Aesthetic
+                </h2>
+                <p className="text-zinc-300 leading-relaxed text-sm sm:text-base mt-4">
+                  {showStyle}
+                </p>
+              </article>
+            )}
 
             {/* SECTION 4: PLAYBILL ACHIEVEMENTS */}
-            <article className="prose prose-invert max-w-none">
-              <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
-                <Award className="h-5 w-5 text-red-500 shrink-0" /> Documented Achievements
-              </h2>
-              <ul className="flex flex-col gap-3 mt-5 pl-1">
-                {fallbackAchievements.map((ach, idx) => (
-                  <li key={idx} className="flex items-start gap-3 text-sm text-zinc-400 bg-zinc-900/30 border border-white/5 rounded-2xl p-4">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 mt-2 shrink-0 animate-pulse" />
-                    <span className="leading-relaxed">{ach}</span>
-                  </li>
-                ))}
-              </ul>
-            </article>
+            {showAchievements.length > 0 && (
+              <article className="prose prose-invert max-w-none">
+                <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
+                  <Award className="h-5 w-5 text-red-500 shrink-0" /> Documented Achievements
+                </h2>
+                <ul className="flex flex-col gap-3 mt-5 pl-1">
+                  {showAchievements.map((ach, idx) => (
+                    <li key={idx} className="flex items-start gap-3 text-sm text-zinc-400 bg-zinc-900/30 border border-white/5 rounded-2xl p-4">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 mt-2 shrink-0 animate-pulse" />
+                      <span className="leading-relaxed">{ach}</span>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            )}
 
           </div>
 
@@ -294,7 +298,7 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
                   { label: 'Platform Status', value: artist.isDeceased ? 'Honorary (Deceased)' : 'Active Contributor', valueColor: artist.isDeceased ? 'text-zinc-500' : 'text-emerald-400 font-bold' },
                   { label: 'Total Show Hits', value: `${(artist.hits || 0).toLocaleString()} views` },
                   { label: 'Credentials ID', value: artist.id.toUpperCase().substring(0, 12), fontMono: true },
-                  { label: 'Lagos Theatremaker', value: 'Verified Member', icon: ShieldCheck }
+                  { label: 'Theatremaker', value: 'Verified Member', icon: ShieldCheck }
                 ].map((row, idx) => {
                   const RowIcon = row.icon;
                   return (

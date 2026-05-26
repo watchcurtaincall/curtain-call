@@ -26,6 +26,13 @@ export default function ArtistsDirectoryPage() {
     }
   }, []);
 
+  // Scroll to top automatically when switching pages
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentPage]);
+
   return (
     <div className="container mx-auto px-4 py-12 min-h-screen">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
