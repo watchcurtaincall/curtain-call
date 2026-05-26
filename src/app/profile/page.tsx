@@ -40,6 +40,10 @@ export default function ProfilePage() {
   const [syncCount, setSyncCount] = useState(0);
   const router = useRouter();
 
+  const isPlayProducerManaged = (p: any) => {
+    return p.isProducerManaged === true || p.ticketTiers !== undefined || p.status === 'Draft';
+  };
+
   const [otpCode, setOtpCode] = useState('');
   const [otpError, setOtpError] = useState('');
   const [otpSuccess, setOtpSuccess] = useState(false);
@@ -182,7 +186,7 @@ export default function ProfilePage() {
       .map(item => ({ ...item, contentType: 'Theatremaker Profile', status: 'Approved', icon: Users }));
 
     const approvedPlays = ClientDB.getProductions()
-      .filter(p => p.submitterEmail?.toLowerCase() === emailLower && p.curationStatus === 'Approved' && p.isProducerManaged !== true)
+      .filter(p => p.submitterEmail?.toLowerCase() === emailLower && p.curationStatus === 'Approved' && !isPlayProducerManaged(p))
       .map(item => ({ ...item, contentType: 'Playbill Listing', status: 'Approved', icon: Drama }));
 
     const approvedArticles = ClientDB.getArticles()
@@ -757,13 +761,13 @@ export default function ProfilePage() {
                     <span className="w-1.5 h-3.5 bg-red-600 rounded-full" />
                     Active Productions
                   </h3>
-                  {allPlays.filter(p => p.submitterEmail === user.email && p.isProducerManaged === true && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).length === 0 ? (
+                  {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).length === 0 ? (
                     <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-8 text-center text-zinc-500 text-sm">
                       No active plays currently listed.
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                      {allPlays.filter(p => p.submitterEmail === user.email && p.isProducerManaged === true && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).map(p => (
+                      {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).map(p => (
                         <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl">
                           <div className="flex-1">
                             <ProductionCard production={p} />
@@ -794,13 +798,13 @@ export default function ProfilePage() {
                     <span className="w-1.5 h-3.5 bg-zinc-600 rounded-full" />
                     Drafts & Unfinished Works
                   </h3>
-                  {allPlays.filter(p => p.submitterEmail === user.email && p.isProducerManaged === true && p.status === 'Draft').length === 0 ? (
+                  {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && p.status === 'Draft').length === 0 ? (
                     <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-8 text-center text-zinc-500 text-sm">
                       No drafts or unfinished works found.
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                      {allPlays.filter(p => p.submitterEmail === user.email && p.isProducerManaged === true && p.status === 'Draft').map(p => (
+                      {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && p.status === 'Draft').map(p => (
                         <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl relative group/card">
                           <div className="flex-1">
                             <ProductionCard production={p} />
@@ -910,13 +914,13 @@ export default function ProfilePage() {
                 <span className="w-1.5 h-3.5 bg-zinc-700 rounded-full" />
                 Past Productions
               </h3>
-              {allPlays.filter(p => p.submitterEmail === user.email && p.isProducerManaged === true && (p.status === 'Past Production' || p.status === 'Recently Concluded')).length === 0 ? (
+              {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Past Production' || p.status === 'Recently Concluded')).length === 0 ? (
                 <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-8 text-center text-zinc-500 text-sm">
                   No past/concluded plays registered.
                 </div>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                  {allPlays.filter(p => p.submitterEmail === user.email && p.isProducerManaged === true && (p.status === 'Past Production' || p.status === 'Recently Concluded')).map(p => (
+                  {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Past Production' || p.status === 'Recently Concluded')).map(p => (
                     <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl">
                       <div className="flex-1">
                         <ProductionCard production={p} />
