@@ -542,7 +542,7 @@ export default function ProfilePage() {
   ];
 
   if (userPlays.length > 0 || user.email.toLowerCase() === 'watchcurtaincall@gmail.com') {
-    tabs.splice(3, 0, { id: 'scanner', label: 'Ticket Scanner', Icon: QrCode });
+    tabs.splice(2, 0, { id: 'scanner', label: 'Ticket Scanner', Icon: QrCode });
   }
 
   return (
