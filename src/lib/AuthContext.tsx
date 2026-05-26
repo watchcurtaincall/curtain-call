@@ -196,13 +196,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
 
           const existingProfile = ClientDB.getSignups().find(p => p.email.toLowerCase() === email.toLowerCase());
-          const customHandle = existingProfile?.handle || existingProfile?.username || deriveHandle(name, email);
+          const customName = existingProfile?.name || name;
+          const customHandle = existingProfile?.handle || existingProfile?.username || deriveHandle(customName, email);
           const customUsername = existingProfile?.username || (existingProfile?.handle && !existingProfile.handle.startsWith('@') ? existingProfile.handle : undefined);
 
           const loggedUser = {
-            name,
+            name: customName,
             email,
-            avatar: name.slice(0, 2).toUpperCase(),
+            avatar: customName.slice(0, 2).toUpperCase(),
             joinDate: 'May 2026',
             ratings: 0,
             reviews: 0,
@@ -259,13 +260,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
 
           const existingProfile = ClientDB.getSignups().find(p => p.email.toLowerCase() === email.toLowerCase());
-          const customHandle = existingProfile?.handle || existingProfile?.username || deriveHandle(name, email);
+          const customName = existingProfile?.name || name;
+          const customHandle = existingProfile?.handle || existingProfile?.username || deriveHandle(customName, email);
           const customUsername = existingProfile?.username || (existingProfile?.handle && !existingProfile.handle.startsWith('@') ? existingProfile.handle : undefined);
 
           const loggedUser = {
-            name,
+            name: customName,
             email,
-            avatar: name.slice(0, 2).toUpperCase(),
+            avatar: customName.slice(0, 2).toUpperCase(),
             joinDate: 'May 2026',
             ratings: 0,
             reviews: 0,
@@ -393,12 +395,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     // Fallback to local storage profiles if Supabase query did not resolve
-    if (!isAlreadyVerified) {
-      const profilesList = ClientDB.getSignups();
-      const existingProfile = profilesList.find((p: any) => p.email.toLowerCase() === cleanEmail);
-      if (existingProfile && existingProfile.isVerified === true) {
+    const profilesList = ClientDB.getSignups();
+    const existingProfile = profilesList.find((p: any) => p.email.toLowerCase() === cleanEmail);
+    if (existingProfile) {
+      if (existingProfile.isVerified === true) {
         isAlreadyVerified = true;
       }
+      loggedUser = {
+        ...loggedUser,
+        name: existingProfile.name || loggedUser.name,
+        avatar: (existingProfile.name || loggedUser.name).slice(0, 2).toUpperCase(),
+        handle: existingProfile.handle || loggedUser.handle,
+        username: existingProfile.username || loggedUser.username,
+        bio: existingProfile.bio || loggedUser.bio,
+        location: existingProfile.location || loggedUser.location
+      };
     }
     
     if (isAlreadyVerified) {
