@@ -607,6 +607,11 @@ export default function ProfilePage() {
                       Contributor
                     </span>
                   )}
+                  {(userPlays.length > 0 || user.email.toLowerCase() === 'watchcurtaincall@gmail.com') && (
+                    <span className="text-[10px] bg-red-500/10 border border-red-500/20 text-red-400 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-semibold flex items-center gap-1">
+                      <ShieldCheck className="h-3 w-3" /> Producer Curation Account
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

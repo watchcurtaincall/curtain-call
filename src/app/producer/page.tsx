@@ -146,15 +146,11 @@ export default function ProducerDashboardPage() {
       <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl pt-8">
         
         {/* Breadcrumb Navigation Toggle */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <Link href="/profile" className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-white transition-colors bg-zinc-900/50 border border-white/5 px-4 py-2 rounded-xl backdrop-blur-md self-start shrink-0">
+        <div className="flex items-center mb-8">
+          <Link href="/profile" className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-white transition-colors bg-zinc-900/40 border border-white/5 px-3 py-1.5 rounded-lg backdrop-blur-md shrink-0">
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Go to Profile Dashboard</span>
+            <span>Go to dashboard</span>
           </Link>
-
-          <span className="text-[10px] bg-red-500/10 border border-red-500/20 text-red-400 font-mono font-bold px-3 py-1 rounded-full uppercase tracking-wider self-start flex items-center gap-1.5 shrink-0">
-            <ShieldCheck className="h-3.5 w-3.5" /> Producer Curation Account
-          </span>
         </div>
 
         {/* Hero Section */}
@@ -554,7 +550,7 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
               <input
                 type="text"
                 required
-                placeholder="e.g. TKT_1716766465"
+                placeholder="e.g. CC-123"
                 value={scanInput}
                 onChange={e => setScanInput(e.target.value)}
                 className="bg-zinc-950 border border-white/5 focus:border-red-500 rounded-xl px-4 py-3.5 text-center text-sm text-white font-mono uppercase tracking-wider focus:outline-none transition-all shadow-inner"
