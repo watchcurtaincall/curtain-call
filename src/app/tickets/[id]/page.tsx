@@ -399,7 +399,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                     </div>
                   </div>
  
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs border-t border-dashed border-white/10 pt-2.5 print-dashed-line">
+                  <div className="grid grid-cols-3 gap-x-4 gap-y-2 text-xs border-t border-dashed border-white/10 pt-2.5 print-dashed-line">
                     <div>
                       <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-mono block">Tier</span>
                       <span className="text-zinc-200 font-bold">{successData.tier}</span>
@@ -409,6 +409,10 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                       <span className="text-zinc-200 font-bold">
                         {production.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Scheduled'}
                       </span>
+                    </div>
+                    <div>
+                      <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-mono block">Show Time</span>
+                      <span className="text-zinc-200 font-bold">{production.showTime || '7:00 PM'}</span>
                     </div>
                   </div>
                   
