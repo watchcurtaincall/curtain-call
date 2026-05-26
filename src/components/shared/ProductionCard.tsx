@@ -77,6 +77,12 @@ export function ProductionCard({ production }: { production: Production }) {
           <MapPin className="h-3 w-3 shrink-0" />
           <span className="truncate">{production.venue}</span>
         </p>
+        {production.status === 'Coming Soon' && production.showDate && (
+          <p className="text-[10px] text-red-400 font-bold mt-1 uppercase tracking-wider bg-red-950/40 border border-red-500/20 px-2 py-0.5 rounded w-fit flex items-center gap-1 font-sans">
+            📅 {new Date(production.showDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            {production.showTime && ` @ ${production.showTime}`}
+          </p>
+        )}
       </div>
     </Link>
   );

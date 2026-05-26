@@ -96,6 +96,9 @@ const mapProductionToDb = (p: any) => {
   if (p.productionType) {
     gallery.push(JSON.stringify({ __productionType: p.productionType }));
   }
+  if (p.showTime) {
+    gallery.push(JSON.stringify({ __showTime: p.showTime }));
+  }
   return {
     id: p.id,
     title: p.title,
@@ -123,6 +126,7 @@ const mapProductionFromDb = (row: any) => {
   const galleryImages: string[] = [];
   let ticketTiers: any[] = [];
   let productionType: 'Student' | 'Professional' | undefined = undefined;
+  let showTime: string | undefined = undefined;
   
   if (row.gallery_images && Array.isArray(row.gallery_images)) {
     row.gallery_images.forEach((item: any) => {
@@ -137,6 +141,13 @@ const mapProductionFromDb = (row: any) => {
         try {
           const parsed = JSON.parse(item);
           productionType = parsed.__productionType;
+        } catch (e) {
+          // ignore
+        }
+      } else if (typeof item === 'string' && item.startsWith('{"__showTime":')) {
+        try {
+          const parsed = JSON.parse(item);
+          showTime = parsed.__showTime;
         } catch (e) {
           // ignore
         }
@@ -180,6 +191,7 @@ const mapProductionFromDb = (row: any) => {
     curationStatus: row.curation_status,
     castAndCrew: row.cast_and_crew || [],
     showDate: row.show_date,
+    showTime,
     declineReason: row.decline_reason || null,
     ticketTiers: ticketTiers.length > 0 ? ticketTiers : undefined,
     productionType,

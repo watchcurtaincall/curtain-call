@@ -222,6 +222,8 @@ export default function AdminDashboardPage() {
     year: '2026',
     status: 'Coming Soon' as 'Currently Showing' | 'Coming Soon' | 'Past Production',
     showDate: '',
+    showTime: '',
+    runtime: '120 mins',
     productionType: 'Professional' as 'Student' | 'Professional'
   });
   const [genreSelect, setGenreSelect] = useState('Drama');
@@ -968,7 +970,7 @@ export default function AdminDashboardPage() {
       title: playForm.title,
       synopsis: playForm.synopsis,
       genre: finalGenre,
-      runtime: '130 mins',
+      runtime: playForm.runtime || '120 mins',
       venue: playForm.venue,
       status: playForm.status,
       posterUrl: playPoster || '',
@@ -978,6 +980,7 @@ export default function AdminDashboardPage() {
       galleryImages: playGallery,
       castAndCrew: castMembers.length > 0 ? castMembers : undefined,
       showDate: playForm.showDate || undefined,
+      showTime: playForm.showTime || undefined,
       createdAt: new Date().toISOString(),
       productionType: playForm.productionType
     };
@@ -986,7 +989,7 @@ export default function AdminDashboardPage() {
       ClientDB.saveProduction(newPlay);
       setLoading(false);
       showToast(`Stage production "${playForm.title}" directly published to database!`);
-      setPlayForm({ title: '', playwright: '', director: '', synopsis: '', venue: '', year: '2026', status: 'Coming Soon', showDate: '', productionType: 'Professional' });
+      setPlayForm({ title: '', playwright: '', director: '', synopsis: '', venue: '', year: '2026', status: 'Coming Soon', showDate: '', showTime: '', runtime: '120 mins', productionType: 'Professional' });
       setGenreSelect('Drama');
       setCustomGenre('');
       setCastMembers([]);
@@ -2137,16 +2140,37 @@ This file was retrieved from the Curtain Call Curation Vault.
                   <option value="Student">Student Production</option>
                 </select>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
-                  {playForm.status === 'Coming Soon' ? 'Upcoming Date' : playForm.status === 'Past Production' ? 'When did it happen?' : 'Show Date'}
-                </label>
-                <input
-                  type="date"
-                  value={playForm.showDate}
-                  onChange={e => setPlayForm({ ...playForm, showDate: e.target.value })}
-                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors [color-scheme:dark]"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
+                    {playForm.status === 'Coming Soon' ? 'Upcoming Date' : playForm.status === 'Past Production' ? 'When did it happen?' : 'Show Date'}
+                  </label>
+                  <input
+                    type="date"
+                    value={playForm.showDate}
+                    onChange={e => setPlayForm({ ...playForm, showDate: e.target.value })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors [color-scheme:dark]"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Show Time</label>
+                  <input
+                    type="time"
+                    value={playForm.showTime || ''}
+                    onChange={e => setPlayForm({ ...playForm, showTime: e.target.value })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors [color-scheme:dark]"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Play Length / Runtime</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 120 mins"
+                    value={playForm.runtime}
+                    onChange={e => setPlayForm({ ...playForm, runtime: e.target.value })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
+                  />
+                </div>
               </div>
             </div>
 
@@ -2978,6 +3002,28 @@ This file was retrieved from the Curtain Call Curation Vault.
                     value={editingPlay.showDate || ''}
                     onChange={e => setEditingPlay({ ...editingPlay, showDate: e.target.value || undefined })}
                     className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 [color-scheme:dark]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Show Time</label>
+                  <input
+                    type="time"
+                    value={editingPlay.showTime || ''}
+                    onChange={e => setEditingPlay({ ...editingPlay, showTime: e.target.value || undefined })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 [color-scheme:dark]"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Play Length / Runtime</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 120 mins"
+                    value={editingPlay.runtime || ''}
+                    onChange={e => setEditingPlay({ ...editingPlay, runtime: e.target.value })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500"
                   />
                 </div>
               </div>

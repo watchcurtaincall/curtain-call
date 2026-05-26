@@ -139,12 +139,20 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
                   {production.productionType} Production
                 </span>
               )}
-              <span className="text-zinc-500 text-xs flex items-center gap-1">
-                <Clock className="h-3 w-3" /> {production.runtime}
+              <span className="text-zinc-400 text-xs flex items-center gap-1.5 bg-zinc-900 border border-white/5 px-2.5 py-1 rounded-full">
+                <Clock className="h-3.5 w-3.5 text-zinc-500 shrink-0" /> 
+                <span className="font-medium">{production.runtime || '120 mins'}</span>
               </span>
-              <span className="text-zinc-500 text-xs flex items-center gap-1">
-                <MapPin className="h-3 w-3" /> {production.venue}
+              <span className="text-zinc-400 text-xs flex items-center gap-1.5 bg-zinc-900 border border-white/5 px-2.5 py-1 rounded-full">
+                <MapPin className="h-3.5 w-3.5 text-zinc-500 shrink-0" /> 
+                <span className="font-medium">{production.venue}</span>
               </span>
+              {production.showDate && (
+                <span className="text-red-400 text-xs flex items-center gap-1.5 bg-red-950/40 border border-red-500/20 px-2.5 py-1 rounded-full font-sans font-bold">
+                  📅 {new Date(production.showDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {production.showTime && ` @ ${production.showTime}`}
+                </span>
+              )}
             </div>
 
             <h1 className="text-3xl md:text-5xl font-serif font-bold text-white leading-tight mb-4">

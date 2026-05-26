@@ -45,6 +45,7 @@ export interface Production {
   curationStatus?: 'Pending' | 'Approved' | 'Declined';
   castAndCrew?: { name: string; role: string; category: 'Creative' | 'Cast' | 'Technical' }[];
   showDate?: string; // YYYY-MM-DD
+  showTime?: string; // HH:MM (24h or string format)
   ticketTiers?: { id: string; name: string; price: string; capacity: string }[];
   city?: string;
   address?: string;

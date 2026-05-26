@@ -75,6 +75,8 @@ export default function SubmitPortalPage() {
     email: user?.email || '',
     status: 'Coming Soon' as 'Currently Showing' | 'Coming Soon' | 'Past Production',
     showDate: '',
+    showTime: '',
+    runtime: '120 mins',
     productionType: 'Professional' as 'Student' | 'Professional'
   });
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
@@ -242,7 +244,7 @@ export default function SubmitPortalPage() {
       createdAt: new Date().toISOString(),
       synopsis: playForm.synopsis,
       genre: 'Drama',
-      runtime: '120 mins',
+      runtime: playForm.runtime || '120 mins',
       venue: playForm.venue,
       status: playForm.status,
       posterUrl: posterPreview || '',
@@ -253,6 +255,7 @@ export default function SubmitPortalPage() {
       submitterEmail: playForm.email || user?.email || 'guest@curtaincall.com',
       curationStatus: 'Pending' as const,
       showDate: playForm.showDate || undefined,
+      showTime: playForm.showTime || undefined,
       castAndCrew: castMembers.length > 0 ? castMembers : undefined,
       productionType: playForm.productionType
     };
@@ -319,6 +322,8 @@ export default function SubmitPortalPage() {
                   email: user?.email || '',
                   status: 'Coming Soon',
                   showDate: '',
+                  showTime: '',
+                  runtime: '120 mins',
                   productionType: 'Professional'
                 });
                 setBlogForm({ title: '', category: 'Critique', excerpt: '', content: '', email: user?.email || '' });
@@ -815,16 +820,37 @@ export default function SubmitPortalPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
-                  {playForm.status === 'Coming Soon' ? 'Upcoming Premiere / Show Date' : playForm.status === 'Past Production' ? 'Show Date (When did the play happen?)' : 'Show Date'}
-                </label>
-                <input
-                  type="date"
-                  value={playForm.showDate}
-                  onChange={e => setPlayForm({ ...playForm, showDate: e.target.value })}
-                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors [color-scheme:dark]"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
+                    {playForm.status === 'Coming Soon' ? 'Upcoming Date' : playForm.status === 'Past Production' ? 'When did it happen?' : 'Show Date'}
+                  </label>
+                  <input
+                    type="date"
+                    value={playForm.showDate}
+                    onChange={e => setPlayForm({ ...playForm, showDate: e.target.value })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors [color-scheme:dark]"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Show Time</label>
+                  <input
+                    type="time"
+                    value={playForm.showTime || ''}
+                    onChange={e => setPlayForm({ ...playForm, showTime: e.target.value })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors [color-scheme:dark]"
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Play Length / Runtime</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 120 mins"
+                    value={playForm.runtime}
+                    onChange={e => setPlayForm({ ...playForm, runtime: e.target.value })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
+                  />
+                </div>
               </div>
 
               {/* Poster Upload Dropzone */}
