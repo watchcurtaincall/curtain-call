@@ -659,17 +659,17 @@ export default function ProfilePage() {
         </div>
 
         {/* Tabs */}
-        <div className="container mx-auto">
-          <div className="flex border-t border-white/5 overflow-x-auto [scrollbar-width:none] [-webkit-overflow-scrolling:touch]">
+        <div className="container mx-auto px-4">
+          <div className="flex border-t border-white/5 overflow-x-auto [scrollbar-width:none]">
             {tabs.map(({ id, label, Icon }) => (
               <button
                 key={id}
                 onClick={() => setTab(id)}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-3.5 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors relative shrink-0 ${
+                className={`flex items-center gap-2 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors relative ${
                   tab === id ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
-                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> {label}
+                <Icon className="h-4 w-4" /> {label}
                 {tab === id && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600 rounded-t-full" />}
               </button>
             ))}
