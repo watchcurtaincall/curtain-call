@@ -612,15 +612,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex items-center gap-1 sm:gap-2">
-              {(userPlays.length > 0 || user.email.toLowerCase() === 'watchcurtaincall@gmail.com') && (
-                <Link
-                  href="/producer"
-                  title="Go to Producer Wallet"
-                  className="p-2 sm:p-2.5 bg-emerald-600/15 hover:bg-emerald-600/30 text-emerald-400 hover:text-emerald-300 rounded-xl transition-colors border border-emerald-500/20"
-                >
-                  <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                </Link>
-              )}
+
               <button
                 onClick={() => setShowNotifs(true)}
                 className="relative p-2 sm:p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors text-zinc-400 hover:text-white"
@@ -687,21 +679,21 @@ export default function ProfilePage() {
           <div className="flex flex-col gap-5 animate-fade-up">
 
             {/* Producer Wallet & Curation Hub Navigation Card */}
-            <div className="relative rounded-2xl overflow-hidden border border-white/5 bg-gradient-to-r from-emerald-950/20 via-zinc-900 to-zinc-900 p-6 shadow-xl backdrop-blur-xl">
+            <div className="relative rounded-3xl overflow-hidden border border-emerald-500/10 bg-gradient-to-br from-zinc-900/60 to-zinc-950/80 p-6 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-emerald-500/20 group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[40px] pointer-events-none" />
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start sm:items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0 shadow-lg shadow-emerald-950/20">
                     <Wallet className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-serif font-bold text-white text-base">Producer Wallet & Curation Hub</h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">Manage your payouts, wallet balance, and stage productions.</p>
+                    <h3 className="font-serif font-bold text-white text-lg tracking-tight">Producer Wallet & Curation Hub</h3>
+                    <p className="text-sm text-zinc-400 mt-1 leading-relaxed max-w-md">Manage your payouts, track ticket sales, and oversee listed productions.</p>
                   </div>
                 </div>
-                <Link href="/producer" className="inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider self-start sm:self-auto shrink-0 shadow-lg shadow-emerald-950/20">
-                  <span>Go to Producer Wallet</span>
-                  <ArrowUpRight className="h-3.5 w-3.5" />
+                <Link href="/producer" className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-450 text-black font-bold px-6 py-3.5 rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/25 active:scale-98 shrink-0">
+                  <span>Go to Wallet</span>
+                  <ArrowUpRight className="h-4 w-4 stroke-[2.5]" />
                 </Link>
               </div>
             </div>
