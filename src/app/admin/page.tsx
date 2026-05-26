@@ -315,7 +315,8 @@ export default function AdminDashboardPage() {
     showDate: '',
     showTime: '',
     runtime: '120 mins',
-    productionType: 'Professional' as 'Student' | 'Professional'
+    productionType: 'Professional' as 'Student' | 'Professional',
+    externalTicketUrl: ''
   });
   const [genreSelect, setGenreSelect] = useState('Drama');
   const [customGenre, setCustomGenre] = useState('');
@@ -1088,14 +1089,15 @@ export default function AdminDashboardPage() {
       showDate: playForm.showDate || undefined,
       showTime: playForm.showTime || undefined,
       createdAt: new Date().toISOString(),
-      productionType: playForm.productionType
+      productionType: playForm.productionType,
+      externalTicketUrl: playForm.externalTicketUrl || undefined
     };
 
     setTimeout(() => {
       ClientDB.saveProduction(newPlay);
       setLoading(false);
       showToast(`Stage production "${playForm.title}" directly published to database!`);
-      setPlayForm({ title: '', playwright: '', director: '', synopsis: '', venue: '', year: '2026', status: 'Coming Soon', showDate: '', showTime: '', runtime: '120 mins', productionType: 'Professional' });
+      setPlayForm({ title: '', playwright: '', director: '', synopsis: '', venue: '', year: '2026', status: 'Coming Soon', showDate: '', showTime: '', runtime: '120 mins', productionType: 'Professional', externalTicketUrl: '' });
       setGenreSelect('Drama');
       setCustomGenre('');
       setCastMembers([]);
@@ -2368,6 +2370,25 @@ This file was retrieved from the Curtain Call Curation Vault.
               </div>
             </div>
 
+            {(playForm.status === 'Coming Soon' || playForm.status === 'Currently Showing') && (
+              <div className="flex flex-col gap-1.5 animate-fade-up">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span>External Ticket Link</span>
+                  <span className="text-[9px] bg-zinc-800 text-zinc-500 border border-white/5 px-1.5 py-0.5 rounded font-mono">Optional</span>
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://paystack.com/buy/your-show-tickets"
+                  value={playForm.externalTicketUrl || ''}
+                  onChange={e => setPlayForm({ ...playForm, externalTicketUrl: e.target.value })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors placeholder:text-zinc-600"
+                />
+                <p className="text-[10px] text-zinc-600 leading-relaxed">
+                  If this play is hosted or has tickets sold on another platform, enter the external URL here.
+                </p>
+              </div>
+            )}
+
             {/* Dynamic Cast & Crew Credits Builder */}
             <div className="flex flex-col gap-3 bg-zinc-950/40 border border-white/5 rounded-2xl p-5">
               <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
@@ -3221,6 +3242,22 @@ This file was retrieved from the Curtain Call Curation Vault.
                   />
                 </div>
               </div>
+
+              {(editingPlay.status === 'Coming Soon' || editingPlay.status === 'Currently Showing') && (
+                <div className="flex flex-col gap-1.5 animate-fade-up">
+                  <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <span>External Ticket Link</span>
+                    <span className="text-[9px] bg-zinc-800 text-zinc-500 border border-white/5 px-1.5 py-0.5 rounded font-mono">Optional</span>
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://paystack.com/buy/your-show-tickets"
+                    value={editingPlay.externalTicketUrl || ''}
+                    onChange={e => setEditingPlay({ ...editingPlay, externalTicketUrl: e.target.value || undefined })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors placeholder:text-zinc-600"
+                  />
+                </div>
+              )}
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Play Synopsis</label>
