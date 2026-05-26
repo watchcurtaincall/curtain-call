@@ -70,7 +70,7 @@ export function Navbar() {
             id: a.id,
             title: a.name,
             type: 'person',
-            link: `/artists/${a.id}`,
+            link: `/artists/${a.slug || a.id}`,
             subtitle: a.roleType
           });
         }

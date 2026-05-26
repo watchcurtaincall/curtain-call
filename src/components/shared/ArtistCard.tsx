@@ -43,7 +43,7 @@ export function ArtistCard({ artist }: { artist: Artist }) {
   }
 
   return (
-    <Link href={`/artists/${artist.id}`} className="group flex flex-col items-center w-full">
+    <Link href={`/artists/${artist.slug || artist.id}`} className="group flex flex-col items-center w-full">
       {CardContent}
     </Link>
   );

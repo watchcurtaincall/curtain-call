@@ -592,16 +592,29 @@ export const ClientDB = {
   getArtists(): Artist[] {
     if (typeof window === 'undefined') return MOCK_ARTISTS;
     const stored = localStorage.getItem(ARTISTS_KEY);
+    let list: Artist[];
     if (!stored) {
       localStorage.setItem(ARTISTS_KEY, JSON.stringify(MOCK_ARTISTS));
-      return MOCK_ARTISTS;
+      list = MOCK_ARTISTS;
+    } else {
+      list = JSON.parse(stored);
     }
-    return JSON.parse(stored);
+    
+    // Ensure all artists dynamically have an SEO slug generated from their name
+    const sanitized = list.map((a: any) => {
+      if (!a.slug) {
+        a.slug = generateSlug(a.name);
+      }
+      return a;
+    });
+
+    // Enforce high-precision newest-first sorting as the default returned order!
+    return sortItemsByDateAdded(sanitized);
   },
 
   getArtistById(id: string): Artist | undefined {
     const artists = this.getArtists();
-    return artists.find(a => a.id === id);
+    return artists.find(a => a.id === id) || artists.find(a => a.slug === id);
   },
 
   saveArtist(artist: Artist): void {
@@ -644,7 +657,7 @@ export const ClientDB = {
     } else {
       list = JSON.parse(stored);
     }
-    return list.map((p: any) => {
+    const mapped = list.map((p: any) => {
       // Dynamic Sanitizer: Ensure all plays always have a valid, clean SEO slug
       if (!p.slug) {
         p.slug = generateSlug(p.title);
@@ -681,6 +694,8 @@ export const ClientDB = {
 
       return p;
     });
+
+    return sortItemsByDateAdded(mapped);
   },
 
   getProductionById(id: string): Production | undefined {
@@ -722,11 +737,14 @@ export const ClientDB = {
   getArticles(): Article[] {
     if (typeof window === 'undefined') return MOCK_ARTICLES;
     const stored = localStorage.getItem(ARTICLES_KEY);
+    let list: Article[];
     if (!stored) {
       localStorage.setItem(ARTICLES_KEY, JSON.stringify(MOCK_ARTICLES));
-      return MOCK_ARTICLES;
+      list = MOCK_ARTICLES;
+    } else {
+      list = JSON.parse(stored);
     }
-    return JSON.parse(stored);
+    return sortItemsByDateAdded(list);
   },
 
   saveArticle(article: Article): void {
@@ -1759,26 +1777,30 @@ if (typeof window !== 'undefined') {
   syncFromSupabase();
 }
 
-// Robust, high-precision sorting utility to order plays and artists by date added descending (newest first)
+// Robust, high-precision sorting utility to order plays, artists, and articles by date added descending (newest first)
 export function sortItemsByDateAdded<T extends { id: string; createdAt?: string | null }>(items: T[]): T[] {
-  return [...items].sort((a, b) => {
-    // 1. Compare by createdAt timestamp if available
-    const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-    const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-    if (timeA !== timeB) {
-      return timeB - timeA; // Newer first
+  const getScore = (item: T): number => {
+    // 1. If createdAt is present and valid, use its timestamp
+    if (item.createdAt) {
+      const parsedTime = new Date(item.createdAt).getTime();
+      if (!isNaN(parsedTime)) return parsedTime;
     }
-    
-    // 2. Fallback: Parse timestamp from dynamic custom IDs like 'pending_play_1779...'
-    const matchA = a.id.match(/\d{10,}/);
-    const matchB = b.id.match(/\d{10,}/);
-    if (matchA && matchB) {
-      return parseInt(matchB[0], 10) - parseInt(matchA[0], 10);
+
+    // 2. Parse timestamp from dynamic custom IDs like 'pending_play_1779...'
+    const match = item.id.match(/\d{10,}/);
+    if (match) {
+      return parseInt(match[0], 10);
     }
-    if (matchA) return -1; // custom items with timestamp go before mock items
-    if (matchB) return 1;
-    
-    // 3. Stable lexicographical fallback (mock items p10, p9, etc.)
-    return b.id.localeCompare(a.id);
-  });
+
+    // 3. Extract number from mock IDs like 'p1'..'p10', 'a1'..'a10', etc.
+    const mockMatch = item.id.match(/^[a-z](\d+)$/i);
+    if (mockMatch) {
+      // Base time in the past + mock order number so larger mock number = newer
+      return 1000000000000 + parseInt(mockMatch[1], 10) * 1000;
+    }
+
+    return 0;
+  };
+
+  return [...items].sort((a, b) => getScore(b) - getScore(a));
 }

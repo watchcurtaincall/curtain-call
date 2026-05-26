@@ -142,7 +142,7 @@ export default function Home() {
         
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
           {trendingPeople.map((artist, index) => (
-            <Link key={artist.id} href={`/artists/${artist.id}`} className="group flex flex-col items-center text-center focus:outline-none">
+            <Link key={artist.id} href={`/artists/${artist.slug || artist.id}`} className="group flex flex-col items-center text-center focus:outline-none">
               <div className="relative w-28 h-28 rounded-full overflow-hidden mb-3 border-2 border-zinc-800 group-hover:border-red-600 transition-all duration-300 shadow-xl shadow-black/40">
                 <Image
                   src={artist.headshotUrl}

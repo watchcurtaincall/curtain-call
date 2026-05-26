@@ -2,6 +2,7 @@ export type ProductionStatus = 'Currently Showing' | 'Coming Soon' | 'Past Produ
 
 export interface Artist {
   id: string;
+  slug?: string;        // Clean URL slug e.g. "james-brown" — used as the URL path segment
   createdAt?: string;   // ISO timestamp for reliable newest-first sorting
   name: string;
   roleType: string;

@@ -49,7 +49,7 @@ export default function ArtistsDirectoryPage() {
           {artists
             .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
             .map(artist => (
-              <Link key={artist.id} href={`/artists/${artist.id}`} className="group block">
+              <Link key={artist.id} href={`/artists/${artist.slug || artist.id}`} className="group block">
                 <div className="relative aspect-[3/4] rounded-2xl overflow-hidden mb-4 border border-white/5 bg-zinc-900 shadow-md transition-all duration-300 group-hover:-translate-y-1.5 group-hover:shadow-[0_12px_24px_rgba(0,0,0,0.5)]">
                   {artist.headshotUrl ? (
                     <Image
