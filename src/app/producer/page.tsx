@@ -9,17 +9,14 @@ import { ProductionCard } from '@/components/shared/ProductionCard';
 import {
   Drama, Wallet, QrCode, ArrowLeft, ArrowUpRight, TrendingUp, Plus,
   X, CheckCircle, Circle, AlertCircle, Trash2, PenSquare, Eye,
-  ShieldCheck, FileText, Calendar, MapPin, Clock, ArrowRight, User
+  ShieldCheck, FileText, Calendar, MapPin, Clock, ArrowRight, User, Settings
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/producer/WithdrawModal';
 import Link from 'next/link';
 
-type Tab = 'shows' | 'wallet' | 'scanner';
-
 export default function ProducerDashboardPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>('shows');
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [allPlays, setAllPlays] = useState<Production[]>([]);
   const [syncCount, setSyncCount] = useState(0);
@@ -44,7 +41,7 @@ export default function ProducerDashboardPage() {
   useEffect(() => {
     if (!user) return;
     setAllPlays(ClientDB.getProductions());
-  }, [user, tab, syncCount]);
+  }, [user, syncCount]);
 
   // ── DYNAMIC WALLET CALCULATIONS ──
   const [walletMetrics, setWalletMetrics] = useState({
@@ -169,7 +166,7 @@ export default function ProducerDashboardPage() {
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-serif font-bold text-white">Welcome, {user.name.split(' ')[0]}</h1>
-                <p className="text-xs text-zinc-400 mt-1">Listed Playbills & Smart Wallet Hub</p>
+                <p className="text-xs text-zinc-400 mt-1">Listed Playbills, Sales and Smart Wallet Hub</p>
               </div>
             </div>
 
@@ -181,144 +178,13 @@ export default function ProducerDashboardPage() {
           </div>
         </div>
 
-        {/* Dashboard Tabs */}
-        <div className="flex border-b border-white/5 mb-8 overflow-x-auto [scrollbar-width:none]">
-          {[
-            { id: 'shows', label: 'Dossier & Shows', Icon: Drama },
-            { id: 'wallet', label: 'Wallet & Revenue', Icon: Wallet },
-            { id: 'scanner', label: 'Gate Ticket Scanner', Icon: QrCode }
-          ].map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id as Tab)}
-              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors relative ${
-                tab === id ? 'text-white' : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              <Icon className="h-4 w-4" /> {label}
-              {tab === id && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600 rounded-t-full" />}
-            </button>
-          ))}
-        </div>
-
-        {/* ── SHOWS TAB ── */}
-        {tab === 'shows' && (
-          <div className="flex flex-col gap-8 animate-fade-up">
-            
-            {/* Active Plays */}
-            <div>
-              <h3 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <span className="w-1.5 h-3.5 bg-red-600 rounded-full" />
-                Active Productions
-              </h3>
-              {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).length === 0 ? (
-                <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-12 text-center text-zinc-500 text-sm max-w-lg mx-auto">
-                  <Drama className="h-8 w-8 text-zinc-700 mx-auto mb-3" />
-                  <p className="font-semibold text-zinc-400">No active plays listed</p>
-                  <p className="text-xs text-zinc-600 mt-1 max-w-xs mx-auto">Create a show listing and activate custom ticket tiers to start selling admissions.</p>
-                  <Link href="/create" className="inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-white font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider mt-5">
-                    <Plus className="h-3.5 w-3.5" /> Add First Playbill
-                  </Link>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
-                  {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).map(p => (
-                    <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl relative group/card">
-                      <div className="flex-1">
-                        <ProductionCard production={p} />
-                      </div>
-                      <div className="flex gap-2 mt-1 shrink-0">
-                        <Link
-                          href={`/create?edit=${p.id}`}
-                          className="flex-1 bg-zinc-900/80 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase text-center flex items-center justify-center gap-1"
-                        >
-                          <PenSquare className="h-3 w-3 text-red-400" /> Edit
-                        </Link>
-                        <button
-                          onClick={() => handleEndShow(p.id)}
-                          className="flex-1 bg-zinc-900/80 hover:bg-red-950/20 text-zinc-400 hover:text-red-450 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase flex items-center justify-center gap-1"
-                        >
-                          End Show
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Drafts */}
-            <div className="mt-6 pt-6 border-t border-white/5">
-              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <span className="w-1.5 h-3.5 bg-zinc-700 rounded-full" />
-                Drafts & Unfinished Playbills
-              </h3>
-              {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && p.status === 'Draft').length === 0 ? (
-                <div className="bg-zinc-900/20 border border-white/5 rounded-2xl p-6 text-center text-zinc-600 text-xs max-w-sm mx-auto">
-                  No playbill drafts saved.
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
-                  {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && p.status === 'Draft').map(p => (
-                    <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl relative group/card">
-                      <div className="flex-1">
-                        <ProductionCard production={p} />
-                      </div>
-                      <div className="flex gap-2 mt-1 shrink-0">
-                        <Link
-                          href={`/create?edit=${p.id}`}
-                          className="flex-1 bg-zinc-900/80 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase text-center flex items-center justify-center gap-1"
-                        >
-                          <PenSquare className="h-3 w-3 text-red-400" /> Resume
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteDraft(p.id)}
-                          className="flex-1 bg-zinc-900/80 hover:bg-red-950/20 text-red-400 hover:text-red-400 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase flex items-center justify-center gap-1"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Concluded */}
-            <div className="mt-6 pt-6 border-t border-white/5">
-              <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <span className="w-1.5 h-3.5 bg-zinc-800 rounded-full" />
-                Past & Concluded Productions
-              </h3>
-              {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Past Production' || p.status === 'Recently Concluded')).length === 0 ? (
-                <div className="bg-zinc-900/10 border border-white/5 rounded-2xl p-6 text-center text-zinc-650 text-xs max-w-sm mx-auto">
-                  No past productions registered.
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
-                  {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Past Production' || p.status === 'Recently Concluded')).map(p => (
-                    <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl">
-                      <div className="flex-1">
-                        <ProductionCard production={p} />
-                      </div>
-                      <Link
-                        href={`/create?edit=${p.id}`}
-                        className="w-full bg-zinc-900/80 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase text-center flex items-center justify-center gap-1 mt-1 shrink-0"
-                      >
-                        <PenSquare className="h-3.5 w-3.5 text-red-400" /> Edit Specs
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-          </div>
-        )}
-
-        {/* ── WALLET TAB ── */}
-        {tab === 'wallet' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fade-up">
+        {/* ── SECTION 1: WALLET & REVENUE ── */}
+        <div className="mb-12">
+          <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-5 flex items-center gap-2">
+            <span className="w-1.5 h-3.5 bg-emerald-500 rounded-full" />
+            Wallet & Revenue
+          </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             {/* Wallet Panel card */}
             <div className="lg:col-span-1 bg-zinc-900 border border-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden self-start">
@@ -372,7 +238,7 @@ export default function ProducerDashboardPage() {
               <div className="absolute bottom-0 right-0 w-64 h-64 bg-red-650/5 rounded-full blur-[80px] pointer-events-none" />
               <h3 className="font-serif font-bold text-lg text-white mb-4">Admissions Payout & Transactions Feed</h3>
               
-              <div className="flex flex-col divide-y divide-white/5 max-h-[500px] overflow-y-auto pr-2">
+              <div className="flex flex-col divide-y divide-white/5 max-h-[260px] overflow-y-auto pr-2 [scrollbar-width:none]">
                 {walletMetrics.transactions.length === 0 ? (
                   <div className="text-center py-16 text-zinc-550 font-mono text-xs">
                     No payment deposits or payout history logged on Curtain Call.
@@ -394,12 +260,129 @@ export default function ProducerDashboardPage() {
             </div>
 
           </div>
-        )}
+        </div>
 
-        {/* ── GATE SCANNER TAB ── */}
-        {tab === 'scanner' && (
+        {/* ── SECTION 2: DOSSIER & SHOWS CATALOG ── */}
+        <div className="flex flex-col gap-8 mb-12 border-t border-white/5 pt-10">
+          
+          {/* Active Plays */}
+          <div>
+            <h3 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-3.5 bg-red-600 rounded-full" />
+              Active Productions
+            </h3>
+            {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).length === 0 ? (
+              <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-12 text-center text-zinc-500 text-sm max-w-lg mx-auto">
+                <Drama className="h-8 w-8 text-zinc-700 mx-auto mb-3" />
+                <p className="font-semibold text-zinc-400">No active plays listed</p>
+                <p className="text-xs text-zinc-600 mt-1 max-w-xs mx-auto">Create a show listing and activate custom ticket tiers to start selling admissions.</p>
+                <Link href="/create" className="inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-white font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider mt-5">
+                  <Plus className="h-3.5 w-3.5" /> Add First Playbill
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
+                {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).map(p => (
+                  <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl relative group/card">
+                    <div className="flex-1">
+                      <ProductionCard production={p} />
+                    </div>
+                    <div className="flex gap-2 mt-1 shrink-0">
+                      <Link
+                        href={`/create?edit=${p.id}`}
+                        className="flex-1 bg-zinc-900/80 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase text-center flex items-center justify-center gap-1"
+                      >
+                        <PenSquare className="h-3 w-3 text-red-400" /> Edit
+                      </Link>
+                      <button
+                        onClick={() => handleEndShow(p.id)}
+                        className="flex-1 bg-zinc-900/80 hover:bg-red-950/20 text-zinc-400 hover:text-red-455 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase flex items-center justify-center gap-1"
+                      >
+                        End Show
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Drafts */}
+          <div className="mt-6 pt-6 border-t border-white/5">
+            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-3.5 bg-zinc-700 rounded-full" />
+              Drafts & Unfinished Playbills
+            </h3>
+            {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && p.status === 'Draft').length === 0 ? (
+              <div className="bg-zinc-900/20 border border-white/5 rounded-2xl p-6 text-center text-zinc-650 text-xs max-w-sm mx-auto">
+                No playbill drafts saved.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
+                {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && p.status === 'Draft').map(p => (
+                  <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl relative group/card">
+                    <div className="flex-1">
+                      <ProductionCard production={p} />
+                    </div>
+                    <div className="flex gap-2 mt-1 shrink-0">
+                      <Link
+                        href={`/create?edit=${p.id}`}
+                        className="flex-1 bg-zinc-900/80 hover:bg-white/10 text-zinc-350 hover:text-white border border-white/5 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase text-center flex items-center justify-center gap-1"
+                      >
+                        <PenSquare className="h-3 w-3 text-red-400" /> Resume
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteDraft(p.id)}
+                        className="flex-1 bg-zinc-900/80 hover:bg-red-950/20 text-red-400 hover:text-red-450 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase flex items-center justify-center gap-1"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Concluded */}
+          <div className="mt-6 pt-6 border-t border-white/5">
+            <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+              <span className="w-1.5 h-3.5 bg-zinc-800 rounded-full" />
+              Past & Concluded Productions
+            </h3>
+            {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Past Production' || p.status === 'Recently Concluded')).length === 0 ? (
+              <div className="bg-zinc-900/10 border border-white/5 rounded-2xl p-6 text-center text-zinc-655 text-xs max-w-sm mx-auto">
+                No past productions registered.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
+                {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Past Production' || p.status === 'Recently Concluded')).map(p => (
+                  <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl">
+                    <div className="flex-1">
+                      <ProductionCard production={p} />
+                    </div>
+                    <Link
+                      href={`/create?edit=${p.id}`}
+                      className="w-full bg-zinc-900/80 hover:bg-white/10 text-zinc-350 hover:text-white border border-white/5 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase text-center flex items-center justify-center gap-1 mt-1 shrink-0"
+                    >
+                      <PenSquare className="h-3.5 w-3.5 text-red-400" /> Edit Specs
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
+
+        {/* ── SECTION 3: GATE TICKET SCANNER ── */}
+        <div className="border-t border-white/5 pt-10">
+          <h3 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+            <span className="w-1.5 h-3.5 bg-red-650 rounded-full animate-pulse" />
+            Gate Pass Admissions Terminal
+          </h3>
           <ProfileScannerTab userEmail={user.email} />
-        )}
+        </div>
 
       </div>
     </div>
@@ -512,7 +495,7 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
   );
 
   return (
-    <div className="flex flex-col gap-8 animate-fade-up max-w-5xl mx-auto">
+    <div className="flex flex-col gap-8 animate-fade-up max-w-7xl">
       <style>{`
         @keyframes scanline {
           0% { top: 0%; opacity: 0.3; }
@@ -548,7 +531,7 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
           <span className="text-2xl md:text-3xl font-serif font-bold text-red-400 block mt-1">
             {ClientDB.getTickets().filter(t => userPlayIds.includes(t.productionId) || userEmail.toLowerCase() === 'watchcurtaincall@gmail.com').length}
           </span>
-          <span className="text-[9px] font-mono text-zinc-650 block mt-1">Total platform tickets sold</span>
+          <span className="text-[9px] font-mono text-zinc-655 block mt-1">Total platform tickets sold</span>
         </div>
       </div>
 
@@ -556,7 +539,7 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
         
         {/* Verification Scanner Form */}
         <div className="lg:col-span-5 bg-zinc-900 border border-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-red-600/5 rounded-full blur-[60px] pointer-events-none" />
+          <div className="absolute top-0 right-0 w-48 h-48 bg-red-650/5 rounded-full blur-[60px] pointer-events-none" />
           
           <div className="border-b border-white/5 pb-4 mb-5 text-center">
             <h4 className="font-serif font-bold text-white text-base">Gate Pass Validator</h4>
