@@ -111,7 +111,7 @@ const mapProductionToDb = (p: any) => {
     cast_and_crew: p.castAndCrew || [],
     show_date: p.showDate || null,
     decline_reason: p.declineReason || null,
-    created_at: p.createdAt || null,
+    created_at: p.createdAt || new Date().toISOString(),
     slug: p.slug || null
   };
 };
@@ -179,7 +179,7 @@ const mapArtistToDb = (a: any) => ({
   date_of_death: a.dateOfDeath || null,
   decline_reason: a.declineReason || null,
   hits: a.hits || 0,
-  created_at: a.createdAt || null
+  created_at: a.createdAt || new Date().toISOString()
 });
 
 const mapArtistFromDb = (row: any) => {
@@ -1564,7 +1564,10 @@ export const syncFromSupabase = async () => {
       const drafts = currentLocal.filter((p: any) => p.status === 'Draft');
       localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([...approved, ...drafts]));
       
-      if (!isAdmin) {
+      if (isAdmin) {
+        const pendingRemote = mappedRemote.filter((p: any) => p.curationStatus === 'Pending');
+        localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(pendingRemote));
+      } else {
         const cleanEmail = email ? email.toLowerCase() : '';
         const pendingRemote = mappedRemote.filter((p: any) => 
           p.curationStatus === 'Pending' && 
@@ -1602,7 +1605,10 @@ export const syncFromSupabase = async () => {
       });
       localStorage.setItem(ARTISTS_KEY, JSON.stringify(mergedApproved));
       
-      if (!isAdmin) {
+      if (isAdmin) {
+        const pendingRemote = mappedRemote.filter((a: any) => a.curationStatus === 'Pending');
+        localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(pendingRemote));
+      } else {
         const cleanEmail = email ? email.toLowerCase() : '';
         const pendingRemote = mappedRemote.filter((a: any) => 
           a.curationStatus === 'Pending' && 
@@ -1628,7 +1634,10 @@ export const syncFromSupabase = async () => {
 
       localStorage.setItem(ARTICLES_KEY, JSON.stringify(approved));
       
-      if (!isAdmin) {
+      if (isAdmin) {
+        const pendingRemote = mappedRemote.filter((a: any) => a.curationStatus === 'Pending');
+        localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(pendingRemote));
+      } else {
         const cleanEmail = email ? email.toLowerCase() : '';
         const pendingRemote = mappedRemote.filter((a: any) => 
           a.curationStatus === 'Pending' && 
@@ -1657,7 +1666,10 @@ export const syncFromSupabase = async () => {
     if (data.criticApplications) {
       const mapped = data.criticApplications.map(mapCriticAppFromDb);
       
-      if (!isAdmin) {
+      if (isAdmin) {
+        const pending = mapped.filter((a: any) => a.curationStatus === 'Pending');
+        localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pending));
+      } else {
         const cleanEmail = email ? email.toLowerCase() : '';
         const pending = mapped.filter((a: any) => a.curationStatus === 'Pending' && a.email && a.email.toLowerCase() === cleanEmail);
         localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pending));

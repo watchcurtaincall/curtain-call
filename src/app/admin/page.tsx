@@ -940,7 +940,8 @@ export default function AdminDashboardPage() {
       roleType: finalRole,
       headshotUrl: artistImage || '',
       bio: artistForm.bio,
-      dateOfBirth: artistForm.dateOfBirth || undefined
+      dateOfBirth: artistForm.dateOfBirth || undefined,
+      createdAt: new Date().toISOString()
     };
 
     setTimeout(() => {
@@ -975,7 +976,8 @@ export default function AdminDashboardPage() {
       totalReviews: 0,
       galleryImages: playGallery,
       castAndCrew: castMembers.length > 0 ? castMembers : undefined,
-      showDate: playForm.showDate || undefined
+      showDate: playForm.showDate || undefined,
+      createdAt: new Date().toISOString()
     };
 
     setTimeout(() => {

@@ -32,7 +32,7 @@ export default function ArtistsDirectoryPage() {
         <div>
           <h1 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">Theatremakers</h1>
           <p className="text-zinc-400 text-lg max-w-2xl">
-            Discover the brilliant directors, actors, and playwrights shaping the narrative of African theatre.
+            Discover the brilliant artists shaping the narrative of African theatre.
           </p>
         </div>
         <Link

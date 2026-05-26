@@ -125,13 +125,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing table or dbItem parameter' }, { status: 400 });
     }
 
-    const { data, error } = await supabaseServer
-      .from(table)
-      .upsert(dbItem)
-      .select();
+    let currentDbItem = { ...dbItem };
+    let attempts = 0;
+    let success = false;
+    let finalData = null;
+    let lastError = null;
 
-    if (error) {
-      console.error(`[API Sync Data] Upsert error on table ${table}:`, error);
+    while (attempts < 10) {
+      const { data, error } = await supabaseServer
+        .from(table)
+        .upsert(currentDbItem)
+        .select();
+
+      if (!error) {
+        success = true;
+        finalData = data?.[0];
+        break;
+      }
+
+      lastError = error;
+      console.warn(`[API Sync Data] Upsert attempt ${attempts + 1} failed on table ${table}:`, error.message);
 
       // Self-Healing Schema Cache Fallback: If column doesn't exist, strip and retry
       if (error.code === 'PGRST204' && error.message && error.message.includes('schema cache')) {
@@ -139,21 +152,22 @@ export async function POST(request: Request) {
         if (match && match[1]) {
           const colName = match[1];
           console.warn(`[API Sync Data Fallback] Stripping missing column '${colName}' and retrying upsert...`);
-          const stripped = { ...dbItem };
-          delete stripped[colName];
-          
-          const retryRes = await supabaseServer.from(table).upsert(stripped).select();
-          if (retryRes.error) {
-            return NextResponse.json({ error: retryRes.error.message }, { status: 500 });
-          }
-          return NextResponse.json({ success: true, data: retryRes.data?.[0] });
+          delete currentDbItem[colName];
+          attempts++;
+          continue;
         }
       }
 
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      // If it's a different error or we couldn't parse the column name, stop retrying
+      break;
     }
 
-    return NextResponse.json({ success: true, data: data?.[0] });
+    if (!success && lastError) {
+      console.error(`[API Sync Data] Final upsert failure on table ${table}:`, lastError);
+      return NextResponse.json({ error: lastError.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data: finalData });
   } catch (err: any) {
     console.error('[API Sync Data] POST Exception:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });

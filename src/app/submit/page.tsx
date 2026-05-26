@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useRouter } from 'next/navigation';
 import { ClientDB } from '@/lib/db';
-import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Calendar, Image as ImageIcon, FileText, ArrowLeft, Mail } from 'lucide-react';
+import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Calendar, Image as ImageIcon, FileText, ArrowLeft, Mail, Search } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -57,6 +57,12 @@ export default function SubmitPortalPage() {
   });
   const [headshotPreview, setHeadshotPreview] = useState<string | null>(null);
   const headshotInputRef = useRef<HTMLInputElement>(null);
+
+  // Stageography submission states
+  const [scenography, setScenography] = useState<{ productionId: string; productionTitle: string; role: string }[]>([]);
+  const [stageSearchQ, setStageSearchQ] = useState('');
+  const [stageRole, setStageRole] = useState('');
+  const [stageSelected, setStageSelected] = useState<{ id: string; title: string } | null>(null);
 
   // Form states - Playbill / Document a Play
   const [playForm, setPlayForm] = useState({
@@ -205,6 +211,8 @@ export default function SubmitPortalPage() {
       roleType: makerForm.discipline === 'Other' ? makerForm.customDiscipline : makerForm.discipline,
       headshotUrl: headshotPreview || '',
       bio: makerForm.bio,
+      dateOfBirth: makerForm.dob || undefined,
+      scenography: scenography || [],
       submitterEmail: makerForm.email || user?.email || 'guest@curtaincall.com',
       curationStatus: 'Pending' as const,
       createdAt: new Date().toISOString(),
@@ -488,6 +496,136 @@ export default function SubmitPortalPage() {
                     <span className="text-[10px] text-zinc-600 font-mono">Re-compressed on-the-fly to save space</span>
                   </div>
                 )}
+              </div>
+
+              {/* ── STAGEOGRAPHY BUILDER ── */}
+              <div className="flex flex-col gap-3 pt-3 border-t border-white/5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-1 h-3.5 bg-red-600 rounded-full inline-block" />
+                  Stageography (Optional)
+                </label>
+                <p className="text-[11px] text-zinc-500 leading-relaxed -mt-1.5">
+                  Search for works this artist has done on our platform.
+                </p>
+
+                {/* Helpful Tip Box */}
+                <div className="bg-zinc-950 border border-white/5 rounded-2xl p-4 flex gap-3 items-start">
+                  <Sparkles className="h-4 w-4 text-red-500 shrink-0 mt-0.5 animate-pulse" />
+                  <p className="text-[11px] text-zinc-400 leading-relaxed">
+                    <span className="font-bold text-white">Tip:</span> Can't find the play in the search below? You can submit the play first on our platform so you can select it here!
+                  </p>
+                </div>
+
+                {/* Added credits list */}
+                {scenography.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {scenography.map((credit, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-zinc-950 border border-white/5 rounded-xl px-3 py-2.5 gap-2 animate-fade-up">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-white truncate">{credit.productionTitle}</p>
+                          <span className="text-[9px] bg-red-600/20 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider inline-block mt-1 font-sans">{credit.role}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setScenography(scenography.filter((_, i) => i !== idx));
+                          }}
+                          className="text-zinc-500 hover:text-red-400 transition-colors p-1.5 shrink-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Search & Add Interface */}
+                <div className="flex flex-col gap-2 bg-zinc-950/40 border border-white/5 rounded-2xl p-4">
+                  {!stageSelected ? (
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500 pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="Search plays on Curtain Call..."
+                        value={stageSearchQ}
+                        onChange={e => setStageSearchQ(e.target.value)}
+                        className="w-full bg-zinc-950 border border-white/5 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 transition-all"
+                      />
+                      {stageSearchQ.trim().length > 0 && (
+                        (() => {
+                          const allProds = ClientDB.getProductions().filter(p => p.curationStatus === 'Approved' || !p.curationStatus);
+                          const filteredProds = allProds.filter(p => p.title.toLowerCase().includes(stageSearchQ.toLowerCase())).slice(0, 5);
+                          return (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 border border-white/10 rounded-xl overflow-hidden z-20 shadow-2xl animate-fade-up">
+                              {filteredProds.length > 0 ? (
+                                filteredProds.map(p => (
+                                  <button
+                                    key={p.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setStageSelected({ id: p.id, title: p.title });
+                                      setStageSearchQ('');
+                                    }}
+                                    className="w-full text-left px-4 py-2.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors border-b border-white/5 last:border-0 flex items-center justify-between"
+                                  >
+                                    <span className="font-bold truncate">{p.title}</span>
+                                    <span className="text-[9px] text-zinc-500 shrink-0 font-mono uppercase bg-zinc-950/50 px-1.5 py-0.5 rounded border border-white/5">{p.genre}</span>
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="px-4 py-3 text-xs text-zinc-500 font-mono">
+                                  No approved plays found matching &quot;{stageSearchQ}&quot;
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-between bg-zinc-950 border border-red-500/20 rounded-xl px-3 py-2">
+                        <p className="text-xs font-bold text-white truncate flex-1">{stageSelected.title}</p>
+                        <button
+                          type="button"
+                          onClick={() => setStageSelected(null)}
+                          className="text-zinc-500 hover:text-white ml-2 transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="What was their role? (e.g. Lead Actor, Director)"
+                          value={stageRole}
+                          onChange={e => setStageRole(e.target.value)}
+                          className="flex-1 bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 transition-colors"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!stageSelected || !stageRole.trim()) return;
+                            const isDuplicate = scenography.some(c => c.productionId === stageSelected.id);
+                            if (!isDuplicate) {
+                              setScenography([...scenography, {
+                                productionId: stageSelected.id,
+                                productionTitle: stageSelected.title,
+                                role: stageRole.trim()
+                              }]);
+                            }
+                            setStageRole('');
+                            setStageSelected(null);
+                          }}
+                          disabled={!stageRole.trim()}
+                          className="bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-1 shrink-0"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Add
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
