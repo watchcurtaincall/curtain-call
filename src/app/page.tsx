@@ -157,7 +157,7 @@ export default function Home() {
               <TrendingUp className="h-5 w-5 text-red-500 shrink-0" />
               Trending Theatremakers
             </h2>
-            <p className="text-zinc-400 text-sm mt-1 truncate">Ranked by verified profile views — minimum 2 to qualify</p>
+            <p className="text-zinc-400 text-sm mt-1 truncate">Most viewed artistes</p>
           </div>
           <Link href="/artists" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors shrink-0 whitespace-nowrap">
             Explore Directory
