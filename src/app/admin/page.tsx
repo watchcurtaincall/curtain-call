@@ -1628,6 +1628,52 @@ This file was retrieved from the Curtain Call Curation Vault.
                 </div>
               )}
             </div>
+
+            {/* Credit Suggestions Queue */}
+            <div>
+              <h2 className="text-xl font-serif font-bold text-white mb-4 flex items-center gap-2">
+                <Users className="h-5 w-5 text-red-500" /> Suggested Cast &amp; Crew Credits ({creditSuggestions.length})
+              </h2>
+              {creditSuggestions.length === 0 ? (
+                <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-8 text-center text-zinc-500 font-mono text-xs">
+                  No credit suggestions pending review.
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {creditSuggestions.map(s => (
+                    <div key={s.id} className="bg-zinc-900 border border-white/5 rounded-3xl p-5 flex flex-col justify-between shadow-xl">
+                      <div>
+                        <div className="flex justify-between items-start gap-2 mb-2">
+                          <h3 className="font-serif font-bold text-white text-base truncate">{s.name}</h3>
+                          <span className="text-[9px] bg-zinc-800 text-zinc-500 border border-white/5 px-1.5 py-0.5 rounded font-mono uppercase shrink-0">{s.category}</span>
+                        </div>
+                        <p className="text-xs text-red-400 font-bold uppercase tracking-widest">{s.role}</p>
+                        <p className="text-[11px] text-zinc-500 font-mono mt-1 truncate">For: {s.productionTitle}</p>
+                        {s.reason && (
+                          <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed italic border-l-2 border-white/10 pl-2">&ldquo;{s.reason}&rdquo;</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-5">
+                        <button
+                          type="button"
+                          onClick={() => handleApproveCreditSuggestion(s.id, s)}
+                          className="flex-1 bg-green-600/10 hover:bg-green-600 text-green-400 hover:text-white border border-green-500/20 hover:border-green-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-all"
+                        >
+                          <Check className="h-3.5 w-3.5" /> Approve &amp; Merge
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDismissCreditSuggestion(s.id)}
+                          className="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 hover:border-red-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-all"
+                        >
+                          <X className="h-3.5 w-3.5" /> Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
