@@ -687,7 +687,7 @@ export default function ProfilePage() {
                     <Wallet className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="font-serif font-bold text-white text-lg tracking-tight">Producer Wallet & Curation Hub</h3>
+                    <h3 className="font-serif font-bold text-white text-lg tracking-tight">Producer&apos;s Hub</h3>
                     <p className="text-sm text-zinc-400 mt-1 leading-relaxed max-w-md">Manage your payouts, track ticket sales, and oversee listed productions.</p>
                   </div>
                 </div>
