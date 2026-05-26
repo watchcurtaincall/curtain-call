@@ -613,10 +613,10 @@ export default function ProfilePage() {
               {(userPlays.length > 0 || user.email.toLowerCase() === 'watchcurtaincall@gmail.com') && (
                 <button
                   onClick={() => setTab('scanner')}
-                  className="flex items-center gap-1.5 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-red-600/10 border border-red-500/20 mr-2"
+                  title="Gate Scanner"
+                  className="p-2.5 bg-red-600/15 hover:bg-red-600/30 text-red-400 hover:text-red-300 rounded-xl transition-colors border border-red-500/20"
                 >
-                  <QrCode className="h-3.5 w-3.5" />
-                  <span>Gate Scanner</span>
+                  <QrCode className="h-4 w-4" />
                 </button>
               )}
               <button
