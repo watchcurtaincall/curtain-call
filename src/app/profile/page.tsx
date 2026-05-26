@@ -14,7 +14,7 @@ import {
   PenSquare, Target, Ticket, Mic2, Drama,
   FileText, Trophy, Library, Zap, Users, Crown, Sparkles, Shield, ShieldCheck,
   Plus, Wallet, TrendingUp, ArrowUpRight, BookOpen, AlertCircle, Trash2,
-  Search, X, Clapperboard, Calendar, QrCode, Camera
+  Search, X, Clapperboard, Calendar, QrCode
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/producer/WithdrawModal';
 import { NotificationsPanel } from '@/components/profile/NotificationsPanel';
@@ -1528,117 +1528,75 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
             <p className="text-zinc-500 text-xs mt-1">Scan or enter references to validate tickets for your active events.</p>
           </div>
 
-          {/* Simulated Camera Scanner screen */}
-          <div className="relative aspect-video rounded-2xl border border-white/10 bg-zinc-950/80 flex flex-col items-center justify-center overflow-hidden shadow-inner group">
-            {/* Hologram neon grid backgrounds */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-            
-            {/* Neon border brackets inside */}
-            <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-zinc-600 group-hover:border-red-500 transition-colors" />
-            <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-zinc-600 group-hover:border-red-500 transition-colors" />
-            <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-zinc-600 group-hover:border-red-500 transition-colors" />
-            <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-zinc-600 group-hover:border-red-500 transition-colors" />
-
-            {/* Red flashing REC label */}
-            <div className="absolute top-6 left-6 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/5 text-[9px] font-mono text-white tracking-widest uppercase">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" />
-              <span>PROD_GATE_LOG</span>
-            </div>
-
-            {/* Laser line overlay */}
-            <div className="scanline-effect" />
-
-            {/* Center QR code glyph icon */}
-            <div className="flex flex-col items-center gap-4 relative z-10 animate-pulse text-zinc-500 group-hover:text-red-500 transition-colors">
-              <Camera className="h-12 w-12 stroke-[1.25]" />
-              <div className="text-center">
-                <p className="text-[10px] font-mono tracking-widest uppercase text-zinc-400">Scanner Engine Active</p>
-                <p className="text-[9px] font-mono text-zinc-600 mt-1">Ready for voucher pass check-in</p>
-              </div>
-            </div>
-
-            {/* Real-time Validation Overlay results */}
-            {scanResult && (
-              <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center p-6 backdrop-blur-md animate-fade-in ${
-                scanResult.status === 'Approved' ? 'bg-green-950/90' : 
-                scanResult.status === 'Duplicate' ? 'bg-amber-950/95' : 'bg-red-950/95'
+          {/* Scan Result Banner */}
+          {scanResult && (
+            <div className={`rounded-2xl border p-5 flex items-start gap-4 ${
+              scanResult.status === 'Approved'
+                ? 'bg-green-950/30 border-green-500/20'
+                : scanResult.status === 'Duplicate'
+                ? 'bg-amber-950/30 border-amber-500/20'
+                : 'bg-red-950/30 border-red-500/20'
+            }`}>
+              <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center ${
+                scanResult.status === 'Approved' ? 'bg-green-500/10 text-green-400' :
+                scanResult.status === 'Duplicate' ? 'bg-amber-500/10 text-amber-400' :
+                'bg-red-500/10 text-red-400'
               }`}>
-                <div className="flex flex-col items-center text-center gap-3 max-w-sm">
-                  {scanResult.status === 'Approved' ? (
-                    <>
-                      <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center text-green-400">
-                        <CheckCircle className="w-7 h-7" />
-                      </div>
-                      <h3 className="font-serif font-bold text-xl text-white">ACCESS GRANTED</h3>
-                      <div className="bg-black/40 border border-white/5 rounded-xl p-3 w-full text-left font-mono text-xs flex flex-col gap-1">
-                        <p className="text-white font-serif truncate font-bold"><span className="text-zinc-500">Show:</span> {scanResult.ticket?.productionTitle}</p>
-                        <p className="text-zinc-300 truncate"><span className="text-zinc-500">Guest:</span> {scanResult.ticket?.buyerEmail}</p>
-                        <p className="text-green-400 uppercase tracking-widest text-[10px] font-bold mt-1 font-mono">
-                          {scanResult.ticket?.tier} Admission
-                        </p>
-                      </div>
-                    </>
-                  ) : scanResult.status === 'Duplicate' ? (
-                    <>
-                      <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                        <AlertCircle className="w-7 h-7" />
-                      </div>
-                      <h3 className="font-serif font-bold text-xl text-white">DUPLICATE TICKET</h3>
-                      <p className="text-zinc-400 text-xs leading-relaxed">
-                        This pass has already been checked-in. Access is denied to prevent ticket reuse.
-                      </p>
-                      <div className="bg-black/40 border border-white/5 rounded-xl p-3 w-full text-left font-mono text-xs flex flex-col gap-1">
-                        <p className="text-white truncate font-bold"><span className="text-zinc-500">Guest:</span> {scanResult.ticket?.buyerEmail}</p>
-                        <p className="text-amber-400"><span className="text-zinc-500">Tier:</span> {scanResult.ticket?.tier}</p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
-                        <X className="w-7 h-7" />
-                      </div>
-                      <h3 className="font-serif font-bold text-xl text-white">VALIDATION FAILED</h3>
-                      <p className="text-zinc-400 text-xs leading-relaxed">
-                        {scanResult.message}
-                      </p>
-                    </>
-                  )}
-                  
-                  <button 
-                    onClick={() => setScanResult(null)}
-                    className="mt-2 text-[10px] font-mono text-zinc-500 hover:text-white uppercase tracking-wider underline underline-offset-4"
-                  >
-                    Dismiss Screen
-                  </button>
-                </div>
+                {scanResult.status === 'Approved' ? <CheckCircle className="w-5 h-5" /> :
+                 scanResult.status === 'Duplicate' ? <AlertCircle className="w-5 h-5" /> :
+                 <X className="w-5 h-5" />}
               </div>
-            )}
-          </div>
+              <div className="flex-1 min-w-0">
+                <p className={`font-bold text-sm uppercase tracking-wider font-mono ${
+                  scanResult.status === 'Approved' ? 'text-green-400' :
+                  scanResult.status === 'Duplicate' ? 'text-amber-400' : 'text-red-400'
+                }`}>
+                  {scanResult.status === 'Approved' ? 'Access Granted' :
+                   scanResult.status === 'Duplicate' ? 'Duplicate — Already Checked In' :
+                   'Validation Failed'}
+                </p>
+                {scanResult.status === 'Approved' && scanResult.ticket && (
+                  <div className="mt-2 font-mono text-xs flex flex-col gap-0.5">
+                    <p className="text-white font-bold truncate">{scanResult.ticket.productionTitle}</p>
+                    <p className="text-zinc-400 truncate">{scanResult.ticket.buyerEmail}</p>
+                    <p className="text-green-400 uppercase tracking-widest text-[10px] font-bold mt-1">{scanResult.ticket.tier} Admission</p>
+                  </div>
+                )}
+                {scanResult.status !== 'Approved' && (
+                  <p className="text-zinc-400 text-xs mt-1 leading-relaxed">{scanResult.message}</p>
+                )}
+              </div>
+              <button onClick={() => setScanResult(null)} className="text-zinc-600 hover:text-zinc-300 transition-colors flex-shrink-0">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Validation Form Entry */}
           <form onSubmit={handleValidate} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] text-zinc-500 uppercase font-semibold">Enter Voucher Pass or Paystack Reference</label>
-              <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Enter Ticket Code</label>
+              <p className="text-[11px] text-zinc-600 leading-relaxed">
+                Type the <span className="text-zinc-400 font-semibold">Gate Pass</span> (e.g. <span className="font-mono text-zinc-300">CC-6AF7D2</span>) printed on the PDF ticket, or the <span className="text-zinc-400 font-semibold">Paystack reference</span> from the confirmation email.
+              </p>
+              <div className="flex gap-2 mt-1">
                 <input
                   type="text"
-                  placeholder="e.g. CC-6AF7D2 or PAY-491730..."
+                  placeholder="CC-6AF7D2 or PAY-491730..."
                   value={scanInput}
                   onChange={e => setScanInput(e.target.value)}
-                  className="flex-1 bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 uppercase tracking-widest font-mono"
+                  autoFocus
+                  className="flex-1 bg-zinc-950 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/20 placeholder:text-zinc-700 uppercase tracking-widest font-mono transition-all"
                 />
                 <button
                   type="submit"
                   disabled={!scanInput.trim()}
-                  className="bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 font-mono shadow-md shadow-red-600/15"
+                  className="bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold px-6 py-3.5 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-2 font-mono shadow-md shadow-red-600/15"
                 >
-                  Verify Key
+                  Verify
                 </button>
               </div>
             </div>
-            <p className="text-[10px] text-zinc-600 leading-relaxed">
-              💡 Tip: Verify passes using either the custom 8-digit **Gate Pass voucher code** printed on the PDF ticket or the standard **Paystack Transaction Reference** sent in receipt emails. Matches are instant.
-            </p>
           </form>
         </div>
 
