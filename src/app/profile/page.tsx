@@ -14,7 +14,7 @@ import {
   PenSquare, Target, Ticket, Mic2, Drama,
   FileText, Trophy, Library, Zap, Users, Crown, Sparkles, Shield, ShieldCheck,
   Plus, Wallet, TrendingUp, ArrowUpRight, BookOpen, AlertCircle, Trash2,
-  Search, X, Clapperboard, Calendar, QrCode
+  Search, X, Clapperboard, Calendar, QrCode, ArrowRight
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/producer/WithdrawModal';
 import { NotificationsPanel } from '@/components/profile/NotificationsPanel';
@@ -22,7 +22,7 @@ import { SettingsPanel } from '@/components/profile/SettingsPanel';
 import { EditReviewModal } from '@/components/profile/EditReviewModal';
 import Link from 'next/link';
 
-type Tab = 'dashboard' | 'productions' | 'submissions' | 'reviews' | 'list' | 'badges' | 'stageography' | 'scanner';
+type Tab = 'dashboard' | 'submissions' | 'reviews' | 'list' | 'badges' | 'stageography';
 
 
 
@@ -69,9 +69,11 @@ export default function ProfilePage() {
 
     // Support setting active tab from query parameters (e.g. /profile?tab=productions)
     const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab') as Tab;
-    if (tabParam && ['dashboard', 'productions', 'submissions', 'reviews', 'list', 'badges', 'stageography', 'scanner'].includes(tabParam)) {
-      setTab(tabParam);
+    const tabParam = params.get('tab');
+    if (tabParam === 'productions' || tabParam === 'scanner') {
+      router.push('/producer');
+    } else if (tabParam && ['dashboard', 'submissions', 'reviews', 'list', 'badges', 'stageography'].includes(tabParam)) {
+      setTab(tabParam as Tab);
     }
 
     return () => {
@@ -537,20 +539,15 @@ export default function ProfilePage() {
 
   const userPlays = user ? allPlays.filter(p => p.submitterEmail?.toLowerCase() === user.email.toLowerCase()) : [];
 
-  // Tabs ordered Dashboard -> Production -> My Submissions
+  // Tabs ordered Dashboard -> My Submissions
   const tabs: { id: Tab; label: string; Icon: React.FC<{ className?: string }> }[] = [
     { id: 'dashboard',     label: 'Dashboard',      Icon: Star          },
-    { id: 'productions',   label: 'Production',     Icon: Drama         },
     { id: 'submissions',   label: 'My Submissions', Icon: FileText      },
     { id: 'reviews',       label: 'My Reviews',     Icon: PenLine       },
     { id: 'list',          label: 'My List',        Icon: Bookmark      },
     { id: 'stageography',  label: 'Stageography',   Icon: Clapperboard  },
     { id: 'badges',        label: 'Badges',         Icon: Award         },
   ];
-
-  if (userPlays.length > 0 || user.email.toLowerCase() === 'watchcurtaincall@gmail.com') {
-    tabs.splice(2, 0, { id: 'scanner', label: 'Ticket Scanner', Icon: QrCode });
-  }
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -619,7 +616,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-1 sm:gap-2">
               {(userPlays.length > 0 || user.email.toLowerCase() === 'watchcurtaincall@gmail.com') && (
                 <button
-                  onClick={() => setTab('scanner')}
+                  onClick={() => router.push('/producer')}
                   title="Gate Scanner"
                   className="p-2 sm:p-2.5 bg-red-600/15 hover:bg-red-600/30 text-red-400 hover:text-red-300 rounded-xl transition-colors border border-red-500/20"
                 >
@@ -691,6 +688,28 @@ export default function ProfilePage() {
         {tab === 'dashboard' && (
           <div className="flex flex-col gap-5 animate-fade-up">
 
+            {/* Access Producer Hub Card */}
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-red-950/20 via-zinc-900 to-zinc-900 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 shadow-2xl">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-[40px] pointer-events-none" />
+              <div className="flex gap-4 items-start sm:items-center">
+                <div className="w-12 h-12 rounded-xl bg-red-650/10 border border-red-500/20 flex items-center justify-center text-red-500 shrink-0">
+                  <Drama className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-white text-base">Producer Hub & Stage Wallet</h3>
+                  <p className="text-xs text-zinc-400 mt-1 max-w-md leading-relaxed">
+                    List upcoming stage plays, set custom ticket tiers, manage Paystack admissions revenue, and use the gate pass ticket scanner.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/producer"
+                className="w-full sm:w-auto bg-white hover:bg-zinc-200 text-black font-bold px-5 py-3 rounded-xl transition-all text-xs uppercase tracking-wider text-center shrink-0 flex items-center justify-center gap-1.5 shadow-lg active:scale-98"
+              >
+                Go to Production Dashboard <ArrowRight className="h-3.5 w-3.5 stroke-[2.5]" />
+              </Link>
+            </div>
+
             {/* Points & Badges */}
             <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
@@ -703,12 +722,14 @@ export default function ProfilePage() {
                 <div className="bg-zinc-800/50 rounded-xl p-4 text-center border border-white/5">
                   <div className="text-3xl font-serif font-bold text-white">{points.toLocaleString()}</div>
                   <div className="text-xs text-zinc-500 mt-1">Points</div>
+                  <div className="text-[10px] text-zinc-650">Earned dynamic points</div>
                 </div>
                 <div className="bg-zinc-800/50 rounded-xl p-4 text-center border border-white/5">
                   <div className="text-3xl font-serif font-bold text-white">
                     {badgesUnlockedCount}<span className="text-lg text-zinc-500">/{dynamicBadges.length}</span>
                   </div>
                   <div className="text-xs text-zinc-500 mt-1">Badges Unlocked</div>
+                  <div className="text-[10px] text-zinc-650">Unlocked profile milestones</div>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -717,7 +738,7 @@ export default function ProfilePage() {
                 </div>
                 <span className="text-xs text-zinc-500 shrink-0">{progressPct}%</span>
               </div>
-              <p className="text-xs text-zinc-600 mt-2">Carry out more activities to unlock more badges.</p>
+              <p className="text-xs text-zinc-650 mt-2">Carry out more activities to unlock more badges.</p>
             </div>
  
             {/* Checklist */}
@@ -727,10 +748,10 @@ export default function ProfilePage() {
                 {dynamicChecklist.map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
                     {item.done
-                      ? <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+                      ? <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
                       : <Circle      className="h-5 w-5 text-zinc-600 shrink-0" />
                     }
-                    <span className={`text-sm ${item.done ? 'text-zinc-500 line-through' : 'text-white'}`}>
+                    <span className={`text-sm ${item.done ? 'text-zinc-500 line-through font-serif italic' : 'text-white'}`}>
                       {item.label}
                     </span>
                   </div>
@@ -744,7 +765,7 @@ export default function ProfilePage() {
               <div className="flex flex-col divide-y divide-white/5">
                 {dynamicActivities.map(({ text, time, Icon }, i) => (
                   <div key={i} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                    <div className="w-8 h-8 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-8 h-8 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0 mt-0.5 border border-white/5">
                       <Icon className="h-3.5 w-3.5 text-zinc-400" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -1150,11 +1171,6 @@ export default function ProfilePage() {
           <ProfileStageographyTab userEmail={user.email} />
         )}
 
-        {/* TICKET SCANNER */}
-        {tab === 'scanner' && (
-          <ProfileScannerTab userEmail={user.email} />
-        )}
-
       </div>
     </div>
   );
@@ -1348,359 +1364,6 @@ function ProfileStageographyTab({ userEmail }: { userEmail: string }) {
             })}
           </div>
         )}
-      </div>
-    </div>
-  );
-}
-
-// ── Profile Scanner Tab Component ──
-function ProfileScannerTab({ userEmail }: { userEmail: string }) {
-  const [scanInput, setScanInput] = useState('');
-  const [scanResult, setScanResult] = useState<{
-    status: 'Approved' | 'Duplicate' | 'Invalid';
-    ticket?: any;
-    message: string;
-    timestamp: number;
-  } | null>(null);
-  const [scanHistory, setScanHistory] = useState<any[]>([]);
-
-  const allPlays = ClientDB.getProductions();
-  const userPlays = allPlays.filter(p => p.submitterEmail?.toLowerCase() === userEmail.toLowerCase());
-  const userPlayIds = userPlays.map(p => p.id);
-
-  // Load scan history on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('curtain_checked_in_tickets');
-      if (stored) {
-        try {
-          setScanHistory(JSON.parse(stored));
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
-  }, []);
-
-  const saveScanHistory = (history: any[]) => {
-    setScanHistory(history);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('curtain_checked_in_tickets', JSON.stringify(history));
-    }
-  };
-
-  const handleValidate = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const inputClean = scanInput.trim().toUpperCase();
-    if (!inputClean) return;
-
-    const allTickets = ClientDB.getTickets();
-    const matchedTicket = allTickets.find(t => 
-      (t.gatePass && t.gatePass.toUpperCase() === inputClean) || 
-      (t.reference && t.reference.toUpperCase() === inputClean)
-    );
-
-    const now = Date.now();
-    let result: any = null;
-
-    if (matchedTicket) {
-      // Security Check: Ensure this ticket actually belongs to one of this producer's productions!
-      const belongsToProducer = userPlayIds.includes(matchedTicket.productionId) || userEmail.toLowerCase() === 'watchcurtaincall@gmail.com';
-      
-      if (!belongsToProducer) {
-        result = {
-          status: 'Invalid',
-          message: `UNAUTHORIZED ACCESS: This pass belongs to another producer's event. Access denied.`,
-          timestamp: now
-        };
-      } else {
-        const isAlreadyCheckedIn = scanHistory.some(h => h.status === 'Approved' && h.ticket?.id === matchedTicket.id);
-
-        if (isAlreadyCheckedIn) {
-          result = {
-            status: 'Duplicate',
-            ticket: matchedTicket,
-            message: `DUPLICATE WARNING: Pass already scanned.`,
-            timestamp: now
-          };
-        } else {
-          result = {
-            status: 'Approved',
-            ticket: matchedTicket,
-            message: `APPROVED: Welcome! Access granted.`,
-            timestamp: now
-          };
-        }
-      }
-    } else {
-      result = {
-        status: 'Invalid',
-        message: `INVALID TICKET: No match found for "${inputClean}".`,
-        timestamp: now
-      };
-    }
-
-    setScanResult(result);
-
-    const newHistoryItem = {
-      id: `scan_${now}_${Math.random().toString(36).substr(2, 4)}`,
-      ticket: matchedTicket,
-      input: inputClean,
-      checkedInAt: now,
-      status: result.status
-    };
-
-    saveScanHistory([newHistoryItem, ...scanHistory]);
-    setScanInput('');
-  };
-
-  // Scoped metrics for dashboard display
-  const allPurchasedTickets = ClientDB.getTickets().filter(t => userPlayIds.includes(t.productionId) || userEmail.toLowerCase() === 'watchcurtaincall@gmail.com');
-  
-  // Filter history to display only their own productions or invalid scans made by this user
-  const scopedHistory = scanHistory.filter(h => 
-    userEmail.toLowerCase() === 'watchcurtaincall@gmail.com' || 
-    (h.ticket && userPlayIds.includes(h.ticket.productionId)) ||
-    (!h.ticket && h.status === 'Invalid')
-  );
-
-  return (
-    <div className="flex flex-col gap-8 animate-fade-up">
-      <style>{`
-        @keyframes scanline {
-          0% { top: 0%; opacity: 0.3; }
-          50% { top: 100%; opacity: 1; }
-          100% { top: 0%; opacity: 0.3; }
-        }
-        .scanline-effect {
-          position: absolute;
-          left: 0;
-          right: 0;
-          height: 3px;
-          background: #22c55e;
-          box-shadow: 0 0 15px #22c55e, 0 0 5px #22c55e;
-          animation: scanline 3.5s ease-in-out infinite;
-          pointer-events: none;
-        }
-      `}</style>
-
-      {/* Quick Stats Panel */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full blur-[40px] pointer-events-none" />
-          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Checked In</span>
-          <span className="text-2xl md:text-3xl font-serif font-bold text-green-400 block mt-1">
-            {scopedHistory.filter(h => h.status === 'Approved').length}
-          </span>
-          <span className="text-[9px] font-mono text-zinc-600 block mt-1">Admitted guest count</span>
-        </div>
-
-        <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-[40px] pointer-events-none" />
-          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Tickets Sold</span>
-          <span className="text-2xl md:text-3xl font-serif font-bold text-white block mt-1">
-            {allPurchasedTickets.length}
-          </span>
-          <span className="text-[9px] font-mono text-zinc-600 block mt-1">Total tickets issued</span>
-        </div>
-
-        <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none" />
-          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Duplicates Blocked</span>
-          <span className="text-2xl md:text-3xl font-serif font-bold text-amber-500 block mt-1">
-            {scopedHistory.filter(h => h.status === 'Duplicate').length}
-          </span>
-          <span className="text-[9px] font-mono text-zinc-600 block mt-1">Declined duplicate passes</span>
-        </div>
-
-        <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-[40px] pointer-events-none" />
-          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Failed Audits</span>
-          <span className="text-2xl md:text-3xl font-serif font-bold text-red-500 block mt-1">
-            {scopedHistory.filter(h => h.status === 'Invalid').length}
-          </span>
-          <span className="text-[9px] font-mono text-zinc-600 block mt-1">Invalid vouchers flagged</span>
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-12 gap-8 items-start">
-        {/* Scan Terminal Panel */}
-        <div className="lg:col-span-7 bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
-          
-          <div className="border-b border-white/5 pb-4">
-            <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
-              <QrCode className="h-5 w-5 text-red-500 animate-pulse" /> Producer Gate Terminal
-            </h2>
-            <p className="text-zinc-500 text-xs mt-1">Scan or enter references to validate tickets for your active events.</p>
-          </div>
-
-          {/* Scan Result Banner */}
-          {scanResult && (
-            <div className={`rounded-2xl border p-5 flex items-start gap-4 ${
-              scanResult.status === 'Approved'
-                ? 'bg-green-950/30 border-green-500/20'
-                : scanResult.status === 'Duplicate'
-                ? 'bg-amber-950/30 border-amber-500/20'
-                : 'bg-red-950/30 border-red-500/20'
-            }`}>
-              <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center ${
-                scanResult.status === 'Approved' ? 'bg-green-500/10 text-green-400' :
-                scanResult.status === 'Duplicate' ? 'bg-amber-500/10 text-amber-400' :
-                'bg-red-500/10 text-red-400'
-              }`}>
-                {scanResult.status === 'Approved' ? <CheckCircle className="w-5 h-5" /> :
-                 scanResult.status === 'Duplicate' ? <AlertCircle className="w-5 h-5" /> :
-                 <X className="w-5 h-5" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`font-bold text-sm uppercase tracking-wider font-mono ${
-                  scanResult.status === 'Approved' ? 'text-green-400' :
-                  scanResult.status === 'Duplicate' ? 'text-amber-400' : 'text-red-400'
-                }`}>
-                  {scanResult.status === 'Approved' ? 'Access Granted' :
-                   scanResult.status === 'Duplicate' ? 'Duplicate — Already Checked In' :
-                   'Validation Failed'}
-                </p>
-                {scanResult.status === 'Approved' && scanResult.ticket && (
-                  <div className="mt-2 font-mono text-xs flex flex-col gap-0.5">
-                    <p className="text-white font-bold truncate">{scanResult.ticket.productionTitle}</p>
-                    <p className="text-zinc-400 truncate">{scanResult.ticket.buyerEmail}</p>
-                    <p className="text-green-400 uppercase tracking-widest text-[10px] font-bold mt-1">{scanResult.ticket.tier} Admission</p>
-                  </div>
-                )}
-                {scanResult.status !== 'Approved' && (
-                  <p className="text-zinc-400 text-xs mt-1 leading-relaxed">{scanResult.message}</p>
-                )}
-              </div>
-              <button onClick={() => setScanResult(null)} className="text-zinc-600 hover:text-zinc-300 transition-colors flex-shrink-0">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* Validation Form Entry */}
-          <form onSubmit={handleValidate} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Enter Ticket Code</label>
-              <p className="text-[11px] text-zinc-600 leading-relaxed">
-                Type the <span className="text-zinc-400 font-semibold">Gate Pass</span> (e.g. <span className="font-mono text-zinc-300">CC-6AF7D2</span>) printed on the PDF ticket, or the <span className="text-zinc-400 font-semibold">Paystack reference</span> from the confirmation email.
-              </p>
-              <div className="flex gap-2 mt-1">
-                <input
-                  type="text"
-                  placeholder="CC-6AF7D2 or PAY-491730..."
-                  value={scanInput}
-                  onChange={e => setScanInput(e.target.value)}
-                  autoFocus
-                  className="flex-1 bg-zinc-950 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/20 placeholder:text-zinc-700 uppercase tracking-widest font-mono transition-all"
-                />
-                <button
-                  type="submit"
-                  disabled={!scanInput.trim()}
-                  className="bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold px-6 py-3.5 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-2 font-mono shadow-md shadow-red-600/15"
-                >
-                  Verify
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-
-        {/* Scan Log History Panel */}
-        <div className="lg:col-span-5 bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col h-[550px]">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
-          
-          <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-5 shrink-0">
-            <div>
-              <h2 className="text-lg font-serif font-bold text-white flex items-center gap-2">
-                <Settings className="h-4.5 w-4.5 text-zinc-500 animate-spin-slow" /> Event Admissions Log
-              </h2>
-              <p className="text-zinc-500 text-[11px] mt-0.5">Scanned admission pass audit trail.</p>
-            </div>
-            
-            {scopedHistory.length > 0 && (
-              <button
-                onClick={() => {
-                  if (confirm("Reset and clear checked-in ticket records log? This action is permanent for this device.")) {
-                    const remaining = scanHistory.filter(h => h.ticket && !userPlayIds.includes(h.ticket.productionId));
-                    saveScanHistory(remaining);
-                  }
-                }}
-                className="text-zinc-500 hover:text-red-400 text-[10px] font-mono uppercase tracking-wider hover:bg-red-500/10 px-2.5 py-1 rounded-lg border border-white/5 transition-colors shrink-0"
-              >
-                Clear Log
-              </button>
-            )}
-          </div>
-
-          {scopedHistory.length === 0 ? (
-            <div className="bg-zinc-950 border border-white/5 rounded-2xl p-12 text-center text-zinc-500 font-mono text-xs flex-1 flex flex-col items-center justify-center gap-3">
-              <QrCode className="h-8 w-8 text-zinc-800 stroke-[1.25]" />
-              <span>No passes checked-in yet. Live events logged here.</span>
-            </div>
-          ) : (
-            <div className="overflow-y-auto [scrollbar-width:none] flex-1 pr-0.5">
-              <div className="flex flex-col gap-2.5">
-                {scopedHistory.map((log) => {
-                  const formattedTime = new Date(log.checkedInAt).toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    second: '2-digit'
-                  });
-
-                  return (
-                    <div 
-                      key={log.id} 
-                      className={`border rounded-2xl p-3.5 flex items-start justify-between gap-4 transition-all ${
-                        log.status === 'Approved' ? 'bg-green-950/20 border-green-500/15' : 
-                        log.status === 'Duplicate' ? 'bg-amber-950/20 border-amber-500/15' : 
-                        'bg-red-950/20 border-red-500/15'
-                      }`}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border ${
-                            log.status === 'Approved' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 
-                            log.status === 'Duplicate' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 
-                            'bg-red-500/10 text-red-400 border-red-500/20'
-                          }`}>
-                            {log.status}
-                          </span>
-                          <span className="text-[10px] font-mono text-zinc-500">{formattedTime}</span>
-                        </div>
-
-                        <span className="text-white font-mono text-xs block truncate mt-2 uppercase tracking-wide">
-                          Key: {log.input}
-                        </span>
-
-                        {log.ticket && (
-                          <div className="mt-1 flex flex-col gap-0.5 text-[10px] text-zinc-400 font-serif">
-                            <span className="text-zinc-300 font-bold truncate">{log.ticket.productionTitle}</span>
-                            <span className="font-mono text-zinc-500 truncate">{log.ticket.buyerEmail} · {log.ticket.tier}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          if (confirm("Remove this log record?")) {
-                            const updatedHistory = scanHistory.filter(h => h.id !== log.id);
-                            saveScanHistory(updatedHistory);
-                          }
-                        }}
-                        className="text-zinc-500 hover:text-red-400 p-1.5 hover:bg-red-500/10 rounded-lg transition-colors shrink-0 align-top"
-                        title="Delete from log"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

@@ -9,7 +9,8 @@ import { ClientDB } from '@/lib/db';
 
 const NAV_LINKS = [
   { href: '/discovery', label: 'Discovery' },
-  { href: '/plays', label: 'Plays' },
+  { href: '/tickets', label: 'Box Office' },
+  { href: '/plays', label: 'Archive' },
   { href: '/critics', label: 'Critics' },
   { href: '/editorial', label: 'Editorial' },
   { href: '/artists', label: 'Artists' },
@@ -131,7 +132,7 @@ export function Navbar() {
                         if (href === '#sell-tickets') {
                           e.preventDefault();
                           if (user) {
-                            router.push('/profile?tab=productions');
+                            router.push('/producer');
                           } else {
                             setIsSellTicketsOpen(true);
                           }
@@ -326,9 +327,9 @@ export function Navbar() {
                   onClick={(e) => {
                     if (href === '#sell-tickets') {
                       e.preventDefault();
-                      if (user) {
-                        router.push('/profile?tab=productions');
-                      } else {
+                       if (user) {
+                         router.push('/producer');
+                       } else {
                         setIsSellTicketsOpen(true);
                       }
                       setIsMenuOpen(false);
@@ -466,7 +467,7 @@ export function Navbar() {
                   Close & Explore
                 </button>
                 <Link
-                  href="/login?redirect=/profile?tab=productions"
+                  href="/login?redirect=/producer"
                   onClick={() => setIsSellTicketsOpen(false)}
                   className="flex-1 bg-white hover:bg-zinc-100 text-black font-bold py-3.5 rounded-xl transition-all text-xs uppercase tracking-wider text-center flex items-center justify-center gap-1.5 shadow-xl shadow-white/5"
                 >
