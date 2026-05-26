@@ -1302,6 +1302,45 @@ export const ClientDB = {
     }
   },
 
+  updateReview(updatedReview: any): void {
+    if (typeof window === 'undefined') return;
+    const reviews = this.getReviews();
+    const index = reviews.findIndex(r => r.id === updatedReview.id);
+    if (index === -1) return;
+
+    const updated = [...reviews];
+    updated[index] = { ...updated[index], ...updatedReview };
+    localStorage.setItem(REVIEWS_KEY, JSON.stringify(updated));
+
+    // Sync review to cloud
+    syncToCloud('reviews', mapReviewToDb(updated[index]));
+
+    // Recalculate production score
+    const productionId = updated[index].productionId;
+    const productions = this.getProductions();
+    const production = productions.find(p => p.id === productionId);
+    if (production) {
+      const prodReviews = updated.filter(r => r.productionId === productionId);
+      const critics = prodReviews.filter(r => r.type === 'Critic');
+      const audience = prodReviews.filter(r => r.type === 'Audience');
+
+      if (critics.length > 0) {
+        const sum = critics.reduce((acc, r) => acc + r.rating, 0);
+        production.criticScore = Math.round(sum / critics.length);
+      } else {
+        production.criticScore = null;
+      }
+      if (audience.length > 0) {
+        const sum = audience.reduce((acc, r) => acc + r.rating, 0);
+        production.audienceScore = parseFloat(((sum / audience.length) / 10).toFixed(1));
+      } else {
+        production.audienceScore = null;
+      }
+      production.totalReviews = prodReviews.length;
+      this.saveProduction(production); // This will automatically sync production updates to cloud
+    }
+  },
+
   // ── WITHDRAWALS DATABASE ──
   getWithdrawals(): any[] {
     if (typeof window === 'undefined') return [];

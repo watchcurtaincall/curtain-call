@@ -6,7 +6,7 @@ import { Production } from '@/lib/types';
 import { MOCK_REVIEWS } from '@/lib/mock';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, MapPin, Clock, Ticket, ArrowLeft, Share2, Check } from 'lucide-react';
+import { Star, MapPin, Clock, Ticket, ArrowLeft, Share2, Check, Calendar } from 'lucide-react';
 import { ProductionReviews } from '@/components/productions/ProductionReviews';
 import { WatchlistButton } from '@/components/productions/WatchlistButton';
 import { PhotoGallery } from '@/components/productions/PhotoGallery';
@@ -149,7 +149,7 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
               </span>
               {production.showDate && (
                 <span className="text-red-400 text-xs flex items-center gap-1.5 bg-red-950/40 border border-red-500/20 px-2.5 py-1 rounded-full font-sans font-bold">
-                  📅 {new Date(production.showDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  <Calendar className="h-3.5 w-3.5 shrink-0" /> {new Date(production.showDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   {production.showTime && ` @ ${production.showTime}`}
                 </span>
               )}

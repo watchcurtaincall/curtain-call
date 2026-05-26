@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, MapPin } from 'lucide-react';
+import { Star, MapPin, Calendar } from 'lucide-react';
 import { Production } from '@/lib/types';
 
 export function ProductionCard({ production }: { production: Production }) {
@@ -79,7 +79,7 @@ export function ProductionCard({ production }: { production: Production }) {
         </p>
         {production.status === 'Coming Soon' && production.showDate && (
           <p className="text-[10px] text-red-400 font-bold mt-1 uppercase tracking-wider bg-red-950/40 border border-red-500/20 px-2 py-0.5 rounded w-fit flex items-center gap-1 font-sans">
-            📅 {new Date(production.showDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            <Calendar className="h-3 w-3 shrink-0" /> {new Date(production.showDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             {production.showTime && ` @ ${production.showTime}`}
           </p>
         )}

@@ -14,11 +14,12 @@ import {
   PenSquare, Target, Ticket, Mic2, Drama,
   FileText, Trophy, Library, Zap, Users, Crown, Sparkles, Shield, ShieldCheck,
   Plus, Wallet, TrendingUp, ArrowUpRight, BookOpen, AlertCircle, Trash2,
-  Search, X, Clapperboard
+  Search, X, Clapperboard, Calendar
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/producer/WithdrawModal';
 import { NotificationsPanel } from '@/components/profile/NotificationsPanel';
 import { SettingsPanel } from '@/components/profile/SettingsPanel';
+import { EditReviewModal } from '@/components/profile/EditReviewModal';
 import Link from 'next/link';
 
 type Tab = 'dashboard' | 'productions' | 'submissions' | 'reviews' | 'list' | 'badges' | 'stageography';
@@ -37,6 +38,7 @@ export default function ProfilePage() {
   const [showNotifs, setShowNotifs] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [editingReview, setEditingReview] = useState<any | null>(null);
   const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
   const [allPlays, setAllPlays] = useState<Production[]>([]);
   const [syncCount, setSyncCount] = useState(0);
@@ -454,6 +456,14 @@ export default function ProfilePage() {
       {showWithdraw && <WithdrawModal availableBalance={walletMetrics.available} onClose={() => setShowWithdraw(false)} />}
       {showNotifs   && <NotificationsPanel onClose={() => setShowNotifs(false)} />}
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
+      {editingReview && (
+        <EditReviewModal
+          review={editingReview}
+          productionTitle={allPlays.find(p => p.id === editingReview.productionId)?.title || 'Unknown Production'}
+          onClose={() => setEditingReview(null)}
+          onSave={() => setSyncCount(prev => prev + 1)}
+        />
+      )}
 
       {/* Logout confirm */}
       {showLogoutConfirm && (
@@ -939,18 +949,34 @@ export default function ProfilePage() {
               userReviews.map(r => {
                 const prod = allPlays.find(p => p.id === r.productionId);
                 return (
-                  <div key={r.id} className="bg-zinc-900 border border-white/5 rounded-2xl p-5">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="text-xs text-zinc-500 mb-0.5">{r.date || 'Recently'}</p>
-                        <h3 className="font-serif font-bold text-white text-base">{prod?.title || 'Unknown Production'}</h3>
+                  <div key={r.id} className="bg-zinc-900 border border-white/5 rounded-2xl p-5 flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <p className="text-xs text-zinc-500 mb-0.5">{r.date || 'Recently'}</p>
+                          <h3 className="font-serif font-bold text-white text-base">{prod?.title || 'Unknown Production'}</h3>
+                        </div>
+                        <div className="flex items-center gap-1 bg-zinc-800 px-2.5 py-1 rounded-full text-sm font-bold text-white border border-white/5">
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                          {parseFloat((r.rating / 10).toFixed(1))}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 bg-zinc-800 px-2.5 py-1 rounded-full text-sm font-bold text-white border border-white/5">
-                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                        {parseFloat((r.rating / 10).toFixed(1))}
-                      </div>
+                      {r.headline && (
+                        <h4 className="text-sm font-bold text-zinc-100 mb-1.5 font-sans">
+                          {r.headline}
+                        </h4>
+                      )}
+                      <p className="text-zinc-400 text-sm leading-relaxed whitespace-pre-wrap">{r.content}</p>
                     </div>
-                    <p className="text-zinc-400 text-sm leading-relaxed">{r.content}</p>
+
+                    <div className="flex justify-end mt-4 pt-3 border-t border-white/5">
+                      <button
+                        onClick={() => setEditingReview(r)}
+                        className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-400 font-bold uppercase tracking-wider transition-colors"
+                      >
+                        <PenSquare className="h-3.5 w-3.5" /> Edit Review
+                      </button>
+                    </div>
                   </div>
                 );
               })
