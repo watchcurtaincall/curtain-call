@@ -9,7 +9,7 @@ import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search,
 import Link from 'next/link';
 import Image from 'next/image';
 
-type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'scanner';
+type AdminTab = 'overview' | 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'scanner' | 'email-logs';
 
 // ── Stageography Adder Sub-component (used inside Edit Artist modal) ──
 function AdminStageographyAdder({ onAdd }: { onAdd: (credit: { productionId: string; productionTitle: string; role: string }) => void }) {
@@ -98,7 +98,7 @@ export default function AdminDashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [activeTab, setActiveTab] = useState<AdminTab>('queue');
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -242,6 +242,8 @@ export default function AdminDashboardPage() {
   const [declineReason, setDeclineReason] = useState('');
   const [emailLogs, setEmailLogs] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [queueSubTab, setQueueSubTab] = useState<'pending' | 'history'>('pending');
+  const [historySearch, setHistorySearch] = useState('');
 
   // Manage tab local states
   const [manageSearch, setManageSearch] = useState('');
@@ -1184,6 +1186,16 @@ This file was retrieved from the Curtain Call Curation Vault.
 
   const pendingTotal = pendingArtists.length + pendingPlays.length + pendingArticles.length + pendingCritics.length + creditSuggestions.length;
 
+  const declinedList = typeof window !== 'undefined' ? ClientDB.getDeclinedSubmissions() : [];
+  const filteredHistory = declinedList.filter((item: any) => {
+    const query = historySearch.toLowerCase().trim();
+    if (!query) return true;
+    const nameMatch = (item.name || item.title || '').toLowerCase().includes(query);
+    const reasonMatch = (item.declineReason || '').toLowerCase().includes(query);
+    const emailMatch = (item.submitterEmail || '').toLowerCase().includes(query);
+    return nameMatch || reasonMatch || emailMatch;
+  });
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4 text-white">
@@ -1194,7 +1206,7 @@ This file was retrieved from the Curtain Call Curation Vault.
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 min-h-screen bg-zinc-950 text-white">
+    <div className="flex min-h-screen bg-zinc-950 text-zinc-100 font-sans">
       {/* Dynamic Toast feedback */}
       {toast && (
         <div className={`fixed bottom-8 right-8 z-50 p-4 rounded-2xl flex items-center gap-3 border shadow-2xl animate-fade-up ${
@@ -1207,157 +1219,213 @@ This file was retrieved from the Curtain Call Curation Vault.
         </div>
       )}
 
-      {/* Header */}
-      <div className="mb-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-6 border-b border-white/5">
-        <div>
-          <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-md uppercase font-mono tracking-widest">
-            Security Clearance Level 4
-          </span>
-          <h1 className="text-4xl font-serif font-bold mt-2">Curtain Curation Portal</h1>
-          <p className="text-zinc-500 text-sm mt-1">Direct control, approvals backlog, and chronicles publishing panel</p>
+      {/* 🧭 Left Floating Glassmorphic Sidebar (Desktop) */}
+      <aside className="hidden lg:flex flex-col w-72 bg-zinc-900/60 backdrop-blur-xl border-r border-white/5 p-6 shrink-0 relative sticky top-0 h-screen justify-between z-30">
+        <div className="flex flex-col gap-8">
+          {/* Logo Brand Header */}
+          <div className="flex items-center gap-3 px-2">
+            <div className="w-9 h-9 bg-gradient-to-tr from-red-600 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-red-950/20 text-white">
+              <Sparkles className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <span className="text-[9px] uppercase tracking-widest text-red-500 font-bold block">clearance level 4</span>
+              <span className="font-serif font-bold text-lg text-white block -mt-0.5 font-sans">Curtain Admin</span>
+            </div>
+          </div>
+
+          {/* Navigation Items */}
+          <nav className="flex flex-col gap-1">
+            {[
+              { id: 'overview', name: 'Overview', icon: LayoutGrid },
+              { id: 'queue', name: 'Queue & History', icon: ShieldAlert, badge: pendingTotal },
+              { id: 'withdrawals', name: 'Withdrawals', icon: Banknote, badge: withdrawals.filter(w => w.status === 'Pending').length },
+              { id: 'blog', name: 'Publish Blog', icon: FileText },
+              { id: 'direct-artist', name: 'Add Artiste', icon: User },
+              { id: 'direct-play', name: 'Add Play', icon: Drama },
+              { id: 'manage', name: 'Manage Directory', icon: FolderEdit },
+              { id: 'subscribers', name: 'Subscribers & Signups', icon: Users },
+              { id: 'scanner', name: 'Ticket Scanner', icon: QrCode },
+              { id: 'email-logs', name: 'Email Logs', icon: Mail }
+            ].map(item => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id as AdminTab)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all group ${
+                    isActive 
+                      ? 'bg-red-600 text-white shadow-lg shadow-red-600/10' 
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    <Icon className={`h-4.5 w-4.5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
+                    {item.name}
+                  </span>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                      isActive ? 'bg-zinc-950 border-red-500/10 text-red-400' : 'bg-red-600/10 border-red-500/20 text-red-400'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
         </div>
 
-        <div className="flex bg-zinc-900 border border-white/5 rounded-2xl p-1 shrink-0 overflow-x-auto max-w-full">
-          <button
-            onClick={() => setActiveTab('queue')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'queue' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <ShieldAlert className="h-4 w-4" /> Queue
-            {pendingTotal > 0 && (
-              <span className="text-[9px] font-mono bg-zinc-950 text-red-400 px-2 py-0.5 rounded-full border border-red-500/10">
-                {pendingTotal}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('withdrawals')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'withdrawals' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Banknote className="h-4 w-4" /> Withdrawals
-            {withdrawals.filter(w => w.status === 'Pending').length > 0 && (
-              <span className="text-[9px] font-mono bg-zinc-950 text-red-400 px-2 py-0.5 rounded-full border border-red-500/10 animate-pulse">
-                {withdrawals.filter(w => w.status === 'Pending').length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('blog')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'blog' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <FileText className="h-4 w-4" /> Publish Blog
-          </button>
-          <button
-            onClick={() => setActiveTab('direct-artist')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'direct-artist' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <User className="h-4 w-4" /> Add Artist
-          </button>
-          <button
-            onClick={() => setActiveTab('direct-play')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'direct-play' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Drama className="h-4 w-4" /> Add Play
-          </button>
-          <button
-            onClick={() => setActiveTab('manage')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'manage' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <FolderEdit className="h-4 w-4" /> Manage Directory
-          </button>
-
-          <button
-            onClick={() => setActiveTab('subscribers')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'subscribers' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <Users className="h-4 w-4" /> Subscribers & Signups
-            {(subscribers.length > 0 || signups.length > 0) && (
-              <span className="text-[9px] font-mono bg-zinc-950 text-red-400 px-2 py-0.5 rounded-full border border-red-500/10">
-                {subscribers.length + signups.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('scanner')}
-            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'scanner' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
-            }`}
-          >
-            <QrCode className="h-4 w-4" /> Gate Scanner
-          </button>
+        {/* Footer info */}
+        <div className="border-t border-white/5 pt-4 text-center">
+          <p className="text-[10px] text-zinc-500 font-mono">Curtain Call Vault v2.6.5</p>
         </div>
+      </aside>
+
+      {/* Mobile Top Navigation */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-zinc-950/80 backdrop-blur-md border-b border-white/5 px-4 flex items-center justify-between z-40">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-gradient-to-tr from-red-600 to-amber-500 rounded-lg flex items-center justify-center text-white">
+            <Sparkles className="h-3.5 w-3.5" />
+          </div>
+          <span className="font-serif font-bold text-sm text-white">Curtain Admin</span>
+        </div>
+        <select
+          value={activeTab}
+          onChange={e => setActiveTab(e.target.value as AdminTab)}
+          className="bg-zinc-900 border border-white/5 text-white text-xs rounded-xl px-3 py-2 focus:outline-none"
+        >
+          <option value="overview">Overview</option>
+          <option value="queue">Queue ({pendingTotal})</option>
+          <option value="withdrawals">Withdrawals</option>
+          <option value="blog">Publish Blog</option>
+          <option value="direct-artist">Add Artiste</option>
+          <option value="direct-play">Add Play</option>
+          <option value="manage">Manage Directory</option>
+          <option value="subscribers">Subscribers</option>
+          <option value="scanner">Ticket Scanner</option>
+          <option value="email-logs">Email Logs</option>
+        </select>
       </div>
 
-      {/* ── HIGH-FIDELITY KPI METRIC CARDS ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5 relative overflow-hidden group hover:border-white/10 transition-all duration-300">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-              <Users className="h-5 w-5 text-red-500" />
-            </div>
-            <div>
-              <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider block">Registered Users</span>
-              <strong className="text-2xl font-serif font-bold text-white mt-0.5 block">{signups.length}</strong>
-            </div>
-          </div>
-        </div>
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 md:p-10 lg:pl-10 overflow-y-auto max-w-7xl mx-auto pt-24 lg:pt-10">
+        
+        {/* OVERVIEW TAB */}
+        {activeTab === 'overview' && (() => {
+          const totalRevenue = ClientDB.getTickets ? ClientDB.getTickets().reduce((acc: number, t: any) => acc + (t.price || 0), 0) : 0;
+          const totalPlays = ClientDB.getProductions ? ClientDB.getProductions().length : 0;
+          const totalArtists = ClientDB.getArtists ? ClientDB.getArtists().length : 0;
+          const totalCritics = verifiedCritics.length;
+          const totalSubscribers = subscribers.length;
 
-        <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5 relative overflow-hidden group hover:border-white/10 transition-all duration-300">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
-              <Mail className="h-5 w-5 text-blue-500" />
-            </div>
-            <div>
-              <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider block">Subscribers</span>
-              <strong className="text-2xl font-serif font-bold text-white mt-0.5 block">{subscribers.length}</strong>
-            </div>
-          </div>
-        </div>
+          return (
+            <div className="flex flex-col gap-8 animate-fade-up">
+              <div>
+                <h1 className="text-3xl font-serif font-bold text-white">Curation Control Dashboard</h1>
+                <p className="text-zinc-500 text-sm mt-1">Holistic status, analytics dossier, and curator utilities audit trail</p>
+              </div>
 
-        <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5 relative overflow-hidden group hover:border-white/10 transition-all duration-300">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-              <ShieldAlert className="h-5 w-5 text-amber-500" />
-            </div>
-            <div>
-              <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider block">Pending Queue</span>
-              <strong className="text-2xl font-serif font-bold text-white mt-0.5 block">{pendingTotal}</strong>
-            </div>
-          </div>
-        </div>
+              {/* Glowing Metric Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                {[
+                  { name: 'Revenue generated', value: `₦${totalRevenue.toLocaleString()}`, color: 'from-emerald-500 to-teal-500', bg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400', icon: Banknote },
+                  { name: 'Plays listed', value: totalPlays, color: 'from-red-500 to-pink-500', bg: 'bg-red-500/10 border-red-500/20 text-red-400', icon: Drama },
+                  { name: 'Theatremakers', value: totalArtists, color: 'from-blue-500 to-indigo-500', bg: 'bg-blue-500/10 border-blue-500/20 text-blue-400', icon: User },
+                  { name: 'Verified critics', value: totalCritics, color: 'from-amber-500 to-orange-500', bg: 'bg-amber-500/10 border-amber-500/20 text-amber-400', icon: Award },
+                  { name: 'Subscribers', value: totalSubscribers, color: 'from-purple-500 to-fuchsia-500', bg: 'bg-purple-500/10 border-purple-500/20 text-purple-400', icon: Mail }
+                ].map((card, idx) => {
+                  const Icon = card.icon;
+                  return (
+                    <div key={idx} className="bg-zinc-900/40 border border-white/5 rounded-3xl p-5 relative overflow-hidden group hover:border-white/10 transition-all duration-300">
+                      <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${card.color} opacity-5 rounded-full blur-xl group-hover:scale-125 transition-transform`} />
+                      <div className="flex items-center gap-3">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${card.bg}`}>
+                          <Icon className="h-4.5 w-4.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider block truncate">{card.name}</span>
+                          <strong className="text-xl font-serif font-bold text-white mt-0.5 block truncate">{card.value}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
-        <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5 relative overflow-hidden group hover:border-white/10 transition-all duration-300">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-              <Banknote className="h-5 w-5 text-emerald-500" />
+              {/* Bottom Cards split */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Column 1: Supabase Sync check (5 cols) */}
+                <div className="lg:col-span-5 bg-zinc-900/20 border border-white/5 rounded-3xl p-6 shadow-lg flex flex-col gap-6">
+                  <div>
+                    <h3 className="font-serif font-bold text-lg">Platform Security & Backup</h3>
+                    <p className="text-zinc-500 text-xs mt-0.5">Real-time status check of core background services</p>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between p-3.5 bg-zinc-900/40 border border-white/5 rounded-2xl">
+                      <div className="flex items-center gap-2.5">
+                        <ShieldCheck className="h-4.5 w-4.5 text-green-400" />
+                        <span className="text-xs font-semibold">Resend API Dispatcher</span>
+                      </div>
+                      <span className="bg-green-500/10 border border-green-500/20 text-green-400 px-2 py-0.5 rounded text-[9px] font-mono uppercase font-bold">Active</span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3.5 bg-zinc-900/40 border border-white/5 rounded-2xl">
+                      <div className="flex items-center gap-2.5">
+                        <Globe className="h-4.5 w-4.5 text-green-400" />
+                        <span className="text-xs font-semibold">Supabase Synchronization</span>
+                      </div>
+                      <span className="bg-green-500/10 border border-green-500/20 text-green-400 px-2 py-0.5 rounded text-[9px] font-mono uppercase font-bold">Synced</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setLoading(true);
+                      await syncFromSupabase();
+                      setLoading(false);
+                      showToast('Database successfully synchronized with Supabase cloud backup.', 'success');
+                      loadQueues();
+                    }}
+                    disabled={loading}
+                    className="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-zinc-100 transition-colors text-xs flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Sync Supabase Backup
+                  </button>
+                </div>
+
+                {/* Column 2: Holistic Signup Dossier (7 cols) */}
+                <div className="lg:col-span-7 bg-zinc-900/20 border border-white/5 rounded-3xl p-6 shadow-lg flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-serif font-bold text-lg">Active Signups Dossier</h3>
+                      <p className="text-zinc-500 text-xs mt-0.5">Most recent user accounts registered on Curtain Call</p>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold bg-zinc-900 border border-white/5 px-2.5 py-1 rounded-full">{signups.length} Users</span>
+                  </div>
+
+                  <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+                    {signups.length === 0 ? (
+                      <p className="text-xs text-zinc-500 font-mono py-6 text-center">No signups found.</p>
+                    ) : (
+                      signups.slice(0, 5).map((user, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-zinc-900/40 border border-white/5 rounded-2xl">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-white truncate">{user.email}</p>
+                            <p className="text-[10px] text-zinc-500 font-mono mt-0.5">{user.signupDate || 'Lagos, Nigeria'}</p>
+                          </div>
+                          <span className="text-[9px] bg-red-500/10 border border-red-500/20 text-red-400 px-2 py-0.5 rounded font-mono font-bold uppercase">Artist</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div>
-              <span className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider block">Cash-out Requests</span>
-              <strong className="text-2xl font-serif font-bold text-white mt-0.5 block">
-                {withdrawals.filter(w => w.status === 'Pending').length}
-              </strong>
-            </div>
-          </div>
-        </div>
-      </div>
+          );
+        })()}
 
       <div className="grid grid-cols-1 gap-8">
         
@@ -1365,7 +1433,33 @@ This file was retrieved from the Curtain Call Curation Vault.
         {activeTab === 'queue' && (
           <div className="flex flex-col gap-8 animate-fade-up">
             
-            {/* Artists submissions */}
+            {/* Queue Sub Tabs Header */}
+            <div className="flex items-center justify-between gap-6 border-b border-white/5 pb-4">
+              <div className="flex bg-zinc-900 border border-white/5 rounded-2xl p-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setQueueSubTab('pending')}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                    queueSubTab === 'pending' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <ShieldAlert className="h-4 w-4" /> Pending Approvals ({pendingTotal})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQueueSubTab('history')}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 ${
+                    queueSubTab === 'history' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  <RefreshCw className="h-4 w-4" /> Decisions History
+                </button>
+              </div>
+            </div>
+
+            {queueSubTab === 'pending' && (
+              <div className="flex flex-col gap-8">
+                {/* Artists submissions */}
             <div>
               <h2 className="text-xl font-serif font-bold text-white mb-4 flex items-center gap-2">
                 <User className="h-5 w-5 text-red-500" /> Pending Artist Profiles ({pendingArtists.length})
@@ -1676,6 +1770,83 @@ This file was retrieved from the Curtain Call Curation Vault.
                 </div>
               )}
             </div>
+            </div>
+            )}
+
+            {queueSubTab === 'history' && (
+              <div className="flex flex-col gap-6">
+                {/* Search Bar for History */}
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                  <input
+                    type="text"
+                    placeholder="Search history by submission name, email, or rejection reason..."
+                    value={historySearch}
+                    onChange={e => setHistorySearch(e.target.value)}
+                    className="w-full bg-zinc-900 border border-white/5 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-white focus:outline-none focus:border-red-500 transition-colors placeholder:text-zinc-500"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  {filteredHistory.length === 0 ? (
+                    <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-8 text-center text-zinc-500 font-mono text-xs">
+                      No decision history found matching your search.
+                    </div>
+                  ) : (
+                    filteredHistory.map((item: any, idx: number) => {
+                      const isPlay = 'genre' in item;
+                      const isArticle = 'excerpt' in item;
+                      const typeLabel = isPlay ? 'Playbill Listing' : isArticle ? 'Chronicle Article' : 'Theatremaker Profile';
+                      const nameText = item.name || item.title || 'Untitled Submission';
+                      
+                      return (
+                        <div key={idx} className="bg-zinc-900/20 border border-white/5 rounded-3xl p-5 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-lg">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[9px] uppercase font-mono font-bold bg-zinc-800 text-zinc-400 border border-white/5 px-2 py-0.5 rounded">
+                                {typeLabel}
+                              </span>
+                              <span className="text-[9px] uppercase font-mono font-bold bg-red-500/10 border border-red-500/20 text-red-400 px-2 py-0.5 rounded">
+                                Declined
+                              </span>
+                            </div>
+                            
+                            <h3 className="font-serif font-bold text-lg text-white mt-2">
+                              {nameText}
+                            </h3>
+                            
+                            <p className="text-xs text-zinc-500 font-mono mt-1">
+                              Submitter: {item.submitterEmail || 'guest@curtaincall.com'}
+                            </p>
+
+                            {item.declineReason && (
+                              <div className="mt-3 bg-red-500/5 border border-red-500/10 rounded-2xl p-4">
+                                <span className="text-[9px] uppercase tracking-wider font-bold text-red-500 font-sans block mb-1">Curator Notes / Rejection Reason:</span>
+                                <p className="text-xs text-red-300 font-sans leading-relaxed italic">
+                                  "{item.declineReason}"
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex md:flex-col gap-2 items-stretch shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                window.open(`/api/trigger-reject?to=${encodeURIComponent(item.submitterEmail || 'sheyeojelekesheyeojeleke@gmail.com')}&name=${encodeURIComponent(nameText)}&reason=${encodeURIComponent(item.declineReason || '')}`, '_blank');
+                              }}
+                              className="bg-white hover:bg-zinc-200 text-black text-xs font-bold py-2.5 px-4 rounded-xl transition-all text-center flex items-center justify-center gap-1"
+                            >
+                              <Mail className="h-3.5 w-3.5" /> Trigger Rejection Email
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -2966,6 +3137,76 @@ This file was retrieved from the Curtain Call Curation Vault.
                 >
                   Confirm Delete
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* EMAIL TRANSACTION LOGS TAB */}
+        {activeTab === 'email-logs' && (
+          <div className="flex flex-col gap-6 animate-fade-up">
+            <div>
+              <h2 className="text-2xl font-serif font-bold text-white flex items-center gap-2">
+                <FileText className="h-5 w-5 text-red-500" /> Transactional Notification Logs
+              </h2>
+              <p className="text-zinc-500 text-sm mt-1">Audit trail of all transactional notifications dispatched by Resend API or simulated</p>
+            </div>
+
+            <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6 shadow-lg flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Dispatched Logs</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    ClientDB.clearEmailLogs && ClientDB.clearEmailLogs();
+                    setEmailLogs([]);
+                    showToast('Transactional logs cleared successfully.', 'success');
+                  }}
+                  className="text-[10px] uppercase font-bold text-red-500 hover:text-red-400 transition-colors"
+                >
+                  Clear Logs
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-white/5 text-zinc-500 font-mono">
+                      <th className="py-3 font-semibold uppercase tracking-wider">Recipient</th>
+                      <th className="py-3 font-semibold uppercase tracking-wider">Subject</th>
+                      <th className="py-3 font-semibold uppercase tracking-wider">Timestamp</th>
+                      <th className="py-3 font-semibold uppercase tracking-wider">Delivery Mode</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {emailLogs.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-zinc-600 font-mono">
+                          No email transactional logs found.
+                        </td>
+                      </tr>
+                    ) : (
+                      emailLogs.map((log: any, idx: number) => (
+                        <tr key={idx} className="border-b border-white/5 hover:bg-zinc-900/30 transition-all">
+                          <td className="py-4 font-mono text-zinc-300">{log.to}</td>
+                          <td className="py-4 font-semibold text-white">{log.subject}</td>
+                          <td className="py-4 text-zinc-500 font-mono">{log.timestamp}</td>
+                          <td className="py-4">
+                            {log.simulated ? (
+                              <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-mono text-[9px] uppercase">
+                                Simulated
+                              </span>
+                            ) : (
+                              <span className="bg-green-500/10 border border-green-500/20 text-green-400 px-2 py-0.5 rounded font-mono text-[9px] uppercase">
+                                Delivered
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -4369,6 +4610,7 @@ This file was retrieved from the Curtain Call Curation Vault.
         </div>
       )}
 
+      </main>
     </div>
   );
 }
