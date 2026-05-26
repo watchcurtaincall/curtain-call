@@ -40,12 +40,12 @@ export async function GET(request: Request) {
       profilesRes,
       userProfileRes
     ] = await Promise.all([
-      // 1. productions
-      supabaseServer.from('productions').select('*'),
-      // 2. artists
-      supabaseServer.from('artists').select('*'),
-      // 3. articles
-      supabaseServer.from('articles').select('*'),
+      // 1. productions - ordered by created_at DESC so newest always first
+      supabaseServer.from('productions').select('*').order('created_at', { ascending: false }),
+      // 2. artists - ordered by created_at DESC so newest always first
+      supabaseServer.from('artists').select('*').order('created_at', { ascending: false }),
+      // 3. articles - ordered by created_at DESC
+      supabaseServer.from('articles').select('*').order('created_at', { ascending: false }),
       // 4. reviews
       supabaseServer.from('reviews').select('*'),
       // 5. critic_applications

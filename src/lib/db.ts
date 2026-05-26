@@ -122,7 +122,7 @@ const mapProductionToDb = (p: any) => {
 const mapProductionFromDb = (row: any) => {
   const galleryImages: string[] = [];
   let ticketTiers: any[] = [];
-  let productionType: 'Student' | 'Professional' = 'Professional';
+  let productionType: 'Student' | 'Professional' | undefined = undefined;
   
   if (row.gallery_images && Array.isArray(row.gallery_images)) {
     row.gallery_images.forEach((item: any) => {
@@ -1606,7 +1606,27 @@ export const syncFromSupabase = async () => {
       
       const currentLocal = JSON.parse(localStorage.getItem(PRODUCTIONS_KEY) || '[]');
       const drafts = currentLocal.filter((p: any) => p.status === 'Draft');
-      localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([...approved, ...drafts]));
+
+      // createdAt Merge Policy: if the remote production is missing createdAt (e.g. old DB rows),
+      // fall back to the locally cached value or derive it from the ID's embedded timestamp.
+      const mergedApproved = approved.map((remoteProd: any) => {
+        if (!remoteProd.createdAt) {
+          const localProd = currentLocal.find((lp: any) => lp.id === remoteProd.id);
+          if (localProd?.createdAt) {
+            return { ...remoteProd, createdAt: localProd.createdAt };
+          }
+          // Derive from ID (e.g. 'the-regent-1748217143085' or 'direct_play_1748217143085')
+          const match = remoteProd.id?.match(/\d{10,}/);
+          if (match) {
+            const ts = parseInt(match[0], 10);
+            const ms = ts < 9999999999 ? ts * 1000 : ts;
+            return { ...remoteProd, createdAt: new Date(ms).toISOString() };
+          }
+        }
+        return remoteProd;
+      });
+
+      localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([...mergedApproved, ...drafts]));
       
       if (isAdmin) {
         const pendingRemote = mappedRemote.filter((p: any) => p.curationStatus === 'Pending');
@@ -1835,27 +1855,36 @@ if (typeof window !== 'undefined') {
 
 // Robust, high-precision sorting utility to order plays, artists, and articles by date added descending (newest first)
 export function sortItemsByDateAdded<T extends { id: string; createdAt?: string | null }>(items: T[]): T[] {
+  // Pre-build an index map so UUID-fallback scoring uses the ORIGINAL array order
+  const indexMap = new Map<T, number>(items.map((item, i) => [item, i]));
+
   const getScore = (item: T): number => {
     // 1. If createdAt is present and valid, use its timestamp
     if (item.createdAt) {
       const parsedTime = new Date(item.createdAt).getTime();
-      if (!isNaN(parsedTime)) return parsedTime;
+      if (!isNaN(parsedTime) && parsedTime > 0) return parsedTime;
     }
 
-    // 2. Parse timestamp from dynamic custom IDs like 'pending_play_1779...'
+    // 2. Parse timestamp from dynamic custom IDs like 'pending_play_1779...', 'direct_play_1779...'
     const match = item.id.match(/\d{10,}/);
     if (match) {
-      return parseInt(match[0], 10);
+      const ts = parseInt(match[0], 10);
+      // Scale 10-digit Unix seconds to milliseconds
+      return ts < 9999999999 ? ts * 1000 : ts;
     }
 
     // 3. Extract number from mock IDs like 'p1'..'p10', 'a1'..'a10', etc.
     const mockMatch = item.id.match(/^[a-z](\d+)$/i);
     if (mockMatch) {
-      // Base time in the past + mock order number so larger mock number = newer
+      // Place mock items just above the bottom — newer mocks have higher numbers
       return 1000000000000 + parseInt(mockMatch[1], 10) * 1000;
     }
 
-    return 0;
+    // 4. For UUID-style IDs (Supabase-generated), use original array position as proxy for
+    //    insertion order (data arrives ordered by created_at DESC from server).
+    //    Assign a very recent score minus the array index so first in array = newest.
+    const arrayIndex = indexMap.get(item) ?? 0;
+    return Date.now() - arrayIndex * 10;
   };
 
   return [...items].sort((a, b) => getScore(b) - getScore(a));

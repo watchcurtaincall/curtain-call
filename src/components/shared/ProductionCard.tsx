@@ -41,12 +41,12 @@ export function ProductionCard({ production }: { production: Production }) {
           {production.status}
         </div>
 
-        {/* Production type tag (Student vs Professional) */}
+        {/* Production type tag (Student vs Professional) — stacked below status badge to avoid overlap */}
         {production.productionType && (
-          <div className={`absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase backdrop-blur-sm border ${
+          <div className={`absolute top-9 left-2.5 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase backdrop-blur-sm border ${
             production.productionType === 'Student'
-              ? 'bg-blue-600/80 border-blue-500/50 text-white shadow-lg shadow-blue-950/20'
-              : 'bg-emerald-600/80 border-emerald-500/50 text-white shadow-lg shadow-emerald-950/20'
+              ? 'bg-blue-600/80 border-blue-500/50 text-white'
+              : 'bg-emerald-600/80 border-emerald-500/50 text-white'
           }`}>
             {production.productionType}
           </div>

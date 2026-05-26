@@ -254,7 +254,7 @@ function CreateProductionForm() {
         .replace(/[^a-z0-9_ ]/g, '')
         .trim()
         .replace(/\s+/g, '-');
-      const newPlayId = `${slug || 'play'}-${Date.now().toString().slice(-4)}`;
+      const newPlayId = `${slug || 'play'}-${Date.now()}`;
       const targetId = isEditMode && editId ? editId : newPlayId;
 
       const existingProd = isEditMode && editId ? ClientDB.getProductionById(editId) : null;
@@ -302,7 +302,7 @@ function CreateProductionForm() {
       const slug = form.title
         ? form.title.toLowerCase().replace(/[^a-z0-9_ ]/g, '').trim().replace(/\s+/g, '-')
         : 'draft';
-      const newPlayId = `${slug}-${Date.now().toString().slice(-4)}`;
+      const newPlayId = `${slug}-${Date.now()}`;
       const targetId = isEditMode && editId ? editId : newPlayId;
 
       const existingProd = isEditMode && editId ? ClientDB.getProductionById(editId) : null;
