@@ -276,6 +276,7 @@ function CreateProductionForm() {
         galleryImages: form.posterUrl ? [form.posterUrl] : [],
         submitterEmail: user?.email || '',
         curationStatus: 'Approved' as const,
+        isProducerManaged: true,
         showDate: firstDate,
         ticketTiers: form.tiers.map(t => ({
           id: t.id,
@@ -324,6 +325,7 @@ function CreateProductionForm() {
         galleryImages: form.posterUrl ? [form.posterUrl] : [],
         submitterEmail: user?.email || '',
         curationStatus: 'Approved' as const, // Drafts are pre-approved but private
+        isProducerManaged: true,
         showDate: firstDate || undefined,
         ticketTiers: form.tiers.map(t => ({
           id: t.id,

@@ -99,6 +99,9 @@ const mapProductionToDb = (p: any) => {
   if (p.showTime) {
     gallery.push(JSON.stringify({ __showTime: p.showTime }));
   }
+  if (p.isProducerManaged !== undefined) {
+    gallery.push(JSON.stringify({ __isProducerManaged: p.isProducerManaged }));
+  }
   return {
     id: p.id,
     title: p.title,
@@ -127,6 +130,7 @@ const mapProductionFromDb = (row: any) => {
   let ticketTiers: any[] = [];
   let productionType: 'Student' | 'Professional' | undefined = undefined;
   let showTime: string | undefined = undefined;
+  let isProducerManaged: boolean | undefined = undefined;
   
   if (row.gallery_images && Array.isArray(row.gallery_images)) {
     row.gallery_images.forEach((item: any) => {
@@ -148,6 +152,13 @@ const mapProductionFromDb = (row: any) => {
         try {
           const parsed = JSON.parse(item);
           showTime = parsed.__showTime;
+        } catch (e) {
+          // ignore
+        }
+      } else if (typeof item === 'string' && item.startsWith('{"__isProducerManaged":')) {
+        try {
+          const parsed = JSON.parse(item);
+          isProducerManaged = parsed.__isProducerManaged;
         } catch (e) {
           // ignore
         }
@@ -192,6 +203,7 @@ const mapProductionFromDb = (row: any) => {
     castAndCrew: row.cast_and_crew || [],
     showDate: row.show_date,
     showTime,
+    isProducerManaged,
     declineReason: row.decline_reason || null,
     ticketTiers: ticketTiers.length > 0 ? ticketTiers : undefined,
     productionType,
