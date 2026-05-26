@@ -293,7 +293,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (cleanEmail === 'watchcurtaincall@gmail.com') {
       loggedUser = {
-        name: 'Watch Curtain Call Admin',
+        name: 'CC Admin',
         email: 'watchcurtaincall@gmail.com',
         avatar: 'WCC',
         joinDate: 'May 2026',
@@ -345,7 +345,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Local Simulation Fallback
       if (cleanEmail === 'watchcurtaincall@gmail.com') {
         loggedUser = {
-          name: 'Watch Curtain Call Admin',
+          name: 'CC Admin',
           email: 'watchcurtaincall@gmail.com',
           avatar: 'WCC',
           joinDate: 'May 2026',
