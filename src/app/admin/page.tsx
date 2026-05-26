@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { ClientDB, syncFromSupabase } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
-import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download } from 'lucide-react';
+import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download, QrCode, Camera, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers';
+type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'scanner';
 
 // ── Stageography Adder Sub-component (used inside Edit Artist modal) ──
 function AdminStageographyAdder({ onAdd }: { onAdd: (credit: { productionId: string; productionTitle: string; role: string }) => void }) {
@@ -101,6 +101,96 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('queue');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Gate Scanner state variables
+  const [scanInput, setScanInput] = useState('');
+  const [scanResult, setScanResult] = useState<{
+    status: 'Approved' | 'Duplicate' | 'Invalid';
+    ticket?: any;
+    message: string;
+    timestamp: number;
+  } | null>(null);
+  const [scanHistory, setScanHistory] = useState<{
+    id: string;
+    ticket?: any;
+    input: string;
+    checkedInAt: number;
+    status: 'Approved' | 'Duplicate' | 'Invalid';
+  }[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('curtain_checked_in_tickets');
+      if (stored) {
+        try {
+          setScanHistory(JSON.parse(stored));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, [isAuthorized]);
+
+  const saveScanHistory = (history: any[]) => {
+    setScanHistory(history);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('curtain_checked_in_tickets', JSON.stringify(history));
+    }
+  };
+
+  const handleValidateTicket = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const inputClean = scanInput.trim().toUpperCase();
+    if (!inputClean) return;
+
+    const allTickets = ClientDB.getTickets();
+    const matchedTicket = allTickets.find(t => 
+      (t.gatePass && t.gatePass.toUpperCase() === inputClean) || 
+      (t.reference && t.reference.toUpperCase() === inputClean)
+    );
+
+    const now = Date.now();
+    let result: any = null;
+
+    if (matchedTicket) {
+      const isAlreadyCheckedIn = scanHistory.some(h => h.status === 'Approved' && h.ticket?.id === matchedTicket.id);
+
+      if (isAlreadyCheckedIn) {
+        result = {
+          status: 'Duplicate',
+          ticket: matchedTicket,
+          message: `DUPLICATE TICKET WARNING: Ticket has already been scanned and verified.`,
+          timestamp: now
+        };
+      } else {
+        result = {
+          status: 'Approved',
+          ticket: matchedTicket,
+          message: `ADMISSION APPROVED: Access granted for ${matchedTicket.buyerEmail}.`,
+          timestamp: now
+        };
+      }
+    } else {
+      result = {
+        status: 'Invalid',
+        message: `INVALID PASS: No purchased ticket matches the code "${inputClean}".`,
+        timestamp: now
+      };
+    }
+
+    setScanResult(result);
+    
+    const newHistoryItem = {
+      id: `scan_${now}_${Math.random().toString(36).substr(2, 4)}`,
+      ticket: matchedTicket,
+      input: inputClean,
+      checkedInAt: now,
+      status: result.status
+    };
+    
+    saveScanHistory([newHistoryItem, ...scanHistory]);
+    setScanInput('');
+  };
 
   const exportToCSV = (data: any[], filename: string, headers: string[]) => {
     let csvContent = "data:text/csv;charset=utf-8,";
@@ -1148,6 +1238,15 @@ This file was retrieved from the Curtain Call Curation Vault.
                 {subscribers.length + signups.length}
               </span>
             )}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('scanner')}
+            className={`px-4 py-3 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'scanner' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            <QrCode className="h-4 w-4" /> Gate Scanner
           </button>
         </div>
       </div>
@@ -3600,6 +3699,293 @@ This file was retrieved from the Curtain Call Curation Vault.
                 )}
               </div>
 
+            </div>
+          </div>
+        )}
+
+
+
+        {/* ── GATE SCANNER & VALIDATION PANEL ────────────────────────── */}
+        {activeTab === 'scanner' && (
+          <div className="flex flex-col gap-8 animate-fade-up">
+            <style>{`
+              @keyframes scanline {
+                0% { top: 0%; opacity: 0.3; }
+                50% { top: 100%; opacity: 1; }
+                100% { top: 0%; opacity: 0.3; }
+              }
+              .scanline-effect {
+                position: absolute;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: #22c55e;
+                box-shadow: 0 0 15px #22c55e, 0 0 5px #22c55e;
+                animation: scanline 3.5s ease-in-out infinite;
+                pointer-events: none;
+              }
+            `}</style>
+
+            {/* Quick Stats Panel */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full blur-[40px] pointer-events-none" />
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Checked In</span>
+                <span className="text-2xl md:text-3xl font-serif font-bold text-green-400 block mt-1">
+                  {scanHistory.filter(h => h.status === 'Approved').length}
+                </span>
+                <span className="text-[9px] font-mono text-zinc-600 block mt-1">Admitted guest count</span>
+              </div>
+
+              <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-[40px] pointer-events-none" />
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Total Pool</span>
+                <span className="text-2xl md:text-3xl font-serif font-bold text-white block mt-1">
+                  {ClientDB.getTickets().length}
+                </span>
+                <span className="text-[9px] font-mono text-zinc-600 block mt-1">Purchased ticket keys</span>
+              </div>
+
+              <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none" />
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Duplicates</span>
+                <span className="text-2xl md:text-3xl font-serif font-bold text-amber-500 block mt-1">
+                  {scanHistory.filter(h => h.status === 'Duplicate').length}
+                </span>
+                <span className="text-[9px] font-mono text-zinc-600 block mt-1">Declined duplicate passes</span>
+              </div>
+
+              <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-[40px] pointer-events-none" />
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Invalid Key Claims</span>
+                <span className="text-2xl md:text-3xl font-serif font-bold text-red-500 block mt-1">
+                  {scanHistory.filter(h => h.status === 'Invalid').length}
+                </span>
+                <span className="text-[9px] font-mono text-zinc-600 block mt-1">Unrecognized voucher entries</span>
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-12 gap-8 items-start">
+              {/* Scan Terminal Panel */}
+              <div className="lg:col-span-7 bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
+                
+                <div className="border-b border-white/5 pb-4">
+                  <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+                    <QrCode className="h-5 w-5 text-red-500 animate-pulse" /> Curtain Call Gate Terminal
+                  </h2>
+                  <p className="text-zinc-500 text-xs mt-1">Check-in tickets, validate references, and verify QR codes in real-time.</p>
+                </div>
+
+                {/* Simulated Camera Scanner screen */}
+                <div className="relative aspect-video rounded-2xl border border-white/10 bg-zinc-950/80 flex flex-col items-center justify-center overflow-hidden shadow-inner group">
+                  {/* Hologram neon grid backgrounds */}
+                  <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+                  
+                  {/* Neon border brackets inside */}
+                  <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-zinc-600 group-hover:border-red-500 transition-colors" />
+                  <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-zinc-600 group-hover:border-red-500 transition-colors" />
+                  <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-zinc-600 group-hover:border-red-500 transition-colors" />
+                  <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-zinc-600 group-hover:border-red-500 transition-colors" />
+
+                  {/* Red flashing REC label */}
+                  <div className="absolute top-6 left-6 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/5 text-[9px] font-mono text-white tracking-widest uppercase">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" />
+                    <span>REC GATE_01</span>
+                  </div>
+
+                  {/* Laser line overlay */}
+                  <div className="scanline-effect" />
+
+                  {/* Center QR code glyph icon */}
+                  <div className="flex flex-col items-center gap-4 relative z-10 animate-pulse text-zinc-500 group-hover:text-red-500 transition-colors">
+                    <Camera className="h-12 w-12 stroke-[1.25]" />
+                    <div className="text-center">
+                      <p className="text-[10px] font-mono tracking-widest uppercase text-zinc-400">Scanner Engine Standby</p>
+                      <p className="text-[9px] font-mono text-zinc-600 mt-1">Ready for Gate Pass Entry or QR Scan</p>
+                    </div>
+                  </div>
+
+                  {/* Real-time Validation Overlay results */}
+                  {scanResult && (
+                    <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center p-6 backdrop-blur-md animate-fade-in ${
+                      scanResult.status === 'Approved' ? 'bg-green-950/90' : 
+                      scanResult.status === 'Duplicate' ? 'bg-amber-950/95' : 'bg-red-950/95'
+                    }`}>
+                      <div className="flex flex-col items-center text-center gap-3 max-w-sm">
+                        {scanResult.status === 'Approved' ? (
+                          <>
+                            <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center text-green-400">
+                              <CheckCircle2 className="w-7 h-7" />
+                            </div>
+                            <h3 className="font-serif font-bold text-xl text-white">ACCESS GRANTED</h3>
+                            <div className="bg-black/40 border border-white/5 rounded-xl p-3 w-full text-left font-mono text-xs flex flex-col gap-1">
+                              <p className="text-white font-serif truncate font-bold"><span className="text-zinc-500">Show:</span> {scanResult.ticket?.productionTitle}</p>
+                              <p className="text-zinc-300 truncate"><span className="text-zinc-500">Guest:</span> {scanResult.ticket?.buyerEmail}</p>
+                              <p className="text-green-400 uppercase tracking-widest text-[10px] font-bold mt-1">
+                                {scanResult.ticket?.tier} Admission · Validated
+                              </p>
+                            </div>
+                          </>
+                        ) : scanResult.status === 'Duplicate' ? (
+                          <>
+                            <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                              <ShieldAlert className="w-7 h-7" />
+                            </div>
+                            <h3 className="font-serif font-bold text-xl text-white">DUPLICATE TICKET</h3>
+                            <p className="text-zinc-400 text-xs leading-relaxed">
+                              This gate pass has already been checked-in. Access is denied to prevent ticket sharing or reuse.
+                            </p>
+                            <div className="bg-black/40 border border-white/5 rounded-xl p-3 w-full text-left font-mono text-xs flex flex-col gap-1">
+                              <p className="text-white truncate font-bold"><span className="text-zinc-500">Guest:</span> {scanResult.ticket?.buyerEmail}</p>
+                              <p className="text-amber-400"><span className="text-zinc-500">Tier:</span> {scanResult.ticket?.tier}</p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
+                              <Skull className="w-7 h-7" />
+                            </div>
+                            <h3 className="font-serif font-bold text-xl text-white">INVALID CODE</h3>
+                            <p className="text-zinc-400 text-xs leading-relaxed">
+                              {scanResult.message}
+                            </p>
+                          </>
+                        )}
+                        
+                        <button 
+                          onClick={() => setScanResult(null)}
+                          className="mt-2 text-[10px] font-mono text-zinc-500 hover:text-white uppercase tracking-wider underline underline-offset-4"
+                        >
+                          Dismiss Screen
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Validation Form Entry */}
+                <form onSubmit={handleValidateTicket} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Enter Voucher Pass or Paystack Reference</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. CC-6AF7D2 or PAY-491730..."
+                        value={scanInput}
+                        onChange={e => setScanInput(e.target.value)}
+                        className="flex-1 bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 uppercase tracking-widest font-mono"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!scanInput.trim()}
+                        className="bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 font-mono shadow-md shadow-red-600/15"
+                      >
+                        Check Pass
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-zinc-600 leading-relaxed">
+                    💡 Tip: Scanning supports both the custom 8-digit **Gate Pass voucher code** printed on the PDF ticket and the standard **Paystack Transaction Reference** sent in the receipt emails. Matches are instant.
+                  </p>
+                </form>
+              </div>
+
+              {/* Scan Log History Panel */}
+              <div className="lg:col-span-5 bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col h-[550px]">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
+                
+                <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-5 shrink-0">
+                  <div>
+                    <h2 className="text-lg font-serif font-bold text-white flex items-center gap-2">
+                      <RefreshCw className="h-4.5 w-4.5 text-zinc-500" /> Access Scan History
+                    </h2>
+                    <p className="text-zinc-500 text-[11px] mt-0.5">Live chronological logs of scanned passes.</p>
+                  </div>
+                  
+                  {scanHistory.length > 0 && (
+                    <button
+                      onClick={() => {
+                        if (confirm("Reset and clear checked-in ticket records log? This action is permanent for this device.")) {
+                          saveScanHistory([]);
+                          showToast("Scan check-in log successfully reset!", "error");
+                        }
+                      }}
+                      className="text-zinc-500 hover:text-red-400 text-[10px] font-mono uppercase tracking-wider hover:bg-red-500/10 px-2.5 py-1 rounded-lg border border-white/5 transition-colors shrink-0"
+                    >
+                      Clear Log
+                    </button>
+                  )}
+                </div>
+
+                {scanHistory.length === 0 ? (
+                  <div className="bg-zinc-950 border border-white/5 rounded-2xl p-12 text-center text-zinc-500 font-mono text-xs flex-1 flex flex-col items-center justify-center gap-3">
+                    <QrCode className="h-8 w-8 text-zinc-800 stroke-[1.25]" />
+                    <span>No passes checked-in yet. Live events logged here.</span>
+                  </div>
+                ) : (
+                  <div className="overflow-y-auto [scrollbar-width:none] flex-1 pr-0.5">
+                    <div className="flex flex-col gap-2.5">
+                      {scanHistory.map((log) => {
+                        const formattedTime = new Date(log.checkedInAt).toLocaleTimeString([], { 
+                          hour: '2-digit', 
+                          minute: '2-digit',
+                          second: '2-digit'
+                        });
+
+                        return (
+                          <div 
+                            key={log.id} 
+                            className={`border rounded-2xl p-3.5 flex items-start justify-between gap-4 transition-all ${
+                              log.status === 'Approved' ? 'bg-green-950/20 border-green-500/15' : 
+                              log.status === 'Duplicate' ? 'bg-amber-950/20 border-amber-500/15' : 
+                              'bg-red-950/20 border-red-500/15'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border ${
+                                  log.status === 'Approved' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 
+                                  log.status === 'Duplicate' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 
+                                  'bg-red-500/10 text-red-400 border-red-500/20'
+                                }`}>
+                                  {log.status}
+                                </span>
+                                <span className="text-[10px] font-mono text-zinc-500">{formattedTime}</span>
+                              </div>
+
+                              <span className="text-white font-mono text-xs block truncate mt-2 uppercase tracking-wide">
+                                Key: {log.input}
+                              </span>
+
+                              {log.ticket && (
+                                <div className="mt-1 flex flex-col gap-0.5 text-[10px] text-zinc-400 font-serif">
+                                  <span className="text-zinc-300 font-bold truncate">{log.ticket.productionTitle}</span>
+                                  <span className="font-mono text-zinc-500 truncate">{log.ticket.buyerEmail} · {log.ticket.tier}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                if (confirm("Remove this log record?")) {
+                                  const updatedHistory = scanHistory.filter(h => h.id !== log.id);
+                                  saveScanHistory(updatedHistory);
+                                  showToast("Access log record removed.", "error");
+                                }
+                              }}
+                              className="text-zinc-500 hover:text-red-400 p-1.5 hover:bg-red-500/10 rounded-lg transition-colors shrink-0 align-top"
+                              title="Delete from log"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
