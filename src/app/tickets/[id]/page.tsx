@@ -121,16 +121,22 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       </tr>
     `).join('');
 
+    const downloadUrl = typeof window !== 'undefined' ? `${window.location.origin}/tickets/${production?.id}?ref=${reference}` : '';
+
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-        <div style="text-align: center; margin-bottom: 30px;">
+        <div style="text-align: center; margin-bottom: 25px;">
           <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Admission Pass</span>
           <div style="height: 2px; width: 80px; background-color: #dc2626; margin: 15px auto 0;"></div>
         </div>
         
-        <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center;">
+        <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 20px;">
           Your seats have been reserved. Present the digital passes at the gates.
         </p>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+          <a href="${downloadUrl}" style="background-color: #ffffff; color: #000000; font-weight: bold; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-size: 13px; display: inline-block; font-family: sans-serif; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">📥 Download PDF Ticket Pass</a>
+        </div>
         
         <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
           <div style="margin-bottom: 20px;">
@@ -182,28 +188,73 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <div className="flex flex-col min-h-screen container mx-auto px-4 py-16 items-center justify-center bg-zinc-950">
-      
       {successData ? (
         /* ── GORGEOUS PREMIUM SUCCESS RECEIPT PASS ── */
-        <div className="max-w-md w-full bg-zinc-900 border-2 border-green-500/30 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden animate-fade-up">
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-green-500" />
+        <div className="max-w-md w-full bg-zinc-900 border-2 border-green-500/30 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden animate-fade-up print-wrapper">
+          <style>{`
+            @media print {
+              body {
+                background: white !important;
+                color: black !important;
+              }
+              /* Hide all other layout and navigation elements */
+              body > div:not(.print-wrapper),
+              body > header,
+              body > footer,
+              .no-print {
+                display: none !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+              /* Isolate tickets printable card container */
+              .print-wrapper {
+                background: white !important;
+                color: black !important;
+                border: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 auto !important;
+                max-width: 100% !important;
+                width: 100% !important;
+              }
+              .print-ticket-card {
+                background: white !important;
+                color: black !important;
+                border: 2px solid black !important;
+                box-shadow: none !important;
+                margin-bottom: 25px !important;
+                page-break-inside: avoid !important;
+                border-radius: 16px !important;
+              }
+              .print-ticket-card * {
+                color: black !important;
+              }
+              .print-dashed-line {
+                border-color: black !important;
+                border-style: dashed !important;
+              }
+            }
+          `}</style>
           
-          <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-6">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-green-500 no-print" />
+          
+          <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-6 no-print">
             <CheckCircle2 className="h-8 w-8 text-green-500" />
           </div>
 
-          <h1 className="text-2xl font-serif font-bold text-white mb-1">
+          <h1 className="text-2xl font-serif font-bold text-white mb-1 no-print">
             Ticket Confirmed!
           </h1>
-          <p className="text-xs text-zinc-500 mb-6">
+          <p className="text-xs text-zinc-500 mb-6 no-print">
             Your {successData.quantity} admission pass{successData.quantity > 1 ? 'es have' : ' has'} been secured and sent to <span className="text-zinc-300 font-semibold">{email || 'guest@curtaincall.ng'}</span>.
           </p>
 
           {/* Stacks of Admission Passes UI */}
           <div className="flex flex-col gap-4 overflow-y-auto max-h-[380px] pr-2 [scrollbar-width:none] mb-6">
             {successData.tickets.map((t, index) => (
-              <div key={index} className="bg-zinc-950 border border-white/5 rounded-2xl p-5 text-left relative overflow-hidden shrink-0">
-                <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-green-500/5 rounded-full blur-xl" />
+              <div key={index} className="bg-zinc-950 border border-white/5 rounded-2xl p-5 text-left relative overflow-hidden shrink-0 print-ticket-card">
+                <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-green-500/5 rounded-full blur-xl no-print" />
                 
                 <div className="flex justify-between items-start mb-3">
                   <div>
@@ -212,12 +263,12 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                       {production.title}
                     </h3>
                   </div>
-                  <span className="text-[9px] font-bold text-green-400 bg-green-600/10 px-2 py-0.5 rounded border border-green-500/20 font-mono">
+                  <span className="text-[9px] font-bold text-green-400 bg-green-600/10 px-2 py-0.5 rounded border border-green-500/20 font-mono no-print">
                     ADMIT ONE
                   </span>
                 </div>
 
-                <div className="border-t border-dashed border-white/10 my-3" />
+                <div className="border-t border-dashed border-white/10 my-3 print-dashed-line" />
 
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
@@ -249,16 +300,24 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             ))}
           </div>
 
-          <p className="text-[10px] text-zinc-500 leading-relaxed mb-6 font-mono">
+          <p className="text-[10px] text-zinc-500 leading-relaxed mb-6 font-mono no-print">
             PRESENT THESE DIGITAL PASSES OR REFERENCE CODES AT THE VENUE GATE.
           </p>
 
-          <Link
-            href={`/productions/${production.slug || production.id}`}
-            className="block w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-zinc-100 transition-colors text-sm shadow-xl"
-          >
-            Back to Show Details
-          </Link>
+          <div className="flex flex-col gap-3 w-full no-print">
+            <button
+              onClick={() => typeof window !== 'undefined' && window.print()}
+              className="w-full bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white font-bold py-3.5 rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
+            >
+              <QrCode className="h-4 w-4 text-red-500" /> Print Passes / Save PDF
+            </button>
+            <Link
+              href={`/productions/${production.slug || production.id}`}
+              className="block w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-zinc-100 transition-colors text-sm shadow-xl text-center"
+            >
+              Back to Show Details
+            </Link>
+          </div>
         </div>
       ) : (
         /* ── TICKET SELECTION & CHECKOUT FORM ── */
