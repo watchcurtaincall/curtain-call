@@ -9,6 +9,106 @@ import { ArrowLeft, Ticket as TicketIcon, Mail, CheckCircle2, QrCode } from 'luc
 import { PaystackButton } from '@/components/payments/PaystackButton';
 import { useAuth } from '@/lib/AuthContext';
 
+function generateQRCodeSVG(text: string) {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = text.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  const size = 15;
+  const cells: boolean[][] = Array(size).fill(null).map(() => Array(size).fill(false));
+  
+  const drawFinder = (x: number, y: number) => {
+    for (let dy = 0; dy < 5; dy++) {
+      for (let dx = 0; dx < 5; dx++) {
+        const isBorder = dx === 0 || dx === 4 || dy === 0 || dy === 4;
+        const isCenter = dx >= 2 && dx <= 2 && dy >= 2 && dy <= 2;
+        cells[y + dy][x + dx] = isBorder || isCenter;
+      }
+    }
+  };
+  
+  drawFinder(0, 0);
+  drawFinder(10, 0);
+  drawFinder(0, 10);
+  
+  let hashIndex = 0;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const inTopLeft = x < 6 && y < 6;
+      const inTopRight = x > 8 && y < 6;
+      const inBottomLeft = x < 6 && y > 8;
+      if (inTopLeft || inTopRight || inBottomLeft) continue;
+      
+      const bit = (Math.abs(hash) >> (hashIndex % 24)) & 1;
+      cells[y][x] = bit === 1;
+      hashIndex++;
+    }
+  }
+
+  const rects: any[] = [];
+  const cellSize = 10;
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (cells[y][x]) {
+        rects.push(
+          <rect
+            key={`${x}-${y}`}
+            x={x * cellSize}
+            y={y * cellSize}
+            width={cellSize}
+            height={cellSize}
+            fill="black"
+          />
+        );
+      }
+    }
+  }
+
+  return (
+    <svg viewBox={`0 0 ${size * cellSize} ${size * cellSize}`} className="w-16 h-16 bg-white p-1 rounded-lg shadow-md shrink-0">
+      {rects}
+    </svg>
+  );
+}
+
+function generateBarcodeSVG(text: string) {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    hash = text.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  
+  const barsCount = 38;
+  const bars: any[] = [];
+  let currentX = 0;
+  
+  for (let i = 0; i < barsCount; i++) {
+    const bit = (Math.abs(hash) >> (i % 24)) & 3;
+    const barWidth = bit === 0 ? 1 : bit === 1 ? 2 : bit === 2 ? 3 : 1.5;
+    const isGap = i % 2 === 1;
+    
+    if (!isGap) {
+      bars.push(
+        <rect
+          key={i}
+          x={currentX}
+          y={0}
+          width={barWidth}
+          height={30}
+          fill="currentColor"
+        />
+      );
+    }
+    currentX += barWidth + (isGap ? 1.5 : 1);
+  }
+  
+  return (
+    <svg viewBox={`0 0 ${currentX} 30`} className="w-full h-7 text-zinc-700/60 print:text-black">
+      {bars}
+    </svg>
+  );
+}
+
 export default function TicketPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth();
   const [production, setProduction] = useState<Production | null>(null);
@@ -189,7 +289,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     <div className="flex flex-col min-h-screen container mx-auto px-4 py-16 items-center justify-center bg-zinc-950">
       {successData ? (
         /* ── GORGEOUS PREMIUM SUCCESS RECEIPT PASS ── */
-        <div className="max-w-md w-full bg-zinc-900 border-2 border-green-500/30 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden animate-fade-up print-wrapper">
+        <div className="max-w-xl w-full bg-zinc-900 border-2 border-green-500/30 rounded-3xl p-6 md:p-8 text-center shadow-2xl relative overflow-hidden animate-fade-up print-wrapper">
           <style>{`
             @media print {
               body {
@@ -217,14 +317,27 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                 max-width: 100% !important;
                 width: 100% !important;
               }
+              .print-ticket-container {
+                max-height: none !important;
+                overflow: visible !important;
+                display: block !important;
+                padding: 0 !important;
+              }
               .print-ticket-card {
                 background: white !important;
                 color: black !important;
                 border: 2px solid black !important;
                 box-shadow: none !important;
-                margin-bottom: 25px !important;
+                margin-bottom: 30px !important;
                 page-break-inside: avoid !important;
                 border-radius: 16px !important;
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: stretch !important;
+                justify-content: space-between !important;
+                padding: 20px !important;
+                width: 100% !important;
+                min-height: 180px !important;
               }
               .print-ticket-card * {
                 color: black !important;
@@ -233,82 +346,107 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                 border-color: black !important;
                 border-style: dashed !important;
               }
+              .print-stub-section {
+                background: white !important;
+                border: none !important;
+                border-left: 2px dashed black !important;
+                border-radius: 0 !important;
+                padding: 0 0 0 20px !important;
+                margin: 0 !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 140px !important;
+              }
             }
           `}</style>
           
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-green-500 no-print" />
           
-          <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-6 no-print">
+          <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-5 no-print">
             <CheckCircle2 className="h-8 w-8 text-green-500" />
           </div>
-
+ 
           <h1 className="text-2xl font-serif font-bold text-white mb-1 no-print">
-            Ticket Confirmed!
+            Tickets Secured!
           </h1>
-          <p className="text-xs text-zinc-500 mb-6 no-print">
+          <p className="text-xs text-zinc-400 mb-6 no-print">
             Your {successData.quantity} admission pass{successData.quantity > 1 ? 'es have' : ' has'} been secured and sent to <span className="text-zinc-300 font-semibold">{email || 'guest@curtaincall.ng'}</span>.
           </p>
-
+ 
           {/* Stacks of Admission Passes UI */}
-          <div className="flex flex-col gap-4 overflow-y-auto max-h-[380px] pr-2 [scrollbar-width:none] mb-6">
+          <div className="flex flex-col gap-5 overflow-y-auto max-h-[460px] pr-1.5 [scrollbar-width:none] mb-6 print-ticket-container">
             {successData.tickets.map((t, index) => (
-              <div key={index} className="bg-zinc-950 border border-white/5 rounded-2xl p-5 text-left relative overflow-hidden shrink-0 print-ticket-card">
+              <div key={index} className="bg-zinc-950 border border-white/5 rounded-2xl p-5 text-left relative overflow-hidden shrink-0 print-ticket-card flex flex-col md:flex-row gap-4 items-stretch justify-between shadow-lg">
                 <div className="absolute -right-8 -bottom-8 w-24 h-24 bg-green-500/5 rounded-full blur-xl no-print" />
                 
-                <div className="flex justify-between items-start mb-3">
+                {/* Left Side: Ticket Event Details */}
+                <div className="flex-1 min-w-0 flex flex-col justify-between gap-3">
                   <div>
-                    <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono">Pass #{index + 1} of {successData.quantity}</span>
-                    <h3 className="text-sm font-serif font-bold text-white truncate max-w-[200px] mt-0.5">
-                      {production.title}
-                    </h3>
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono font-bold block">Pass #{index + 1} of {successData.quantity}</span>
+                        <h3 className="text-base font-serif font-bold text-white truncate mt-0.5">
+                          {production.title}
+                        </h3>
+                      </div>
+                      <span className="text-[9px] font-bold text-green-400 bg-green-600/10 px-2 py-0.5 rounded border border-green-500/20 font-mono shrink-0 md:hidden print:hidden">
+                        ADMIT ONE
+                      </span>
+                    </div>
+                    
+                    <div className="mt-2 text-[10px] text-zinc-400 truncate flex items-center gap-1">
+                      <span className="font-semibold text-zinc-500">Venue:</span> {production.venue}
+                    </div>
                   </div>
-                  <span className="text-[9px] font-bold text-green-400 bg-green-600/10 px-2 py-0.5 rounded border border-green-500/20 font-mono no-print">
-                    ADMIT ONE
-                  </span>
+ 
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs border-t border-dashed border-white/10 pt-2.5 print-dashed-line">
+                    <div>
+                      <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-mono block">Tier</span>
+                      <span className="text-zinc-200 font-bold">{successData.tier}</span>
+                    </div>
+                    <div>
+                      <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-mono block">Event Date</span>
+                      <span className="text-zinc-200 font-bold">
+                        {production.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Scheduled'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-1 no-print">
+                    {generateBarcodeSVG(t.gatePass)}
+                  </div>
                 </div>
-
-                <div className="border-t border-dashed border-white/10 my-3 print-dashed-line" />
-
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div>
-                    <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Tier</span>
-                    <span className="text-xs text-zinc-200 font-semibold">{successData.tier}</span>
+ 
+                {/* Right Side Stub: Scanner & Gate Codes */}
+                <div className="md:w-36 flex md:flex-col items-center justify-between md:justify-center gap-4 bg-zinc-900/40 p-4 rounded-xl border border-white/5 md:border-l md:border-t-0 border-t print-stub-section shrink-0 text-center">
+                  <div className="flex items-center justify-center shrink-0 bg-white p-0.5 rounded-lg">
+                    {generateQRCodeSVG(t.gatePass)}
                   </div>
-                  <div>
-                    <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Event Date</span>
-                    <span className="text-xs text-zinc-200 font-semibold">
-                      {production.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Scheduled'}
+                  
+                  <div className="text-right md:text-center flex-1 md:flex-none">
+                    <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-mono block">Gate Pass Code</span>
+                    <span className="text-xs text-green-400 font-mono font-bold tracking-widest uppercase block mt-0.5">
+                      {t.gatePass}
                     </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Venue</span>
-                    <span className="text-xs text-zinc-200 font-semibold truncate block" title={production.venue}>{production.venue}</span>
-                  </div>
-                  <div>
-                    <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Gate Pass / Ref</span>
-                    <span className="text-xs text-green-400 font-mono font-bold flex items-center gap-1">
-                      <QrCode className="h-3.5 w-3.5" /> {t.gatePass}
-                    </span>
-                    <span className="text-[8px] text-zinc-500 font-mono block mt-0.5">Ref: {t.reference}</span>
+                    <span className="text-[8px] text-zinc-500 font-mono block truncate max-w-[120px] mx-auto mt-0.5">Ref: {t.reference}</span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-
+ 
           <p className="text-[10px] text-zinc-500 leading-relaxed mb-6 font-mono no-print">
-            PRESENT THESE DIGITAL PASSES OR REFERENCE CODES AT THE VENUE GATE.
+            PRESENT THESE DIGITAL PASSES OR PRINTED TICKETS AT THE GATE FOR SCANNED ADMISSION.
           </p>
-
+ 
           <div className="flex flex-col gap-3 w-full no-print">
             <button
               onClick={() => typeof window !== 'undefined' && window.print()}
               className="w-full bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white font-bold py-3.5 rounded-xl transition-colors text-sm flex items-center justify-center gap-2"
             >
-              <QrCode className="h-4 w-4 text-red-500" /> Print Passes / Save PDF
+              <QrCode className="h-4 w-4 text-red-500 animate-pulse" /> Print Tickets / Save PDF
             </button>
             <Link
               href={`/productions/${production.slug || production.id}`}

@@ -14,7 +14,7 @@ import {
   PenSquare, Target, Ticket, Mic2, Drama,
   FileText, Trophy, Library, Zap, Users, Crown, Sparkles, Shield, ShieldCheck,
   Plus, Wallet, TrendingUp, ArrowUpRight, BookOpen, AlertCircle, Trash2,
-  Search, X, Clapperboard, Calendar
+  Search, X, Clapperboard, Calendar, QrCode, Camera
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/producer/WithdrawModal';
 import { NotificationsPanel } from '@/components/profile/NotificationsPanel';
@@ -604,6 +604,15 @@ export default function ProfilePage() {
             </div>
 
             <div className="flex items-center gap-2">
+              {user.email.toLowerCase() === 'watchcurtaincall@gmail.com' && (
+                <Link
+                  href="/admin?tab=scanner"
+                  className="flex items-center gap-1.5 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-red-600/10 border border-red-500/20 mr-2"
+                >
+                  <QrCode className="h-3.5 w-3.5" />
+                  <span>Gate Scanner</span>
+                </Link>
+              )}
               <button
                 onClick={() => setShowNotifs(true)}
                 className="relative p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors text-zinc-400 hover:text-white"

@@ -373,6 +373,15 @@ export default function AdminDashboardPage() {
   }, [user, router]);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('tab') === 'scanner') {
+        setActiveTab('scanner');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (!isAuthorized) return;
     
     loadQueues();
