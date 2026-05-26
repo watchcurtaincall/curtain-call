@@ -9,7 +9,7 @@ import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search,
 import Link from 'next/link';
 import Image from 'next/image';
 
-type AdminTab = 'overview' | 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'scanner' | 'email-logs';
+type AdminTab = 'overview' | 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'email-logs';
 
 // ── Stageography Adder Sub-component (used inside Edit Artist modal) ──
 function AdminStageographyAdder({ onAdd }: { onAdd: (credit: { productionId: string; productionTitle: string; role: string }) => void }) {
@@ -244,6 +244,8 @@ export default function AdminDashboardPage() {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [queueSubTab, setQueueSubTab] = useState<'pending' | 'history'>('pending');
   const [historySearch, setHistorySearch] = useState('');
+  const [subscriberSearch, setSubscriberSearch] = useState('');
+  const [signupSearch, setSignupSearch] = useState('');
 
   // Manage tab local states
   const [manageSearch, setManageSearch] = useState('');
@@ -382,14 +384,7 @@ export default function AdminDashboardPage() {
     }
   }, [user, router]);
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('tab') === 'scanner') {
-        setActiveTab('scanner');
-      }
-    }
-  }, []);
+
 
   useEffect(() => {
     if (!isAuthorized) return;
@@ -1244,7 +1239,6 @@ This file was retrieved from the Curtain Call Curation Vault.
               { id: 'direct-play', name: 'Add Play', icon: Drama },
               { id: 'manage', name: 'Manage Directory', icon: FolderEdit },
               { id: 'subscribers', name: 'Subscribers & Signups', icon: Users },
-              { id: 'scanner', name: 'Ticket Scanner', icon: QrCode },
               { id: 'email-logs', name: 'Email Logs', icon: Mail }
             ].map(item => {
               const Icon = item.icon;
@@ -1303,7 +1297,6 @@ This file was retrieved from the Curtain Call Curation Vault.
           <option value="direct-play">Add Play</option>
           <option value="manage">Manage Directory</option>
           <option value="subscribers">Subscribers</option>
-          <option value="scanner">Ticket Scanner</option>
           <option value="email-logs">Email Logs</option>
         </select>
       </div>
@@ -1427,8 +1420,7 @@ This file was retrieved from the Curtain Call Curation Vault.
           );
         })()}
 
-      <div className="grid grid-cols-1 gap-8">
-        
+
         {/* SUBMISSIONS APPROVAL QUEUE */}
         {activeTab === 'queue' && (
           <div className="flex flex-col gap-8 animate-fade-up">
@@ -3877,493 +3869,261 @@ This file was retrieved from the Curtain Call Curation Vault.
           </div>
         )}
 
-
-
         {/* ── SUBSCRIBERS & SIGNUPS PANEL ────────────────────────────── */}
-        {activeTab === 'subscribers' && (
-          <div className="flex flex-col gap-8 animate-fade-up">
-            <div className="grid md:grid-cols-2 gap-8">
-              
-              {/* NEWSLETTER SUBSCRIBERS */}
-              <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
+        {activeTab === 'subscribers' && (() => {
+          const filteredSubscribers = subscribers.filter(item => {
+            const email = typeof item === 'string' ? item : (item.email || '');
+            return email.toLowerCase().includes(subscriberSearch.toLowerCase().trim());
+          });
+
+          const filteredSignups = signups.filter(profile => {
+            const name = profile.name || '';
+            const email = profile.email || '';
+            const handle = profile.handle || '';
+            const query = signupSearch.toLowerCase().trim();
+            return name.toLowerCase().includes(query) || email.toLowerCase().includes(query) || handle.toLowerCase().includes(query);
+          });
+
+          return (
+            <div className="flex flex-col gap-8 animate-fade-up">
+              <div className="grid md:grid-cols-2 gap-8">
                 
-                <div className="flex items-center justify-between border-b border-white/5 pb-5 mb-6 shrink-0">
-                  <div>
-                    <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
-                      <Mail className="h-5 w-5 text-red-500" /> Newsletter Subscribers ({subscribers.length})
-                    </h2>
-                    <p className="text-zinc-500 text-xs mt-1">Weekly theatre chronicle circular whitelist.</p>
-                  </div>
-                  {subscribers.length > 0 && (
-                    <button
-                      onClick={() => {
-                        const csvData = subscribers.map(item => {
-                          const email = typeof item === 'string' ? item : item.email;
-                          const date = typeof item === 'string' ? 'Unknown' : item.createdAt || 'Unknown';
-                          return { email, subscribed_at: date };
-                        });
-                        exportToCSV(csvData, 'newsletter_subscribers.csv', ['email', 'subscribed_at']);
-                      }}
-                      className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
-                    >
-                      <Download className="h-3.5 w-3.5" /> Export
-                    </button>
-                  )}
-                </div>
+                {/* NEWSLETTER SUBSCRIBERS */}
+                <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
+                  
+                  <div className="flex flex-col gap-4 border-b border-white/5 pb-5 mb-6 shrink-0">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+                          <Mail className="h-5 w-5 text-red-500" /> Newsletter Subscribers ({filteredSubscribers.length})
+                        </h2>
+                        <p className="text-zinc-500 text-xs mt-1">Weekly theatre chronicle circular whitelist.</p>
+                      </div>
+                      {subscribers.length > 0 && (
+                        <button
+                          onClick={() => {
+                            const csvData = subscribers.map(item => {
+                              const email = typeof item === 'string' ? item : item.email;
+                              const date = typeof item === 'string' ? 'Unknown' : item.createdAt || 'Unknown';
+                              return { email, subscribed_at: date };
+                            });
+                            exportToCSV(csvData, 'newsletter_subscribers.csv', ['email', 'subscribed_at']);
+                          }}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                        >
+                          <Download className="h-3.5 w-3.5" /> Export
+                        </button>
+                      )}
+                    </div>
 
-                {subscribers.length === 0 ? (
-                  <div className="bg-zinc-950 border border-white/5 rounded-3xl p-12 text-center text-zinc-500 font-mono text-xs flex-1 flex items-center justify-center min-h-[300px]">
-                    No newsletter subscriptions found.
-                  </div>
-                ) : (
-                  <div className="overflow-y-auto max-h-[500px] [scrollbar-width:none] flex-1">
-                    <div className="flex flex-col gap-2.5">
-                      {subscribers.map((item, idx) => {
-                        const email = typeof item === 'string' ? item : item.email;
-                        const dateRaw = typeof item === 'string' ? null : item.createdAt;
-                        const formattedDate = dateRaw
-                          ? new Date(dateRaw).toLocaleDateString(undefined, {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            }) + ' ' + new Date(dateRaw).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                          : 'May 2026';
-
-                        return (
-                          <div key={idx} className="bg-zinc-950/50 border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-4">
-                            <div className="min-w-0">
-                              <span className="text-[10px] font-mono text-zinc-500 block uppercase tracking-wider">Subscriber #{idx + 1}</span>
-                              <span className="text-white font-mono text-sm block truncate mt-0.5">{email}</span>
-                              <span className="text-zinc-500 text-[9px] font-mono block mt-1">Subscribed {formattedDate}</span>
-                            </div>
-                            <button
-                              onClick={() => {
-                                if (confirm(`Remove ${email} from newsletter list?`)) {
-                                  ClientDB.unsubscribeNewsletter(email);
-                                  setSubscribers(ClientDB.getNewsletterSubscribers());
-                                  showToast(`Unsubscribed ${email} successfully!`, 'error');
-                                }
-                              }}
-                              className="text-zinc-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-xl transition-all shrink-0"
-                              title="Unsubscribe"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        );
-                      })}
+                    {/* Newsletter Search Bar */}
+                    <div className="relative">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="Search subscribers by email..."
+                        value={subscriberSearch}
+                        onChange={e => setSubscriberSearch(e.target.value)}
+                        className="w-full bg-zinc-950/80 border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 transition-colors"
+                      />
+                      {subscriberSearch && (
+                        <button 
+                          onClick={() => setSubscriberSearch('')} 
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-xs font-mono"
+                        >
+                          Clear
+                        </button>
+                      )}
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* USER SIGNUPS */}
-              <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
-                
-                <div className="flex items-center justify-between border-b border-white/5 pb-5 mb-6 shrink-0">
-                  <div>
-                    <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
-                      <User className="h-5 w-5 text-red-500" /> Platform Signups ({signups.length})
-                    </h2>
-                    <p className="text-zinc-500 text-xs mt-1">Registered audience & contributor profiles.</p>
-                  </div>
-                  {signups.length > 0 && (
-                    <button
-                      onClick={() => {
-                        exportToCSV(signups, 'platform_signups.csv', ['name', 'email', 'handle', 'location', 'joinDate']);
-                      }}
-                      className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
-                    >
-                      <Download className="h-3.5 w-3.5" /> Export
-                    </button>
-                  )}
-                </div>
+                  {filteredSubscribers.length === 0 ? (
+                    <div className="bg-zinc-950 border border-white/5 rounded-3xl p-12 text-center text-zinc-500 font-mono text-xs flex-1 flex items-center justify-center min-h-[300px]">
+                      {subscribers.length === 0 ? 'No newsletter subscriptions found.' : 'No matching subscribers found.'}
+                    </div>
+                  ) : (
+                    <div className="overflow-y-auto max-h-[500px] [scrollbar-width:none] flex-1">
+                      <div className="flex flex-col gap-2.5">
+                        {filteredSubscribers.map((item, idx) => {
+                          const email = typeof item === 'string' ? item : item.email;
+                          const dateRaw = typeof item === 'string' ? null : item.createdAt;
+                          const formattedDate = dateRaw
+                            ? new Date(dateRaw).toLocaleDateString(undefined, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              }) + ' ' + new Date(dateRaw).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                            : 'May 2026';
 
-                {signups.length === 0 ? (
-                  <div className="bg-zinc-950 border border-white/5 rounded-3xl p-12 text-center text-zinc-500 font-mono text-xs flex-1 flex items-center justify-center min-h-[300px]">
-                    No registered user profiles found.
-                  </div>
-                ) : (
-                  <div className="overflow-y-auto max-h-[500px] [scrollbar-width:none] flex-1">
-                    <div className="flex flex-col gap-2.5">
-                      {signups.map((profile, idx) => {
-                        const criticActive = ClientDB.isApprovedCritic(profile.email);
-                        const isVerified = profile.isVerified ?? true;
-
-                        return (
-                          <div key={idx} className="bg-zinc-950/50 border border-white/5 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-white font-serif font-bold text-base truncate">{profile.name}</span>
-                                {criticActive && (
-                                  <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider shrink-0">
-                                    Critic
-                                  </span>
-                                )}
-                                {isVerified ? (
-                                  <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider shrink-0 flex items-center gap-0.5">
-                                    <ShieldCheck className="h-3 w-3" /> Verified
-                                  </span>
-                                ) : (
-                                  <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider shrink-0 flex items-center gap-0.5" title={`Unconfirmed user registration. Verification code: ${profile.verificationCode || 'N/A'}`}>
-                                    <ShieldAlert className="h-3 w-3" /> Unverified
-                                  </span>
-                                )}
+                          return (
+                            <div key={idx} className="bg-zinc-950/50 border border-white/5 rounded-2xl p-4 flex items-center justify-between gap-4">
+                              <div className="min-w-0">
+                                <span className="text-[10px] font-mono text-zinc-500 block uppercase tracking-wider">Subscriber #{idx + 1}</span>
+                                <span className="text-white font-mono text-sm block truncate mt-0.5">{email}</span>
+                                <span className="text-zinc-500 text-[9px] font-mono block mt-1">Subscribed {formattedDate}</span>
                               </div>
-                              <span className="text-zinc-400 text-xs block font-mono mt-0.5 truncate">{profile.email}</span>
-                              
-                              {!isVerified && profile.verificationCode && (
-                                <div className="mt-2 flex items-center gap-1.5 text-zinc-400 text-[10px] font-mono bg-zinc-900 px-2.5 py-1 rounded-lg w-max border border-white/5">
-                                  <span>OTP Code:</span>
-                                  <strong className="text-red-400 tracking-wider">{profile.verificationCode}</strong>
-                                </div>
-                              )}
-                              
-                              <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[10px] text-zinc-500 font-mono">
-                                {profile.handle && <span className="text-red-400/80">{profile.handle}</span>}
-                                {profile.location && <span>📍 {profile.location}</span>}
-                                <span>
-                                  Joined{' '}
-                                  {profile.createdAt
-                                    ? new Date(profile.createdAt).toLocaleDateString(undefined, {
-                                        year: 'numeric',
-                                        month: 'short',
-                                        day: 'numeric'
-                                      }) +
-                                      ' ' +
-                                      new Date(profile.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                    : profile.joinDate || 'May 2026'}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
-                              {!isVerified && (
-                                <button
-                                  onClick={() => verifySignupUser(profile)}
-                                  className="bg-green-600 hover:bg-green-500 text-white font-bold text-xs px-3 py-2 rounded-xl transition-all shadow-md flex items-center gap-1"
-                                  title="Approve verification manually"
-                                >
-                                  <ShieldCheck className="h-3.5 w-3.5" />
-                                  <span>Verify</span>
-                                </button>
-                              )}
                               <button
                                 onClick={() => {
-                                  if (confirm(`Are you sure you want to permanently delete profile for ${profile.name}?`)) {
-                                    ClientDB.deleteSignup(profile.email);
-                                    setSignups(ClientDB.getSignups());
-                                    showToast(`Deleted profile for ${profile.name}`, 'error');
+                                  if (confirm(`Remove ${email} from newsletter list?`)) {
+                                    ClientDB.unsubscribeNewsletter(email);
+                                    setSubscribers(ClientDB.getNewsletterSubscribers());
+                                    showToast(`Unsubscribed ${email} successfully!`, 'error');
                                   }
                                 }}
-                                className="text-zinc-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-xl transition-all"
-                                title="Delete User"
+                                className="text-zinc-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-xl transition-all shrink-0"
+                                title="Unsubscribe"
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-            </div>
-          </div>
-        )}
-
-
-
-        {/* ── GATE SCANNER & VALIDATION PANEL ────────────────────────── */}
-        {activeTab === 'scanner' && (
-          <div className="flex flex-col gap-8 animate-fade-up">
-            <style>{`
-              @keyframes scanline {
-                0% { top: 0%; opacity: 0.3; }
-                50% { top: 100%; opacity: 1; }
-                100% { top: 0%; opacity: 0.3; }
-              }
-              .scanline-effect {
-                position: absolute;
-                left: 0;
-                right: 0;
-                height: 3px;
-                background: #22c55e;
-                box-shadow: 0 0 15px #22c55e, 0 0 5px #22c55e;
-                animation: scanline 3.5s ease-in-out infinite;
-                pointer-events: none;
-              }
-            `}</style>
-
-            {/* Quick Stats Panel */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full blur-[40px] pointer-events-none" />
-                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Checked In</span>
-                <span className="text-2xl md:text-3xl font-serif font-bold text-green-400 block mt-1">
-                  {scanHistory.filter(h => h.status === 'Approved').length}
-                </span>
-                <span className="text-[9px] font-mono text-zinc-600 block mt-1">Admitted guest count</span>
-              </div>
-
-              <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-[40px] pointer-events-none" />
-                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Total Pool</span>
-                <span className="text-2xl md:text-3xl font-serif font-bold text-white block mt-1">
-                  {ClientDB.getTickets().length}
-                </span>
-                <span className="text-[9px] font-mono text-zinc-600 block mt-1">Purchased ticket keys</span>
-              </div>
-
-              <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none" />
-                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Duplicates</span>
-                <span className="text-2xl md:text-3xl font-serif font-bold text-amber-500 block mt-1">
-                  {scanHistory.filter(h => h.status === 'Duplicate').length}
-                </span>
-                <span className="text-[9px] font-mono text-zinc-600 block mt-1">Declined duplicate passes</span>
-              </div>
-
-              <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-[40px] pointer-events-none" />
-                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Invalid Key Claims</span>
-                <span className="text-2xl md:text-3xl font-serif font-bold text-red-500 block mt-1">
-                  {scanHistory.filter(h => h.status === 'Invalid').length}
-                </span>
-                <span className="text-[9px] font-mono text-zinc-600 block mt-1">Unrecognized voucher entries</span>
-              </div>
-            </div>
-
-            <div className="grid lg:grid-cols-12 gap-8 items-start">
-              {/* Scan Terminal Panel */}
-              <div className="lg:col-span-7 bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
-                
-                <div className="border-b border-white/5 pb-4">
-                  <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
-                    <QrCode className="h-5 w-5 text-red-500 animate-pulse" /> Curtain Call Gate Terminal
-                  </h2>
-                  <p className="text-zinc-500 text-xs mt-1">Check-in tickets, validate references, and verify QR codes in real-time.</p>
-                </div>
-
-                {/* Simulated Camera Scanner screen */}
-                <div className="relative aspect-video rounded-2xl border border-white/10 bg-zinc-950/80 flex flex-col items-center justify-center overflow-hidden shadow-inner group">
-                  {/* Hologram neon grid backgrounds */}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-                  
-                  {/* Neon border brackets inside */}
-                  <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-zinc-600 group-hover:border-red-500 transition-colors" />
-                  <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-zinc-600 group-hover:border-red-500 transition-colors" />
-                  <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-zinc-600 group-hover:border-red-500 transition-colors" />
-                  <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-zinc-600 group-hover:border-red-500 transition-colors" />
-
-                  {/* Red flashing REC label */}
-                  <div className="absolute top-6 left-6 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/5 text-[9px] font-mono text-white tracking-widest uppercase">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-ping" />
-                    <span>REC GATE_01</span>
-                  </div>
-
-                  {/* Laser line overlay */}
-                  <div className="scanline-effect" />
-
-                  {/* Center QR code glyph icon */}
-                  <div className="flex flex-col items-center gap-4 relative z-10 animate-pulse text-zinc-500 group-hover:text-red-500 transition-colors">
-                    <Camera className="h-12 w-12 stroke-[1.25]" />
-                    <div className="text-center">
-                      <p className="text-[10px] font-mono tracking-widest uppercase text-zinc-400">Scanner Engine Standby</p>
-                      <p className="text-[9px] font-mono text-zinc-600 mt-1">Ready for Gate Pass Entry or QR Scan</p>
-                    </div>
-                  </div>
-
-                  {/* Real-time Validation Overlay results */}
-                  {scanResult && (
-                    <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center p-6 backdrop-blur-md animate-fade-in ${
-                      scanResult.status === 'Approved' ? 'bg-green-950/90' : 
-                      scanResult.status === 'Duplicate' ? 'bg-amber-950/95' : 'bg-red-950/95'
-                    }`}>
-                      <div className="flex flex-col items-center text-center gap-3 max-w-sm">
-                        {scanResult.status === 'Approved' ? (
-                          <>
-                            <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center text-green-400">
-                              <CheckCircle2 className="w-7 h-7" />
-                            </div>
-                            <h3 className="font-serif font-bold text-xl text-white">ACCESS GRANTED</h3>
-                            <div className="bg-black/40 border border-white/5 rounded-xl p-3 w-full text-left font-mono text-xs flex flex-col gap-1">
-                              <p className="text-white font-serif truncate font-bold"><span className="text-zinc-500">Show:</span> {scanResult.ticket?.productionTitle}</p>
-                              <p className="text-zinc-300 truncate"><span className="text-zinc-500">Guest:</span> {scanResult.ticket?.buyerEmail}</p>
-                              <p className="text-green-400 uppercase tracking-widest text-[10px] font-bold mt-1">
-                                {scanResult.ticket?.tier} Admission · Validated
-                              </p>
-                            </div>
-                          </>
-                        ) : scanResult.status === 'Duplicate' ? (
-                          <>
-                            <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                              <ShieldAlert className="w-7 h-7" />
-                            </div>
-                            <h3 className="font-serif font-bold text-xl text-white">DUPLICATE TICKET</h3>
-                            <p className="text-zinc-400 text-xs leading-relaxed">
-                              This gate pass has already been checked-in. Access is denied to prevent ticket sharing or reuse.
-                            </p>
-                            <div className="bg-black/40 border border-white/5 rounded-xl p-3 w-full text-left font-mono text-xs flex flex-col gap-1">
-                              <p className="text-white truncate font-bold"><span className="text-zinc-500">Guest:</span> {scanResult.ticket?.buyerEmail}</p>
-                              <p className="text-amber-400"><span className="text-zinc-500">Tier:</span> {scanResult.ticket?.tier}</p>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-400">
-                              <Skull className="w-7 h-7" />
-                            </div>
-                            <h3 className="font-serif font-bold text-xl text-white">INVALID CODE</h3>
-                            <p className="text-zinc-400 text-xs leading-relaxed">
-                              {scanResult.message}
-                            </p>
-                          </>
-                        )}
-                        
-                        <button 
-                          onClick={() => setScanResult(null)}
-                          className="mt-2 text-[10px] font-mono text-zinc-500 hover:text-white uppercase tracking-wider underline underline-offset-4"
-                        >
-                          Dismiss Screen
-                        </button>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Validation Form Entry */}
-                <form onSubmit={handleValidateTicket} className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] text-zinc-500 uppercase font-semibold">Enter Voucher Pass or Paystack Reference</label>
-                    <div className="flex gap-2">
+                {/* USER SIGNUPS */}
+                <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
+                  
+                  <div className="flex flex-col gap-4 border-b border-white/5 pb-5 mb-6 shrink-0">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
+                          <User className="h-5 w-5 text-red-500" /> Platform Signups ({filteredSignups.length})
+                        </h2>
+                        <p className="text-zinc-500 text-xs mt-1">Registered audience & contributor profiles.</p>
+                      </div>
+                      {signups.length > 0 && (
+                        <button
+                          onClick={() => {
+                            exportToCSV(signups, 'platform_signups.csv', ['name', 'email', 'handle', 'location', 'joinDate']);
+                          }}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors"
+                        >
+                          <Download className="h-3.5 w-3.5" /> Export
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Platform Signups Search Bar */}
+                    <div className="relative">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                       <input
                         type="text"
-                        placeholder="e.g. CC-6AF7D2 or PAY-491730..."
-                        value={scanInput}
-                        onChange={e => setScanInput(e.target.value)}
-                        className="flex-1 bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 uppercase tracking-widest font-mono"
+                        placeholder="Search signups by name, email or handle..."
+                        value={signupSearch}
+                        onChange={e => setSignupSearch(e.target.value)}
+                        className="w-full bg-zinc-950/80 border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 transition-colors"
                       />
-                      <button
-                        type="submit"
-                        disabled={!scanInput.trim()}
-                        className="bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold px-6 py-3 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 font-mono shadow-md shadow-red-600/15"
-                      >
-                        Check Pass
-                      </button>
+                      {signupSearch && (
+                        <button 
+                          onClick={() => setSignupSearch('')} 
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white text-xs font-mono"
+                        >
+                          Clear
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <p className="text-[10px] text-zinc-600 leading-relaxed">
-                    💡 Tip: Scanning supports both the custom 8-digit **Gate Pass voucher code** printed on the PDF ticket and the standard **Paystack Transaction Reference** sent in the receipt emails. Matches are instant.
-                  </p>
-                </form>
-              </div>
 
-              {/* Scan Log History Panel */}
-              <div className="lg:col-span-5 bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col h-[550px]">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
-                
-                <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-5 shrink-0">
-                  <div>
-                    <h2 className="text-lg font-serif font-bold text-white flex items-center gap-2">
-                      <RefreshCw className="h-4.5 w-4.5 text-zinc-500" /> Access Scan History
-                    </h2>
-                    <p className="text-zinc-500 text-[11px] mt-0.5">Live chronological logs of scanned passes.</p>
-                  </div>
-                  
-                  {scanHistory.length > 0 && (
-                    <button
-                      onClick={() => {
-                        if (confirm("Reset and clear checked-in ticket records log? This action is permanent for this device.")) {
-                          saveScanHistory([]);
-                          showToast("Scan check-in log successfully reset!", "error");
-                        }
-                      }}
-                      className="text-zinc-500 hover:text-red-400 text-[10px] font-mono uppercase tracking-wider hover:bg-red-500/10 px-2.5 py-1 rounded-lg border border-white/5 transition-colors shrink-0"
-                    >
-                      Clear Log
-                    </button>
+                  {filteredSignups.length === 0 ? (
+                    <div className="bg-zinc-950 border border-white/5 rounded-3xl p-12 text-center text-zinc-500 font-mono text-xs flex-1 flex items-center justify-center min-h-[300px]">
+                      {signups.length === 0 ? 'No registered user profiles found.' : 'No matching signups found.'}
+                    </div>
+                  ) : (
+                    <div className="overflow-y-auto max-h-[500px] [scrollbar-width:none] flex-1">
+                      <div className="flex flex-col gap-2.5">
+                        {filteredSignups.map((profile, idx) => {
+                          const criticActive = ClientDB.isApprovedCritic(profile.email);
+                          const isVerified = profile.isVerified ?? true;
+
+                          return (
+                            <div key={idx} className="bg-zinc-950/50 border border-white/5 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="text-white font-serif font-bold text-base truncate">{profile.name}</span>
+                                  {criticActive && (
+                                    <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider shrink-0">
+                                      Critic
+                                    </span>
+                                  )}
+                                  {isVerified ? (
+                                    <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider shrink-0 flex items-center gap-0.5">
+                                      <ShieldCheck className="h-3 w-3" /> Verified
+                                    </span>
+                                  ) : (
+                                    <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider shrink-0 flex items-center gap-0.5" title={`Unconfirmed user registration. Verification code: ${profile.verificationCode || 'N/A'}`}>
+                                      <ShieldAlert className="h-3 w-3" /> Unverified
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-zinc-400 text-xs block font-mono mt-0.5 truncate">{profile.email}</span>
+                                
+                                {!isVerified && profile.verificationCode && (
+                                  <div className="mt-2 flex items-center gap-1.5 text-zinc-400 text-[10px] font-mono bg-zinc-900 px-2.5 py-1 rounded-lg w-max border border-white/5">
+                                    <span>OTP Code:</span>
+                                    <strong className="text-red-400 tracking-wider">{profile.verificationCode}</strong>
+                                  </div>
+                                )}
+                                
+                                <div className="flex flex-wrap items-center gap-3 mt-1.5 text-[10px] text-zinc-500 font-mono">
+                                  {profile.handle && <span className="text-red-400/80">{profile.handle}</span>}
+                                  {profile.location && <span>📍 {profile.location}</span>}
+                                  <span>
+                                    Joined{' '}
+                                    {profile.createdAt
+                                      ? new Date(profile.createdAt).toLocaleDateString(undefined, {
+                                          year: 'numeric',
+                                          month: 'short',
+                                          day: 'numeric'
+                                        }) +
+                                        ' ' +
+                                        new Date(profile.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                      : profile.joinDate || 'May 2026'}
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                                {!isVerified && (
+                                  <button
+                                    onClick={() => verifySignupUser(profile)}
+                                    className="bg-green-600 hover:bg-green-500 text-white font-bold text-xs px-3 py-2 rounded-xl transition-all shadow-md flex items-center gap-1"
+                                    title="Approve verification manually"
+                                  >
+                                    <ShieldCheck className="h-3.5 w-3.5" />
+                                    <span>Verify</span>
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`Are you sure you want to permanently delete profile for ${profile.name}?`)) {
+                                      ClientDB.deleteSignup(profile.email);
+                                      setSignups(ClientDB.getSignups());
+                                      showToast(`Deleted profile for ${profile.name}`, 'error');
+                                    }
+                                  }}
+                                  className="text-zinc-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-xl transition-all"
+                                  title="Delete User"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
                 </div>
 
-                {scanHistory.length === 0 ? (
-                  <div className="bg-zinc-950 border border-white/5 rounded-2xl p-12 text-center text-zinc-500 font-mono text-xs flex-1 flex flex-col items-center justify-center gap-3">
-                    <QrCode className="h-8 w-8 text-zinc-800 stroke-[1.25]" />
-                    <span>No passes checked-in yet. Live events logged here.</span>
-                  </div>
-                ) : (
-                  <div className="overflow-y-auto [scrollbar-width:none] flex-1 pr-0.5">
-                    <div className="flex flex-col gap-2.5">
-                      {scanHistory.map((log) => {
-                        const formattedTime = new Date(log.checkedInAt).toLocaleTimeString([], { 
-                          hour: '2-digit', 
-                          minute: '2-digit',
-                          second: '2-digit'
-                        });
-
-                        return (
-                          <div 
-                            key={log.id} 
-                            className={`border rounded-2xl p-3.5 flex items-start justify-between gap-4 transition-all ${
-                              log.status === 'Approved' ? 'bg-green-950/20 border-green-500/15' : 
-                              log.status === 'Duplicate' ? 'bg-amber-950/20 border-amber-500/15' : 
-                              'bg-red-950/20 border-red-500/15'
-                            }`}
-                          >
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded border ${
-                                  log.status === 'Approved' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 
-                                  log.status === 'Duplicate' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 
-                                  'bg-red-500/10 text-red-400 border-red-500/20'
-                                }`}>
-                                  {log.status}
-                                </span>
-                                <span className="text-[10px] font-mono text-zinc-500">{formattedTime}</span>
-                              </div>
-
-                              <span className="text-white font-mono text-xs block truncate mt-2 uppercase tracking-wide">
-                                Key: {log.input}
-                              </span>
-
-                              {log.ticket && (
-                                <div className="mt-1 flex flex-col gap-0.5 text-[10px] text-zinc-400 font-serif">
-                                  <span className="text-zinc-300 font-bold truncate">{log.ticket.productionTitle}</span>
-                                  <span className="font-mono text-zinc-500 truncate">{log.ticket.buyerEmail} · {log.ticket.tier}</span>
-                                </div>
-                              )}
-                            </div>
-
-                            <button
-                              onClick={() => {
-                                if (confirm("Remove this log record?")) {
-                                  const updatedHistory = scanHistory.filter(h => h.id !== log.id);
-                                  saveScanHistory(updatedHistory);
-                                  showToast("Access log record removed.", "error");
-                                }
-                              }}
-                              className="text-zinc-500 hover:text-red-400 p-1.5 hover:bg-red-500/10 rounded-lg transition-colors shrink-0 align-top"
-                              title="Delete from log"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
-          </div>
-        )}
-
-      </div>
+          );
+        })()}
 
       {/* Decline Reason Modal */}
       {declineItem && (
