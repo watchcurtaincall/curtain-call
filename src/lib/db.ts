@@ -102,6 +102,9 @@ const mapProductionToDb = (p: any) => {
   if (p.isProducerManaged !== undefined) {
     gallery.push(JSON.stringify({ __isProducerManaged: p.isProducerManaged }));
   }
+  if (p.externalTicketUrl) {
+    gallery.push(JSON.stringify({ __externalTicketUrl: p.externalTicketUrl }));
+  }
   return {
     id: p.id,
     title: p.title,
@@ -131,6 +134,7 @@ const mapProductionFromDb = (row: any) => {
   let productionType: 'Student' | 'Professional' | undefined = undefined;
   let showTime: string | undefined = undefined;
   let isProducerManaged: boolean | undefined = undefined;
+  let externalTicketUrl: string | undefined = undefined;
   
   if (row.gallery_images && Array.isArray(row.gallery_images)) {
     row.gallery_images.forEach((item: any) => {
@@ -162,6 +166,11 @@ const mapProductionFromDb = (row: any) => {
         } catch (e) {
           // ignore
         }
+      } else if (typeof item === 'string' && item.startsWith('{"__externalTicketUrl":')) {
+        try {
+          const parsed = JSON.parse(item);
+          externalTicketUrl = parsed.__externalTicketUrl;
+        } catch (e) {}
       } else {
         galleryImages.push(item);
       }
@@ -207,6 +216,7 @@ const mapProductionFromDb = (row: any) => {
     declineReason: row.decline_reason || null,
     ticketTiers: ticketTiers.length > 0 ? ticketTiers : undefined,
     productionType,
+    externalTicketUrl,
     createdAt: parsedCreatedAt
   };
 };

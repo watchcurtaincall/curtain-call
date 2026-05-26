@@ -6,7 +6,7 @@ import { Production } from '@/lib/types';
 import { MOCK_REVIEWS } from '@/lib/mock';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, MapPin, Clock, Ticket, ArrowLeft, Share2, Check, Calendar } from 'lucide-react';
+import { Star, MapPin, Clock, Ticket, ArrowLeft, Share2, Check, Calendar, ExternalLink } from 'lucide-react';
 import { ProductionReviews } from '@/components/productions/ProductionReviews';
 import { WatchlistButton } from '@/components/productions/WatchlistButton';
 import { PhotoGallery } from '@/components/productions/PhotoGallery';
@@ -205,6 +205,30 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
               Get Tickets
             </Link>
           )}
+          {production.status !== 'Past Production' && production.status !== 'Recently Concluded' && production.externalTicketUrl && !production.ticketTiers?.length && (() => {
+            // Check if show date has passed
+            let linkExpired = false;
+            if (production.showDate) {
+              const showDate = new Date(production.showDate);
+              showDate.setHours(0, 0, 0, 0);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              linkExpired = today > showDate;
+            }
+            if (linkExpired) return null;
+            return (
+              <a
+                href={production.externalTicketUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 bg-white text-black text-center py-4 rounded-2xl font-bold hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 text-base"
+              >
+                <Ticket className="h-5 w-5" />
+                Get Tickets
+                <ExternalLink className="h-4 w-4 opacity-50" />
+              </a>
+            );
+          })()}
           <WatchlistButton productionId={production.id} />
           <button
             onClick={() => setShareOpen(true)}

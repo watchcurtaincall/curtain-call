@@ -53,6 +53,7 @@ export interface Production {
   accountName?: string;
   accountNumber?: string;
   bankName?: string;
+  externalTicketUrl?: string;
 }
 
 export interface Article {

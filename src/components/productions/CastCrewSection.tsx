@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Award, ShieldCheck, Heart } from 'lucide-react';
+import { X, Award, ShieldCheck, Heart, Plus } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Artist, Production } from '@/lib/types';
+import { SuggestCreditModal } from './SuggestCreditModal';
 
 interface CastCrewSectionProps {
   artists: Artist[];
@@ -42,6 +43,7 @@ function matchArtist(dbArtists: Artist[], memberName: string): Artist | undefine
 
 export function CastCrewSection({ artists, productionTitle, production }: CastCrewSectionProps) {
   const [showModal, setShowModal] = useState(false);
+  const [showSuggest, setShowSuggest] = useState(false);
 
   // Build credits from the production's castAndCrew array first
   const getFullCredits = () => {
@@ -215,18 +217,35 @@ export function CastCrewSection({ artists, productionTitle, production }: CastCr
 
   return (
     <div>
+      {/* Suggest credit modal */}
+      {showSuggest && production && (
+        <SuggestCreditModal
+          productionId={production.id}
+          productionTitle={productionTitle}
+          onClose={() => setShowSuggest(false)}
+        />
+      )}
+
       {/* Cast & Crew Preview Grid */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-serif font-bold text-white flex items-center gap-2">
           <span className="w-1 h-6 bg-red-600 rounded-full inline-block" />
           Cast & Crew
         </h2>
-        <button
-          onClick={() => setShowModal(true)}
-          className="text-sm text-red-500 hover:text-red-400 font-bold transition-colors uppercase tracking-wider bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-xl"
-        >
-          All Credits
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowSuggest(true)}
+            className="text-sm text-zinc-400 hover:text-white font-bold transition-colors bg-zinc-900 hover:bg-zinc-800 border border-white/5 hover:border-white/10 px-3 py-1.5 rounded-xl flex items-center gap-1.5"
+          >
+            <Plus className="h-3.5 w-3.5" /> Suggest
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="text-sm text-red-500 hover:text-red-400 font-bold transition-colors uppercase tracking-wider bg-red-500/5 hover:bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-xl"
+          >
+            All Credits
+          </button>
+        </div>
       </div>
 
       {enriched.length === 0 ? (
@@ -312,8 +331,18 @@ export function CastCrewSection({ artists, productionTitle, production }: CastCr
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-white/5 bg-zinc-900/30 text-center flex items-center justify-center gap-1.5 text-xs text-zinc-600">
-              <ShieldCheck className="h-3.5 w-3.5 text-zinc-600" /> Officially registered play credits. Handcrafted with <Heart className="h-3 w-3 text-red-500/50 fill-red-500/20" /> on Curtain Call.
+            <div className="px-6 py-4 border-t border-white/5 bg-zinc-900/30 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-1.5 text-xs text-zinc-600">
+                <ShieldCheck className="h-3.5 w-3.5 text-zinc-600" /> Officially registered play credits. Handcrafted with <Heart className="h-3 w-3 text-red-500/50 fill-red-500/20" /> on Curtain Call.
+              </div>
+              {production && (
+                <button
+                  onClick={() => { setShowModal(false); setShowSuggest(true); }}
+                  className="shrink-0 text-[11px] font-bold text-red-500 hover:text-red-400 uppercase tracking-wider flex items-center gap-1 transition-colors"
+                >
+                  <Plus className="h-3 w-3" /> Suggest Credit
+                </button>
+              )}
             </div>
 
           </div>

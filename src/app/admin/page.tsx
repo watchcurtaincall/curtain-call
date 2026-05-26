@@ -278,6 +278,7 @@ export default function AdminDashboardPage() {
   const [pendingCritics, setPendingCritics] = useState<any[]>([]);
   const [subscribers, setSubscribers] = useState<any[]>([]);
   const [signups, setSignups] = useState<any[]>([]);
+  const [creditSuggestions, setCreditSuggestions] = useState<any[]>([]);
 
   // Blog publishing state
   const [blogForm, setBlogForm] = useState({
@@ -339,6 +340,12 @@ export default function AdminDashboardPage() {
     setWithdrawals(ClientDB.getWithdrawals());
     setSubscribers(ClientDB.getNewsletterSubscribers());
     setSignups(ClientDB.getSignups());
+    
+    // Load credit suggestions from localStorage
+    if (typeof window !== 'undefined') {
+      const suggestions = JSON.parse(localStorage.getItem('curtain_credit_suggestions') || '[]');
+      setCreditSuggestions(suggestions.filter((s: any) => s.status === 'Pending'));
+    }
     
     const defaultApproved = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com'];
     const storedCritics = localStorage.getItem('curtain_approved_critic_emails');
@@ -1140,7 +1147,40 @@ This file was retrieved from the Curtain Call Curation Vault.
     }
   };
 
-  const pendingTotal = pendingArtists.length + pendingPlays.length + pendingArticles.length + pendingCritics.length;
+  const handleApproveCreditSuggestion = (id: string, suggestion: any) => {
+    // Merge the credit into the production's castAndCrew
+    const production = ClientDB.getProductionById(suggestion.productionId);
+    if (production) {
+      const existing = production.castAndCrew || [];
+      const isDupe = existing.some((c: any) => c.name.toLowerCase() === suggestion.name.toLowerCase());
+      if (!isDupe) {
+        const updated = {
+          ...production,
+          castAndCrew: [
+            ...existing,
+            { name: suggestion.name, role: suggestion.role, category: suggestion.category || 'Cast' }
+          ]
+        };
+        ClientDB.saveProduction(updated);
+      }
+    }
+    // Mark as approved in localStorage
+    const all = JSON.parse(localStorage.getItem('curtain_credit_suggestions') || '[]');
+    const updated = all.map((s: any) => s.id === id ? { ...s, status: 'Approved' } : s);
+    localStorage.setItem('curtain_credit_suggestions', JSON.stringify(updated));
+    setCreditSuggestions(prev => prev.filter(s => s.id !== id));
+    showToast(`Credit for "${suggestion.name}" approved and merged into ${suggestion.productionTitle}.`);
+  };
+
+  const handleDismissCreditSuggestion = (id: string) => {
+    const all = JSON.parse(localStorage.getItem('curtain_credit_suggestions') || '[]');
+    const updated = all.map((s: any) => s.id === id ? { ...s, status: 'Declined' } : s);
+    localStorage.setItem('curtain_credit_suggestions', JSON.stringify(updated));
+    setCreditSuggestions(prev => prev.filter(s => s.id !== id));
+    showToast('Credit suggestion dismissed.', 'error');
+  };
+
+  const pendingTotal = pendingArtists.length + pendingPlays.length + pendingArticles.length + pendingCritics.length + creditSuggestions.length;
 
   if (!isAuthorized) {
     return (

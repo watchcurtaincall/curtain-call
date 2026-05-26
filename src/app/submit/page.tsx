@@ -83,7 +83,8 @@ export default function SubmitPortalPage() {
     showDate: '',
     showTime: '',
     runtime: '120 mins',
-    productionType: 'Professional' as 'Student' | 'Professional'
+    productionType: 'Professional' as 'Student' | 'Professional',
+    externalTicketUrl: ''
   });
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>([]);
@@ -263,7 +264,8 @@ export default function SubmitPortalPage() {
       showDate: playForm.showDate || undefined,
       showTime: playForm.showTime || undefined,
       castAndCrew: castMembers.length > 0 ? castMembers : undefined,
-      productionType: playForm.productionType
+      productionType: playForm.productionType,
+      externalTicketUrl: playForm.externalTicketUrl || undefined
     };
 
     setTimeout(() => {
@@ -330,7 +332,8 @@ export default function SubmitPortalPage() {
                   showDate: '',
                   showTime: '',
                   runtime: '120 mins',
-                  productionType: 'Professional'
+                  productionType: 'Professional',
+                  externalTicketUrl: ''
                 });
                 setBlogForm({ title: '', category: 'Critique', excerpt: '', content: '', email: user?.email || '' });
                 setHeadshotPreview(null);
@@ -825,6 +828,25 @@ export default function SubmitPortalPage() {
                   </select>
                 </div>
               </div>
+
+              {(playForm.status === 'Coming Soon' || playForm.status === 'Currently Showing') && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                    <span>External Ticket Link</span>
+                    <span className="text-[9px] bg-zinc-800 text-zinc-500 border border-white/5 px-1.5 py-0.5 rounded font-mono">Optional</span>
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://paystack.com/buy/your-show-tickets"
+                    value={playForm.externalTicketUrl}
+                    onChange={e => setPlayForm({ ...playForm, externalTicketUrl: e.target.value })}
+                    className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors placeholder:text-zinc-600"
+                  />
+                  <p className="text-[10px] text-zinc-600 leading-relaxed">
+                    If you sell tickets on a third-party platform (Paystack, Eventbrite, etc.), paste the link here. A &quot;Get Tickets&quot; button will appear on your production page. This link disappears automatically once the show date has passed.
+                  </p>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">

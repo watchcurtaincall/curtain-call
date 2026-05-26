@@ -37,9 +37,9 @@ export default function Home() {
       //  #4  Notable     →  6+ views
       //  #5  Emerging    →  4+ views
       //  #6  On the Radar→  2+ views
-      const TRENDING_THRESHOLDS = [15, 12, 9, 6, 4, 2];
+      const TRENDING_THRESHOLDS = [10, 8, 6, 4, 2, 1];
       const sortedArtists = ClientDB.getArtists()
-        .filter(a => (a.hits || 0) >= TRENDING_THRESHOLDS[TRENDING_THRESHOLDS.length - 1]) // must meet minimum
+        .filter(a => (a.hits || 0) >= 1) // must meet minimum
         .sort((a, b) => (b.hits || 0) - (a.hits || 0));
       // Fill each slot only if the ranked artist meets that slot's threshold
       const trendingSlots: typeof sortedArtists = [];
