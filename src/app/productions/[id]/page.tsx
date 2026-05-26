@@ -13,14 +13,32 @@ import { PhotoGallery } from '@/components/productions/PhotoGallery';
 import { CastCrewSection } from '@/components/productions/CastCrewSection';
 import { ImageLightbox } from '@/components/shared/ImageLightbox';
 import { ShareModal } from '@/components/shared/ShareModal';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function ProductionPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const { user } = useAuth();
   const [production, setProduction] = useState<Production | null>(null);
   const [hasSynced, setHasSynced] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'critic' | 'audience'>('critic');
+
+  useEffect(() => {
+    if (user) {
+      const isCritic = ClientDB.isApprovedCritic(user.email);
+      setActiveTab(isCritic ? 'critic' : 'audience');
+    } else {
+      setActiveTab('audience');
+    }
+  }, [user]);
 
   const scrollToReviews = () => {
+    if (user) {
+      const isCritic = ClientDB.isApprovedCritic(user.email);
+      setActiveTab(isCritic ? 'critic' : 'audience');
+    } else {
+      setActiveTab('audience');
+    }
     const section = document.getElementById('reviews-section');
     if (section) {
       section.scrollIntoView({ behavior: 'smooth' });
@@ -275,12 +293,14 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
           <PhotoGallery productionTitle={production.title} galleryImages={production.galleryImages} />
 
           {/* Reviews section */}
-          <div id="reviews-section">
+          <div id="reviews-section" className="scroll-mt-24">
             <ProductionReviews
               reviews={ClientDB.getReviews().filter(r => r.productionId === production.id)}
               productionTitle={production.title}
               productionId={production.id}
               status={production.status}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
             />
           </div>
 

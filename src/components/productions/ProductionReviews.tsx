@@ -18,14 +18,26 @@ interface Review {
   date?: string;
 }
 
-export function ProductionReviews({ reviews, productionTitle, productionId, status }: {
+export function ProductionReviews({ reviews, productionTitle, productionId, status, activeTab: activeTabProp, onTabChange }: {
   reviews: Review[];
   productionTitle: string;
   productionId: string;
   status: ProductionStatus;
+  activeTab?: 'critic' | 'audience';
+  onTabChange?: (tab: 'critic' | 'audience') => void;
 }) {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'critic' | 'audience'>('critic');
+  const [localActiveTab, setLocalActiveTab] = useState<'critic' | 'audience'>('critic');
+  
+  const activeTab = activeTabProp !== undefined ? activeTabProp : localActiveTab;
+  const setActiveTab = (tab: 'critic' | 'audience') => {
+    if (onTabChange) {
+      onTabChange(tab);
+    } else {
+      setLocalActiveTab(tab);
+    }
+  };
+
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showCriticModal, setShowCriticModal] = useState(false);
   
@@ -299,7 +311,7 @@ export function ProductionReviews({ reviews, productionTitle, productionId, stat
                       To preserve review authenticity, only registered members of the Curtain Call community can submit professional stage ratings.
                     </p>
                     <Link
-                      href="/login"
+                      href={`/login?redirect=/productions/${productionId}`}
                       className="mt-2 inline-flex items-center justify-center bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-bold px-6 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider shadow-lg shadow-red-950/20 hover:scale-[1.02] active:scale-[0.98] border border-white/10"
                     >
                       Sign In to Review
