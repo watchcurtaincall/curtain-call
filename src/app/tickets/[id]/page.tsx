@@ -133,6 +133,10 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     params.then(resolved => {
       const fetched = ClientDB.getProductionById(resolved.id);
       if (fetched) {
+        if (fetched.externalTicketUrl) {
+          window.location.replace(fetched.externalTicketUrl);
+          return;
+        }
         setProduction(fetched);
         if (fetched.ticketTiers && fetched.ticketTiers.length > 0) {
           const firstTier = fetched.ticketTiers[0];

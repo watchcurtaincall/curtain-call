@@ -196,16 +196,7 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
       {/* ── CTAs ── */}
       <div className="container mx-auto px-4 mt-6">
         <div className="flex flex-col sm:flex-row gap-3">
-          {production.status !== 'Past Production' && production.status !== 'Recently Concluded' && production.ticketTiers && production.ticketTiers.length > 0 && (
-            <Link
-              href={`/tickets/${production.id}`}
-              className="flex-1 bg-white text-black text-center py-4 rounded-2xl font-bold hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 text-base"
-            >
-              <Ticket className="h-5 w-5" />
-              Get Tickets
-            </Link>
-          )}
-          {production.status !== 'Past Production' && production.status !== 'Recently Concluded' && production.externalTicketUrl && !production.ticketTiers?.length && (() => {
+          {production.status !== 'Past Production' && production.status !== 'Recently Concluded' && production.externalTicketUrl && (() => {
             // Check if show date has passed
             let linkExpired = false;
             if (production.showDate) {
@@ -229,6 +220,15 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
               </a>
             );
           })()}
+          {production.status !== 'Past Production' && production.status !== 'Recently Concluded' && !production.externalTicketUrl && production.ticketTiers && production.ticketTiers.length > 0 && (
+            <Link
+              href={`/tickets/${production.id}`}
+              className="flex-1 bg-white text-black text-center py-4 rounded-2xl font-bold hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 text-base"
+            >
+              <Ticket className="h-5 w-5" />
+              Get Tickets
+            </Link>
+          )}
           <WatchlistButton productionId={production.id} />
           <button
             onClick={() => setShareOpen(true)}

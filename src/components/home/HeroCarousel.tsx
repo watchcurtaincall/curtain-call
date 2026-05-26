@@ -111,13 +111,25 @@ export function HeroCarousel({ productions }: { productions: Production[] }) {
               View Details
             </Link>
             {featured.status !== 'Past Production' && featured.status !== 'Recently Concluded' && (
-              <Link
-                href={`/tickets/${featured.id}`}
-                className="bg-zinc-900/60 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-zinc-800/80 transition-colors"
-              >
-                <Ticket className="h-4 w-4" />
-                Get Tickets
-              </Link>
+              featured.externalTicketUrl ? (
+                <a
+                  href={featured.externalTicketUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-zinc-900/60 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-zinc-800/80 transition-colors"
+                >
+                  <Ticket className="h-4 w-4" />
+                  Get Tickets
+                </a>
+              ) : (
+                <Link
+                  href={`/tickets/${featured.id}`}
+                  className="bg-zinc-900/60 backdrop-blur-md border border-white/20 text-white px-6 py-3 rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-zinc-800/80 transition-colors"
+                >
+                  <Ticket className="h-4 w-4" />
+                  Get Tickets
+                </Link>
+              )
             )}
           </div>
         </div>
