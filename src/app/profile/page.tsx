@@ -24,11 +24,7 @@ import Link from 'next/link';
 
 type Tab = 'dashboard' | 'productions' | 'submissions' | 'reviews' | 'list' | 'badges' | 'stageography';
 
-const ACTIVITY = [
-  { text: 'Rated WATERSIDE 9/10',                         time: '2 days ago',  Icon: Star       },
-  { text: 'Added Oba Ovonramwen to your list',             time: '5 days ago',  Icon: Bookmark   },
-  { text: 'Wrote a review for Motherland The Musical',     time: '1 week ago',  Icon: PenLine    },
-];
+
 
 export default function ProfilePage() {
   const { user, logout, verifyCode, resendVerificationCode } = useAuth();
@@ -399,6 +395,94 @@ export default function ProfilePage() {
     (user.email.toLowerCase() === 'adaeze@example.com' && r.type === 'Audience')
   );
 
+  // ── DYNAMIC RECENT ACTIVITIES ──
+  const dynamicActivities = (() => {
+    const list: any[] = [];
+    const emailLower = user.email.toLowerCase();
+
+    // 1. Reviews & Ratings
+    userReviews.forEach((r: any) => {
+      const prod = allPlays.find(p => p.id === r.productionId);
+      const prodTitle = prod?.title || 'Unknown Production';
+      const score = parseFloat((r.rating / 10).toFixed(1));
+      
+      let text = `Rated ${prodTitle} ${score}/10`;
+      let Icon = Star;
+      if (r.content && r.content.trim().length > 0) {
+        text = `Wrote a review for ${prodTitle}`;
+        Icon = PenLine;
+      }
+      
+      let ts = Date.now();
+      if (r.id && r.id.startsWith('rev_')) {
+        const parsed = parseInt(r.id.replace('rev_', ''), 10);
+        if (!isNaN(parsed)) ts = parsed;
+      }
+
+      list.push({
+        text,
+        time: r.date || 'Recently',
+        Icon,
+        timestamp: ts
+      });
+    });
+
+    // 2. Watchlist
+    watchlistProductions.forEach((p: any) => {
+      list.push({
+        text: `Added ${p.title} to your list`,
+        time: 'Recently',
+        Icon: Bookmark,
+        timestamp: 0
+      });
+    });
+
+    // 3. Tickets Purchased
+    const dbTickets = ClientDB.getTickets();
+    const userTickets = dbTickets.filter(t => t.buyerEmail?.toLowerCase() === emailLower);
+    userTickets.forEach((t: any) => {
+      list.push({
+        text: `Purchased a ticket for ${t.productionTitle} (${t.tier} Tier)`,
+        time: t.date || 'Recently',
+        Icon: Ticket,
+        timestamp: t.timestamp || Date.now()
+      });
+    });
+
+    // 4. Submissions
+    userSubmissions.forEach((sub: any) => {
+      let ts = Date.now();
+      if (sub.id) {
+        const numStr = sub.id.match(/\d+/);
+        if (numStr) {
+          const parsed = parseInt(numStr[0], 10);
+          if (!isNaN(parsed)) ts = parsed;
+        }
+      }
+      list.push({
+        text: `Submitted ${sub.contentType}: ${sub.name || sub.title}`,
+        time: 'Recently',
+        Icon: FileText,
+        timestamp: ts
+      });
+    });
+
+    // Sort newest first
+    list.sort((a, b) => b.timestamp - a.timestamp);
+
+    // Default fallbacks if empty
+    if (list.length === 0) {
+      list.push({
+        text: 'Welcome to Curtain Call! Explore productions to get started.',
+        time: 'Just now',
+        Icon: Sparkles,
+        timestamp: Date.now()
+      });
+    }
+
+    return list.slice(0, 3);
+  })();
+
   // Dynamic point system logic - attach points to each step
   const validatedDone = user.bio ? user.bio.trim().length > 0 : false; 
   const ratedCount = user.email === 'adaeze@example.com' ? user.ratings : userReviews.length;
@@ -632,7 +716,7 @@ export default function ProfilePage() {
             <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6">
               <h2 className="font-serif font-bold text-white text-lg mb-4">Recent Activity</h2>
               <div className="flex flex-col divide-y divide-white/5">
-                {ACTIVITY.map(({ text, time, Icon }, i) => (
+                {dynamicActivities.map(({ text, time, Icon }, i) => (
                   <div key={i} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
                     <div className="w-8 h-8 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0 mt-0.5">
                       <Icon className="h-3.5 w-3.5 text-zinc-400" />
