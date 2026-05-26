@@ -195,7 +195,7 @@ export default function SignupPage() {
           </p>
 
           <p className="text-center text-zinc-400 text-sm mt-8">
-            Already have an account? <Link href="/login" className="text-white font-medium hover:underline">Sign in</Link>
+            Already have an account? <Link href={typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('redirect') ? `/login?redirect=${new URLSearchParams(window.location.search).get('redirect')}` : "/login"} className="text-white font-medium hover:underline">Sign in</Link>
           </p>
         </div>
       </div>

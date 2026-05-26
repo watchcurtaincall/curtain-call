@@ -21,9 +21,6 @@ export default function SubmitPortalPage() {
       router.push('/login?redirect=/submit');
       return;
     }
-    if (user && !user.isVerified) {
-      router.push('/profile');
-    }
   }, [user, router]);
 
   useEffect(() => {

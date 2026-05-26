@@ -127,7 +127,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-zinc-500 text-sm mt-8">
-            Don&apos;t have an account? <Link href="/signup" className="text-white font-medium hover:underline">Sign up</Link>
+            Don&apos;t have an account? <Link href={typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('redirect') ? `/signup?redirect=${new URLSearchParams(window.location.search).get('redirect')}` : "/signup"} className="text-white font-medium hover:underline">Sign up</Link>
           </p>
         </div>
       </div>

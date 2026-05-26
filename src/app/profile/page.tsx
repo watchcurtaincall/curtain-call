@@ -22,7 +22,7 @@ import { SettingsPanel } from '@/components/profile/SettingsPanel';
 import { EditReviewModal } from '@/components/profile/EditReviewModal';
 import Link from 'next/link';
 
-type Tab = 'dashboard' | 'productions' | 'submissions' | 'reviews' | 'list' | 'badges' | 'stageography' | 'scanner';
+type Tab = 'dashboard' | 'submissions' | 'reviews' | 'list' | 'badges' | 'stageography';
 
 
 
@@ -67,10 +67,10 @@ export default function ProfilePage() {
     // Background pull database sync on page load/mount
     syncFromSupabase();
 
-    // Support setting active tab from query parameters (e.g. /profile?tab=productions)
+    // Support setting active tab from query parameters (e.g. /profile?tab=submissions)
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab') as Tab;
-    if (tabParam && ['dashboard', 'productions', 'submissions', 'reviews', 'list', 'badges', 'stageography', 'scanner'].includes(tabParam)) {
+    if (tabParam && ['dashboard', 'submissions', 'reviews', 'list', 'badges', 'stageography'].includes(tabParam)) {
       setTab(tabParam);
     }
 
@@ -537,20 +537,15 @@ export default function ProfilePage() {
 
   const userPlays = user ? allPlays.filter(p => p.submitterEmail?.toLowerCase() === user.email.toLowerCase()) : [];
 
-  // Tabs ordered Dashboard -> Production -> My Submissions
+  // Tabs ordered Dashboard -> My Submissions
   const tabs: { id: Tab; label: string; Icon: React.FC<{ className?: string }> }[] = [
     { id: 'dashboard',     label: 'Dashboard',      Icon: Star          },
-    { id: 'productions',   label: 'Production',     Icon: Drama         },
     { id: 'submissions',   label: 'My Submissions', Icon: FileText      },
     { id: 'reviews',       label: 'My Reviews',     Icon: PenLine       },
     { id: 'list',          label: 'My List',        Icon: Bookmark      },
     { id: 'stageography',  label: 'Stageography',   Icon: Clapperboard  },
     { id: 'badges',        label: 'Badges',         Icon: Award         },
   ];
-
-  if (userPlays.length > 0 || user.email.toLowerCase() === 'watchcurtaincall@gmail.com') {
-    tabs.splice(2, 0, { id: 'scanner', label: 'Ticket Scanner', Icon: QrCode });
-  }
 
   return (
     <div className="min-h-screen bg-zinc-950">
@@ -618,13 +613,13 @@ export default function ProfilePage() {
 
             <div className="flex items-center gap-1 sm:gap-2">
               {(userPlays.length > 0 || user.email.toLowerCase() === 'watchcurtaincall@gmail.com') && (
-                <button
-                  onClick={() => setTab('scanner')}
-                  title="Gate Scanner"
-                  className="p-2 sm:p-2.5 bg-red-600/15 hover:bg-red-600/30 text-red-400 hover:text-red-300 rounded-xl transition-colors border border-red-500/20"
+                <Link
+                  href="/producer"
+                  title="Go to Producer Wallet"
+                  className="p-2 sm:p-2.5 bg-emerald-600/15 hover:bg-emerald-600/30 text-emerald-400 hover:text-emerald-300 rounded-xl transition-colors border border-emerald-500/20"
                 >
-                  <QrCode className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                </button>
+                  <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </Link>
               )}
               <button
                 onClick={() => setShowNotifs(true)}
@@ -690,6 +685,26 @@ export default function ProfilePage() {
         {/* DASHBOARD */}
         {tab === 'dashboard' && (
           <div className="flex flex-col gap-5 animate-fade-up">
+
+            {/* Producer Wallet & Curation Hub Navigation Card */}
+            <div className="relative rounded-2xl overflow-hidden border border-white/5 bg-gradient-to-r from-emerald-950/20 via-zinc-900 to-zinc-900 p-6 shadow-xl backdrop-blur-xl">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[40px] pointer-events-none" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                    <Wallet className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif font-bold text-white text-base">Producer Wallet & Curation Hub</h3>
+                    <p className="text-xs text-zinc-400 mt-0.5">Manage your payouts, wallet balance, and stage productions.</p>
+                  </div>
+                </div>
+                <Link href="/producer" className="inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider self-start sm:self-auto shrink-0 shadow-lg shadow-emerald-950/20">
+                  <span>Go to Producer Wallet</span>
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
 
             {/* Points & Badges */}
             <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6">
@@ -947,10 +962,7 @@ export default function ProfilePage() {
           <ProfileStageographyTab userEmail={user.email} />
         )}
 
-        {/* TICKET SCANNER */}
-        {tab === 'scanner' && (
-          <ProfileScannerTab userEmail={user.email} />
-        )}
+
 
       </div>
     </div>

@@ -78,11 +78,7 @@ function CreateProductionForm() {
   const [resolvedName, setResolvedName] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
 
-  useEffect(() => {
-    if (user && !user.isVerified) {
-      router.push('/profile');
-    }
-  }, [user, router]);
+
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState('');
 

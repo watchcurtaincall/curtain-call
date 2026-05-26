@@ -293,7 +293,7 @@ export function Navbar() {
                 </Link>
               ) : (
                 <Link
-                  href="/login"
+                  href={`/login?redirect=${pathname}`}
                   className="hidden md:flex items-center gap-2 text-sm font-medium text-white bg-white/8 hover:bg-white/14 px-4 py-2 rounded-xl transition-colors whitespace-nowrap border border-white/10"
                 >
                   <User className="h-4 w-4" />
@@ -372,7 +372,7 @@ export function Navbar() {
               </div>
             ) : (
               <Link
-                href="/login"
+                href={`/login?redirect=${pathname}`}
                 onClick={close}
                 className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-white text-black font-bold text-base hover:bg-zinc-100 transition-colors"
               >
