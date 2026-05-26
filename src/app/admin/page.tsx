@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { ClientDB, syncFromSupabase } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
-import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download, QrCode, Camera, RefreshCw } from 'lucide-react';
+import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download, QrCode, Camera, RefreshCw, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -299,8 +299,12 @@ export default function AdminDashboardPage() {
   const [artistForm, setArtistForm] = useState({
     name: '',
     bio: '',
-    dateOfBirth: ''
+    dateOfBirth: '',
+    career: '',
+    style: '',
+    achievements: ''
   });
+  const [draftingAI, setDraftingAI] = useState(false);
   const [roleSelect, setRoleSelect] = useState('Actor');
   const [customRole, setCustomRole] = useState('');
   const [crawling, setCrawling] = useState(false);
@@ -865,7 +869,10 @@ export default function AdminDashboardPage() {
       setArtistForm({
         name: profile.name,
         bio: profile.bio,
-        dateOfBirth: profile.dateOfBirth || ''
+        dateOfBirth: profile.dateOfBirth || '',
+        career: '',
+        style: '',
+        achievements: ''
       });
       
       const standardRoles = ['Actor', 'Director', 'Playwright', 'Producer', 'Set Designer', 'Costume Designer', 'Lighting Designer', 'Stage Manager', 'Sound Designer'];
@@ -884,6 +891,42 @@ export default function AdminDashboardPage() {
       showToast(err.message || 'Failed to crawl profile details.', 'error');
     } finally {
       setCrawling(false);
+    }
+  };
+
+  const handleDraftAI = async () => {
+    if (!artistForm.name.trim() || !artistForm.bio.trim()) {
+      showToast('Please fill out Name and Biography first so the AI has context to draft from.', 'error');
+      return;
+    }
+    try {
+      setDraftingAI(true);
+      showToast('Engaging Gemini API curatorial board draft assistant...');
+      const res = await fetch('/api/curator-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: artistForm.name,
+          roleType: roleSelect === 'Other' ? customRole : roleSelect,
+          bio: artistForm.bio
+        })
+      });
+      const resData = await res.json();
+      if (!res.ok || !resData.success) {
+        throw new Error(resData.error || 'Failed to engage curator assistant');
+      }
+      const draft = resData.data;
+      setArtistForm(prev => ({
+        ...prev,
+        career: draft.career || '',
+        style: draft.style || '',
+        achievements: (draft.achievements || []).join('\n')
+      }));
+      showToast('Successfully generated verified career draft elements!', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Curation draft engine failed.', 'error');
+    } finally {
+      setDraftingAI(false);
     }
   };
 
@@ -1048,6 +1091,9 @@ export default function AdminDashboardPage() {
       headshotUrl: artistImage || '',
       bio: artistForm.bio,
       dateOfBirth: artistForm.dateOfBirth || undefined,
+      career: artistForm.career.trim() || undefined,
+      style: artistForm.style.trim() || undefined,
+      achievements: artistForm.achievements.trim() ? artistForm.achievements.split('\n').filter(Boolean) : undefined,
       createdAt: new Date().toISOString()
     };
 
@@ -1055,7 +1101,7 @@ export default function AdminDashboardPage() {
       ClientDB.saveArtist(newArtist);
       setLoading(false);
       showToast(`Artist "${artistForm.name}" directly published to live directory!`);
-      setArtistForm({ name: '', bio: '', dateOfBirth: '' });
+      setArtistForm({ name: '', bio: '', dateOfBirth: '', career: '', style: '', achievements: '' });
       setRoleSelect('Actor');
       setCustomRole('');
       setArtistImage(null);
@@ -2245,7 +2291,18 @@ This file was retrieved from the Curtain Call Curation Vault.
             )}
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Biography</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Biography</label>
+                <button
+                  type="button"
+                  disabled={draftingAI}
+                  onClick={handleDraftAI}
+                  className="text-[10px] font-bold text-red-500 hover:text-red-400 uppercase tracking-wider flex items-center gap-1 transition-all disabled:opacity-50"
+                >
+                  <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+                  <span>{draftingAI ? 'Drafting Details...' : 'Smart AI Draft Biography'}</span>
+                </button>
+              </div>
               <textarea
                 required
                 rows={4}
@@ -2253,6 +2310,50 @@ This file was retrieved from the Curtain Call Curation Vault.
                 value={artistForm.bio}
                 onChange={e => setArtistForm({ ...artistForm, bio: e.target.value })}
                 className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors resize-none [scrollbar-width:none]"
+              />
+            </div>
+
+            {/* AI Generated Sections */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-red-500" />
+                  <span>Theatrical Career</span>
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder="Key career milestones, regional showcase plays, dramatic works..."
+                  value={artistForm.career}
+                  onChange={e => setArtistForm({ ...artistForm, career: e.target.value })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-700 resize-none"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Star className="h-3.5 w-3.5 text-red-500" />
+                  <span>Style & Aesthetic</span>
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder="Artistic aesthetics, visual staging style, thematic motifs..."
+                  value={artistForm.style}
+                  onChange={e => setArtistForm({ ...artistForm, style: e.target.value })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-700 resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <Award className="h-4 w-4 text-red-500" />
+                <span>Documented Achievements (One per line)</span>
+              </label>
+              <textarea
+                rows={3}
+                placeholder="e.g. Recipient of national dramatic arts award&#10;Contributed verified playbill credits to archive..."
+                value={artistForm.achievements}
+                onChange={e => setArtistForm({ ...artistForm, achievements: e.target.value })}
+                className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-700"
               />
             </div>
 
