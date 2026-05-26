@@ -140,6 +140,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const parsed = JSON.parse(savedUser);
         const defaultVerified = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'];
+        
+        // Self-healing credentials align
+        if (parsed && parsed.email.toLowerCase() === 'watchcurtaincall@gmail.com' && parsed.name !== 'CC Admin') {
+          parsed.name = 'CC Admin';
+          localStorage.setItem('cc_authed_user', JSON.stringify(parsed));
+        }
+        
         if (parsed && defaultVerified.includes(parsed.email.toLowerCase()) && !parsed.isVerified) {
           parsed.isVerified = true;
           localStorage.setItem('cc_authed_user', JSON.stringify(parsed));
