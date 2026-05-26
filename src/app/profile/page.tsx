@@ -609,36 +609,36 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               {(userPlays.length > 0 || user.email.toLowerCase() === 'watchcurtaincall@gmail.com') && (
                 <button
                   onClick={() => setTab('scanner')}
                   title="Gate Scanner"
-                  className="p-2.5 bg-red-600/15 hover:bg-red-600/30 text-red-400 hover:text-red-300 rounded-xl transition-colors border border-red-500/20"
+                  className="p-2 sm:p-2.5 bg-red-600/15 hover:bg-red-600/30 text-red-400 hover:text-red-300 rounded-xl transition-colors border border-red-500/20"
                 >
-                  <QrCode className="h-4 w-4" />
+                  <QrCode className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </button>
               )}
               <button
                 onClick={() => setShowNotifs(true)}
-                className="relative p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors text-zinc-400 hover:text-white"
+                className="relative p-2 sm:p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors text-zinc-400 hover:text-white"
               >
-                <Bell className="h-4 w-4" />
+                <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 {unreadNotifications > 0 && (
                   <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border border-zinc-900" />
                 )}
               </button>
               <button
                 onClick={() => setShowSettings(true)}
-                className="p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors text-zinc-400 hover:text-white"
+                className="p-2 sm:p-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors text-zinc-400 hover:text-white"
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </button>
               <button
                 onClick={() => setShowLogoutConfirm(true)}
-                className="p-2.5 bg-zinc-800 hover:bg-red-900/40 rounded-xl transition-colors text-zinc-400 hover:text-red-400"
+                className="p-2 sm:p-2.5 bg-zinc-800 hover:bg-red-900/40 rounded-xl transition-colors text-zinc-400 hover:text-red-400"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               </button>
             </div>
           </div>
