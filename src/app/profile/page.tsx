@@ -67,6 +67,13 @@ export default function ProfilePage() {
     // Background pull database sync on page load/mount
     syncFromSupabase();
 
+    // Support setting active tab from query parameters (e.g. /profile?tab=productions)
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab') as Tab;
+    if (tabParam && ['dashboard', 'productions', 'submissions', 'reviews', 'list', 'badges', 'stageography', 'scanner'].includes(tabParam)) {
+      setTab(tabParam);
+    }
+
     return () => {
       window.removeEventListener('cc-db-synced', handleSync);
       window.removeEventListener('cc-profile-updated', handleSync);

@@ -680,6 +680,34 @@ export const ClientDB = {
       list = MOCK_ARTISTS;
     } else {
       list = JSON.parse(stored);
+      let migrated = false;
+      list = list.map((artist: any) => {
+        const mockMatch = MOCK_ARTISTS.find(m => m.id === artist.id);
+        if (mockMatch) {
+          let updated = false;
+          const artistWithMock = { ...artist };
+          if (mockMatch.career && !artist.career) {
+            artistWithMock.career = mockMatch.career;
+            updated = true;
+          }
+          if (mockMatch.style && !artist.style) {
+            artistWithMock.style = mockMatch.style;
+            updated = true;
+          }
+          if (mockMatch.achievements && mockMatch.achievements.length > 0 && (!artist.achievements || artist.achievements.length === 0)) {
+            artistWithMock.achievements = mockMatch.achievements;
+            updated = true;
+          }
+          if (updated) {
+            migrated = true;
+            return artistWithMock;
+          }
+        }
+        return artist;
+      });
+      if (migrated) {
+        localStorage.setItem(ARTISTS_KEY, JSON.stringify(list));
+      }
     }
     
     // Ensure all artists dynamically have an SEO slug generated from their name

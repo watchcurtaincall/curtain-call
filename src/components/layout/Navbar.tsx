@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from "next/link";
-import { Search, User, Menu, X } from "lucide-react";
-import { usePathname } from 'next/navigation';
+import { Search, User, Menu, X, Ticket, Coins, TrendingUp, QrCode, ArrowRight } from "lucide-react";
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { ClientDB } from '@/lib/db';
 
@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: '/critics', label: 'Critics' },
   { href: '/editorial', label: 'Editorial' },
   { href: '/artists', label: 'Artists' },
+  { href: '#sell-tickets', label: 'Sell Tickets' },
   { href: '/submit', label: 'Submit' },
 ];
 
@@ -31,7 +32,9 @@ export function Navbar() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
+  const [isSellTicketsOpen, setIsSellTicketsOpen] = useState(false);
 
   const close = () => { setIsMenuOpen(false); setIsSearchOpen(false); setSearchVal(''); setShowSuggestions(false); };
 
@@ -124,6 +127,16 @@ export function Navbar() {
                     <Link
                       key={href}
                       href={href}
+                      onClick={(e) => {
+                        if (href === '#sell-tickets') {
+                          e.preventDefault();
+                          if (user) {
+                            router.push('/profile?tab=productions');
+                          } else {
+                            setIsSellTicketsOpen(true);
+                          }
+                        }
+                      }}
                       className={`relative py-1 transition-colors ${
                         active ? 'text-white' : 'text-zinc-400 hover:text-zinc-200'
                       }`}
@@ -310,7 +323,19 @@ export function Navbar() {
                 <Link
                   key={href}
                   href={href}
-                  onClick={close}
+                  onClick={(e) => {
+                    if (href === '#sell-tickets') {
+                      e.preventDefault();
+                      if (user) {
+                        router.push('/profile?tab=productions');
+                      } else {
+                        setIsSellTicketsOpen(true);
+                      }
+                      setIsMenuOpen(false);
+                    } else {
+                      close();
+                    }
+                  }}
                   className={`py-4 text-2xl font-serif font-bold border-b border-white/5 transition-colors ${
                     active ? 'text-white' : 'text-zinc-400 hover:text-white'
                   }`}
@@ -354,6 +379,101 @@ export function Navbar() {
                 Sign In
               </Link>
             )}
+          </div>
+        </div>
+      )}
+      {/* ── SELL TICKETS INFORMATIONAL PROMOTIONAL MODAL ── */}
+      {isSellTicketsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={() => setIsSellTicketsOpen(false)} />
+          
+          <div className="relative w-full max-w-lg bg-zinc-950/90 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl animate-fade-up overflow-hidden max-h-[90vh] overflow-y-auto">
+            {/* Background elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-orange-500/5 rounded-full blur-[60px] pointer-events-none" />
+
+            <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-6">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-red-600/10 border border-red-500/20 flex items-center justify-center">
+                  <Ticket className="h-4 w-4 text-red-500" />
+                </div>
+                <h3 className="font-serif font-bold text-lg text-white">Sell Production Tickets</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSellTicketsOpen(false)}
+                className="text-zinc-500 hover:text-white transition-colors p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-6">
+              <div className="text-center sm:text-left">
+                <h4 className="font-serif text-2xl font-bold text-white leading-tight">
+                  Maximize Playbill Earnings with Curtain Call 🎭
+                </h4>
+                <p className="text-xs sm:text-sm text-zinc-400 mt-2 leading-relaxed">
+                  List your theatrical stage plays, curate multiple custom ticket tiers, process secure local payments via Paystack, and track gate admissions in real-time.
+                </p>
+              </div>
+
+              {/* Feature grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  {
+                    icon: Coins,
+                    title: "Flat 5% Commission",
+                    desc: "Free registration and setup. No hidden charges. Keep 95% of all admissions sales."
+                  },
+                  {
+                    icon: TrendingUp,
+                    title: "Multi-Tiered Tickets",
+                    desc: "Create VIP, General, Patron, or early bird tiers with custom pricing and seat limits."
+                  },
+                  {
+                    icon: QrCode,
+                    title: "Gate Ticket Scanner",
+                    desc: "Producers scan guest admissions vouchers at the hall entry using a smartphone camera."
+                  },
+                  {
+                    icon: User,
+                    title: "Audience Analytics",
+                    desc: "Track real-time signups, ticket purchase histories, and withdrawal details instantly."
+                  }
+                ].map((f, idx) => {
+                  const IconComp = f.icon;
+                  return (
+                    <div key={idx} className="bg-zinc-900/60 border border-white/5 rounded-2xl p-4 flex gap-3 items-start">
+                      <div className="w-8 h-8 rounded-xl bg-zinc-800 flex items-center justify-center text-red-400 border border-white/5 shrink-0 animate-pulse">
+                        <IconComp className="h-4 w-4" />
+                      </div>
+                      <div className="flex-1">
+                        <h5 className="text-xs font-bold text-white font-sans uppercase tracking-wide">{f.title}</h5>
+                        <p className="text-[11px] text-zinc-500 leading-normal mt-1">{f.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/5">
+                <button
+                  onClick={() => setIsSellTicketsOpen(false)}
+                  className="flex-1 bg-zinc-900 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white font-bold py-3.5 rounded-xl transition-all text-xs uppercase tracking-wider"
+                >
+                  Close & Explore
+                </button>
+                <Link
+                  href="/login?redirect=/profile?tab=productions"
+                  onClick={() => setIsSellTicketsOpen(false)}
+                  className="flex-1 bg-white hover:bg-zinc-100 text-black font-bold py-3.5 rounded-xl transition-all text-xs uppercase tracking-wider text-center flex items-center justify-center gap-1.5 shadow-xl shadow-white/5"
+                >
+                  Get Started Now <ArrowRight className="h-3.5 w-3.5 animate-pulse" />
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       )}

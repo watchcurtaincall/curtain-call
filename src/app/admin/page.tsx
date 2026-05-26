@@ -3360,10 +3360,43 @@ This file was retrieved from the Curtain Call Curation Vault.
                 <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Biography</label>
                 <textarea
                   required
-                  rows={4}
+                  rows={3}
                   value={editingArtist.bio || ''}
                   onChange={e => setEditingArtist({ ...editingArtist, bio: e.target.value })}
                   className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Theatrical Career</label>
+                <textarea
+                  rows={3}
+                  placeholder="Key career milestones, regional showcase plays, dramatic works..."
+                  value={editingArtist.career || ''}
+                  onChange={e => setEditingArtist({ ...editingArtist, career: e.target.value })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-700"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Style & Aesthetic</label>
+                <textarea
+                  rows={3}
+                  placeholder="Artistic aesthetics, visual staging style, thematic motifs..."
+                  value={editingArtist.style || ''}
+                  onChange={e => setEditingArtist({ ...editingArtist, style: e.target.value })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-700"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Documented Achievements (One per line)</label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Recipient of national dramatic arts award..."
+                  value={(editingArtist.achievements || []).join('\n')}
+                  onChange={e => setEditingArtist({ ...editingArtist, achievements: e.target.value.split('\n').filter(Boolean) })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-700"
                 />
               </div>
 

@@ -20,6 +20,13 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
   const [hasSynced, setHasSynced] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
+  const scrollToReviews = () => {
+    const section = document.getElementById('reviews-section');
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   // Load dynamically from the ClientDB on mount
   useEffect(() => {
     const loadData = () => {
@@ -231,6 +238,13 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
           )}
           <WatchlistButton productionId={production.id} />
           <button
+            onClick={scrollToReviews}
+            className="bg-red-600/10 hover:bg-red-600 border border-red-500/20 hover:border-red-600 text-red-400 hover:text-white px-6 py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 text-base group"
+          >
+            <Star className="h-5 w-5 text-red-400 group-hover:text-white transition-colors" />
+            <span>Review Play</span>
+          </button>
+          <button
             onClick={() => setShareOpen(true)}
             className="bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white px-6 py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 text-base group"
           >
@@ -261,12 +275,14 @@ export default function ProductionPage({ params }: { params: Promise<{ id: strin
           <PhotoGallery productionTitle={production.title} galleryImages={production.galleryImages} />
 
           {/* Reviews section */}
-          <ProductionReviews
-            reviews={ClientDB.getReviews().filter(r => r.productionId === production.id)}
-            productionTitle={production.title}
-            productionId={production.id}
-            status={production.status}
-          />
+          <div id="reviews-section">
+            <ProductionReviews
+              reviews={ClientDB.getReviews().filter(r => r.productionId === production.id)}
+              productionTitle={production.title}
+              productionId={production.id}
+              status={production.status}
+            />
+          </div>
 
         </div>
 
