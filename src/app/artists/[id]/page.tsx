@@ -42,7 +42,37 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
   }, [resolvedParams.id]);
 
   // Map dynamic stageography credits (null-safe: artist may not be loaded yet)
-  const stageographyProductions = (artist?.scenography || [])
+  const explicitScenography = artist?.scenography || [];
+  
+  // Find all productions where the artist is credited in castAndCrew
+  const implicitProductions = artist ? ClientDB.getProductions().filter(p => {
+    return p.castAndCrew?.some(member => 
+      member.name.toLowerCase().trim() === artist.name.toLowerCase().trim()
+    );
+  }) : [];
+
+  // Merge them to avoid duplicates, prioritizing explicit scenography details
+  const stageographyMap = new Map<string, { productionId: string; role: string }>();
+
+  // Add implicit matches first
+  implicitProductions.forEach(prod => {
+    if (artist) {
+      const member = prod.castAndCrew?.find(m => m.name.toLowerCase().trim() === artist.name.toLowerCase().trim());
+      if (member) {
+        stageographyMap.set(prod.id, {
+          productionId: prod.id,
+          role: member.role
+        });
+      }
+    }
+  });
+
+  // Add explicit scenography (overrides/updates implicit roles if duplicated)
+  explicitScenography.forEach((item: any) => {
+    stageographyMap.set(item.productionId, item);
+  });
+
+  const stageographyProductions = Array.from(stageographyMap.values())
     .map((item: any) => {
       const prod = ClientDB.getProductions().find(p => p.id === item.productionId);
       if (prod) {
