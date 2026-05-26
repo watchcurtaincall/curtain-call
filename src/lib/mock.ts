@@ -126,49 +126,111 @@ export const MOCK_ARTISTS: Artist[] = [
     name: 'Bolanle Austen-Peters',
     roleType: 'Director / Producer',
     headshotUrl: '/images/bolanle_headshot_real.png',
-    bio: 'Bolanle Austen-Peters is a Nigerian movie director, theatre producer, and lawyer. She is the founder of Terra Kulture, a leading Nigerian arts, culture, and lifestyle center, and the production company Bolanle Austen-Peters Productions (BAP Productions) which pioneered large-scale stage musicals.'
+    bio: 'Bolanle Austen-Peters is a Nigerian movie director, theatre producer, and lawyer. She is the founder of Terra Kulture, a leading Nigerian arts, culture, and lifestyle center, and the production company Bolanle Austen-Peters Productions (BAP Productions) which pioneered large-scale stage musicals.',
+    scenography: [
+      { productionId: 'p1', productionTitle: 'Motherland The Musical', role: 'Director / Producer' },
+      { productionId: 'p4', productionTitle: 'Fela and the Kalakuta Queens', role: 'Director / Producer' },
+      { productionId: 'p8', productionTitle: 'Saro The Musical', role: 'Director / Producer' }
+    ],
+    career: 'Bolanle Austen-Peters is a pivotal figure in the contemporary West African theatrical renaissance. In 2013, she founded BAP Productions, a powerhouse that changed the commercial landscape of Nigerian theatre by staging high-budget, broadway-grade musical ensembles celebrating legendary African figures and historical milestones.',
+    style: 'Her directing style is marked by grand scale scale visual arrangements, spectacular costuming, large-ensemble dance routines, and high-energy Afrobeat orchestration, making her musicals instantly recognizable global cultural phenomena.',
+    achievements: [
+      'Pioneered premium commercial musical theatre in Nigeria',
+      'Staged global tours of African musicals in London, Pretoria, and Cairo',
+      'Honored by the Federal Government for Outstanding Cultural Legacy Development'
+    ]
   },
   {
     id: 'a2',
     name: 'Wole Soyinka',
     roleType: 'Playwright / Nobel Laureate',
     headshotUrl: '/images/wole_soyinka_headshot_real.png',
-    bio: 'Akinwande Oluwole Babatunde Soyinka, known as Wole Soyinka, is a Nigerian playwright, novelist, poet, and essayist in the English language. He was awarded the 1986 Nobel Prize in Literature, the first sub-Saharan African to be honored in that category, for works like Death and the King\'s Horseman.'
+    bio: 'Akinwande Oluwole Babatunde Soyinka, known as Wole Soyinka, is a Nigerian playwright, novelist, poet, and essayist in the English language. He was awarded the 1986 Nobel Prize in Literature, the first sub-Saharan African to be honored in that category, for works like Death and the King\'s Horseman.',
+    scenography: [
+      { productionId: 'p6', productionTitle: 'Death and the King\'s Horseman', role: 'Playwright' },
+      { productionId: 'p9', productionTitle: 'The Lion and the Jewel', role: 'Playwright' }
+    ],
+    career: 'Wole Soyinka has spent over six decades at the absolute pinnacle of global literature and drama. Educated at University College Ibadan and the University of Leeds, his plays have been performed worldwide, establishing him as one of the most intellectually fierce and creatively sublime voices in post-colonial literature.',
+    style: 'His plays utilize rich Yoruba cosmology, complex political satire, ritual dance-dramas, and high-style poetic English to investigate themes of individual honor, colonial friction, and the cosmic transition between life and death.',
+    achievements: [
+      'Awarded the Nobel Prize in Literature in 1986',
+      'Commander of the Federal Republic (CFR) of Nigeria',
+      'Founder of the Orisun Theatre Company and prominent civil rights advocate'
+    ]
   },
   {
     id: 'a3',
     name: 'Joke Silva',
     roleType: 'Actor / Director',
     headshotUrl: '/images/joke_silva_headshot_real.png',
-    bio: 'Joke Silva, MFR is a legendary Nigerian actress, director, and businesswoman. She has starred in numerous stage plays and films, co-founded the Lufodo Academy of Performing Arts, and is widely regarded as the matriarch of modern Nigerian stage and screen.'
+    bio: 'Joke Silva, MFR is a legendary Nigerian actress, director, and businesswoman. She has starred in numerous stage plays and films, co-founded the Lufodo Academy of Performing Arts, and is widely regarded as the matriarch of modern Nigerian stage and screen.',
+    scenography: [
+      { productionId: 'p7', productionTitle: 'Hear Word! Naija Woman Talk True', role: 'Lead Actor' }
+    ],
+    career: 'Joke Silva graduated from the Webber Douglas Academy of Dramatic Art in London and the University of Lagos. Across four decades of theatrical performance, her immense vocal clarity and emotional depth have anchored some of the most influential dramatic stage ensembles in West African history.',
+    style: 'Renowned for intense dramatic realism, pristine elocution, and profound maternal gravity, her stage roles present complex, strong-willed female leads fighting for equity and systemic reform.',
+    achievements: [
+      'Member of the Order of the Federal Republic (MFR)',
+      'Co-founder of the Lufodo Group and Academy of Performing Arts',
+      'Recipient of multiple Lifetime Achievement Awards for Stage and Screen Performance'
+    ]
   },
   {
     id: 'a4',
     name: 'Lola Shoneyin',
     roleType: 'Playwright / Novelist / Poet',
     headshotUrl: '/images/lola_shoneyin_headshot_real.png',
-    bio: 'Titilola Atinuke Alexandrah Shoneyin, known as Lola Shoneyin, is a prominent Nigerian poet and novelist. She is the author of the critically acclaimed novel The Secret Lives of Baba Segi\'s Wives, which was adapted into a highly successful international stage play.'
+    bio: 'Titilola Atinuke Alexandrah Shoneyin, known as Lola Shoneyin, is a prominent Nigerian poet and novelist. She is the author of the critically acclaimed novel The Secret Lives of Baba Segi\'s Wives, which was adapted into a highly successful international stage play.',
+    scenography: [
+      { productionId: 'p5', productionTitle: 'Baba Segi\'s Wives', role: 'Playwright / Original Author' }
+    ],
+    career: 'Lola Shoneyin has gained international renown for her literature dissecting Nigerian domestic life. Her landmark novel, The Secret Lives of Baba Segi\'s Wives, was adapted for the stage by Rotimi Babatunde and has been produced across Nigeria, the UK, and Germany to sold-out audiences.',
+    style: 'Her writing style is defined by sharp wit, unflinching humor, subversion of domestic patriarchies, and rich, relatable character monologues that resonate powerfully with diverse audiences.',
+    achievements: [
+      'Authored the internationally acclaimed and bestselling novel Baba Segi\'s Wives',
+      'Director of the Aké Arts and Book Festival, promoting African cultural discourse',
+      'Produced globally recognized theatrical adaptations of African literature'
+    ]
   },
   {
     id: 'a5',
     name: 'Femi Odugbemi',
     roleType: 'Director / Producer / Filmmaker',
     headshotUrl: '/images/femi_odugbemi_headshot_real.png',
-    bio: 'Femi Odugbemi is a Nigerian documentary filmmaker, screen producer, writer, director, and photographer. He is the co-founder of the iRepresent International Documentary Film Festival and a voting member of the Academy of Motion Picture Arts and Sciences (Oscars).'
+    bio: 'Femi Odugbemi is a Nigerian documentary filmmaker, screen producer, writer, director, and photographer. He is the co-founder of the iRepresent International Documentary Film Festival and a voting member of the Academy of Motion Picture Arts and Sciences (Oscars).',
+    scenography: []
   },
   {
     id: 'a6',
     name: 'Temi Otedola',
     roleType: 'Actor / Creative',
     headshotUrl: '/images/temi_headshot_real.png',
-    bio: 'Temi Otedola is a Nigerian actor and creative who made her professional stage debut playing the role of Young Hassana in Bolanle Austen-Peters\' critically acclaimed musical Motherland The Musical.'
+    bio: 'Temi Otedola is a Nigerian actor and creative who made her professional stage debut playing the role of Young Hassana in Bolanle Austen-Peters\' critically acclaimed musical Motherland The Musical.',
+    scenography: [
+      { productionId: 'p1', productionTitle: 'Motherland The Musical', role: 'Actor (Young Hassana)' }
+    ],
+    career: 'Temi Otedola transitioned from fashion curation and digital style critique to professional acting in 2020. Her performance in the feature film Citation led to her highly anticipated stage debut in Motherland The Musical, where she demonstrated exceptional vocal and performance capabilities.',
+    style: 'Bringing a fresh, earnest, and emotionally raw vulnerability to the stage, her performances capture the optimism and conflicts of contemporary African youth.',
+    achievements: [
+      'Successfully debuted in major commercial musical theatre at Terra Kulture Arena',
+      'Winner of Best Actress in a Leading Role at the African Movie Academy Awards (Citation)'
+    ]
   },
   {
     id: 'a7',
     name: 'Uzo Osimkpa',
     roleType: 'Actor / Creative',
     headshotUrl: '/images/uzo_headshot_real.png',
-    bio: 'Uzo Osimkpa is a seasoned Nigerian actor known for her powerful stage performances, most notably starring in the groundbreaking ensemble production Hear Word! Naija Woman Talk True.'
+    bio: 'Uzo Osimkpa is a seasoned Nigerian actor known for her powerful stage performances, most notably starring in the groundbreaking ensemble production Hear Word! Naija Woman Talk True.',
+    scenography: [
+      { productionId: 'p7', productionTitle: 'Hear Word! Naija Woman Talk True', role: 'Actor / Creative' }
+    ],
+    career: 'Uzo Osimkpa has spent over fifteen years perfecting her craft across television drama and live stage productions in Nigeria. Her participation in Hear Word! has toured international institutions, including Harvard University, bringing global focus to Nigerian feminist stage craft.',
+    style: 'Characterized by high physical dynamism, expressive comedic timing, and visceral delivery of serious social monologues, she commands a powerful, versatile presence on stage.',
+    achievements: [
+      'Performed in international tours of premium Nigerian feminist stage pieces',
+      'Celebrated lead actress across numerous high-profile stage comedies and dramas'
+    ]
   }
 ];
 

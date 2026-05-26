@@ -88,7 +88,8 @@ function CreateProductionForm() {
 
   const handleCopyLink = () => {
     if (typeof window === 'undefined') return;
-    const link = `${window.location.origin}/productions/${createdProductionId}`;
+    const prod = ClientDB.getProductionById(createdProductionId);
+    const link = `${window.location.origin}/productions/${prod?.slug || createdProductionId}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -261,6 +262,8 @@ function CreateProductionForm() {
       const newPlay = {
         id: targetId,
         title: form.title,
+        slug: slug || undefined,
+        createdAt: existingProd?.createdAt || new Date().toISOString(),
         synopsis: form.synopsis,
         genre: form.genre,
         runtime: existingProd?.runtime || '120 mins',
@@ -307,6 +310,8 @@ function CreateProductionForm() {
       const newPlay = {
         id: targetId,
         title: form.title || 'Untitled Draft',
+        slug: slug || undefined,
+        createdAt: existingProd?.createdAt || new Date().toISOString(),
         synopsis: form.synopsis || 'No synopsis added yet.',
         genre: form.genre || 'Drama',
         runtime: existingProd?.runtime || '120 mins',
@@ -338,7 +343,8 @@ function CreateProductionForm() {
   };
 
   if (published) {
-    const playUrl = `/productions/${createdProductionId}`;
+    const prod = ClientDB.getProductionById(createdProductionId);
+    const playUrl = `/productions/${prod?.slug || createdProductionId}`;
     const ticketsUrl = `/tickets/${createdProductionId}`;
     
     return (
@@ -374,7 +380,7 @@ function CreateProductionForm() {
               <div className="min-w-0">
                 <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-bold">Public Playbill URL</span>
                 <Link href={playUrl} target="_blank" className="text-sm text-red-500 hover:text-red-400 font-medium break-all flex items-center gap-1 mt-0.5">
-                  /productions/{createdProductionId}
+                  /productions/{prod?.slug || createdProductionId}
                 </Link>
               </div>
               <button

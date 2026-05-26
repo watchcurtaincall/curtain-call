@@ -257,9 +257,10 @@ export default function Home() {
           {/* Main blog columns (Left 2/3) */}
           <div className="lg:col-span-2 flex flex-col gap-6">
             {recentArticles.map(article => (
-              <div 
-                key={article.id} 
-                className="bg-zinc-900/50 hover:bg-zinc-900 border border-white/5 hover:border-white/10 rounded-3xl p-5 transition-all duration-300 flex flex-col sm:flex-row gap-5 items-stretch shadow-md hover:shadow-xl group"
+              <Link
+                key={article.id}
+                href={`/editorial/${article.id}`}
+                className="bg-zinc-900/50 hover:bg-zinc-900 border border-white/5 hover:border-white/10 rounded-3xl p-5 transition-all duration-300 flex flex-col sm:flex-row gap-5 items-stretch shadow-md hover:shadow-xl group cursor-pointer"
               >
                 {/* Thumbnail */}
                 <div className="relative w-full sm:w-44 aspect-[4/3] rounded-2xl overflow-hidden shrink-0 bg-zinc-950 border border-white/5">
@@ -292,14 +293,11 @@ export default function Home() {
                     </p>
                   </div>
                   
-                  <Link 
-                    href={`/editorial/${article.id}`} 
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-zinc-400 group-hover:text-white uppercase tracking-wider mt-4 transition-colors"
-                  >
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-zinc-400 group-hover:text-white uppercase tracking-wider mt-4 transition-colors">
                     Read Chronicle <ArrowRight className="h-3 w-3" />
-                  </Link>
+                  </span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 

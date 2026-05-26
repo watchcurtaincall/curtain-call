@@ -64,6 +64,30 @@ const MOCK_ARTICLES: Article[] = [
 
 // ── DATABASE TRANSLATION MAPPERS (camelCase to snake_case) ──
 
+// Clean slug generator — "Saro: The Musical!" → "saro-the-musical"
+export function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize('NFD')                      // decompose accented chars
+    .replace(/[\u0300-\u036f]/g, '')        // strip accent marks
+    .replace(/[^a-z0-9\s-]/g, '')          // keep letters, digits, spaces, hyphens
+    .trim()
+    .replace(/\s+/g, '-')                  // spaces → hyphens
+    .replace(/-+/g, '-')                   // collapse multiple hyphens
+    .substring(0, 80);                     // max 80 chars
+}
+
+// Ensure slug is unique among existing productions (add -2, -3 suffix if needed)
+export function ensureUniqueSlug(baseSlug: string, existingProductions: { id: string; slug?: string }[], currentId?: string): string {
+  const others = existingProductions.filter(p => p.id !== currentId);
+  let candidate = baseSlug;
+  let counter = 2;
+  while (others.some(p => (p.slug || '') === candidate)) {
+    candidate = `${baseSlug}-${counter++}`;
+  }
+  return candidate;
+}
+
 const mapProductionToDb = (p: any) => {
   const gallery = [...(p.galleryImages || [])];
   if (p.ticketTiers) {
@@ -87,7 +111,8 @@ const mapProductionToDb = (p: any) => {
     cast_and_crew: p.castAndCrew || [],
     show_date: p.showDate || null,
     decline_reason: p.declineReason || null,
-    created_at: p.createdAt || null
+    created_at: p.createdAt || null,
+    slug: p.slug || null
   };
 };
 
@@ -112,6 +137,7 @@ const mapProductionFromDb = (row: any) => {
 
   return {
     id: row.id,
+    slug: row.slug || null,
     title: row.title,
     synopsis: row.synopsis,
     genre: row.genre,
@@ -140,7 +166,13 @@ const mapArtistToDb = (a: any) => ({
   headshot_url: a.headshotUrl,
   bio: a.bio || '',
   date_of_birth: a.dateOfBirth || null,
-  social_links: a.socialLinks || {},
+  social_links: {
+    ...(a.socialLinks || {}),
+    __scenography: a.scenography || [],
+    __career: a.career || '',
+    __style: a.style || '',
+    __achievements: a.achievements || []
+  },
   submitter_email: a.submitterEmail || null,
   curation_status: a.curationStatus || 'Approved',
   is_deceased: a.isDeceased || false,
@@ -150,22 +182,35 @@ const mapArtistToDb = (a: any) => ({
   created_at: a.createdAt || null
 });
 
-const mapArtistFromDb = (row: any) => ({
-  id: row.id,
-  name: row.name,
-  roleType: row.role_type,
-  headshotUrl: row.headshot_url,
-  bio: row.bio,
-  dateOfBirth: row.date_of_birth,
-  socialLinks: row.social_links || {},
-  submitterEmail: row.submitter_email,
-  curationStatus: row.curation_status,
-  isDeceased: row.is_deceased,
-  dateOfDeath: row.date_of_death,
-  declineReason: row.decline_reason || null,
-  hits: row.hits || 0,
-  createdAt: row.created_at || null
-});
+const mapArtistFromDb = (row: any) => {
+  const social = row.social_links || {};
+  const socialLinks = { ...social };
+  delete socialLinks.__scenography;
+  delete socialLinks.__career;
+  delete socialLinks.__style;
+  delete socialLinks.__achievements;
+
+  return {
+    id: row.id,
+    name: row.name,
+    roleType: row.role_type,
+    headshotUrl: row.headshot_url,
+    bio: row.bio,
+    dateOfBirth: row.date_of_birth,
+    socialLinks,
+    submitterEmail: row.submitter_email,
+    curationStatus: row.curation_status,
+    isDeceased: row.is_deceased,
+    dateOfDeath: row.date_of_death,
+    declineReason: row.decline_reason || null,
+    hits: row.hits || 0,
+    createdAt: row.created_at || null,
+    scenography: social.__scenography || [],
+    career: social.__career || '',
+    style: social.__style || '',
+    achievements: social.__achievements || []
+  };
+};
 
 const mapArticleToDb = (art: any) => ({
   id: art.id,
@@ -600,6 +645,11 @@ export const ClientDB = {
       list = JSON.parse(stored);
     }
     return list.map((p: any) => {
+      // Dynamic Sanitizer: Ensure all plays always have a valid, clean SEO slug
+      if (!p.slug) {
+        p.slug = generateSlug(p.title);
+      }
+
       // Dynamic Sanitizer: If this is a custom play (ID is not p1..p10 mock format),
       // dynamically recalculate or preserve critic and audience scores from the reviews list
       const isMock = p.id && /^p\d+$/.test(p.id);
@@ -635,7 +685,8 @@ export const ClientDB = {
 
   getProductionById(id: string): Production | undefined {
     const productions = this.getProductions();
-    return productions.find(p => p.id === id);
+    // Match by id first, then by slug (enables clean URL routing)
+    return productions.find(p => p.id === id) || productions.find(p => p.slug === id);
   },
 
   saveProduction(production: Production): void {
@@ -737,7 +788,11 @@ export const ClientDB = {
     const pending = this.getPendingArtists();
     const artist = pending.find(a => a.id === id);
     if (artist) {
-      const approved = { ...artist, curationStatus: 'Approved' as const };
+      const approved = { 
+        ...artist, 
+        curationStatus: 'Approved' as const,
+        createdAt: artist.createdAt || new Date().toISOString()
+      };
       this.saveArtist(approved);
       const filtered = pending.filter(a => a.id !== id);
       localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(filtered));
@@ -812,7 +867,12 @@ export const ClientDB = {
     const pending = this.getPendingPlays();
     const play = pending.find(p => p.id === id);
     if (play) {
-      const approved = { ...play, curationStatus: 'Approved' as const };
+      const approved = { 
+        ...play, 
+        curationStatus: 'Approved' as const,
+        slug: play.slug || generateSlug(play.title),
+        createdAt: play.createdAt || new Date().toISOString()
+      };
       this.saveProduction(approved);
       const filtered = pending.filter(p => p.id !== id);
       localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(filtered));

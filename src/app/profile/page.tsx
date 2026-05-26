@@ -13,14 +13,15 @@ import {
   LogOut, Settings, Bell, ChevronRight, Lock,
   PenSquare, Target, Ticket, Mic2, Drama,
   FileText, Trophy, Library, Zap, Users, Crown, Sparkles, Shield, ShieldCheck,
-  Plus, Wallet, TrendingUp, ArrowUpRight, BookOpen, AlertCircle, Trash2
+  Plus, Wallet, TrendingUp, ArrowUpRight, BookOpen, AlertCircle, Trash2,
+  Search, X, Clapperboard
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/producer/WithdrawModal';
 import { NotificationsPanel } from '@/components/profile/NotificationsPanel';
 import { SettingsPanel } from '@/components/profile/SettingsPanel';
 import Link from 'next/link';
 
-type Tab = 'dashboard' | 'productions' | 'submissions' | 'reviews' | 'list' | 'badges';
+type Tab = 'dashboard' | 'productions' | 'submissions' | 'reviews' | 'list' | 'badges' | 'stageography';
 
 const ACTIVITY = [
   { text: 'Rated WATERSIDE 9/10',                         time: '2 days ago',  Icon: Star       },
@@ -439,12 +440,13 @@ export default function ProfilePage() {
 
   // Tabs ordered Dashboard -> Production -> My Submissions
   const tabs: { id: Tab; label: string; Icon: React.FC<{ className?: string }> }[] = [
-    { id: 'dashboard',   label: 'Dashboard',      Icon: Star     },
-    { id: 'productions', label: 'Production',     Icon: Drama    },
-    { id: 'submissions', label: 'My Submissions',  Icon: FileText },
-    { id: 'reviews',     label: 'My Reviews',     Icon: PenLine  },
-    { id: 'list',        label: 'My List',        Icon: Bookmark },
-    { id: 'badges',      label: 'Badges',         Icon: Award    },
+    { id: 'dashboard',     label: 'Dashboard',      Icon: Star          },
+    { id: 'productions',   label: 'Production',     Icon: Drama         },
+    { id: 'submissions',   label: 'My Submissions', Icon: FileText      },
+    { id: 'reviews',       label: 'My Reviews',     Icon: PenLine       },
+    { id: 'list',          label: 'My List',        Icon: Bookmark      },
+    { id: 'stageography',  label: 'Stageography',   Icon: Clapperboard  },
+    { id: 'badges',        label: 'Badges',         Icon: Award         },
   ];
 
   return (
@@ -1007,6 +1009,204 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {/* STAGEOGRAPHY */}
+        {tab === 'stageography' && (
+          <ProfileStageographyTab userEmail={user.email} />
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+// ── Stageography Tab Component ──
+function ProfileStageographyTab({ userEmail }: { userEmail: string }) {
+  const [searchQ, setSearchQ] = useState('');
+  const [selectedProd, setSelectedProd] = useState<{ id: string; title: string } | null>(null);
+  const [roleInput, setRoleInput] = useState('');
+  const [credits, setCredits] = useState<{ productionId: string; productionTitle: string; role: string }[]>([]);
+  const [artistId, setArtistId] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Load the user's artist profile credits on mount
+  useEffect(() => {
+    const artists = ClientDB.getArtists();
+    const match = artists.find(a => a.submitterEmail?.toLowerCase() === userEmail.toLowerCase());
+    if (match) {
+      setArtistId(match.id);
+      setCredits(match.scenography || []);
+    }
+  }, [userEmail]);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3500);
+  };
+
+  const allProductions = ClientDB.getProductions().filter(p => p.curationStatus === 'Approved' || !p.curationStatus);
+  const filtered = searchQ.trim().length > 0
+    ? allProductions.filter(p => p.title.toLowerCase().includes(searchQ.toLowerCase())).slice(0, 8)
+    : [];
+
+  const handleAdd = () => {
+    if (!selectedProd || !roleInput.trim() || !artistId) return;
+    const isDup = credits.some(c => c.productionId === selectedProd.id);
+    if (isDup) { showToast('This production is already in your stageography.'); return; }
+    const updated = [...credits, { productionId: selectedProd.id, productionTitle: selectedProd.title, role: roleInput.trim() }];
+    setCredits(updated);
+    // Persist: find artist and save
+    const artists = ClientDB.getArtists();
+    const artist = artists.find(a => a.id === artistId);
+    if (artist) {
+      ClientDB.saveArtist({ ...artist, scenography: updated });
+      showToast(`Added "${selectedProd.title}" to your stageography!`);
+    }
+    setSelectedProd(null);
+    setRoleInput('');
+    setSearchQ('');
+  };
+
+  const handleRemove = (prodId: string) => {
+    const updated = credits.filter(c => c.productionId !== prodId);
+    setCredits(updated);
+    const artists = ClientDB.getArtists();
+    const artist = artists.find(a => a.id === artistId);
+    if (artist) {
+      ClientDB.saveArtist({ ...artist, scenography: updated });
+      showToast('Credit removed from your stageography.');
+    }
+  };
+
+  if (!artistId) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center gap-4 animate-fade-up">
+        <Clapperboard className="h-10 w-10 text-zinc-700" />
+        <h3 className="font-serif font-bold text-white text-lg">No Artist Profile Found</h3>
+        <p className="text-zinc-500 text-sm max-w-sm leading-relaxed">
+          Your Stageography is linked to your approved theatremaker profile. Submit an artist profile first and once approved, you can document your production credits here.
+        </p>
+        <Link href="/submit?tab=artist" className="text-sm font-bold text-red-500 hover:text-red-400 underline underline-offset-4 transition-colors">
+          Submit Theatremaker Profile
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-8 animate-fade-up">
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-zinc-800 border border-white/10 text-white text-sm font-medium px-5 py-3 rounded-2xl shadow-2xl animate-fade-up">
+          {toast}
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="border-b border-white/5 pb-6">
+        <h2 className="font-serif font-bold text-white text-2xl mb-1">My Stageography</h2>
+        <p className="text-zinc-400 text-sm">Document your production credits — only works listed on Curtain Call can be added. This section is optional.</p>
+      </div>
+
+      {/* Add New Credit */}
+      <div className="bg-zinc-900/60 border border-white/5 rounded-3xl p-6 flex flex-col gap-4">
+        <h3 className="font-serif font-bold text-white text-base flex items-center gap-2">
+          <Plus className="h-4 w-4 text-red-500" /> Add Production Credit
+        </h3>
+
+        {!selectedProd ? (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search for a production on Curtain Call..."
+              value={searchQ}
+              onChange={e => setSearchQ(e.target.value)}
+              className="w-full bg-zinc-950 border border-white/5 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600"
+            />
+            {filtered.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-zinc-900 border border-white/10 rounded-2xl overflow-hidden z-20 shadow-2xl">
+                {filtered.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => { setSelectedProd({ id: p.id, title: p.title }); setSearchQ(''); }}
+                    className="w-full text-left px-4 py-3 text-sm text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors border-b border-white/5 last:border-0 flex items-center justify-between"
+                  >
+                    <span>{p.title}</span>
+                    <span className="text-[10px] text-zinc-600 uppercase tracking-wider">{p.status}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {searchQ.trim().length > 0 && filtered.length === 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1.5 bg-zinc-900 border border-white/10 rounded-2xl px-4 py-4 text-sm text-zinc-500 z-20">
+                No productions found matching &quot;{searchQ}&quot;
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between bg-zinc-950 border border-red-500/20 rounded-xl px-4 py-3">
+              <p className="text-sm font-bold text-white">{selectedProd.title}</p>
+              <button onClick={() => setSelectedProd(null)} className="text-zinc-500 hover:text-white ml-3 transition-colors">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="flex gap-3">
+              <input
+                type="text"
+                placeholder="Your role (e.g. Director, Lead Actor, Stage Manager)"
+                value={roleInput}
+                onChange={e => setRoleInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleAdd()}
+                className="flex-1 bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600"
+              />
+              <button
+                onClick={handleAdd}
+                disabled={!roleInput.trim()}
+                className="bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold px-5 py-3 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-2"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Credits List */}
+      <div>
+        <h3 className="font-serif font-bold text-white text-lg mb-4 flex items-center gap-2">
+          <Clapperboard className="h-5 w-5 text-red-500" />
+          Your Production Credits ({credits.length})
+        </h3>
+        {credits.length === 0 ? (
+          <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-10 text-center text-zinc-500 font-mono text-xs">
+            No stageography credits added yet. Search for a production above to get started.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {credits.map((credit, idx) => {
+              const prod = ClientDB.getProductions().find(p => p.id === credit.productionId);
+              return (
+                <div key={idx} className="bg-zinc-900/60 border border-white/5 hover:border-white/10 rounded-2xl p-4 flex items-center gap-4 transition-all group">
+                  {prod?.posterUrl && (
+                    <div className="relative w-12 h-16 rounded-xl overflow-hidden shrink-0 border border-white/5 bg-zinc-950">
+                      <img src={prod.posterUrl} alt={credit.productionTitle} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-serif font-bold text-white text-sm truncate">{credit.productionTitle}</p>
+                    <span className="inline-block mt-1 text-[10px] bg-red-600/20 text-red-400 border border-red-500/20 px-2 py-0.5 rounded font-bold uppercase tracking-wider">{credit.role}</span>
+                  </div>
+                  <button
+                    onClick={() => handleRemove(credit.productionId)}
+                    className="text-zinc-600 hover:text-red-400 transition-colors p-2 opacity-0 group-hover:opacity-100 shrink-0"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -254,7 +254,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
           </p>
 
           <Link
-            href={`/productions/${production.id}`}
+            href={`/productions/${production.slug || production.id}`}
             className="block w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-zinc-100 transition-colors text-sm shadow-xl"
           >
             Back to Show Details
@@ -376,7 +376,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
 
             {/* Cancel/Back link */}
             <Link
-              href={`/productions/${production.id}`}
+              href={`/productions/${production.slug || production.id}`}
               className="text-xs text-zinc-500 hover:text-white transition-colors flex items-center justify-center gap-1 mt-1 font-bold uppercase tracking-wider"
             >
               <ArrowLeft className="h-3 w-3" /> Go Back

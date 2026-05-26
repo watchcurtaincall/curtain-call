@@ -8,7 +8,7 @@ export function ProductionCard({ production }: { production: Production }) {
 
   return (
     <Link
-      href={`/productions/${production.id}`}
+      href={`/productions/${production.slug || production.id}`}
       className="group flex flex-col gap-3 focus:outline-none"
     >
       {/* Poster */}

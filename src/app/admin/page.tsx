@@ -11,6 +11,89 @@ import Image from 'next/image';
 
 type AdminTab = 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers';
 
+// ── Stageography Adder Sub-component (used inside Edit Artist modal) ──
+function AdminStageographyAdder({ onAdd }: { onAdd: (credit: { productionId: string; productionTitle: string; role: string }) => void }) {
+  const [searchQ, setSearchQ] = useState('');
+  const [role, setRole] = useState('');
+  const [selected, setSelected] = useState<{ id: string; title: string } | null>(null);
+
+  const allProductions = ClientDB.getProductions().filter(p => p.curationStatus === 'Approved' || !p.curationStatus);
+  const filtered = searchQ.trim().length > 0
+    ? allProductions.filter(p => p.title.toLowerCase().includes(searchQ.toLowerCase())).slice(0, 8)
+    : [];
+
+  const handleAdd = () => {
+    if (!selected || !role.trim()) return;
+    onAdd({ productionId: selected.id, productionTitle: selected.title, role: role.trim() });
+    setSearchQ('');
+    setRole('');
+    setSelected(null);
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      {!selected ? (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search platform productions to add..."
+            value={searchQ}
+            onChange={e => setSearchQ(e.target.value)}
+            className="w-full bg-zinc-950 border border-white/5 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600"
+          />
+          {filtered.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 border border-white/10 rounded-xl overflow-hidden z-10 shadow-xl">
+              {filtered.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => { setSelected({ id: p.id, title: p.title }); setSearchQ(''); }}
+                  className="w-full text-left px-4 py-2.5 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors border-b border-white/5 last:border-0"
+                >
+                  {p.title}
+                  <span className="ml-2 text-[10px] text-zinc-600">{p.status}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          {searchQ.trim().length > 0 && filtered.length === 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-xs text-zinc-500 z-10">
+              No approved productions found matching &quot;{searchQ}&quot;
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between bg-zinc-950 border border-red-500/20 rounded-xl px-3 py-2">
+            <p className="text-xs font-bold text-white truncate flex-1">{selected.title}</p>
+            <button type="button" onClick={() => setSelected(null)} className="text-zinc-500 hover:text-white ml-2">
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Role (e.g. Director, Lead Actor)"
+              value={role}
+              onChange={e => setRole(e.target.value)}
+              className="flex-1 bg-zinc-950 border border-white/5 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600"
+            />
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={!role.trim()}
+              className="bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminDashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -2731,6 +2814,49 @@ This file was retrieved from the Curtain Call Curation Vault.
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* ── STAGEOGRAPHY SECTION ── */}
+              <div className="flex flex-col gap-3 pt-3 border-t border-white/5">
+                <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-1 h-3.5 bg-red-600 rounded-full inline-block" />
+                  Stageography Credits (Optional)
+                </label>
+
+                {/* Existing credits list */}
+                {(editingArtist.scenography || []).length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {(editingArtist.scenography || []).map((credit, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-zinc-950/60 border border-white/5 rounded-xl px-3 py-2 gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-white truncate">{credit.productionTitle}</p>
+                          <span className="text-[10px] bg-red-600/20 text-red-400 border border-red-500/20 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">{credit.role}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = (editingArtist.scenography || []).filter((_, i) => i !== idx);
+                            setEditingArtist({ ...editingArtist, scenography: updated });
+                          }}
+                          className="text-zinc-500 hover:text-red-400 transition-colors p-1 shrink-0"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Search + Add new credit */}
+                <AdminStageographyAdder
+                  onAdd={(credit) => {
+                    const existing = editingArtist.scenography || [];
+                    const isDuplicate = existing.some(c => c.productionId === credit.productionId);
+                    if (!isDuplicate) {
+                      setEditingArtist({ ...editingArtist, scenography: [...existing, credit] });
+                    }
+                  }}
+                />
               </div>
 
               <div className="flex items-center justify-end gap-3 mt-4 pt-3 border-t border-white/5">

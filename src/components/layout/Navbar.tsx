@@ -52,7 +52,7 @@ export function Navbar() {
             id: p.id,
             title: p.title,
             type: 'play',
-            link: `/productions/${p.id}`,
+            link: `/productions/${p.slug || p.id}`,
             subtitle: p.genre
           });
         }

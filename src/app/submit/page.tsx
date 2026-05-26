@@ -207,6 +207,7 @@ export default function SubmitPortalPage() {
       bio: makerForm.bio,
       submitterEmail: makerForm.email || user?.email || 'guest@curtaincall.com',
       curationStatus: 'Pending' as const,
+      createdAt: new Date().toISOString(),
     };
 
     setTimeout(() => {
@@ -221,9 +222,15 @@ export default function SubmitPortalPage() {
     e.preventDefault();
     setLoading(true);
 
+    const playSlug = playForm.title
+      ? playForm.title.toLowerCase().replace(/[^a-z0-9_ ]/g, '').trim().replace(/\s+/g, '-')
+      : undefined;
+
     const newPlay = {
       id: `pending_play_${Date.now()}`,
       title: playForm.title,
+      slug: playSlug,
+      createdAt: new Date().toISOString(),
       synopsis: playForm.synopsis,
       genre: 'Drama',
       runtime: '120 mins',

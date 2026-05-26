@@ -157,21 +157,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const isWhitelisted = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
           let isAlreadyVerified = isWhitelisted;
           
-          if (!isAlreadyVerified) {
-            // Check if local storage user matches and is verified to prevent OTP flashing
-            const savedUser = localStorage.getItem('cc_authed_user');
-            if (savedUser) {
-              try {
-                const parsed = JSON.parse(savedUser);
-                if (parsed.email?.toLowerCase() === email.toLowerCase() && parsed.isVerified === true) {
-                  isAlreadyVerified = true;
-                }
-              } catch (e) {}
-            }
+          // Pre-check: if already verified in local storage, keep it verified to prevent flashing OTP screen
+          const currentSavedUser = localStorage.getItem('cc_authed_user');
+          if (currentSavedUser) {
+            try {
+              const parsed = JSON.parse(currentSavedUser);
+              if (parsed.email?.toLowerCase() === email.toLowerCase() && parsed.isVerified === true) {
+                isAlreadyVerified = true;
+              }
+            } catch (e) {}
           }
           
           if (supabase && !isAlreadyVerified) {
-            isAlreadyVerified = await fetchVerificationStatusFromServer(email);
+            const serverVerified = await fetchVerificationStatusFromServer(email);
+            if (serverVerified) {
+              isAlreadyVerified = true;
+            } else {
+              // Dual-check: if server returns false (e.g. network failure or delay), but local storage says they were verified,
+              // DO NOT downgrade them under any circumstances to prevent forced re-verifications!
+              if (currentSavedUser) {
+                try {
+                  const parsed = JSON.parse(currentSavedUser);
+                  if (parsed.email?.toLowerCase() === email.toLowerCase() && parsed.isVerified === true) {
+                    isAlreadyVerified = true;
+                  }
+                } catch (e) {}
+              }
+            }
           }
 
           const loggedUser = {
@@ -203,21 +215,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const isWhitelisted = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'].includes(email.toLowerCase());
           let isAlreadyVerified = isWhitelisted;
           
-          if (!isAlreadyVerified) {
-            // Check if local storage user matches and is verified to prevent OTP flashing
-            const savedUser = localStorage.getItem('cc_authed_user');
-            if (savedUser) {
-              try {
-                const parsed = JSON.parse(savedUser);
-                if (parsed.email?.toLowerCase() === email.toLowerCase() && parsed.isVerified === true) {
-                  isAlreadyVerified = true;
-                }
-              } catch (e) {}
-            }
+          // Pre-check: if already verified in local storage, keep it verified to prevent flashing OTP screen
+          const currentSavedUser = localStorage.getItem('cc_authed_user');
+          if (currentSavedUser) {
+            try {
+              const parsed = JSON.parse(currentSavedUser);
+              if (parsed.email?.toLowerCase() === email.toLowerCase() && parsed.isVerified === true) {
+                isAlreadyVerified = true;
+              }
+            } catch (e) {}
           }
           
           if (supabase && !isAlreadyVerified) {
-            isAlreadyVerified = await fetchVerificationStatusFromServer(email);
+            const serverVerified = await fetchVerificationStatusFromServer(email);
+            if (serverVerified) {
+              isAlreadyVerified = true;
+            } else {
+              // Dual-check: if server returns false (e.g. network failure or delay), but local storage says they were verified,
+              // DO NOT downgrade them under any circumstances to prevent forced re-verifications!
+              if (currentSavedUser) {
+                try {
+                  const parsed = JSON.parse(currentSavedUser);
+                  if (parsed.email?.toLowerCase() === email.toLowerCase() && parsed.isVerified === true) {
+                    isAlreadyVerified = true;
+                  }
+                } catch (e) {}
+              }
+            }
           }
 
           const loggedUser = {
@@ -391,6 +415,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password?: string, name?: string) => {
     const cleanEmail = email.trim().toLowerCase();
+    
+    // Check if account already exists to avoid spamming welcome emails and overwriting active sessions
+    const existingProfiles = ClientDB.getSignups();
+    const alreadyExists = existingProfiles.some(p => p.email.toLowerCase() === cleanEmail);
+    const defaultVerifiedEmails = ['critic@example.com', 'editor@example.com', 'verify@example.com', 'adaeze@example.com', 'watchcurtaincall@gmail.com'];
+    if (alreadyExists || defaultVerifiedEmails.includes(cleanEmail)) {
+      throw new Error('An account with this email address already exists. Please sign in instead.');
+    }
+
     const displayName = name || email.split('@')[0];
     
     let loggedUser = {

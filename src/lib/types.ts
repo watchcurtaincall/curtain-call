@@ -2,6 +2,7 @@ export type ProductionStatus = 'Currently Showing' | 'Coming Soon' | 'Past Produ
 
 export interface Artist {
   id: string;
+  createdAt?: string;   // ISO timestamp for reliable newest-first sorting
   name: string;
   roleType: string;
   headshotUrl: string;
@@ -17,10 +18,16 @@ export interface Artist {
   isDeceased?: boolean;
   dateOfDeath?: string;
   hits?: number;
+  scenography?: { productionId: string; productionTitle: string; role: string }[];
+  career?: string;
+  style?: string;
+  achievements?: string[];
 }
 
 export interface Production {
   id: string;
+  slug?: string;        // Clean URL slug e.g. "saro-the-musical" — used as the URL path segment
+  createdAt?: string;   // ISO timestamp for reliable newest-first sorting
   title: string;
   synopsis: string;
   genre: string;
@@ -37,10 +44,16 @@ export interface Production {
   castAndCrew?: { name: string; role: string; category: 'Creative' | 'Cast' | 'Technical' }[];
   showDate?: string; // YYYY-MM-DD
   ticketTiers?: { id: string; name: string; price: string; capacity: string }[];
+  city?: string;
+  address?: string;
+  accountName?: string;
+  accountNumber?: string;
+  bankName?: string;
 }
 
 export interface Article {
   id: string;
+  createdAt?: string;   // ISO timestamp for reliable newest-first sorting
   title: string;
   excerpt: string;
   date: string;

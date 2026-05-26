@@ -41,8 +41,19 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
     }
   }, [resolvedParams.id]);
 
-  // Mock stageography using all mock productions for demonstration
-  const stageography = ClientDB.getProductions();
+  // Map dynamic stageography credits (null-safe: artist may not be loaded yet)
+  const stageographyProductions = (artist?.scenography || [])
+    .map((item: any) => {
+      const prod = ClientDB.getProductions().find(p => p.id === item.productionId);
+      if (prod) {
+        return {
+          ...prod,
+          artistRole: item.role
+        };
+      }
+      return null;
+    })
+    .filter(Boolean) as any[];
 
   const [isFollowing, setIsFollowing] = useState(false);
 
@@ -123,6 +134,9 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
             name={artist.name}
             roleType={artist.roleType}
             bio={artist.bio || `${artist.name} is a renowned ${artist.roleType.toLowerCase()} based in Lagos, Nigeria. With a rich history of contributions to the Nigerian theatre ecosystem, their work explores themes of tradition, modernity, and the human condition.`}
+            career={artist.career}
+            style={artist.style}
+            achievements={artist.achievements}
           />
           
           <div className="flex items-center gap-4 flex-wrap">
@@ -163,7 +177,7 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-white/10">
           <div>
             <h2 className="text-3xl font-serif font-bold text-white mb-2">Stageography</h2>
-            <p className="text-zinc-400 text-sm">Professional production history</p>
+            <p className="text-zinc-400 text-sm">Professional production history on Curtain Call</p>
           </div>
           <div className="flex bg-zinc-900 rounded-lg p-1 border border-white/5">
             <button className="p-2 bg-black rounded-md shadow-sm">
@@ -175,11 +189,22 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
           </div>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-          {stageography.slice(0, 5).map(production => (
-            <ProductionCard key={production.id} production={production} />
-          ))}
-        </div>
+        {stageographyProductions.length === 0 ? (
+          <div className="bg-zinc-900/30 border border-white/5 rounded-3xl p-8 text-center text-zinc-500 font-mono text-xs max-w-md">
+            No stageography credits documented on Curtain Call yet.
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+            {stageographyProductions.map(production => (
+              <div key={production.id} className="relative group">
+                <ProductionCard production={production} />
+                <div className="absolute top-3 left-3 bg-red-600/90 text-white font-sans text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-xl shadow-lg border border-red-500/20 backdrop-blur-sm">
+                  {production.artistRole}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
       <ShareModal 
         isOpen={shareOpen} 
