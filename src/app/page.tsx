@@ -27,9 +27,13 @@ export default function Home() {
       // Sort plays by date added so newly added plays appear at the top!
       setProductions(sortItemsByDateAdded(ClientDB.getProductions()));
 
-      // ── Trending Theatremakers
+      // ── Trending Theatremakers (Deterministic cross-device sorting)
       const sortedArtists = ClientDB.getArtists()
-        .sort((a, b) => (b.hits || 0) - (a.hits || 0))
+        .sort((a, b) => {
+          const diff = (b.hits || 0) - (a.hits || 0);
+          if (diff !== 0) return diff;
+          return a.name.localeCompare(b.name);
+        })
         .slice(0, 6);
       setTrendingPeople(sortedArtists);
       
@@ -151,7 +155,7 @@ export default function Home() {
             <Link 
               key={artist.id} 
               href={`/artists/${artist.slug || artist.id}`} 
-              className="group bg-zinc-900/30 backdrop-blur-md border border-white/5 hover:border-amber-500/30 rounded-3xl p-4 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_16px_32px_rgba(0,0,0,0.6)] cursor-pointer"
+              className={`group bg-zinc-900/30 backdrop-blur-md border border-white/5 hover:border-amber-500/30 rounded-3xl p-4 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_16px_32px_rgba(0,0,0,0.6)] cursor-pointer ${index >= 4 ? 'hidden md:flex' : 'flex'}`}
             >
               <div className="relative w-24 h-24 rounded-full mb-4 border border-zinc-800 group-hover:border-amber-500 transition-all duration-500 shadow-xl overflow-hidden">
                 <Image
@@ -175,12 +179,6 @@ export default function Home() {
               <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider line-clamp-1">
                 {artist.roleType.split(' / ')[0]}
               </p>
-
-              {/* View/Popularity score pill */}
-              <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-full mt-3 border border-white/5 text-[9px] text-zinc-500 group-hover:text-amber-400 group-hover:bg-amber-500/5 group-hover:border-amber-500/10 transition-colors">
-                <Flame className="h-3 w-3 shrink-0 text-amber-500 fill-amber-500/30" />
-                <span>{artist.hits || 0} views</span>
-              </div>
             </Link>
           ))}
         </div>
