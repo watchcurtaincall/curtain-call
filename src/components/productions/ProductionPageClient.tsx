@@ -173,7 +173,7 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-400 mb-4 font-medium select-none">
               <span className="flex items-center gap-1">
                 <MapPin className="h-3.5 w-3.5 text-zinc-550 shrink-0" />
-                <span className="truncate max-w-[150px] sm:max-w-none">{production.venue}</span>
+                <span>{production.venue}</span>
               </span>
               <span className="text-zinc-700 font-bold">·</span>
               <span className="flex items-center gap-1 shrink-0">
