@@ -76,7 +76,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    metadataBase: new URL('https://curtaincall.com.ng'),
+    metadataBase: new URL('https://www.curtaincall.com.ng'),
     title,
     description,
     openGraph: {

@@ -4,7 +4,7 @@ import { ProductionCard } from '@/components/shared/ProductionCard';
 import { HeroCarousel } from '@/components/home/HeroCarousel';
 import Link from 'next/link';
 import Image from 'next/image';
-import { TrendingUp, BookOpen, Calendar, ArrowRight } from 'lucide-react';
+import { TrendingUp, BookOpen, Calendar, ArrowRight, Flame, Trophy, Award, Sparkles, Heart } from 'lucide-react';
 
 import { ClientDB, syncFromSupabase, sortItemsByDateAdded } from '@/lib/db';
 import { Production, Artist } from '@/lib/types';
@@ -27,16 +27,7 @@ export default function Home() {
       // Sort plays by date added so newly added plays appear at the top!
       setProductions(sortItemsByDateAdded(ClientDB.getProductions()));
 
-      // ── Trending Theatremakers: tiered threshold system ──────────────────
-      // An artist only occupies a rank slot if they meet that slot's minimum
-      // profile-view count. This prevents 1-click appearances on the list.
-      //
-      //  #1  Spotlight   → 15+ views
-      //  #2  Rising      → 12+ views
-      //  #3  Buzzing     →  9+ views
-      //  #4  Notable     →  6+ views
-      //  #5  Emerging    →  4+ views
-      //  #6  On the Radar→  2+ views
+      // ── Trending Theatremakers
       const sortedArtists = ClientDB.getArtists()
         .sort((a, b) => (b.hits || 0) - (a.hits || 0))
         .slice(0, 6);
@@ -72,7 +63,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-zinc-950 flex flex-col gap-16 pb-24">
         {/* Premium Shimmer Hero Block */}
-        <div className="relative w-full h-[80vh] min-h-[580px] bg-zinc-900/10 animate-pulse flex items-end p-8 md:p-16 border-b border-white/5 relative overflow-hidden">
+        <div className="relative w-full h-[80vh] min-h-[580px] bg-zinc-900/10 animate-pulse flex items-end p-8 md:p-16 border-b border-white/5 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
           <div className="max-w-2xl w-full flex flex-col gap-4 relative z-10">
             <div className="h-6 w-32 bg-white/10 rounded-full" />
@@ -134,46 +125,62 @@ export default function Home() {
     .slice(0, 4);
 
   return (
-    <div className="flex flex-col gap-16 pb-24">
+    <div className="flex flex-col gap-20 pb-24 bg-zinc-950">
       {/* Dynamic Hero Carousel displaying latest 5 plays */}
       <HeroCarousel productions={featured} />
 
-      {/* ── TRENDING THEATREMAKERS ── Only renders when artists hit threshold */}
+      {/* ── TRENDING THEATREMAKERS ── Premium Spotlight Grid Deck */}
       {trendingPeople.length > 0 && (
-      <section className="container mx-auto px-4">
-        <div className="flex items-end justify-between gap-4 mb-8 pb-4 border-b border-white/10">
+      <section className="container mx-auto px-4 md:px-6">
+        <div className="flex items-end justify-between gap-4 mb-10 pb-5 border-b border-white/5 relative">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-serif font-bold text-white flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-red-500 shrink-0" />
+            <h2 className="text-3xl font-serif font-bold text-white flex items-center gap-2.5 tracking-tight">
+              <Sparkles className="h-6 w-6 text-amber-500 shrink-0" />
               Trending Theatremakers
             </h2>
-            <p className="text-zinc-400 text-sm mt-1 truncate">Most viewed artistes</p>
+            <p className="text-zinc-400 text-sm mt-1.5 font-normal">Spotlighting the minds behind the contemporary West African theatrical renaissance</p>
           </div>
-          <Link href="/artists" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors shrink-0 whitespace-nowrap">
+          <Link href="/artists" className="text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-widest border border-white/10 px-4 py-2 rounded-full transition-all shrink-0 whitespace-nowrap hover:bg-white/5">
             Explore Directory
           </Link>
+          <div className="absolute bottom-0 left-0 w-24 h-[1px] bg-gradient-to-r from-amber-500 to-transparent" />
         </div>
         
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
           {trendingPeople.map((artist, index) => (
-            <Link key={artist.id} href={`/artists/${artist.slug || artist.id}`} className="group flex flex-col items-center text-center focus:outline-none">
-              <div className="relative w-28 h-28 rounded-full overflow-hidden mb-3 border-2 border-zinc-800 group-hover:border-red-600 transition-all duration-300 shadow-xl shadow-black/40">
+            <Link 
+              key={artist.id} 
+              href={`/artists/${artist.slug || artist.id}`} 
+              className="group bg-zinc-900/30 backdrop-blur-md border border-white/5 hover:border-amber-500/30 rounded-3xl p-4 flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_16px_32px_rgba(0,0,0,0.6)] cursor-pointer"
+            >
+              <div className="relative w-24 h-24 rounded-full mb-4 border border-zinc-800 group-hover:border-amber-500 transition-all duration-500 shadow-xl overflow-hidden">
                 <Image
                   src={artist.headshotUrl}
                   alt={artist.name}
                   fill
-                  sizes="112px"
+                  sizes="96px"
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                {/* Rank badge */}
-                <div className="absolute bottom-1 right-1 bg-red-600 border border-white/10 rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
+                
+                {/* Elegant gold rank badge */}
+                <div className="absolute -top-1 -left-1 bg-amber-500 border border-white/10 rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold text-black shadow-lg">
                   #{index + 1}
                 </div>
               </div>
-              <h3 className="font-serif text-sm font-bold text-zinc-200 group-hover:text-white transition-colors line-clamp-1">
+
+              <h3 className="font-serif text-sm font-bold text-zinc-100 group-hover:text-amber-400 transition-colors line-clamp-1 leading-tight mb-1">
                 {artist.name}
               </h3>
-              <p className="text-[10px] text-zinc-500 mt-0.5 uppercase tracking-wider">{artist.roleType.split(' / ')[0]}</p>
+              
+              <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider line-clamp-1">
+                {artist.roleType.split(' / ')[0]}
+              </p>
+
+              {/* View/Popularity score pill */}
+              <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded-full mt-3 border border-white/5 text-[9px] text-zinc-500 group-hover:text-amber-400 group-hover:bg-amber-500/5 group-hover:border-amber-500/10 transition-colors">
+                <Flame className="h-3 w-3 shrink-0 text-amber-500 fill-amber-500/30" />
+                <span>{artist.hits || 0} views</span>
+              </div>
             </Link>
           ))}
         </div>
@@ -182,20 +189,21 @@ export default function Home() {
 
 
       {/* Currently Showing Section */}
-      <section className="container mx-auto px-4">
-        <div className="flex items-end justify-between gap-4 mb-8 pb-4 border-b border-white/10">
+      <section className="container mx-auto px-4 md:px-6">
+        <div className="flex items-end justify-between gap-4 mb-10 pb-5 border-b border-white/5 relative">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-serif font-bold text-white flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            <h2 className="text-3xl font-serif font-bold text-white flex items-center gap-3 tracking-tight">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_#e50914]"></span>
               Currently Showing
             </h2>
-            <p className="text-zinc-400 text-sm mt-1 truncate">Live performances happening right now</p>
+            <p className="text-zinc-400 text-sm mt-1.5">Live stage performance experiences happening right now in Lagos and beyond</p>
           </div>
-          <Link href="/discovery?filter=showing" className="text-sm font-medium text-red-500 hover:text-red-400 transition-colors shrink-0 whitespace-nowrap">
-            View All
+          <Link href="/discovery?filter=showing" className="text-xs font-bold text-red-500 hover:text-red-400 uppercase tracking-widest border border-red-500/20 px-4 py-2 rounded-full transition-all shrink-0 whitespace-nowrap hover:bg-red-500/5">
+            View All Shows
           </Link>
+          <div className="absolute bottom-0 left-0 w-24 h-[1px] bg-gradient-to-r from-red-500 to-transparent" />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
           {currentlyShowing.map(production => (
             <ProductionCard key={production.id} production={production} />
           ))}
@@ -203,68 +211,87 @@ export default function Home() {
       </section>
 
       {/* Coming Soon / Buy Tickets */}
-      <section className="container mx-auto px-4">
-        <div className="flex items-end justify-between gap-4 mb-8 pb-4 border-b border-white/10">
+      <section className="container mx-auto px-4 md:px-6">
+        <div className="flex items-end justify-between gap-4 mb-10 pb-5 border-b border-white/5 relative">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-serif font-bold text-white">Coming Soon</h2>
-            <p className="text-zinc-400 text-sm mt-1">Highly anticipated premieres. Secure your tickets early.</p>
+            <h2 className="text-3xl font-serif font-bold text-white tracking-tight">Coming Soon</h2>
+            <p className="text-zinc-400 text-sm mt-1.5">Highly anticipated premieres and dramatic showcases. Secure your ticket tiers early.</p>
           </div>
-          <Link href="/discovery?filter=upcoming" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors shrink-0 whitespace-nowrap">
-            View All
+          <Link href="/discovery?filter=upcoming" className="text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-widest border border-white/10 px-4 py-2 rounded-full transition-all shrink-0 whitespace-nowrap hover:bg-white/5">
+            View Upcoming
           </Link>
+          <div className="absolute bottom-0 left-0 w-24 h-[1px] bg-gradient-to-r from-zinc-500 to-transparent" />
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
           {comingSoon.map(production => (
             <ProductionCard key={production.id} production={production} />
           ))}
         </div>
       </section>
 
-      {/* Highest Rated by Critics */}
-      <section className="container mx-auto px-4 bg-zinc-900/40 rounded-3xl py-12 border border-white/5">
-        <div className="flex items-center justify-between mb-8 pb-4 px-4">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-serif font-bold text-white flex items-center gap-2">
-              Critic&apos;s Choice
-            </h2>
-            <p className="text-zinc-400 text-sm mt-1">The highest reviewed productions by verified critics</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 px-4">
-          {highestRatedCritics.map(production => (
-            <ProductionCard key={production.id} production={production} />
-          ))}
-        </div>
-      </section>
+      {/* Critics' Choice & Editorial Spotlight Wrapper */}
+      <div className="bg-zinc-900/10 border-y border-white/5 py-16 relative overflow-hidden">
+        {/* Cinematic Backdrop Glow */}
+        <div className="absolute -top-40 right-10 w-96 h-96 rounded-full bg-red-500/5 blur-[120px] mix-blend-screen pointer-events-none" />
+        <div className="absolute -bottom-40 left-10 w-96 h-96 rounded-full bg-amber-500/5 blur-[120px] mix-blend-screen pointer-events-none" />
 
-      {/* Audience Favorites */}
-      <section className="container mx-auto px-4">
-        <div className="flex items-end justify-between gap-4 mb-8 pb-4 border-b border-white/10">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-serif font-bold text-white">Audience Favorites</h2>
-            <p className="text-zinc-400 text-sm mt-1">Must-see shows beloved by theatregoers</p>
-          </div>
+        <div className="container mx-auto px-4 md:px-6 flex flex-col gap-16">
+          
+          {/* Highest Rated by Critics */}
+          <section className="bg-zinc-950/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 md:p-10 shadow-[0_24px_48px_rgba(0,0,0,0.5)]">
+            <div className="flex items-center justify-between mb-10 pb-5 border-b border-white/5 relative">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-3xl font-serif font-bold text-white flex items-center gap-2.5 tracking-tight">
+                  <Award className="h-6 w-6 text-red-500 shrink-0" />
+                  Critic&apos;s Choice
+                </h2>
+                <p className="text-zinc-400 text-sm mt-1.5">The highest reviewed stage productions and musicals rated by verified guild critics</p>
+              </div>
+              <div className="absolute bottom-0 left-0 w-24 h-[1px] bg-gradient-to-r from-red-500 to-transparent" />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {highestRatedCritics.map(production => (
+                <ProductionCard key={production.id} production={production} />
+              ))}
+            </div>
+          </section>
+
+          {/* Audience Favorites */}
+          <section className="bg-zinc-950/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 md:p-10 shadow-[0_24px_48px_rgba(0,0,0,0.5)]">
+            <div className="flex items-center justify-between mb-10 pb-5 border-b border-white/5 relative">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-3xl font-serif font-bold text-white flex items-center gap-2.5 tracking-tight">
+                  <Heart className="h-6 w-6 text-amber-500 shrink-0" />
+                  Audience Favorites
+                </h2>
+                <p className="text-zinc-400 text-sm mt-1.5">Crowd-favorite theatrical masterpieces deeply loved by passionate theatregoers</p>
+              </div>
+              <div className="absolute bottom-0 left-0 w-24 h-[1px] bg-gradient-to-r from-amber-500 to-transparent" />
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {highestRatedAudience.map(production => (
+                <ProductionCard key={production.id} production={production} />
+              ))}
+            </div>
+          </section>
+
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {highestRatedAudience.map(production => (
-            <ProductionCard key={production.id} production={production} />
-          ))}
-        </div>
-      </section>
+      </div>
 
       {/* ── EDITORIAL CHRONICLES & BLOGS ── */}
-      <section className="container mx-auto px-4">
-        <div className="flex items-end justify-between gap-4 mb-8 pb-4 border-b border-white/10">
+      <section className="container mx-auto px-4 md:px-6">
+        <div className="flex items-end justify-between gap-4 mb-10 pb-5 border-b border-white/5 relative">
           <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-serif font-bold text-white flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-red-500 shrink-0" />
+            <h2 className="text-3xl font-serif font-bold text-white flex items-center gap-2.5 tracking-tight">
+              <BookOpen className="h-6 w-6 text-red-500 shrink-0" />
               Recent Chronicles
             </h2>
-            <p className="text-zinc-400 text-sm mt-1 truncate">Expert analysis, blogs, and historical insights from our editors</p>
+            <p className="text-zinc-400 text-sm mt-1.5">Expert cultural analysis, historic stage documentations, and critiques from our curators</p>
           </div>
-          <Link href="/editorial" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors shrink-0 whitespace-nowrap">
+          <Link href="/editorial" className="text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-widest border border-white/10 px-4 py-2 rounded-full transition-all shrink-0 whitespace-nowrap hover:bg-white/5">
             View All Chronicles
           </Link>
+          <div className="absolute bottom-0 left-0 w-24 h-[1px] bg-gradient-to-r from-red-500 to-transparent" />
         </div>
 
         {/* Editorial Layout: Left Main Column, Right Sidebar */}
@@ -276,15 +303,15 @@ export default function Home() {
               <Link
                 key={article.id}
                 href={`/editorial/${article.id}`}
-                className="bg-zinc-900/50 hover:bg-zinc-900 border border-white/5 hover:border-white/10 rounded-3xl p-5 transition-all duration-300 flex flex-col sm:flex-row gap-5 items-stretch shadow-md hover:shadow-xl group cursor-pointer"
+                className="bg-zinc-900/30 hover:bg-zinc-900/60 backdrop-blur-md border border-white/5 hover:border-white/15 rounded-3xl p-5 transition-all duration-300 flex flex-col sm:flex-row gap-6 items-stretch shadow-md hover:shadow-xl group cursor-pointer"
               >
                 {/* Thumbnail */}
-                <div className="relative w-full sm:w-44 aspect-[4/3] rounded-2xl overflow-hidden shrink-0 bg-zinc-950 border border-white/5">
+                <div className="relative w-full sm:w-48 aspect-[4/3] rounded-2xl overflow-hidden shrink-0 bg-zinc-950 border border-white/5">
                   <Image
                     src={article.imageUrl}
                     alt={article.title}
                     fill
-                    sizes="(max-width: 640px) 100vw, 176px"
+                    sizes="(max-width: 640px) 100vw, 192px"
                     className="object-cover transition-transform duration-500 group-hover:scale-102"
                   />
                 </div>
@@ -292,16 +319,16 @@ export default function Home() {
                 {/* Description */}
                 <div className="flex-1 flex flex-col justify-between py-1">
                   <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-[10px] font-semibold text-red-400 uppercase tracking-widest bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-[9px] font-bold text-red-400 uppercase tracking-widest bg-red-500/10 px-2.5 py-1 rounded-md border border-red-500/20">
                         {article.category || 'Theatre Spotlight'}
                       </span>
-                      <span className="text-[10px] text-zinc-500 flex items-center gap-1">
-                        <Calendar className="h-3 w-3" /> {article.date}
+                      <span className="text-[10px] text-zinc-500 flex items-center gap-1 font-semibold">
+                        <Calendar className="h-3.5 w-3.5" /> {article.date}
                       </span>
-                      <span className="text-[10px] text-zinc-500">• {article.readTime || '5 min read'}</span>
+                      <span className="text-[10px] text-zinc-500 font-semibold">• {article.readTime || '5 min read'}</span>
                     </div>
-                    <h3 className="font-serif text-lg font-bold text-white group-hover:text-red-400 transition-colors leading-snug mb-2">
+                    <h3 className="font-serif text-xl font-bold text-white group-hover:text-red-400 transition-colors leading-snug mb-2">
                       {article.title}
                     </h3>
                     <p className="text-zinc-400 text-xs leading-relaxed line-clamp-2">
@@ -309,7 +336,7 @@ export default function Home() {
                     </p>
                   </div>
                   
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-zinc-400 group-hover:text-white uppercase tracking-wider mt-4 transition-colors">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-zinc-300 group-hover:text-white uppercase tracking-widest mt-4 transition-colors">
                     Read Chronicle <ArrowRight className="h-3 w-3" />
                   </span>
                 </div>
@@ -319,15 +346,17 @@ export default function Home() {
 
           {/* Sidebar Area (Right 1/3) */}
           <div className="flex flex-col gap-6">
-            <div className="bg-zinc-900/80 border border-white/5 rounded-3xl p-6 flex flex-col gap-5 shadow-lg">
+            <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 flex flex-col gap-6 shadow-lg relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/0 to-white/5 pointer-events-none" />
+              
               <div>
                 <h3 className="font-serif font-bold text-white text-lg flex items-center gap-2">
                   Featured Highlights
                 </h3>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-wider mt-1">Hottest editorials read by the guild</p>
+                <p className="text-[9px] text-zinc-500 uppercase tracking-widest mt-1.5 font-bold">Hottest editorials read by the guild</p>
               </div>
 
-              <div className="flex flex-col gap-4 divide-y divide-white/5">
+              <div className="flex flex-col gap-4 divide-y divide-white/5 relative z-10">
                 {featuredHighlights.map((feat, index) => {
                   const getViews = (id: string) => {
                     const map: Record<string, string> = {
@@ -339,16 +368,16 @@ export default function Home() {
                   };
                   return (
                     <div key={feat.id} className={`${index > 0 ? 'pt-4' : ''} group`}>
-                      <span className="text-[10px] font-bold text-red-500/80 tracking-widest font-mono uppercase">
+                      <span className="text-[9px] font-bold text-red-500/80 tracking-widest font-mono uppercase">
                         Chronicle #{index + 1}
                       </span>
                       <Link 
                         href={`/editorial/${feat.id}`}
-                        className="block font-serif text-sm font-bold text-zinc-300 group-hover:text-white transition-colors leading-snug mt-1 line-clamp-2"
+                        className="block font-serif text-sm font-bold text-zinc-300 group-hover:text-white transition-colors leading-snug mt-1.5 line-clamp-2"
                       >
                         {feat.title}
                       </Link>
-                      <span className="text-[9px] text-zinc-500 mt-1 block uppercase font-medium">
+                      <span className="text-[9px] text-zinc-500 mt-1 block uppercase font-bold tracking-wider">
                         {getViews(feat.id)}
                       </span>
                     </div>
@@ -356,13 +385,13 @@ export default function Home() {
                 })}
               </div>
 
-              <div className="bg-zinc-950 border border-white/5 rounded-2xl p-4 mt-2">
+              <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-5 mt-2 relative z-10">
                 <p className="text-xs text-zinc-400 leading-relaxed">
                   Want to publish a stage critique, historical chronicle, or regional theatre spotlight? Get in touch with our editorial curators.
                 </p>
                 <Link 
                   href="/submit"
-                  className="inline-block bg-white text-black text-[10px] font-bold px-3 py-2 rounded-xl mt-3 uppercase tracking-wider hover:bg-zinc-200 transition-colors"
+                  className="inline-block bg-white text-black text-[10px] font-bold px-4 py-2.5 rounded-xl mt-4 uppercase tracking-wider hover:bg-zinc-200 transition-colors"
                 >
                   Write For Us
                 </Link>

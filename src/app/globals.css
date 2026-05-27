@@ -11,7 +11,7 @@
 
   /* Premium Theatre Typography Variables */
   --font-sans: var(--font-outfit), system-ui, -apple-system, sans-serif;
-  --font-serif: var(--font-outfit), system-ui, -apple-system, sans-serif; /* Both headings and body use Outfit! */
+  --font-serif: var(--font-playfair), Georgia, serif; /* Use beautiful Playfair Display! */
 
   /* Custom Premium Theatre Color Palette Overrides */
   /* Immersive velvet shadowing for all zinc elements */
@@ -90,4 +90,14 @@ h1, h2, h3, h4, h5, h6, .font-serif {
 }
 .animate-fade-up {
   animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Cinematic background Ken Burns scale effect */
+@keyframes cinematicZoom {
+  0% { transform: scale(1.02) translate(0px, 0px); }
+  50% { transform: scale(1.08) translate(5px, -3px); }
+  100% { transform: scale(1.02) translate(0px, 0px); }
+}
+.animate-cinematic-zoom {
+  animation: cinematicZoom 20s ease-in-out infinite;
 }
