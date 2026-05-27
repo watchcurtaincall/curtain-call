@@ -230,55 +230,62 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
 
       {/* ── CTAs ── */}
       <div className="container mx-auto px-4 mt-6">
-        <div className="flex flex-col sm:flex-row gap-3">
-          {production.status !== 'Past Production' && production.status !== 'Recently Concluded' && production.externalTicketUrl && (() => {
-            // Check if show date has passed
-            let linkExpired = false;
-            if (production.showDate) {
-              const showDate = new Date(production.showDate);
-              showDate.setHours(0, 0, 0, 0);
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              linkExpired = today > showDate;
-            }
-            if (linkExpired) return null;
-            return (
-              <a
-                href={production.externalTicketUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 bg-white text-black text-center py-4 rounded-2xl font-bold hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 text-base"
-              >
-                <Ticket className="h-5 w-5" />
-                Get Tickets
-                <ExternalLink className="h-4 w-4 opacity-50" />
-              </a>
-            );
-          })()}
-          {production.status !== 'Past Production' && production.status !== 'Recently Concluded' && !production.externalTicketUrl && production.ticketTiers && production.ticketTiers.length > 0 && (
-            <Link
-              href={`/tickets/${production.id}`}
-              className="flex-1 bg-white text-black text-center py-4 rounded-2xl font-bold hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 text-base"
-            >
-              <Ticket className="h-5 w-5" />
-              Get Tickets
-            </Link>
+        <div className="flex flex-col gap-2.5 max-w-xl">
+          {/* Row 1: Primary Action (Get Tickets - Bold, prominent call-to-action) */}
+          {(production.status !== 'Past Production' && production.status !== 'Recently Concluded' && (production.externalTicketUrl || (production.ticketTiers && production.ticketTiers.length > 0))) && (
+            <div>
+              {production.externalTicketUrl ? (() => {
+                let linkExpired = false;
+                if (production.showDate) {
+                  const showDate = new Date(production.showDate);
+                  showDate.setHours(0, 0, 0, 0);
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  linkExpired = today > showDate;
+                }
+                if (linkExpired) return null;
+                return (
+                  <a
+                    href={production.externalTicketUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-white text-black text-center py-3.5 rounded-xl font-bold hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 text-sm uppercase tracking-wider shadow-lg"
+                  >
+                    <Ticket className="h-4 w-4" />
+                    Get Tickets
+                    <ExternalLink className="h-3.5 w-3.5 opacity-50" />
+                  </a>
+                );
+              })() : (
+                <Link
+                  href={`/tickets/${production.id}`}
+                  className="w-full bg-white text-black text-center py-3.5 rounded-xl font-bold hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 text-sm uppercase tracking-wider block shadow-lg"
+                >
+                  <Ticket className="h-4 w-4" />
+                  Get Tickets
+                </Link>
+              )}
+            </div>
           )}
-          <WatchlistButton productionId={production.id} />
-          <button
-            onClick={scrollToReviews}
-            className="bg-red-600/10 hover:bg-red-600 border border-red-500/20 hover:border-red-600 text-red-400 hover:text-white px-6 py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 text-base group"
-          >
-            <Star className="h-5 w-5 text-red-400 group-hover:text-white transition-colors" />
-            <span>Review Play</span>
-          </button>
-          <button
-            onClick={() => setShareOpen(true)}
-            className="bg-zinc-900 hover:bg-zinc-800 border border-white/10 text-white px-6 py-4 rounded-2xl font-bold transition-all flex items-center justify-center gap-2 text-base group"
-          >
-            <Share2 className="h-5 w-5 text-zinc-400 group-hover:text-white transition-colors" />
-            <span>Share</span>
-          </button>
+
+          {/* Row 2: Secondary Action Grid (Watchlist, Review, and Share in a single clean row) */}
+          <div className="grid grid-cols-3 gap-2">
+            <WatchlistButton productionId={production.id} compact={true} />
+            <button
+              onClick={scrollToReviews}
+              className="w-full bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wider"
+            >
+              <Star className="h-4 w-4 text-red-500" />
+              <span>Review</span>
+            </button>
+            <button
+              onClick={() => setShareOpen(true)}
+              className="w-full bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wider"
+            >
+              <Share2 className="h-4 w-4 text-zinc-400" />
+              <span>Share</span>
+            </button>
+          </div>
         </div>
       </div>
 
