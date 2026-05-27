@@ -573,22 +573,44 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
           </div>
 
           <form onSubmit={handleValidate} className="flex flex-col gap-4">
+            {/* Immersive Scanner Radar Status Graphic - Clearly Marked as Status only */}
+            <div className="relative w-full h-16 bg-zinc-950/80 border border-white/5 rounded-2xl flex items-center justify-between px-5 overflow-hidden shadow-inner group/radar mb-2">
+              <div className="scanline-effect" />
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="w-9 h-9 rounded-xl border border-red-500/20 bg-red-550/5 flex items-center justify-center">
+                  <QrCode className="h-4.5 w-4.5 text-red-500 animate-pulse" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-zinc-300 font-bold uppercase tracking-wider block">
+                    Radar Status Feed
+                  </span>
+                  <span className="text-[9px] font-mono text-red-500 uppercase tracking-widest font-bold animate-pulse mt-0.5 block">
+                    Terminal Online · Ready
+                  </span>
+                </div>
+              </div>
+              <div className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping shrink-0" />
+            </div>
+
+            {/* Premium, High-Contrast, Bold Text Input Terminal Area */}
             <div className="flex flex-col gap-2">
-              <label className="text-[9px] text-zinc-400 font-mono uppercase tracking-widest font-bold">Gate Pass / Reference ID</label>
-              <div className="relative w-full h-32 bg-zinc-950 border border-white/5 focus-within:border-red-500/50 rounded-2xl flex items-center justify-center overflow-hidden transition-all shadow-inner group/terminal">
-                {/* Immersive Scan Line & Radar Circle Overlay */}
-                <div className="scanline-effect" />
-                <div className="absolute w-24 h-24 rounded-full border border-red-500/5 radar-pulse-effect" />
-                
+              <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest block flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                Type Admissions Code Below:
+              </label>
+              <div className="relative">
                 <input
                   type="text"
                   required
-                  placeholder="e.g. CC-123"
+                  placeholder="👉 CLICK TO TYPE CODE (e.g. CC-123)"
                   value={scanInput}
                   onChange={e => setScanInput(e.target.value)}
-                  className="bg-transparent border-none text-center text-xl text-white font-mono uppercase tracking-widest focus:outline-none transition-all placeholder:text-zinc-800 placeholder:tracking-normal w-full h-full relative z-10 px-4 font-bold"
+                  className="w-full bg-zinc-950/95 border-2 border-white/10 hover:border-red-500/30 focus:border-red-500 rounded-2xl px-5 py-4 text-center text-base text-white font-mono uppercase tracking-widest focus:outline-none transition-all shadow-[0_4px_12px_rgba(0,0,0,0.5)] focus:shadow-[0_0_20px_rgba(229,9,20,0.15)] placeholder:text-zinc-650 placeholder:normal-case font-bold"
                 />
               </div>
+              <p className="text-[10px] text-zinc-500 font-sans leading-relaxed text-center mt-1">
+                Click inside the black box above to type or paste the Guest Gate Pass Code.
+              </p>
             </div>
             
             <button

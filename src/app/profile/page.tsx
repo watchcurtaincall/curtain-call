@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { ClientDB, syncFromSupabase } from '@/lib/db';
 import { Production } from '@/lib/types';
 import {
-  Star, Bookmark, PenLine, Award, CheckCircle, Circle,
+  Star, Bookmark, PenLine, Award, CheckCircle, Circle, Check,
   LogOut, Settings, Bell, ChevronRight, Lock,
   PenSquare, Target, Ticket, Mic2, Drama,
   FileText, Trophy, Library, Zap, Users, Crown, Sparkles, Shield, ShieldCheck,
@@ -39,6 +39,8 @@ export default function ProfilePage() {
   const [allPlays, setAllPlays] = useState<Production[]>([]);
   const [syncCount, setSyncCount] = useState(0);
   const router = useRouter();
+  
+  const purchasedTickets = user ? ClientDB.getTickets().filter(t => t.buyerEmail?.toLowerCase() === user.email.toLowerCase()) : [];
 
   const isPlayProducerManaged = (p: any) => {
     return p.isProducerManaged === true || p.ticketTiers !== undefined || p.status === 'Draft';
@@ -678,96 +680,281 @@ export default function ProfilePage() {
 
       {/* ── Tab Content ── */}
       <div className="container mx-auto px-4 py-8">
-
         {/* DASHBOARD */}
         {tab === 'dashboard' && (
-          <div className="flex flex-col gap-5 animate-fade-up">
-
-            {/* Producer Wallet & Curation Hub Navigation Card */}
-            <div className="relative rounded-3xl overflow-hidden border border-emerald-500/10 bg-gradient-to-br from-zinc-900/60 to-zinc-950/80 p-6 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-emerald-500/20 group">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[40px] pointer-events-none" />
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0 shadow-lg shadow-emerald-950/20">
-                    <Wallet className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif font-bold text-white text-lg tracking-tight">Producer&apos;s Hub</h3>
-                    <p className="text-sm text-zinc-400 mt-1 leading-relaxed max-w-md">Manage your payouts, track ticket sales, and oversee listed productions.</p>
-                  </div>
-                </div>
-                <Link href="/producer" className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-450 text-black font-bold px-6 py-3.5 rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/25 active:scale-98 shrink-0">
-                  <span>Go to Wallet</span>
-                  <ArrowUpRight className="h-4 w-4 stroke-[2.5]" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Points & Badges */}
-            <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-serif font-bold text-white text-lg">Points & Badges</h2>
-                <button onClick={() => setTab('badges')} className="text-xs text-red-500 hover:text-red-400 flex items-center gap-1">
-                  View all <ChevronRight className="h-3 w-3" />
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-4 mb-5">
-                <div className="bg-zinc-800/50 rounded-xl p-4 text-center border border-white/5">
-                  <div className="text-3xl font-serif font-bold text-white">{points.toLocaleString()}</div>
-                  <div className="text-xs text-zinc-500 mt-1">Points</div>
-                </div>
-                <div className="bg-zinc-800/50 rounded-xl p-4 text-center border border-white/5">
-                  <div className="text-3xl font-serif font-bold text-white">
-                    {badgesUnlockedCount}<span className="text-lg text-zinc-500">/{dynamicBadges.length}</span>
-                  </div>
-                  <div className="text-xs text-zinc-500 mt-1">Badges Unlocked</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-                  <div className="bg-red-600 h-full rounded-full transition-all" style={{ width: `${progressPct}%` }} />
-                </div>
-                <span className="text-xs text-zinc-500 shrink-0">{progressPct}%</span>
-              </div>
-              <p className="text-xs text-zinc-600 mt-2">Carry out more activities to unlock more badges.</p>
-            </div>
- 
-            {/* Checklist */}
-            <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6">
-              <h2 className="font-serif font-bold text-white text-lg mb-4">Profile Checklist</h2>
-              <div className="flex flex-col gap-3">
-                {dynamicChecklist.map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    {item.done
-                      ? <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
-                      : <Circle      className="h-5 w-5 text-zinc-600 shrink-0" />
-                    }
-                    <span className={`text-sm ${item.done ? 'text-zinc-500 line-through' : 'text-white'}`}>
-                      {item.label}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-up">
+              
+              {/* Left Column - Col 8: User Tickets, Watchlist, Submissions */}
+              <div className="lg:col-span-8 flex flex-col gap-8">
+                
+                {/* 🎟️ Active Tickets Wallet */}
+                <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/5 rounded-full blur-[40px] pointer-events-none" />
+                  
+                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shrink-0">
+                        <Ticket className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-serif font-bold text-white text-base">My Ticket Wallet</h3>
+                        <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5 font-bold">Your active event access passes</p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
+                      {purchasedTickets.length} Active Vouchers
                     </span>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Recent Activity */}
-            <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6">
-              <h2 className="font-serif font-bold text-white text-lg mb-4">Recent Activity</h2>
-              <div className="flex flex-col divide-y divide-white/5">
-                {dynamicActivities.map(({ text, time, Icon }, i) => (
-                  <div key={i} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                    <div className="w-8 h-8 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0 mt-0.5">
-                      <Icon className="h-3.5 w-3.5 text-zinc-400" />
+                  {purchasedTickets.length === 0 ? (
+                    <div className="bg-zinc-950/60 border border-dashed border-white/5 rounded-2xl p-8 text-center flex flex-col items-center justify-center min-h-[160px] group/wallet">
+                      <Ticket className="h-8 w-8 text-zinc-750 mb-3 group-hover/wallet:text-red-500 transition-colors animate-pulse" />
+                      <p className="text-zinc-300 font-serif font-bold text-sm">No ticket vouchers booked</p>
+                      <p className="text-xs text-zinc-500 mt-1 max-w-xs leading-relaxed">
+                        Book stage plays and verified performances to see your gorgeous front-row pass stubs here!
+                      </p>
+                      <Link href="/" className="mt-4 bg-white hover:bg-zinc-200 text-black font-bold px-5 py-2.5 rounded-xl transition-all text-[10px] uppercase tracking-widest">
+                        Browse Stage Shows
+                      </Link>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-zinc-300 leading-snug">{text}</p>
-                      <p className="text-xs text-zinc-600 mt-0.5">{time}</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {purchasedTickets.map((t: any) => (
+                        <div key={t.id} className="relative bg-zinc-950 border border-white/5 hover:border-red-500/20 rounded-2xl overflow-hidden flex flex-col transition-all group/stub">
+                          {/* Top accent line */}
+                          <div className="h-1 bg-gradient-to-r from-red-600 to-red-400" />
+                          
+                          <div className="p-4 flex flex-col gap-3 justify-between flex-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <h4 className="font-serif font-bold text-white text-sm truncate leading-snug group-hover/stub:text-red-400 transition-colors">
+                                  {t.productionTitle}
+                                </h4>
+                                <p className="text-[10px] text-zinc-500 mt-0.5 truncate uppercase tracking-wider font-mono">
+                                  {t.tier} Tier Admission
+                                </p>
+                              </div>
+                              <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-400 shrink-0">
+                                <QrCode className="w-4 h-4 text-zinc-550" />
+                              </div>
+                            </div>
+
+                            <div className="border-t border-dashed border-white/10 pt-3 mt-1 flex flex-col gap-1.5 font-mono text-[10px] text-zinc-450">
+                              <div className="flex justify-between">
+                                <span className="text-zinc-600 font-bold uppercase tracking-wider">Gate Code</span>
+                                <span className="text-white font-bold tracking-wider">{t.gatePass || t.reference}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-zinc-600 font-bold uppercase tracking-wider">Show Date</span>
+                                <span className="text-zinc-200 font-semibold">{t.date || 'Soon'}</span>
+                              </div>
+                            </div>
+                            
+                            <Link 
+                              href={`/tickets/${t.id}`}
+                              className="w-full bg-zinc-900 hover:bg-zinc-850 text-white font-bold text-center py-2.5 rounded-xl text-[9px] uppercase tracking-widest border border-white/5 group-hover/stub:border-red-500/20 transition-all mt-2"
+                            >
+                              View Secure Pass Stub
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 📂 Watchlist / Bookmarked Collection */}
+                <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
+                  <div className="absolute bottom-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none" />
+                  
+                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                        <Bookmark className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-serif font-bold text-white text-base">Watchlist & Reserved Shows</h3>
+                        <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5 font-bold">Your bookmarked event queue</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setTab('list')} className="text-xs font-bold text-red-400 hover:text-white uppercase tracking-wider flex items-center gap-1">
+                      Manage List <ChevronRight className="h-3 w-3" />
+                    </button>
+                  </div>
+
+                  {watchlistProductions.length === 0 ? (
+                    <div className="bg-zinc-950/60 border border-dashed border-white/5 rounded-2xl p-8 text-center flex flex-col items-center justify-center min-h-[160px] group/watchlist">
+                      <Bookmark className="h-8 w-8 text-zinc-750 mb-3 group-hover/watchlist:text-amber-400 transition-colors animate-pulse" />
+                      <p className="text-zinc-300 font-serif font-bold text-sm">Watchlist is empty</p>
+                      <p className="text-xs text-zinc-500 mt-1 max-w-xs leading-relaxed">
+                        Add upcoming theatre shows to your watchlist to track dates, seat availability, and announcements!
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {watchlistProductions.slice(0, 3).map((p: any) => (
+                        <div key={p.id} className="relative bg-zinc-950 border border-white/5 hover:border-amber-500/20 rounded-2xl p-3.5 transition-all group/watchcard">
+                          <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-zinc-900 border border-white/5">
+                            {p.image ? (
+                              <img src={p.image} alt={p.title} className="w-full h-full object-cover group-hover/watchcard:scale-105 transition-transform duration-500" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-zinc-700"><Clapperboard className="w-8 h-8" /></div>
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent opacity-60" />
+                            <div className="absolute bottom-2.5 left-2.5 right-2.5">
+                              <span className="text-[8px] bg-red-600 text-white font-bold uppercase tracking-wider px-1.5 py-0.5 rounded font-mono">
+                                {p.status}
+                              </span>
+                            </div>
+                          </div>
+                          <h4 className="font-serif font-bold text-white text-xs mt-3 truncate leading-snug group-hover/watchcard:text-amber-400 transition-colors">
+                            {p.title}
+                          </h4>
+                          <p className="text-[10px] text-zinc-500 truncate mt-0.5">{p.genre} · {p.duration}</p>
+                          
+                          <Link 
+                            href={`/productions/${p.id}`}
+                            className="w-full inline-block bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white text-center py-2 rounded-xl text-[9px] uppercase tracking-widest border border-white/5 mt-3 transition-all"
+                          >
+                            Explore
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
+              {/* Right Column - Col 4: Achievement Hub, Setup Checklist, Subtle Producer Entry */}
+              <div className="lg:col-span-4 flex flex-col gap-6">
+                
+                {/* 🏆 Rank Progression & Achievements */}
+                <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none" />
+                  
+                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                        <Trophy className="h-5 w-5" />
+                      </div>
+                      <h3 className="font-serif font-bold text-white text-sm">Theatregoer Rank</h3>
+                    </div>
+                    <button onClick={() => setTab('badges')} className="text-xs font-bold text-red-400 hover:text-white uppercase tracking-wider flex items-center gap-1">
+                      Badges <ChevronRight className="h-3 w-3" />
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-5 text-center">
+                    <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 relative overflow-hidden">
+                      <span className="text-[9px] text-zinc-550 font-bold uppercase tracking-widest block mb-1">Milestone Level</span>
+                      <span className="text-2xl font-serif font-bold text-white block">
+                        {points >= 1000 ? 'Patron Legend' : points >= 500 ? 'Pro Critic' : 'Act I Critic'}
+                      </span>
+                      <div className="flex justify-center gap-3 mt-3.5 border-t border-white/5 pt-3.5">
+                        <div>
+                          <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold block">Score</span>
+                          <span className="text-base font-serif font-bold text-white mt-0.5 block">{points} pts</span>
+                        </div>
+                        <div className="w-px bg-white/5 self-stretch" />
+                        <div>
+                          <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold block">Badges</span>
+                          <span className="text-base font-serif font-bold text-white mt-0.5 block">{badgesUnlockedCount}/{dynamicBadges.length}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 text-left">
+                      <div className="flex items-center justify-between text-[9px] font-mono font-bold uppercase text-zinc-500 tracking-widest">
+                        <span>Tier Milestone</span>
+                        <span className="text-red-400">{progressPct}%</span>
+                      </div>
+                      <div className="flex-1 bg-zinc-950 border border-white/5 rounded-full h-2 overflow-hidden shadow-inner">
+                        <div className="bg-gradient-to-r from-red-600 to-red-500 h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
+                      </div>
                     </div>
                   </div>
-                ))}
+                </div>
+
+                {/* 📝 Theatre Daily Checklist */}
+                <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 flex flex-col gap-5 shadow-lg relative overflow-hidden">
+                  <div>
+                    <h3 className="font-serif font-bold text-white text-sm">Platform Checklist</h3>
+                    <p className="text-[8px] text-zinc-500 uppercase tracking-widest mt-0.5 font-bold">Complete setup to earn bonus points</p>
+                  </div>
+
+                  <div className="flex flex-col gap-3 relative z-10 pt-1">
+                    {dynamicChecklist.map((item, i) => (
+                      <div key={i} className="flex items-center gap-3 group/chk">
+                        {item.done ? (
+                          <div className="w-5 h-5 rounded-lg bg-green-550/10 border border-green-500/20 flex items-center justify-center text-green-400 shrink-0">
+                            <Check className="h-3 w-3 stroke-[3]" />
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-lg bg-zinc-950 border border-white/10 flex items-center justify-center text-zinc-650 shrink-0 transition-colors">
+                            <Circle className="h-3 w-3 stroke-[2]" />
+                          </div>
+                        )}
+                        <span className={`text-xs transition-colors ${item.done ? 'text-zinc-550 line-through font-medium' : 'text-zinc-350 group-hover/chk:text-white font-medium'}`}>
+                          {item.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ✍️ Recent Activity Log */}
+                <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 flex flex-col gap-5 shadow-lg relative overflow-hidden">
+                  <div>
+                    <h3 className="font-serif font-bold text-white text-sm">Chronicle Timeline</h3>
+                    <p className="text-[8px] text-zinc-500 uppercase tracking-widest mt-0.5 font-bold">Your latest audience contributions</p>
+                  </div>
+
+                  <div className="flex flex-col divide-y divide-white/5 max-h-[190px] overflow-y-auto pr-1 [scrollbar-width:none]">
+                    {dynamicActivities.slice(0, 2).map((act, i) => (
+                      <div key={i} className="flex items-start gap-3 py-3.5 first:pt-0 last:pb-0 group/act">
+                        <div className="w-7 h-7 rounded-lg bg-zinc-950 border border-white/5 group-hover/act:border-red-500/30 flex items-center justify-center shrink-0 mt-0.5 transition-all">
+                          <act.Icon className="h-3.5 w-3.5 text-zinc-500 group-hover/act:text-red-400 transition-colors" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-zinc-300 leading-relaxed font-medium truncate">{act.text}</p>
+                          <p className="text-[8px] text-zinc-600 font-mono mt-0.5 font-bold uppercase tracking-wider">{act.time}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 👔 Elegant Subtle Producer Access */}
+                {(userPlays.length > 0 || user.email.toLowerCase() === 'watchcurtaincall@gmail.com') ? (
+                  <div className="relative rounded-[32px] overflow-hidden border border-emerald-500/10 hover:border-emerald-500/30 bg-gradient-to-br from-zinc-900/20 to-zinc-950/60 p-5 shadow-xl backdrop-blur-md transition-all duration-300 group/hub">
+                    <div className="flex flex-col gap-4 relative z-10">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-450 shrink-0">
+                          <Wallet className="h-4.5 w-4.5" />
+                        </div>
+                        <div>
+                          <h3 className="font-serif font-bold text-white text-xs">Switch to Producer Hub</h3>
+                          <p className="text-[10px] text-zinc-500 mt-0.5 leading-relaxed">Scan tickets & manage event balances</p>
+                        </div>
+                      </div>
+                      <Link href="/producer" className="w-full inline-flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-black font-bold py-3 rounded-xl transition-all text-[9px] uppercase tracking-widest shadow-md">
+                        <span>Open Producer Terminal</span>
+                        <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-zinc-950 border border-white/5 rounded-2xl p-4 text-center">
+                    <span className="text-[10px] text-zinc-500 font-medium leading-relaxed block">
+                      Are you a theatremaker or producer? <Link href="/submit" className="text-red-400 hover:underline">List stage playbills</Link> to start selling admissions.
+                    </span>
+                  </div>
+                )}
+
               </div>
+
             </div>
-          </div>
         )}
 
 
@@ -1387,28 +1574,51 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
 
           {/* Validation Form Entry */}
           <form onSubmit={handleValidate} className="flex flex-col gap-4">
+            {/* Visual Scanner Status Band */}
+            <div className="relative w-full h-14 bg-zinc-950/80 border border-white/5 rounded-2xl flex items-center justify-between px-5 overflow-hidden shadow-inner mb-1">
+              <div className="scanline-effect" />
+              <div className="flex items-center gap-3 relative z-10">
+                <div className="w-8 h-8 rounded-xl border border-green-500/20 bg-green-550/5 flex items-center justify-center">
+                  <QrCode className="h-4 w-4 text-green-400 animate-pulse" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono text-zinc-300 font-bold uppercase tracking-wider block">
+                    Green Scan Feed Status
+                  </span>
+                  <span className="text-[9px] font-mono text-green-400 uppercase tracking-widest font-bold animate-pulse block">
+                    Admissions Standby
+                  </span>
+                </div>
+              </div>
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-ping shrink-0" />
+            </div>
+
             <div className="flex flex-col gap-2">
-              <label className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Enter Ticket Code</label>
-              <p className="text-[11px] text-zinc-600 leading-relaxed">
-                Type the <span className="text-zinc-400 font-semibold">Gate Pass</span> (e.g. <span className="font-mono text-zinc-300">CC-6AF7D2</span>) printed on the PDF ticket, or the <span className="text-zinc-400 font-semibold">Paystack reference</span> from the confirmation email.
-              </p>
-              <div className="flex gap-2 mt-1">
+              <label className="text-[10px] text-zinc-450 font-bold uppercase tracking-widest block flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                Type Admissions Code Below:
+              </label>
+              
+              <div className="flex flex-col sm:flex-row gap-3 mt-1">
                 <input
                   type="text"
-                  placeholder="CC-6AF7D2 or PAY-491730..."
+                  placeholder="👉 CLICK TO TYPE CODE (e.g. CC-6AF7D2)"
                   value={scanInput}
                   onChange={e => setScanInput(e.target.value)}
                   autoFocus
-                  className="flex-1 bg-zinc-950 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none focus:border-red-500/60 focus:ring-1 focus:ring-red-500/20 placeholder:text-zinc-700 uppercase tracking-widest font-mono transition-all"
+                  className="flex-1 bg-zinc-950/95 border-2 border-white/10 hover:border-green-500/30 focus:border-green-500 rounded-2xl px-5 py-3.5 text-center text-sm text-white font-mono uppercase tracking-widest focus:outline-none transition-all shadow-[0_4px_12px_rgba(0,0,0,0.5)] focus:shadow-[0_0_20px_rgba(34,197,94,0.15)] placeholder:text-zinc-650 placeholder:normal-case font-bold"
                 />
                 <button
                   type="submit"
                   disabled={!scanInput.trim()}
-                  className="bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold px-6 py-3.5 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-2 font-mono shadow-md shadow-red-600/15"
+                  className="bg-green-500 hover:bg-green-600 disabled:bg-zinc-800 disabled:text-zinc-600 text-black hover:text-black font-bold px-8 py-3.5 rounded-2xl text-xs uppercase tracking-widest transition-all shadow-md active:scale-95 shrink-0 cursor-pointer"
                 >
-                  Verify
+                  Verify Code
                 </button>
               </div>
+              <p className="text-[10px] text-zinc-500 font-sans leading-relaxed text-center mt-2">
+                Click inside the black input box above to type or paste the ticket code, then click verify.
+              </p>
             </div>
           </form>
         </div>
