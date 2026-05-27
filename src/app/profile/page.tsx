@@ -597,7 +597,7 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-1.5 mt-2">
                   {ClientDB.isApprovedCritic(user.email) ? (
                     <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-semibold flex items-center gap-1">
-                      <ShieldCheck className="h-3 w-3" /> Verified Critic
+                      <ShieldCheck className="h-3 w-3" /> Critic
                     </span>
                   ) : (
                     <span className="text-[10px] bg-red-600/20 text-red-400 border border-red-600/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
@@ -683,278 +683,209 @@ export default function ProfilePage() {
         {/* DASHBOARD */}
         {tab === 'dashboard' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-fade-up">
+            {/* Left Column - Col 8: User Tickets */}
+            <div className="lg:col-span-8 flex flex-col gap-8">
               
-              {/* Left Column - Col 8: User Tickets, Watchlist, Submissions */}
-              <div className="lg:col-span-8 flex flex-col gap-8">
+              {/* 🎟️ Active Tickets Wallet */}
+              <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-[40px] pointer-events-none" />
                 
-                {/* 🎟️ Active Tickets Wallet */}
-                <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/5 rounded-full blur-[40px] pointer-events-none" />
-                  
-                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shrink-0">
-                        <Ticket className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-serif font-bold text-white text-base">My Ticket Wallet</h3>
-                        <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5 font-bold">Your active event access passes</p>
-                      </div>
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 shrink-0">
+                      <Ticket className="h-5 w-5" />
                     </div>
-                    <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
-                      {purchasedTickets.length} Active Vouchers
-                    </span>
+                    <div>
+                      <h3 className="font-serif font-bold text-white text-base">My Ticket Wallet</h3>
+                      <p className="text-[10px] text-zinc-550 font-mono uppercase tracking-widest mt-0.5 font-bold">Your active event access passes</p>
+                    </div>
                   </div>
-
-                  {purchasedTickets.length === 0 ? (
-                    <div className="bg-zinc-950/60 border border-dashed border-white/5 rounded-2xl p-8 text-center flex flex-col items-center justify-center min-h-[160px] group/wallet">
-                      <Ticket className="h-8 w-8 text-zinc-750 mb-3 group-hover/wallet:text-red-500 transition-colors animate-pulse" />
-                      <p className="text-zinc-300 font-serif font-bold text-sm">No ticket vouchers booked</p>
-                      <p className="text-xs text-zinc-500 mt-1 max-w-xs leading-relaxed">
-                        Book stage plays and verified performances to see your gorgeous front-row pass stubs here!
-                      </p>
-                      <Link href="/" className="mt-4 bg-white hover:bg-zinc-200 text-black font-bold px-5 py-2.5 rounded-xl transition-all text-[10px] uppercase tracking-widest">
-                        Browse Stage Shows
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {purchasedTickets.map((t: any) => (
-                        <div key={t.id} className="relative bg-zinc-950 border border-white/5 hover:border-red-500/20 rounded-2xl overflow-hidden flex flex-col transition-all group/stub">
-                          {/* Top accent line */}
-                          <div className="h-1 bg-gradient-to-r from-red-600 to-red-400" />
-                          
-                          <div className="p-4 flex flex-col gap-3 justify-between flex-1">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <h4 className="font-serif font-bold text-white text-sm truncate leading-snug group-hover/stub:text-red-400 transition-colors">
-                                  {t.productionTitle}
-                                </h4>
-                                <p className="text-[10px] text-zinc-500 mt-0.5 truncate uppercase tracking-wider font-mono">
-                                  {t.tier} Tier Admission
-                                </p>
-                              </div>
-                              <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-400 shrink-0">
-                                <QrCode className="w-4 h-4 text-zinc-550" />
-                              </div>
-                            </div>
-
-                            <div className="border-t border-dashed border-white/10 pt-3 mt-1 flex flex-col gap-1.5 font-mono text-[10px] text-zinc-450">
-                              <div className="flex justify-between">
-                                <span className="text-zinc-600 font-bold uppercase tracking-wider">Gate Code</span>
-                                <span className="text-white font-bold tracking-wider">{t.gatePass || t.reference}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-zinc-600 font-bold uppercase tracking-wider">Show Date</span>
-                                <span className="text-zinc-200 font-semibold">{t.date || 'Soon'}</span>
-                              </div>
-                            </div>
-                            
-                            <Link 
-                              href={`/tickets/${t.id}`}
-                              className="w-full bg-zinc-900 hover:bg-zinc-850 text-white font-bold text-center py-2.5 rounded-xl text-[9px] uppercase tracking-widest border border-white/5 group-hover/stub:border-red-500/20 transition-all mt-2"
-                            >
-                              View Secure Pass Stub
-                            </Link>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
+                    {purchasedTickets.length} Active Vouchers
+                  </span>
                 </div>
 
-                {/* 📂 Watchlist / Bookmarked Collection */}
-                <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
-                  <div className="absolute bottom-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none" />
-                  
-                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                        <Bookmark className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <h3 className="font-serif font-bold text-white text-base">Watchlist & Reserved Shows</h3>
-                        <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5 font-bold">Your bookmarked event queue</p>
-                      </div>
-                    </div>
-                    <button onClick={() => setTab('list')} className="text-xs font-bold text-red-400 hover:text-white uppercase tracking-wider flex items-center gap-1">
-                      Manage List <ChevronRight className="h-3 w-3" />
-                    </button>
-                  </div>
-
-                  {watchlistProductions.length === 0 ? (
-                    <div className="bg-zinc-950/60 border border-dashed border-white/5 rounded-2xl p-8 text-center flex flex-col items-center justify-center min-h-[160px] group/watchlist">
-                      <Bookmark className="h-8 w-8 text-zinc-750 mb-3 group-hover/watchlist:text-amber-400 transition-colors animate-pulse" />
-                      <p className="text-zinc-300 font-serif font-bold text-sm">Watchlist is empty</p>
-                      <p className="text-xs text-zinc-500 mt-1 max-w-xs leading-relaxed">
-                        Add upcoming theatre shows to your watchlist to track dates, seat availability, and announcements!
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                      {watchlistProductions.slice(0, 3).map((p: any) => (
-                        <div key={p.id} className="relative bg-zinc-950 border border-white/5 hover:border-amber-500/20 rounded-2xl p-3.5 transition-all group/watchcard">
-                          <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-zinc-900 border border-white/5">
-                            {p.image ? (
-                              <img src={p.image} alt={p.title} className="w-full h-full object-cover group-hover/watchcard:scale-105 transition-transform duration-500" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-zinc-700"><Clapperboard className="w-8 h-8" /></div>
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent opacity-60" />
-                            <div className="absolute bottom-2.5 left-2.5 right-2.5">
-                              <span className="text-[8px] bg-red-600 text-white font-bold uppercase tracking-wider px-1.5 py-0.5 rounded font-mono">
-                                {p.status}
-                              </span>
-                            </div>
-                          </div>
-                          <h4 className="font-serif font-bold text-white text-xs mt-3 truncate leading-snug group-hover/watchcard:text-amber-400 transition-colors">
-                            {p.title}
-                          </h4>
-                          <p className="text-[10px] text-zinc-500 truncate mt-0.5">{p.genre} · {p.duration}</p>
-                          
-                          <Link 
-                            href={`/productions/${p.id}`}
-                            className="w-full inline-block bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white text-center py-2 rounded-xl text-[9px] uppercase tracking-widest border border-white/5 mt-3 transition-all"
-                          >
-                            Explore
-                          </Link>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-              </div>
-
-              {/* Right Column - Col 4: Achievement Hub, Setup Checklist, Subtle Producer Entry */}
-              <div className="lg:col-span-4 flex flex-col gap-6">
-                
-                {/* 🏆 Rank Progression & Achievements */}
-                <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none" />
-                  
-                  <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                        <Trophy className="h-5 w-5" />
-                      </div>
-                      <h3 className="font-serif font-bold text-white text-sm">Theatregoer Rank</h3>
-                    </div>
-                    <button onClick={() => setTab('badges')} className="text-xs font-bold text-red-400 hover:text-white uppercase tracking-wider flex items-center gap-1">
-                      Badges <ChevronRight className="h-3 w-3" />
-                    </button>
-                  </div>
-
-                  <div className="flex flex-col gap-5 text-center">
-                    <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 relative overflow-hidden">
-                      <span className="text-[9px] text-zinc-550 font-bold uppercase tracking-widest block mb-1">Milestone Level</span>
-                      <span className="text-2xl font-serif font-bold text-white block">
-                        {points >= 1000 ? 'Patron Legend' : points >= 500 ? 'Pro Critic' : 'Act I Critic'}
-                      </span>
-                      <div className="flex justify-center gap-3 mt-3.5 border-t border-white/5 pt-3.5">
-                        <div>
-                          <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold block">Score</span>
-                          <span className="text-base font-serif font-bold text-white mt-0.5 block">{points} pts</span>
-                        </div>
-                        <div className="w-px bg-white/5 self-stretch" />
-                        <div>
-                          <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold block">Badges</span>
-                          <span className="text-base font-serif font-bold text-white mt-0.5 block">{badgesUnlockedCount}/{dynamicBadges.length}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 text-left">
-                      <div className="flex items-center justify-between text-[9px] font-mono font-bold uppercase text-zinc-500 tracking-widest">
-                        <span>Tier Milestone</span>
-                        <span className="text-red-400">{progressPct}%</span>
-                      </div>
-                      <div className="flex-1 bg-zinc-950 border border-white/5 rounded-full h-2 overflow-hidden shadow-inner">
-                        <div className="bg-gradient-to-r from-red-600 to-red-500 h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 📝 Theatre Daily Checklist */}
-                <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 flex flex-col gap-5 shadow-lg relative overflow-hidden">
-                  <div>
-                    <h3 className="font-serif font-bold text-white text-sm">Platform Checklist</h3>
-                    <p className="text-[8px] text-zinc-500 uppercase tracking-widest mt-0.5 font-bold">Complete setup to earn bonus points</p>
-                  </div>
-
-                  <div className="flex flex-col gap-3 relative z-10 pt-1">
-                    {dynamicChecklist.map((item, i) => (
-                      <div key={i} className="flex items-center gap-3 group/chk">
-                        {item.done ? (
-                          <div className="w-5 h-5 rounded-lg bg-green-550/10 border border-green-500/20 flex items-center justify-center text-green-400 shrink-0">
-                            <Check className="h-3 w-3 stroke-[3]" />
-                          </div>
-                        ) : (
-                          <div className="w-5 h-5 rounded-lg bg-zinc-950 border border-white/10 flex items-center justify-center text-zinc-650 shrink-0 transition-colors">
-                            <Circle className="h-3 w-3 stroke-[2]" />
-                          </div>
-                        )}
-                        <span className={`text-xs transition-colors ${item.done ? 'text-zinc-550 line-through font-medium' : 'text-zinc-350 group-hover/chk:text-white font-medium'}`}>
-                          {item.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* ✍️ Recent Activity Log */}
-                <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 flex flex-col gap-5 shadow-lg relative overflow-hidden">
-                  <div>
-                    <h3 className="font-serif font-bold text-white text-sm">Chronicle Timeline</h3>
-                    <p className="text-[8px] text-zinc-500 uppercase tracking-widest mt-0.5 font-bold">Your latest audience contributions</p>
-                  </div>
-
-                  <div className="flex flex-col divide-y divide-white/5 max-h-[190px] overflow-y-auto pr-1 [scrollbar-width:none]">
-                    {dynamicActivities.slice(0, 2).map((act, i) => (
-                      <div key={i} className="flex items-start gap-3 py-3.5 first:pt-0 last:pb-0 group/act">
-                        <div className="w-7 h-7 rounded-lg bg-zinc-950 border border-white/5 group-hover/act:border-red-500/30 flex items-center justify-center shrink-0 mt-0.5 transition-all">
-                          <act.Icon className="h-3.5 w-3.5 text-zinc-500 group-hover/act:text-red-400 transition-colors" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-zinc-300 leading-relaxed font-medium truncate">{act.text}</p>
-                          <p className="text-[8px] text-zinc-600 font-mono mt-0.5 font-bold uppercase tracking-wider">{act.time}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 👔 Elegant Subtle Producer Access */}
-                {(userPlays.length > 0 || user.email.toLowerCase() === 'watchcurtaincall@gmail.com') ? (
-                  <div className="relative rounded-[32px] overflow-hidden border border-emerald-500/10 hover:border-emerald-500/30 bg-gradient-to-br from-zinc-900/20 to-zinc-950/60 p-5 shadow-xl backdrop-blur-md transition-all duration-300 group/hub">
-                    <div className="flex flex-col gap-4 relative z-10">
-                      <div className="flex items-start gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-450 shrink-0">
-                          <Wallet className="h-4.5 w-4.5" />
-                        </div>
-                        <div>
-                          <h3 className="font-serif font-bold text-white text-xs">Switch to Producer Hub</h3>
-                          <p className="text-[10px] text-zinc-500 mt-0.5 leading-relaxed">Scan tickets & manage event balances</p>
-                        </div>
-                      </div>
-                      <Link href="/producer" className="w-full inline-flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-black font-bold py-3 rounded-xl transition-all text-[9px] uppercase tracking-widest shadow-md">
-                        <span>Open Producer Terminal</span>
-                        <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />
-                      </Link>
-                    </div>
+                {purchasedTickets.length === 0 ? (
+                  <div className="bg-zinc-950/60 border border-dashed border-white/5 rounded-2xl p-8 text-center flex flex-col items-center justify-center min-h-[220px] group/wallet">
+                    <Ticket className="h-10 w-10 text-zinc-800 mb-3 group-hover/wallet:text-red-500 transition-colors animate-pulse" />
+                    <p className="text-zinc-300 font-serif font-bold text-base">No ticket vouchers booked</p>
+                    <p className="text-xs text-zinc-500 mt-2 max-w-sm leading-relaxed mx-auto">
+                      Explore our theatrical archives and verified Broad Street broadway shows to claim your digital ticketing gate passes!
+                    </p>
+                    <Link href="/" className="mt-5 bg-white hover:bg-zinc-200 text-black font-bold px-6 py-3 rounded-xl transition-all text-xs uppercase tracking-widest">
+                      Browse Stage Shows
+                    </Link>
                   </div>
                 ) : (
-                  <div className="bg-zinc-950 border border-white/5 rounded-2xl p-4 text-center">
-                    <span className="text-[10px] text-zinc-500 font-medium leading-relaxed block">
-                      Are you a theatremaker or producer? <Link href="/submit" className="text-red-400 hover:underline">List stage playbills</Link> to start selling admissions.
-                    </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {purchasedTickets.map((t: any) => (
+                      <div key={t.id} className="relative bg-zinc-950 border border-white/5 hover:border-red-500/20 rounded-2xl overflow-hidden flex flex-col transition-all group/stub">
+                        {/* Top accent line */}
+                        <div className="h-1.5 bg-gradient-to-r from-red-600 to-red-400" />
+                        
+                        <div className="p-5 flex flex-col gap-4 justify-between flex-1">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <h4 className="font-serif font-bold text-white text-base truncate leading-snug group-hover/stub:text-red-400 transition-colors">
+                                {t.productionTitle}
+                              </h4>
+                              <p className="text-[10px] text-zinc-500 mt-1 truncate uppercase tracking-wider font-mono">
+                                {t.tier} Tier Admission
+                              </p>
+                            </div>
+                            <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-400 shrink-0">
+                              <QrCode className="w-5 h-5 text-zinc-550 animate-pulse" />
+                            </div>
+                          </div>
+
+                          <div className="border-t border-dashed border-white/10 pt-4 mt-1 flex flex-col gap-2 font-mono text-[11px] text-zinc-450">
+                            <div className="flex justify-between">
+                              <span className="text-zinc-650 font-bold uppercase tracking-wider">Gate Code</span>
+                              <span className="text-white font-bold tracking-wider">{t.gatePass || t.reference}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-zinc-655 font-bold uppercase tracking-wider">Show Date</span>
+                              <span className="text-zinc-200 font-semibold">{t.date || 'Soon'}</span>
+                            </div>
+                          </div>
+                          
+                          <Link 
+                            href={`/tickets/${t.gatePass || t.reference || t.id}`}
+                            className="w-full bg-zinc-900 hover:bg-zinc-850 text-white font-bold text-center py-3 rounded-xl text-[10px] uppercase tracking-widest border border-white/5 group-hover/stub:border-red-500/20 transition-all mt-2 cursor-pointer shadow-md"
+                          >
+                            View Secure Pass Stub
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
-
               </div>
 
             </div>
+
+            {/* Right Column - Col 4: Hub Switcher, Rank Achievements, Setup Checklist */}
+            <div className="lg:col-span-4 flex flex-col gap-6">
+              
+              {/* 👔 ALWAYS VISIBLE Producer Hub Navigation Link - CANNOT MISS */}
+              <div className="relative rounded-[32px] overflow-hidden border-2 border-emerald-500/25 bg-gradient-to-br from-zinc-900/60 to-zinc-950/90 p-6 shadow-2xl backdrop-blur-xl transition-all duration-300 group/hub animate-pulse">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[40px] pointer-events-none" />
+                <div className="flex flex-col gap-5 relative z-10">
+                  <div className="flex items-start gap-4">
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-450 shrink-0 shadow-lg">
+                      <Wallet className="h-5.5 w-5.5" />
+                    </div>
+                    <div>
+                      <h3 className="font-serif font-bold text-white text-sm">Producer&apos;s Hub</h3>
+                      <p className="text-[10px] text-zinc-550 mt-1 leading-relaxed">Oversee ticket sales, scan admissions, and withdraw event balances.</p>
+                    </div>
+                  </div>
+                  <Link href="/producer" className="w-full inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-black font-bold py-3.5 rounded-2xl transition-all text-xs uppercase tracking-widest shadow-lg shadow-emerald-950/20 active:scale-95 cursor-pointer">
+                    <span>Open Producer Hub</span>
+                    <ArrowUpRight className="h-4 w-4 stroke-[3]" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* 🏆 Rank Progression & Achievements */}
+              <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col gap-6">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-[40px] pointer-events-none" />
+                
+                <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                      <Trophy className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-serif font-bold text-white text-sm">Theatregoer Rank</h3>
+                  </div>
+                  <button onClick={() => setTab('badges')} className="text-xs font-bold text-red-400 hover:text-white uppercase tracking-wider flex items-center gap-1">
+                    Badges <ChevronRight className="h-3 w-3" />
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-5 text-center">
+                  <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 relative overflow-hidden">
+                    <span className="text-[9px] text-zinc-550 font-bold uppercase tracking-widest block mb-1">Milestone Level</span>
+                    <span className="text-2xl font-serif font-bold text-white block">
+                      {points >= 1000 ? 'Patron Legend' : points >= 500 ? 'Pro Critic' : 'Act I Critic'}
+                    </span>
+                    <div className="flex justify-center gap-3 mt-3.5 border-t border-white/5 pt-3.5">
+                      <div>
+                        <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold block">Score</span>
+                        <span className="text-base font-serif font-bold text-white mt-0.5 block">{points} pts</span>
+                      </div>
+                      <div className="w-px bg-white/5 self-stretch" />
+                      <div>
+                        <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold block">Badges</span>
+                        <span className="text-base font-serif font-bold text-white mt-0.5 block">{badgesUnlockedCount}/{dynamicBadges.length}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 text-left">
+                    <div className="flex items-center justify-between text-[9px] font-mono font-bold uppercase text-zinc-500 tracking-widest">
+                      <span>Tier Milestone</span>
+                      <span className="text-red-400">{progressPct}%</span>
+                    </div>
+                    <div className="flex-1 bg-zinc-950 border border-white/5 rounded-full h-2 overflow-hidden shadow-inner">
+                      <div className="bg-gradient-to-r from-red-600 to-red-500 h-full rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 📝 Theatre Daily Checklist */}
+              <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 flex flex-col gap-5 shadow-lg relative overflow-hidden">
+                <div>
+                  <h3 className="font-serif font-bold text-white text-sm">Platform Checklist</h3>
+                  <p className="text-[8px] text-zinc-555 uppercase tracking-widest mt-0.5 font-bold">Complete setup to earn bonus points</p>
+                </div>
+
+                <div className="flex flex-col gap-3 relative z-10 pt-1">
+                  {dynamicChecklist.map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 group/chk">
+                      {item.done ? (
+                        <div className="w-5 h-5 rounded-lg bg-green-550/10 border border-green-500/20 flex items-center justify-center text-green-400 shrink-0">
+                          <Check className="h-3 w-3 stroke-[3]" />
+                        </div>
+                      ) : (
+                        <div className="w-5 h-5 rounded-lg bg-zinc-950 border border-white/10 flex items-center justify-center text-zinc-655 shrink-0 transition-colors">
+                          <Circle className="h-3 w-3 stroke-[2]" />
+                        </div>
+                      )}
+                      <span className={`text-xs transition-colors ${item.done ? 'text-zinc-555 line-through font-medium' : 'text-zinc-350 group-hover/chk:text-white font-medium'}`}>
+                        {item.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ✍️ Recent Activities Log */}
+              <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 flex flex-col gap-5 shadow-lg relative overflow-hidden">
+                <div>
+                  <h3 className="font-serif font-bold text-white text-sm">Recent Activities</h3>
+                  <p className="text-[8px] text-zinc-555 uppercase tracking-widest mt-0.5 font-bold">Your latest audience contributions</p>
+                </div>
+
+                <div className="flex flex-col divide-y divide-white/5 max-h-[190px] overflow-y-auto pr-1 [scrollbar-width:none]">
+                  {dynamicActivities.slice(0, 3).map((act, i) => (
+                    <div key={i} className="flex items-start gap-3 py-3.5 first:pt-0 last:pb-0 group/act">
+                      <div className="w-7 h-7 rounded-lg bg-zinc-950 border border-white/5 group-hover/act:border-red-500/30 flex items-center justify-center shrink-0 mt-0.5 transition-all">
+                        <act.Icon className="h-3.5 w-3.5 text-zinc-500 group-hover/act:text-red-400 transition-colors" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-zinc-300 leading-relaxed font-medium truncate">{act.text}</p>
+                        <p className="text-[8px] text-zinc-650 font-mono mt-0.5 font-bold uppercase tracking-wider">{act.time}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
         )}
 
 

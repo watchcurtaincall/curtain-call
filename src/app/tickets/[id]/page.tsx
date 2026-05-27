@@ -131,6 +131,37 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
 
   useEffect(() => {
     params.then(resolved => {
+      // 1. Try finding if resolved.id matches an already purchased ticket reference, gate pass, or ID
+      const tickets = ClientDB.getTickets();
+      const matchedTicket = tickets.find(t => 
+        t.id === resolved.id || 
+        t.reference?.toLowerCase() === resolved.id.toLowerCase() || 
+        t.gatePass?.toLowerCase() === resolved.id.toLowerCase()
+      );
+
+      if (matchedTicket) {
+        const prod = ClientDB.getProductionById(matchedTicket.productionId) || {
+          id: matchedTicket.productionId,
+          title: matchedTicket.productionTitle || 'Curtain Call Event',
+          venue: 'Broad Street Stage Venue',
+          showDate: matchedTicket.date || 'Scheduled Date',
+          showTime: '7:00 PM',
+          status: 'Currently Showing',
+          ticketTiers: [{ name: matchedTicket.tier, price: matchedTicket.price || 5000 }]
+        } as Production;
+
+        setProduction(prod);
+        setSuccessData({
+          reference: matchedTicket.reference,
+          tier: matchedTicket.tier,
+          quantity: 1,
+          tickets: [{ reference: matchedTicket.reference, gatePass: matchedTicket.gatePass }]
+        });
+        setLoading(false);
+        return;
+      }
+
+      // 2. Otherwise load standard production details for booking checkout
       const fetched = ClientDB.getProductionById(resolved.id);
       if (fetched) {
         if (fetched.externalTicketUrl) {
