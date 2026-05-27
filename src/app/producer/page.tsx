@@ -9,7 +9,7 @@ import { ProductionCard } from '@/components/shared/ProductionCard';
 import {
   Drama, Wallet, QrCode, ArrowLeft, ArrowUpRight, TrendingUp, Plus,
   X, CheckCircle, Circle, AlertCircle, Trash2, PenSquare, Eye,
-  ShieldCheck, FileText, Calendar, MapPin, Clock, ArrowRight, User, Settings
+  ShieldCheck, FileText, Calendar, MapPin, Clock, ArrowRight, User, Settings, Sparkles, Flame, Check, Shield
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/producer/WithdrawModal';
 import Link from 'next/link';
@@ -74,7 +74,7 @@ export default function ProducerDashboardPage() {
     
     const transactions = [
       ...userTickets.map(t => ({
-        label: `Ticket sale — ${t.productionTitle} (${t.tier}) (Net after 5% fee)`,
+        label: `Ticket sale — ${t.productionTitle} (${t.tier}) (Net 95%)`,
         amount: `+₦${(t.price * 0.95).toLocaleString()}`,
         date: t.date || 'Recently',
         positive: true,
@@ -118,15 +118,15 @@ export default function ProducerDashboardPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4 px-4 text-center">
-        <div className="w-16 h-16 rounded-3xl bg-zinc-900 border border-white/10 flex items-center justify-center shadow-2xl animate-pulse">
-          <Wallet className="h-7 w-7 text-red-500" />
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-5 px-4 text-center">
+        <div className="w-20 h-20 rounded-[24px] bg-zinc-900 border border-white/10 flex items-center justify-center shadow-2xl animate-pulse">
+          <Wallet className="h-9 w-9 text-red-500" />
         </div>
-        <h1 className="text-2xl font-serif font-bold text-white">Producer Dashboard Access Restricted</h1>
-        <p className="text-zinc-500 text-sm max-w-sm leading-relaxed">
+        <h1 className="text-3xl font-serif font-bold text-white tracking-tight">Producer Dashboard Access Restricted</h1>
+        <p className="text-zinc-400 text-sm max-w-sm leading-relaxed">
           Please sign in to access listed productions, admissions scanners, and audience wallet metrics.
         </p>
-        <Link href="/login" className="bg-white text-black font-bold px-6 py-3 rounded-xl hover:bg-zinc-100 transition-all shadow-lg text-xs uppercase tracking-wider">
+        <Link href="/login" className="bg-white text-black font-bold px-8 py-3.5 rounded-xl hover:bg-zinc-200 transition-all shadow-lg text-xs uppercase tracking-widest">
           Sign In as Producer
         </Link>
       </div>
@@ -138,115 +138,133 @@ export default function ProducerDashboardPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20 relative overflow-hidden">
-      {/* Background glow */}
-      <div className="fixed top-0 left-0 right-0 h-[400px] bg-gradient-to-b from-red-950/10 via-red-900/5 to-transparent pointer-events-none z-0 blur-[120px]" />
+      {/* Immersive cinematic background glows */}
+      <div className="fixed top-0 left-0 right-0 h-[450px] bg-gradient-to-b from-red-950/15 via-red-900/5 to-transparent pointer-events-none z-0 blur-[130px]" />
+      <div className="fixed bottom-0 right-0 w-[450px] h-[450px] bg-emerald-950/5 rounded-full blur-[140px] pointer-events-none z-0 mix-blend-screen" />
       
       {showWithdraw && <WithdrawModal availableBalance={walletMetrics.available} onClose={() => { setShowWithdraw(false); setSyncCount(c => c+1); }} />}
 
-      <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl pt-8">
+      <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl pt-8 flex flex-col gap-12">
         
-        {/* Breadcrumb Navigation Toggle */}
-        <div className="flex items-center mb-8">
-          <Link href="/profile" className="inline-flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-zinc-400 hover:text-white transition-colors bg-zinc-900/40 border border-white/5 px-3 py-1.5 rounded-lg backdrop-blur-md shrink-0">
-            <ArrowLeft className="h-3.5 w-3.5" />
+        {/* Navigation Breadcrumb & Premium Menu Trigger */}
+        <div className="flex items-center justify-between">
+          <Link href="/profile" className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-all bg-zinc-900/50 backdrop-blur-md border border-white/10 hover:border-white/20 px-4 py-2 rounded-xl">
+            <ArrowLeft className="h-4 w-4 text-red-500" />
             <span>Go to dashboard</span>
           </Link>
+
+          <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1 rounded-full font-bold uppercase tracking-widest font-mono">
+            Producer Hub
+          </span>
         </div>
 
-        {/* Hero Section */}
-        <div className="relative rounded-3xl overflow-hidden border border-white/5 bg-gradient-to-r from-zinc-900/40 via-zinc-950/80 to-zinc-950/90 p-6 sm:p-8 lg:p-10 mb-10 shadow-2xl backdrop-blur-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-lg font-serif font-bold text-white shrink-0 shadow-xl border border-red-500/20">
-                {user.avatar}
+        {/* Breathtaking Welcome Glass Card */}
+        <div className="relative rounded-[32px] overflow-hidden border border-white/10 bg-gradient-to-r from-zinc-900/40 via-zinc-950/80 to-zinc-950/90 p-6 sm:p-8 lg:p-10 shadow-[0_24px_50px_rgba(0,0,0,0.65)] backdrop-blur-xl">
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 pointer-events-none" />
+          
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
+            <div className="flex items-center gap-5">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-2xl font-serif font-bold text-white shrink-0 shadow-xl border border-red-500/20 relative group overflow-hidden">
+                <span className="relative z-10">{user.avatar}</span>
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <div>
-                <h1 className="text-xl sm:text-2xl font-serif font-bold text-white">Welcome, {user.name.split(' ')[0]}</h1>
-                <p className="text-xs text-zinc-400 mt-1">Manage your shows, sales, and wallets</p>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight">Welcome back, {user.name}</h1>
+                  <Sparkles className="h-5 w-5 text-amber-500 fill-amber-550/10" />
+                </div>
+                <p className="text-zinc-400 text-sm mt-1">Direct and manage listed productions, admissions scanners, and audience wallets</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Link href="/create" className="flex items-center gap-1.5 bg-white text-black hover:bg-zinc-200 font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider shadow-lg active:scale-98">
-                <Plus className="h-4 w-4 stroke-[2.5]" /> Create Show
+            <div className="flex items-center gap-3">
+              <Link href="/create" className="flex items-center gap-2 bg-white text-black hover:bg-zinc-200 font-bold px-5 py-3 rounded-2xl transition-all text-xs uppercase tracking-widest shadow-lg active:scale-95">
+                <Plus className="h-4 w-4 stroke-[3]" /> Add New Show
               </Link>
             </div>
           </div>
         </div>
 
         {/* ── SECTION 1: WALLET & REVENUE ── */}
-        <div className="mb-12">
-          <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-5 flex items-center gap-2">
-            <span className="w-1.5 h-3.5 bg-emerald-500 rounded-full" />
-            Wallet & Revenue
+        <div className="flex flex-col gap-6">
+          <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2.5">
+            <span className="w-2 h-4 bg-emerald-500 rounded-full" />
+            Wallet & Earnings Terminal
           </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             
-            {/* Wallet Panel card */}
-            <div className="lg:col-span-1 bg-zinc-900 border border-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden self-start">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-green-500/5 rounded-full blur-[60px] pointer-events-none" />
+            {/* Wallet Panel card (Col 5) */}
+            <div className="lg:col-span-5 bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 md:p-8 shadow-2xl relative overflow-hidden self-start flex flex-col gap-6">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full blur-[60px] pointer-events-none" />
               
-              <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
-                <div className="flex items-center gap-2">
-                  <Wallet className="h-5 w-5 text-emerald-400" />
-                  <h3 className="font-serif font-bold text-white text-base">Wallet Available</h3>
+              <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                    <Wallet className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-serif font-bold text-white text-base">Payout Balance</h3>
                 </div>
-                <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/25 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                  Verified
+                <span className="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-3 py-1 rounded-full font-bold uppercase tracking-widest font-mono">
+                  Verified Wallet
                 </span>
               </div>
 
-              <div className="mb-6">
-                <p className="text-xs text-zinc-500 mb-1">Available Payout Balance</p>
-                <p className="text-4xl font-serif font-bold text-white">
-                  ₦{walletMetrics.available.toLocaleString()}.<span className="text-2xl text-zinc-500">00</span>
+              <div>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-1.5">Available for instant withdrawal</p>
+                <p className="text-4xl md:text-5xl font-serif font-bold text-white tracking-tight leading-none">
+                  ₦{walletMetrics.available.toLocaleString()}<span className="text-lg text-zinc-500 font-normal">.00</span>
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="bg-zinc-950/60 border border-white/5 rounded-xl p-3">
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
-                    <p className="text-[10px] text-zinc-500 font-medium">Total Revenue</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4">
+                  <div className="flex items-center gap-1.5 mb-1 text-zinc-500">
+                    <TrendingUp className="h-4 w-4 text-emerald-400" />
+                    <p className="text-[9px] font-bold uppercase tracking-wider">Gross Sales</p>
                   </div>
-                  <p className="text-base font-bold font-serif text-white">₦{walletMetrics.totalEarned.toLocaleString()}</p>
+                  <p className="text-lg font-bold font-serif text-white">₦{walletMetrics.totalEarned.toLocaleString()}</p>
                 </div>
-                <div className="bg-zinc-950/60 border border-white/5 rounded-xl p-3">
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <ArrowUpRight className="h-3.5 w-3.5 text-blue-400" />
-                    <p className="text-[10px] text-zinc-500 font-medium">Withdrawn</p>
+                <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4">
+                  <div className="flex items-center gap-1.5 mb-1 text-zinc-500">
+                    <ArrowUpRight className="h-4 w-4 text-blue-400" />
+                    <p className="text-[9px] font-bold uppercase tracking-wider">Paid Out</p>
                   </div>
-                  <p className="text-base font-bold font-serif text-white">₦{walletMetrics.withdrawn.toLocaleString()}</p>
+                  <p className="text-lg font-bold font-serif text-white">₦{walletMetrics.withdrawn.toLocaleString()}</p>
                 </div>
               </div>
 
               <button
                 onClick={() => setShowWithdraw(true)}
                 disabled={walletMetrics.available <= 0}
-                className="w-full bg-white hover:bg-zinc-100 disabled:bg-zinc-800 disabled:text-zinc-500 text-black font-bold py-3.5 rounded-xl transition-all text-xs uppercase tracking-wider active:scale-[0.98]"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:border-transparent text-white font-bold py-4 rounded-2xl transition-all text-xs uppercase tracking-widest active:scale-95 shadow-lg shadow-emerald-950/20 border border-emerald-400/20 cursor-pointer"
               >
-                Withdraw to Bank Account
+                Withdraw payout to bank
               </button>
             </div>
 
-            {/* Transaction Logs */}
-            <div className="lg:col-span-2 bg-zinc-900 border border-white/5 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-              <div className="absolute bottom-0 right-0 w-64 h-64 bg-red-650/5 rounded-full blur-[80px] pointer-events-none" />
-              <h3 className="font-serif font-bold text-lg text-white mb-4">Admissions Payout & Transactions Feed</h3>
+            {/* Transaction Logs (Col 7) */}
+            <div className="lg:col-span-7 bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 md:p-8 shadow-2xl relative overflow-hidden self-stretch flex flex-col gap-5">
+              <div className="absolute bottom-0 right-0 w-64 h-64 bg-red-950/5 rounded-full blur-[80px] pointer-events-none" />
               
-              <div className="flex flex-col divide-y divide-white/5 max-h-[260px] overflow-y-auto pr-2 [scrollbar-width:none]">
+              <div>
+                <h3 className="font-serif font-bold text-lg text-white">Payout & Admissions Feed</h3>
+                <p className="text-[9px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Real-time audit log of ticket revenue deposits</p>
+              </div>
+              
+              <div className="flex-1 flex flex-col divide-y divide-white/5 max-h-[290px] overflow-y-auto pr-2 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.05)_transparent]">
                 {walletMetrics.transactions.length === 0 ? (
-                  <div className="text-center py-16 text-zinc-550 font-mono text-xs">
-                    No payment deposits or payout history logged on Curtain Call.
+                  <div className="flex-1 flex flex-col items-center justify-center text-center py-16 text-zinc-600 font-mono text-xs gap-2">
+                    <FileText className="h-6 w-6 text-zinc-800" />
+                    No payout or ticket sales records registered.
                   </div>
                 ) : (
                   walletMetrics.transactions.map((tx, idx) => (
-                    <div key={idx} className="flex items-center justify-between py-4 first:pt-0 last:pb-0 gap-4">
+                    <div key={idx} className="flex items-center justify-between py-4 first:pt-0 last:pb-0 gap-4 group/tx">
                       <div>
-                        <p className="text-sm font-sans font-medium text-white leading-snug">{tx.label}</p>
-                        <p className="text-xs text-zinc-550 font-mono mt-1 font-semibold">{tx.date}</p>
+                        <p className="text-sm font-sans font-medium text-white group-hover/tx:text-emerald-400 transition-colors leading-snug">{tx.label}</p>
+                        <p className="text-[10px] text-zinc-500 font-mono mt-1 font-bold uppercase tracking-wider">{tx.date}</p>
                       </div>
-                      <span className={`text-sm font-bold shrink-0 font-serif ${tx.positive ? 'text-emerald-450' : 'text-zinc-400'}`}>
+                      <span className={`text-sm font-bold shrink-0 font-serif ${tx.positive ? 'text-emerald-400' : 'text-zinc-400'}`}>
                         {tx.amount}
                       </span>
                     </div>
@@ -258,43 +276,45 @@ export default function ProducerDashboardPage() {
           </div>
         </div>
 
-        {/* ── SECTION 2: DOSSIER & SHOWS CATALOG ── */}
-        <div className="flex flex-col gap-8 mb-12 border-t border-white/5 pt-10">
+        {/* ── SECTION 2: SHOWS DOSSIER CATALOG ── */}
+        <div className="flex flex-col gap-10 border-t border-white/5 pt-10">
           
           {/* Active Plays */}
-          <div>
-            <h3 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-3.5 bg-red-600 rounded-full" />
+          <div className="flex flex-col gap-6">
+            <h3 className="text-xs font-bold text-red-500 uppercase tracking-widest flex items-center gap-2.5">
+              <span className="w-2 h-4 bg-red-600 rounded-full" />
               Active Productions
             </h3>
             {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).length === 0 ? (
-              <div className="bg-zinc-900/40 border border-white/5 rounded-2xl p-12 text-center text-zinc-500 text-sm max-w-lg mx-auto">
-                <Drama className="h-8 w-8 text-zinc-700 mx-auto mb-3" />
-                <p className="font-semibold text-zinc-400">No active plays listed</p>
-                <p className="text-xs text-zinc-600 mt-1 max-w-xs mx-auto">Create a show listing and activate custom ticket tiers to start selling admissions.</p>
-                <Link href="/create" className="inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-white font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider mt-5">
-                  <Plus className="h-3.5 w-3.5" /> Add First Playbill
+              <div className="bg-zinc-900/20 border border-white/5 rounded-[32px] p-16 text-center text-zinc-500 text-sm max-w-xl mx-auto backdrop-blur-md flex flex-col gap-4 items-center">
+                <Drama className="h-10 w-10 text-zinc-800 animate-pulse" />
+                <div>
+                  <p className="font-bold text-zinc-300">No active plays listed</p>
+                  <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">Create a show listing and activate custom ticket tiers to start selling admissions.</p>
+                </div>
+                <Link href="/create" className="inline-flex items-center gap-2 bg-white text-black font-bold px-6 py-3 rounded-2xl transition-all text-xs uppercase tracking-widest mt-2 hover:bg-zinc-200">
+                  <Plus className="h-4 w-4 stroke-[3]" /> Add Show Listing
                 </Link>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
                 {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).map(p => (
-                  <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl relative group/card">
+                  <div key={p.id} className="flex flex-col gap-3 bg-zinc-900/30 border border-white/5 p-3 rounded-[24px] relative hover:border-red-500/20 hover:shadow-2xl transition-all group/card">
                     <div className="flex-1">
                       <ProductionCard production={p} />
                     </div>
-                    <div className="flex gap-2 mt-1 shrink-0">
+                    <div className="flex gap-2 mt-1 shrink-0 z-10 relative">
                       <Link
                         href={`/create?edit=${p.id}`}
-                        className="flex-1 bg-zinc-900/80 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/5 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase text-center flex items-center justify-center gap-1"
+                        className="flex-1 bg-zinc-950 border border-white/10 hover:bg-zinc-900 hover:border-red-500/30 text-zinc-300 hover:text-white font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase text-center flex items-center justify-center gap-1 cursor-pointer"
                       >
-                        <PenSquare className="h-3 w-3 text-red-400" /> Edit
+                        <PenSquare className="h-3 w-3 text-red-500" /> Edit
                       </Link>
                       <button
                         onClick={() => handleEndShow(p.id)}
-                        className="flex-1 bg-zinc-900/80 hover:bg-red-950/20 text-zinc-400 hover:text-red-455 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase flex items-center justify-center gap-1"
+                        className="flex-1 bg-zinc-950 border border-white/10 hover:bg-red-950/20 hover:border-red-500/30 text-zinc-400 hover:text-red-400 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
                       >
-                        End Show
+                        End
                       </button>
                     </div>
                   </div>
@@ -304,32 +324,32 @@ export default function ProducerDashboardPage() {
           </div>
 
           {/* Drafts */}
-          <div className="mt-6 pt-6 border-t border-white/5">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-3.5 bg-zinc-700 rounded-full" />
-              Drafts & Unfinished Playbills
+          <div className="pt-8 border-t border-white/5">
+            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2.5">
+              <span className="w-2 h-4 bg-zinc-700 rounded-full" />
+              Unpublished Drafts
             </h3>
             {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && p.status === 'Draft').length === 0 ? (
-              <div className="bg-zinc-900/20 border border-white/5 rounded-2xl p-6 text-center text-zinc-650 text-xs max-w-sm mx-auto">
-                No playbill drafts saved.
+              <div className="bg-zinc-900/10 border border-white/5 rounded-2xl p-8 text-center text-zinc-600 text-xs max-w-sm mx-auto font-mono">
+                No saved drafts in your archive.
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
                 {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && p.status === 'Draft').map(p => (
-                  <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl relative group/card">
+                  <div key={p.id} className="flex flex-col gap-3 bg-zinc-900/30 border border-white/5 p-3 rounded-[24px] relative hover:border-white/20 transition-all group/card">
                     <div className="flex-1">
                       <ProductionCard production={p} />
                     </div>
-                    <div className="flex gap-2 mt-1 shrink-0">
+                    <div className="flex gap-2 mt-1 shrink-0 z-10 relative">
                       <Link
                         href={`/create?edit=${p.id}`}
-                        className="flex-1 bg-zinc-900/80 hover:bg-white/10 text-zinc-350 hover:text-white border border-white/5 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase text-center flex items-center justify-center gap-1"
+                        className="flex-1 bg-zinc-950 border border-white/10 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase text-center flex items-center justify-center gap-1 cursor-pointer"
                       >
-                        <PenSquare className="h-3 w-3 text-red-400" /> Resume
+                        <PenSquare className="h-3 w-3 text-red-500" /> Resume
                       </Link>
                       <button
                         onClick={() => handleDeleteDraft(p.id)}
-                        className="flex-1 bg-zinc-900/80 hover:bg-red-950/20 text-red-400 hover:text-red-450 border border-white/5 hover:border-red-500/35 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase flex items-center justify-center gap-1"
+                        className="flex-1 bg-zinc-950 border border-white/10 hover:bg-red-950/20 hover:border-red-500/30 text-red-400 hover:text-red-300 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
                       >
                         Delete
                       </button>
@@ -341,27 +361,27 @@ export default function ProducerDashboardPage() {
           </div>
 
           {/* Concluded */}
-          <div className="mt-6 pt-6 border-t border-white/5">
-            <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-3.5 bg-zinc-800 rounded-full" />
-              Past & Concluded Productions
+          <div className="pt-8 border-t border-white/5">
+            <h3 className="text-xs font-bold text-zinc-550 uppercase tracking-widest mb-6 flex items-center gap-2.5">
+              <span className="w-2 h-4 bg-zinc-800 rounded-full" />
+              Concluded Shows & Archive
             </h3>
             {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Past Production' || p.status === 'Recently Concluded')).length === 0 ? (
-              <div className="bg-zinc-900/10 border border-white/5 rounded-2xl p-6 text-center text-zinc-655 text-xs max-w-sm mx-auto">
+              <div className="bg-zinc-900/10 border border-white/5 rounded-2xl p-8 text-center text-zinc-650 text-xs max-w-sm mx-auto font-mono">
                 No past productions registered.
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
                 {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Past Production' || p.status === 'Recently Concluded')).map(p => (
-                  <div key={p.id} className="flex flex-col gap-2 bg-zinc-900/20 border border-white/5 p-3 rounded-2xl">
+                  <div key={p.id} className="flex flex-col gap-3 bg-zinc-900/30 border border-white/5 p-3 rounded-[24px]">
                     <div className="flex-1">
                       <ProductionCard production={p} />
                     </div>
                     <Link
                       href={`/create?edit=${p.id}`}
-                      className="w-full bg-zinc-900/80 hover:bg-white/10 text-zinc-350 hover:text-white border border-white/5 font-bold py-2 rounded-xl transition-all text-[10px] tracking-wider uppercase text-center flex items-center justify-center gap-1 mt-1 shrink-0"
+                      className="w-full bg-zinc-950 border border-white/10 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase text-center flex items-center justify-center gap-1 mt-1 shrink-0 cursor-pointer"
                     >
-                      <PenSquare className="h-3.5 w-3.5 text-red-400" /> Edit Specs
+                      <PenSquare className="h-3 w-3 text-red-500" /> Edit Archive Specs
                     </Link>
                   </div>
                 ))}
@@ -373,9 +393,9 @@ export default function ProducerDashboardPage() {
 
         {/* ── SECTION 3: GATE TICKET SCANNER ── */}
         <div className="border-t border-white/5 pt-10">
-          <h3 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-6 flex items-center gap-2">
-            <span className="w-1.5 h-3.5 bg-red-650 rounded-full animate-pulse" />
-            Gate Pass Admissions Terminal
+          <h3 className="text-xs font-bold text-red-500 uppercase tracking-widest mb-6 flex items-center gap-2.5">
+            <span className="w-2 h-4 bg-red-600 rounded-full animate-pulse" />
+            Live Admissions Terminal
           </h3>
           <ProfileScannerTab userEmail={user.email} />
         </div>
@@ -450,14 +470,14 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
           result = {
             status: 'Duplicate',
             ticket: matchedTicket,
-            message: `DUPLICATE WARNING: Pass already scanned.`,
+            message: `DUPLICATE WARNING: Pass already scanned. Check-in rejected.`,
             timestamp: now
           };
         } else {
           result = {
             status: 'Approved',
             ticket: matchedTicket,
-            message: `APPROVED: Welcome! Access granted.`,
+            message: `APPROVED: Welcome to the showcase! Admissions pass validated successfully.`,
             timestamp: now
           };
         }
@@ -465,7 +485,7 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
     } else {
       result = {
         status: 'Invalid',
-        message: `INVALID TICKET: No match found for "${inputClean}".`,
+        message: `INVALID TICKET: No matching record found for Admissions Code "${inputClean}".`,
         timestamp: now
       };
     }
@@ -491,138 +511,168 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
   );
 
   return (
-    <div className="flex flex-col gap-8 animate-fade-up max-w-7xl">
+    <div className="flex flex-col gap-8 animate-fade-up max-w-7xl relative z-10">
+      
+      {/* Immersive Admissions Scanner Styles */}
       <style>{`
         @keyframes scanline {
-          0% { top: 0%; opacity: 0.3; }
-          50% { top: 100%; opacity: 1; }
-          100% { top: 0%; opacity: 0.3; }
+          0% { top: 0%; opacity: 0.1; }
+          50% { top: 100%; opacity: 0.9; }
+          100% { top: 0%; opacity: 0.1; }
         }
         .scanline-effect {
           position: absolute;
           left: 0;
           right: 0;
-          height: 3px;
-          background: #ef4444;
-          box-shadow: 0 0 15px #ef4444, 0 0 5px #ef4444;
-          animation: scanline 3.5s ease-in-out infinite;
+          height: 2px;
+          background: #e50914;
+          box-shadow: 0 0 10px #e50914, 0 0 4px #e50914;
+          animation: scanline 4s ease-in-out infinite;
           pointer-events: none;
+        }
+        @keyframes radar-pulse {
+          0% { transform: scale(0.95); opacity: 0.1; }
+          50% { opacity: 0.25; }
+          100% { transform: scale(1.05); opacity: 0.1; }
+        }
+        .radar-pulse-effect {
+          animation: radar-pulse 3s infinite ease-in-out;
         }
       `}</style>
 
-      {/* Quick Stats Panel */}
+      {/* Quick Verified Admissions Statistics Panel */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+        <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between min-h-[100px]">
           <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full blur-[40px] pointer-events-none" />
-          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Checked In</span>
-          <span className="text-2xl md:text-3xl font-serif font-bold text-green-400 block mt-1">
+          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest font-bold block">Admitted Guests</span>
+          <span className="text-3xl font-serif font-bold text-green-400 block mt-2">
             {scopedHistory.filter(h => h.status === 'Approved').length}
           </span>
-          <span className="text-[9px] font-mono text-zinc-650 block mt-1">Admitted guest count</span>
+          <span className="text-[9px] font-mono text-zinc-600 block mt-1 font-semibold">Total verified admissions</span>
         </div>
 
-        <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden">
+        <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/5 rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between min-h-[100px]">
           <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/5 rounded-full blur-[40px] pointer-events-none" />
-          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider block">Tickets Sold</span>
-          <span className="text-2xl md:text-3xl font-serif font-bold text-red-400 block mt-1">
+          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest font-bold block">Tickets Issued</span>
+          <span className="text-3xl font-serif font-bold text-red-500 block mt-2">
             {ClientDB.getTickets().filter(t => userPlayIds.includes(t.productionId) || userEmail.toLowerCase() === 'watchcurtaincall@gmail.com').length}
           </span>
-          <span className="text-[9px] font-mono text-zinc-655 block mt-1">Total platform tickets sold</span>
+          <span className="text-[9px] font-mono text-zinc-600 block mt-1 font-semibold">Platform tickets sold</span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Verification Scanner Form */}
-        <div className="lg:col-span-5 bg-zinc-900 border border-white/5 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-48 h-48 bg-red-650/5 rounded-full blur-[60px] pointer-events-none" />
+        {/* Verification Scanner Terminal Form (Col 5) */}
+        <div className="lg:col-span-5 bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 md:p-8 shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-red-950/5 rounded-full blur-[60px] pointer-events-none" />
           
-          <div className="border-b border-white/5 pb-4 mb-5 text-center">
+          <div className="border-b border-white/5 pb-4 mb-6 text-center">
             <h4 className="font-serif font-bold text-white text-base">Gate Pass Validator</h4>
-            <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mt-0.5">Admissions verification terminal</p>
+            <p className="text-[9px] text-zinc-500 font-mono uppercase tracking-widest mt-1 font-bold">Admissions validation scanner terminal</p>
           </div>
 
-
-
           <form onSubmit={handleValidate} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] text-zinc-500 font-mono uppercase tracking-wider block font-bold">Gate Pass/Ref ID</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. CC-123"
-                value={scanInput}
-                onChange={e => setScanInput(e.target.value)}
-                className="bg-zinc-950 border border-white/5 focus:border-red-500 rounded-xl px-4 py-3.5 text-center text-sm text-white font-mono uppercase tracking-wider focus:outline-none transition-all shadow-inner"
-              />
+            <div className="flex flex-col gap-2">
+              <label className="text-[9px] text-zinc-400 font-mono uppercase tracking-widest font-bold">Gate Pass / Reference ID</label>
+              <div className="relative w-full h-32 bg-zinc-950 border border-white/5 focus-within:border-red-500/50 rounded-2xl flex items-center justify-center overflow-hidden transition-all shadow-inner group/terminal">
+                {/* Immersive Scan Line & Radar Circle Overlay */}
+                <div className="scanline-effect" />
+                <div className="absolute w-24 h-24 rounded-full border border-red-500/5 radar-pulse-effect" />
+                
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. CC-123"
+                  value={scanInput}
+                  onChange={e => setScanInput(e.target.value)}
+                  className="bg-transparent border-none text-center text-xl text-white font-mono uppercase tracking-widest focus:outline-none transition-all placeholder:text-zinc-800 placeholder:tracking-normal w-full h-full relative z-10 px-4 font-bold"
+                />
+              </div>
             </div>
+            
             <button
               type="submit"
-              className="w-full bg-white hover:bg-zinc-100 text-black font-bold py-3.5 rounded-xl transition-all text-xs uppercase tracking-wider active:scale-98"
+              className="w-full bg-white hover:bg-zinc-200 text-black font-bold py-4 rounded-xl transition-all text-xs uppercase tracking-widest active:scale-95 shadow-md shadow-white/5 cursor-pointer"
             >
               Verify Admissions
             </button>
           </form>
 
-          {/* Result Alert overlay */}
+          {/* Result Alert overlay: highly elegant, floating inside validator */}
           {scanResult && (
-            <div className={`mt-5 p-4 rounded-2xl border flex items-start gap-3 animate-scale-up ${
+            <div className={`mt-6 p-5 rounded-2xl border flex items-start gap-3.5 animate-fade-up ${
               scanResult.status === 'Approved' ? 'bg-green-500/10 border-green-500/20 text-green-300' :
               scanResult.status === 'Duplicate' ? 'bg-amber-500/10 border-amber-500/20 text-amber-300' :
               'bg-red-500/10 border-red-500/20 text-red-300'
             }`}>
-              {scanResult.status === 'Approved' ? <CheckCircle className="h-5 w-5 shrink-0 mt-0.5 text-green-400" /> : <AlertCircle className="h-5 w-5 shrink-0 mt-0.5 text-red-400" />}
+              {scanResult.status === 'Approved' ? (
+                <div className="w-8 h-8 rounded-lg bg-green-550/15 border border-green-500/35 flex items-center justify-center shrink-0">
+                  <Check className="h-4 w-4 text-green-400 stroke-[3]" />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-lg bg-red-550/15 border border-red-500/35 flex items-center justify-center shrink-0">
+                  <X className="h-4 w-4 text-red-400 stroke-[3]" />
+                </div>
+              )}
+              
               <div className="flex-1 min-w-0 text-xs">
-                <p className="font-bold uppercase tracking-wider">{scanResult.status} Check-In</p>
-                <p className="mt-1 leading-relaxed">{scanResult.message}</p>
+                <p className="font-bold uppercase tracking-widest text-[10px]">{scanResult.status} Admissions check</p>
+                <p className="mt-1 leading-relaxed text-zinc-300">{scanResult.message}</p>
                 
                 {scanResult.ticket && (
-                  <div className="mt-2.5 bg-zinc-950/60 border border-white/5 rounded-xl p-3 font-mono text-[10px] text-zinc-400 flex flex-col gap-1">
-                    <div className="flex justify-between"><span className="text-zinc-650">Guest:</span> <span className="font-sans font-semibold text-white truncate max-w-[150px]">{scanResult.ticket.buyerEmail}</span></div>
-                    <div className="flex justify-between"><span className="text-zinc-650">Show:</span> <span className="text-zinc-300 truncate max-w-[150px]">{scanResult.ticket.productionTitle}</span></div>
-                    <div className="flex justify-between"><span className="text-zinc-650">Tier:</span> <span className="text-red-400 font-bold uppercase">{scanResult.ticket.tier}</span></div>
-                    <div className="flex justify-between"><span className="text-zinc-650">Price:</span> <span className="text-white font-bold">₦{scanResult.ticket.price.toLocaleString()}</span></div>
+                  <div className="mt-4 bg-zinc-950/70 border border-white/5 rounded-xl p-3.5 font-mono text-[10px] text-zinc-400 flex flex-col gap-1.5 shadow-inner">
+                    <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-zinc-600 uppercase tracking-widest font-bold">Guest Email</span> <span className="font-sans font-bold text-white truncate max-w-[170px]">{scanResult.ticket.buyerEmail}</span></div>
+                    <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-zinc-600 uppercase tracking-widest font-bold">Production</span> <span className="text-zinc-200 font-bold truncate max-w-[170px]">{scanResult.ticket.productionTitle}</span></div>
+                    <div className="flex justify-between border-b border-white/5 pb-1"><span className="text-zinc-600 uppercase tracking-widest font-bold">Admissions Category</span> <span className="text-red-400 font-bold uppercase">{scanResult.ticket.tier}</span></div>
+                    <div className="flex justify-between"><span className="text-zinc-600 uppercase tracking-widest font-bold">Reference Code</span> <span className="text-white font-bold">{scanResult.ticket.gatePass || scanResult.ticket.reference}</span></div>
                   </div>
                 )}
               </div>
-              <button onClick={() => setScanResult(null)} className="text-zinc-500 hover:text-white transition-colors shrink-0">
+              
+              <button onClick={() => setScanResult(null)} className="text-zinc-500 hover:text-white transition-colors shrink-0 cursor-pointer">
                 <X className="h-4 w-4" />
               </button>
             </div>
           )}
         </div>
 
-        {/* Live Scans History */}
-        <div className="lg:col-span-7 bg-zinc-900 border border-white/5 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden self-stretch">
-          <div className="absolute bottom-0 right-0 w-64 h-64 bg-orange-500/5 rounded-full blur-[80px] pointer-events-none" />
-          <h4 className="font-serif font-bold text-white text-base mb-4">Admissions Log Feed (Real-time)</h4>
+        {/* Live Scans History (Col 7) */}
+        <div className="lg:col-span-7 bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 md:p-8 shadow-2xl relative overflow-hidden self-stretch flex flex-col gap-5">
+          <div className="absolute bottom-0 right-0 w-64 h-64 bg-orange-950/5 rounded-full blur-[80px] pointer-events-none" />
           
-          <div className="flex flex-col divide-y divide-white/5 max-h-[500px] overflow-y-auto pr-2">
+          <div>
+            <h4 className="font-serif font-bold text-white text-base">Admissions Verification Log</h4>
+            <p className="text-[9px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Live check-in history feed of admitted theatregoers</p>
+          </div>
+          
+          <div className="flex-1 flex flex-col divide-y divide-white/5 max-h-[480px] overflow-y-auto pr-2 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.05)_transparent]">
             {scopedHistory.length === 0 ? (
-              <div className="text-center py-16 text-zinc-550 font-mono text-xs">
-                No scan history records found.
+              <div className="flex-1 flex flex-col items-center justify-center text-center py-20 text-zinc-600 font-mono text-xs gap-2">
+                <QrCode className="h-6 w-6 text-zinc-800" />
+                Waiting for gate pass admissions scan events...
               </div>
             ) : (
               scopedHistory.map((h, idx) => (
-                <div key={idx} className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0 gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
-                      h.status === 'Approved' ? 'bg-green-500/10 border-green-500/25 text-green-400' :
-                      h.status === 'Duplicate' ? 'bg-amber-500/10 border-amber-500/25 text-amber-400' :
-                      'bg-red-500/10 border-red-500/25 text-red-450'
+                <div key={idx} className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0 gap-4 group/h">
+                  <div className="flex items-center gap-3.5">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+                      h.status === 'Approved' ? 'bg-green-550/15 border-green-500/25 text-green-400' :
+                      h.status === 'Duplicate' ? 'bg-amber-550/15 border-amber-500/25 text-amber-400' :
+                      'bg-red-550/15 border-red-500/25 text-red-400'
                     }`}>
                       {h.status === 'Approved' ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
                     </div>
                     <div>
-                      <p className="text-xs text-white leading-tight font-semibold">
-                        {h.ticket ? `${h.ticket.productionTitle} (${h.ticket.tier})` : `Invalid Entry Match`}
+                      <p className="text-xs text-white leading-tight font-bold group-hover/h:text-red-400 transition-colors">
+                        {h.ticket ? `${h.ticket.productionTitle} · ${h.ticket.tier}` : `Invalid Pass Code`}
                       </p>
-                      <p className="text-[10px] text-zinc-550 font-mono mt-0.5">
-                        Code: {h.input} · Submitter: {h.ticket?.buyerEmail || 'Guest'}
+                      <p className="text-[10px] text-zinc-500 font-mono mt-1 font-bold">
+                        CODE: {h.input} · SUBMITTER: {h.ticket?.buyerEmail || 'Guest'}
                       </p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-mono text-zinc-550 shrink-0 font-medium">
+                  <span className="text-[10px] font-mono text-zinc-500 shrink-0 font-bold bg-zinc-950 border border-white/5 px-2.5 py-1 rounded-lg">
                     {new Date(h.checkedInAt).toLocaleTimeString()}
                   </span>
                 </div>

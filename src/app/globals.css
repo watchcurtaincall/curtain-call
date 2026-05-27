@@ -11,7 +11,7 @@
 
   /* Premium Theatre Typography Variables */
   --font-sans: var(--font-outfit), system-ui, -apple-system, sans-serif;
-  --font-serif: var(--font-playfair), Georgia, serif; /* Use beautiful Playfair Display! */
+  --font-serif: var(--font-outfit), system-ui, -apple-system, sans-serif; /* Both headings and body use Outfit! */
 
   /* Custom Premium Theatre Color Palette Overrides */
   /* Immersive velvet shadowing for all zinc elements */
