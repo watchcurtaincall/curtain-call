@@ -47,7 +47,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         if (prodData.synopsis) description = prodData.synopsis.slice(0, 160) + (prodData.synopsis.length > 160 ? '...' : '');
         if (prodData.poster_url) {
           imageUrl = prodData.poster_url;
-          if (imageUrl.startsWith('/')) {
+          if (imageUrl.startsWith('/storage/')) {
+            imageUrl = `https://jzbsegkzxozytguytijb.supabase.co${imageUrl}`;
+          } else if (imageUrl.startsWith('/')) {
             imageUrl = `https://curtaincall.com.ng${imageUrl}`;
           }
         }
@@ -61,7 +63,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         if (play.synopsis) description = play.synopsis.slice(0, 160) + (play.synopsis.length > 160 ? '...' : '');
         if (play.posterUrl) {
           imageUrl = play.posterUrl;
-          if (imageUrl.startsWith('/')) {
+          if (imageUrl.startsWith('/storage/')) {
+            imageUrl = `https://jzbsegkzxozytguytijb.supabase.co${imageUrl}`;
+          } else if (imageUrl.startsWith('/')) {
             imageUrl = `https://curtaincall.com.ng${imageUrl}`;
           }
         }
