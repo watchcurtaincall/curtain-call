@@ -103,12 +103,10 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
       {/* ── CINEMATIC BACKDROP ── */}
       <div className="relative w-full h-[50vh] md:h-[65vh] min-h-[320px] overflow-hidden bg-zinc-950">
         {production.posterUrl && (
-          <Image
+          <img
             src={production.posterUrl}
             alt={production.title}
-            fill
-            priority
-            className="object-cover opacity-30 blur-[2px] scale-110"
+            className="absolute inset-0 w-full h-full object-cover opacity-30 blur-[2px] scale-110"
           />
         )}
         {/* Gradient fades into page bg */}
@@ -131,9 +129,9 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
       <div className="container mx-auto px-4 -mt-24 relative z-10">
         <div className="flex gap-6 items-end">
 
-          {/* Poster thumbnail with Lightbox — desktop only */}
+          {/* Poster thumbnail with Lightbox */}
           {production.posterUrl && (
-            <div className="relative w-40 lg:w-52 aspect-[2/3] shrink-0 rounded-2xl hidden md:block">
+            <div className="relative w-28 sm:w-40 lg:w-52 aspect-[2/3] shrink-0 rounded-2xl block">
               <ImageLightbox
                 src={production.posterUrl}
                 alt={production.title}

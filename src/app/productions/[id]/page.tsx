@@ -20,20 +20,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   try {
     if (supabase) {
+      // Query by ID first, then fallback to matching by slug
+      let prodData = null;
+      
+      // If id looks like a standard production ID (e.g. play1, prod_1), query ID
       const { data } = await supabase
         .from('productions')
         .select('title, synopsis, poster_url')
         .eq('id', id)
-        .single();
-      if (data) {
-        title = `${data.title} | Curtain Call`;
-        if (data.synopsis) description = data.synopsis.slice(0, 160) + (data.synopsis.length > 160 ? '...' : '');
-        if (data.poster_url) imageUrl = data.poster_url;
+        .maybeSingle();
+      
+      prodData = data;
+      
+      // If not found by ID, attempt querying by slug
+      if (!prodData) {
+        const { data: slugData } = await supabase
+          .from('productions')
+          .select('title, synopsis, poster_url')
+          .eq('slug', id)
+          .maybeSingle();
+        prodData = slugData;
+      }
+
+      if (prodData) {
+        title = `${prodData.title} | Curtain Call`;
+        if (prodData.synopsis) description = prodData.synopsis.slice(0, 160) + (prodData.synopsis.length > 160 ? '...' : '');
+        if (prodData.poster_url) imageUrl = prodData.poster_url;
       }
     } else {
       // Fallback to static mock data if supabase config isn't loaded
       const { MOCK_PRODUCTIONS } = require('@/lib/mock');
-      const play = MOCK_PRODUCTIONS.find((p: any) => p.id === id);
+      const play = MOCK_PRODUCTIONS.find((p: any) => p.id === id || p.slug === id);
       if (play) {
         title = `${play.title} | Curtain Call`;
         if (play.synopsis) description = play.synopsis.slice(0, 160) + (play.synopsis.length > 160 ? '...' : '');
