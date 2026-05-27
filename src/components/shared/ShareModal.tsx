@@ -38,8 +38,20 @@ export function ShareModal({ isOpen, onClose, title, url }: ShareModalProps) {
 
   if (!isOpen) return null;
 
+  // Generate cache-busting URL to force crawler bots to bypass social media caching
+  const cacheBustUrl = (() => {
+    if (!url) return '';
+    try {
+      const u = new URL(url);
+      u.searchParams.set('cb', Date.now().toString().slice(-4));
+      return u.toString();
+    } catch (e) {
+      return `${url}${url.includes('?') ? '&' : '?'}cb=${Date.now().toString().slice(-4)}`;
+    }
+  })();
+
   const shareText = `Check out "${title}" on Curtain Call! Read verified ratings and make sure to write a review of your own too!`;
-  const encodedUrl = encodeURIComponent(url);
+  const encodedUrl = encodeURIComponent(cacheBustUrl);
   const encodedTitle = encodeURIComponent(shareText);
 
   const shareOptions = [
@@ -71,12 +83,12 @@ export function ShareModal({ isOpen, onClose, title, url }: ShareModalProps) {
       name: 'Email',
       icon: Mail,
       color: 'bg-zinc-800 hover:bg-zinc-700 border border-white/5 text-white',
-      link: `mailto:?subject=${encodeURIComponent(`Check out "${title}" on Curtain Call!`)}&body=${encodeURIComponent(`Hi!\n\nCheck out "${title}" on Curtain Call. Read verified community ratings and make sure to write a review of your own too!\n\nLink: ${url}`)}`
+      link: `mailto:?subject=${encodeURIComponent(`Check out "${title}" on Curtain Call!`)}&body=${encodeURIComponent(`Hi!\n\nCheck out "${title}" on Curtain Call. Read verified community ratings and make sure to write a review of your own too!\n\nLink: ${cacheBustUrl}`)}`
     }
   ];
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(url);
+    navigator.clipboard.writeText(cacheBustUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -124,7 +136,7 @@ export function ShareModal({ isOpen, onClose, title, url }: ShareModalProps) {
         {/* Copy Link input */}
         <div className="bg-zinc-950 border border-white/5 rounded-2xl p-3 flex items-center justify-between gap-3">
           <span className="text-zinc-500 text-xs truncate select-all font-mono pl-1 max-w-[200px]">
-            {url}
+            {cacheBustUrl}
           </span>
           <button
             onClick={handleCopyLink}
