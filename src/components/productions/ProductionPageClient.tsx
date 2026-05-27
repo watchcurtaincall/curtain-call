@@ -143,44 +143,56 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
 
           {/* Title + badges */}
           <div className="flex-1 pb-2">
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-widest ${
+            {/* Status & Type Badges (Clean, Compact, No Clutter) */}
+            <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
                 production.status === 'Currently Showing'
-                  ? 'bg-red-600/20 text-red-400 border border-red-600/40'
+                  ? 'bg-red-600/25 text-red-400 border border-red-500/30'
                   : production.status === 'Recently Concluded'
-                  ? 'bg-amber-600/20 text-amber-400 border border-amber-600/40'
+                  ? 'bg-amber-600/25 text-amber-400 border border-amber-500/30'
                   : 'bg-zinc-800 text-zinc-400 border border-white/10'
               }`}>
                 {production.status}
               </span>
               {production.productionType && (
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-widest ${
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
                   production.productionType === 'Student'
-                    ? 'bg-blue-600/20 text-blue-400 border border-blue-600/40 shadow-sm'
-                    : 'bg-emerald-600/20 text-emerald-400 border border-emerald-600/40 shadow-sm'
+                    ? 'bg-blue-600/25 text-blue-400 border border-blue-500/30'
+                    : 'bg-emerald-600/25 text-emerald-400 border border-emerald-500/30'
                 }`}>
-                  {production.productionType} Production
-                </span>
-              )}
-              <span className="text-zinc-400 text-xs flex items-center gap-1.5 bg-zinc-900 border border-white/5 px-2.5 py-1 rounded-full">
-                <Clock className="h-3.5 w-3.5 text-zinc-500 shrink-0" /> 
-                <span className="font-medium">{production.runtime || '120 mins'}</span>
-              </span>
-              <span className="text-zinc-400 text-xs flex items-center gap-1.5 bg-zinc-900 border border-white/5 px-2.5 py-1 rounded-full">
-                <MapPin className="h-3.5 w-3.5 text-zinc-500 shrink-0" /> 
-                <span className="font-medium">{production.venue}</span>
-              </span>
-              {production.showDate && (
-                <span className="text-red-400 text-xs flex items-center gap-1.5 bg-red-950/40 border border-red-500/20 px-2.5 py-1 rounded-full font-sans font-bold">
-                  <Calendar className="h-3.5 w-3.5 shrink-0" /> {new Date(production.showDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  {production.showTime && ` @ ${production.showTime}`}
+                  {production.productionType}
                 </span>
               )}
             </div>
 
-            <h1 className="text-3xl md:text-5xl font-serif font-bold text-white leading-tight mb-4">
+            <h1 className="text-2xl md:text-5xl font-serif font-bold text-white leading-tight mb-2">
               {production.title}
             </h1>
+
+            {/* Horizontal Sleek Metadata Bar (Venue, Runtime, Date) */}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-400 mb-4 font-medium select-none">
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5 text-zinc-550 shrink-0" />
+                <span className="truncate max-w-[150px] sm:max-w-none">{production.venue}</span>
+              </span>
+              <span className="text-zinc-700 font-bold">·</span>
+              <span className="flex items-center gap-1 shrink-0">
+                <Clock className="h-3.5 w-3.5 text-zinc-550 shrink-0" />
+                <span>{production.runtime || '120 mins'}</span>
+              </span>
+              {production.showDate && (
+                <>
+                  <span className="text-zinc-700 font-bold">·</span>
+                  <span className="flex items-center gap-1 text-red-400 font-semibold shrink-0">
+                    <Calendar className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      {new Date(production.showDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {production.showTime && ` @ ${production.showTime}`}
+                    </span>
+                  </span>
+                </>
+              )}
+            </div>
 
             {/* Score Pills */}
             <div className="flex items-center gap-4 flex-wrap">
