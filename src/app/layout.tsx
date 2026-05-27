@@ -19,6 +19,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://curtaincall.com.ng'),
   title: "Curtain Call | Digital Home for Theatre Culture in Africa",
   description: "Discover, review, and archive African theatre productions.",
 };

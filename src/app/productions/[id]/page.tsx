@@ -72,12 +72,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
+    metadataBase: new URL('https://curtaincall.com.ng'),
     title,
     description,
     openGraph: {
       title,
       description,
-      images: imageUrl ? [{ url: imageUrl, width: 800, height: 600, alt: title }] : [],
+      images: imageUrl ? [{ url: imageUrl }] : [],
       type: 'video.movie',
     },
     twitter: {
