@@ -38,8 +38,9 @@ export function ShareModal({ isOpen, onClose, title, url }: ShareModalProps) {
 
   if (!isOpen) return null;
 
+  const shareText = `Check out "${title}" on Curtain Call! Read verified ratings and make sure to write a review of your own too!`;
   const encodedUrl = encodeURIComponent(url);
-  const encodedTitle = encodeURIComponent(`Check out "${title}" on Curtain Call!`);
+  const encodedTitle = encodeURIComponent(shareText);
 
   const shareOptions = [
     {
@@ -70,7 +71,7 @@ export function ShareModal({ isOpen, onClose, title, url }: ShareModalProps) {
       name: 'Email',
       icon: Mail,
       color: 'bg-zinc-800 hover:bg-zinc-700 border border-white/5 text-white',
-      link: `mailto:?subject=${encodedTitle}&body=Hi! Check this out on Curtain Call: ${url}`
+      link: `mailto:?subject=${encodeURIComponent(`Check out "${title}" on Curtain Call!`)}&body=${encodeURIComponent(`Hi!\n\nCheck out "${title}" on Curtain Call. Read verified community ratings and make sure to write a review of your own too!\n\nLink: ${url}`)}`
     }
   ];
 
