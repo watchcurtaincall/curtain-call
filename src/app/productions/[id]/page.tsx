@@ -45,7 +45,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       if (prodData) {
         title = `${prodData.title} | Curtain Call`;
         if (prodData.synopsis) description = prodData.synopsis.slice(0, 160) + (prodData.synopsis.length > 160 ? '...' : '');
-        if (prodData.poster_url) imageUrl = prodData.poster_url;
+        if (prodData.poster_url) {
+          imageUrl = prodData.poster_url;
+          if (imageUrl.startsWith('/')) {
+            imageUrl = `https://curtaincall.com.ng${imageUrl}`;
+          }
+        }
       }
     } else {
       // Fallback to static mock data if supabase config isn't loaded
@@ -54,7 +59,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       if (play) {
         title = `${play.title} | Curtain Call`;
         if (play.synopsis) description = play.synopsis.slice(0, 160) + (play.synopsis.length > 160 ? '...' : '');
-        if (play.posterUrl) imageUrl = play.posterUrl;
+        if (play.posterUrl) {
+          imageUrl = play.posterUrl;
+          if (imageUrl.startsWith('/')) {
+            imageUrl = `https://curtaincall.com.ng${imageUrl}`;
+          }
+        }
       }
     }
   } catch (error) {

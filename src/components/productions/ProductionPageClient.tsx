@@ -101,7 +101,7 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
     <div className="flex flex-col min-h-screen bg-zinc-950">
 
       {/* ── CINEMATIC BACKDROP ── */}
-      <div className="relative w-full h-[50vh] md:h-[65vh] min-h-[320px] overflow-hidden bg-zinc-950">
+      <div className="relative w-full h-[32vh] sm:h-[40vh] md:h-[55vh] min-h-[220px] overflow-hidden bg-zinc-950">
         {production.posterUrl && (
           <img
             src={production.posterUrl}
@@ -126,7 +126,7 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
       </div>
 
       {/* ── TITLE BLOCK (sits on top of backdrop gradient) ── */}
-      <div className="container mx-auto px-4 -mt-24 relative z-10">
+      <div className="container mx-auto px-4 -mt-16 sm:-mt-24 relative z-10">
         <div className="flex gap-6 items-end">
 
           {/* Poster thumbnail with Lightbox */}
