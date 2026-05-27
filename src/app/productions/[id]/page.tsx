@@ -14,9 +14,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const id = resolvedParams.id;
   
-  let title = "Curtain Call | Stage Play Specs";
+  let title = "Curtain Call | Stage Show";
   let description = "Discover, review, and archive African theatre productions on Curtain Call.";
-  let imageUrl = "https://watchcurtaincall.com/og-default.png"; // Fallback URL
+  let imageUrl = "https://curtaincall.com.ng/og-default.png"; // Fallback URL
 
   try {
     if (supabase) {
