@@ -602,10 +602,10 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
                 <input
                   type="text"
                   required
-                  placeholder="👉 CLICK TO TYPE CODE (e.g. CC-123)"
+                  placeholder="ENTER GATE CODE - CC-134..."
                   value={scanInput}
                   onChange={e => setScanInput(e.target.value)}
-                  className="w-full bg-zinc-950/95 border-2 border-white/10 hover:border-red-500/30 focus:border-red-500 rounded-2xl px-5 py-4 text-center text-base text-white font-mono uppercase tracking-widest focus:outline-none transition-all shadow-[0_4px_12px_rgba(0,0,0,0.5)] focus:shadow-[0_0_20px_rgba(229,9,20,0.15)] placeholder:text-zinc-650 placeholder:normal-case font-bold"
+                  className="w-full bg-zinc-950/95 border-2 border-white/10 hover:border-red-500/30 focus:border-red-500 rounded-2xl px-5 py-4 text-center text-xs text-white font-mono uppercase tracking-widest focus:outline-none transition-all shadow-[0_4px_12px_rgba(0,0,0,0.5)] focus:shadow-[0_0_20px_rgba(229,9,20,0.15)] placeholder:text-zinc-600 placeholder:normal-case font-bold"
                 />
               </div>
               <p className="text-[10px] text-zinc-500 font-sans leading-relaxed text-center mt-1">

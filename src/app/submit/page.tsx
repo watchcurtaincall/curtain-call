@@ -355,35 +355,39 @@ export default function SubmitPortalPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 min-h-screen bg-zinc-950">
-      <div className="text-center max-w-xl mx-auto mb-10">
-        <h1 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4">Submit to Curtain Call</h1>
-        <p className="text-zinc-400 text-sm leading-relaxed">
+    <div className="container mx-auto px-4 py-16 min-h-screen bg-zinc-950 relative overflow-hidden">
+      {/* Sleek Spotlight Glow Dots */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-red-900/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-1/2 right-10 w-96 h-96 bg-red-950/5 rounded-full blur-[100px] pointer-events-none" />
+
+      <div className="text-center max-w-xl mx-auto mb-12 relative z-10">
+        <h1 className="text-4xl md:text-5xl font-serif font-bold text-white mb-4 tracking-tight leading-tight">Submit to Curtain Call</h1>
+        <p className="text-zinc-400 text-xs md:text-sm leading-relaxed max-w-lg mx-auto">
           Help build a verified repository for African theatre. Submit theatrical details, register theatremakers, or upload article drafts for archival cataloging.
         </p>
 
         {/* Tab Controls */}
-        <div className="flex bg-zinc-900 border border-white/5 rounded-2xl p-1 mt-8 max-w-lg mx-auto">
+        <div className="flex bg-zinc-900/60 backdrop-blur-xl border border-white/10 rounded-2xl p-1 mt-8 max-w-lg mx-auto shadow-2xl relative">
           <button
             onClick={() => setActiveTab('maker')}
-            className={`flex-1 py-3 text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'maker' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
+            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeTab === 'maker' ? 'bg-gradient-to-r from-red-600 to-red-800 text-white shadow-lg shadow-red-900/20' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             <User className="h-3.5 w-3.5 shrink-0" /> Add Profile
           </button>
           <button
             onClick={() => setActiveTab('play')}
-            className={`flex-1 py-3 text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'play' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
+            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeTab === 'play' ? 'bg-gradient-to-r from-red-600 to-red-800 text-white shadow-lg shadow-red-900/20' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             <Drama className="h-3.5 w-3.5 shrink-0" /> Add Play
           </button>
           <button
             onClick={() => setActiveTab('blog')}
-            className={`flex-1 py-3 text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'blog' ? 'bg-red-600 text-white shadow-lg' : 'text-zinc-400 hover:text-white'
+            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+              activeTab === 'blog' ? 'bg-gradient-to-r from-red-600 to-red-800 text-white shadow-lg shadow-red-900/20' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             <BookOpen className="h-3.5 w-3.5 shrink-0" /> Submit Article
@@ -391,8 +395,8 @@ export default function SubmitPortalPage() {
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl">
+      <div className="max-w-2xl mx-auto relative z-10">
+        <div className="bg-zinc-900/60 backdrop-blur-2xl border border-white/10 rounded-[32px] p-6 md:p-10 shadow-2xl">
           
           {/* THEATREMAKER REGISTRATION */}
           {activeTab === 'maker' && (
