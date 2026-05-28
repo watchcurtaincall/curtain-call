@@ -306,136 +306,44 @@ export function getFeatureAnnouncementHtml(name: string, appUrl: string): string
     <p style="margin: 0 0 24px; font-size: 16px; color: #d4d4d8; line-height: 1.6;">
       Hi <strong style="color: #ffffff;">${shortName}</strong>,
     </p>
-    <p style="margin: 0 0 20px; font-size: 15px; color: #a1a1aa; line-height: 1.8;">
-      We're thrilled to introduce a highly requested feature to the **Curtain Call Daily Quiz** designed to capture your proudest theatrical achievements:
+    
+    <p style="margin: 0 0 20px; font-size: 18px; font-weight: 700; color: #ffffff; line-height: 1.5; font-family: Georgia, serif; text-align: center;">
+      Quick question — how well do you know Nigerian theatre?
     </p>
-
-    <!-- Headline and core announcement banner -->
+    
+    <!-- Campaign Highlights Card -->
     <div style="
-      background: radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.06) 0%, rgba(0, 0, 0, 0) 90%);
-      border: 1px solid rgba(245, 158, 11, 0.15);
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 24px;
-      padding: 30px 24px;
+      padding: 28px 24px;
+      margin-bottom: 28px;
       text-align: center;
-      margin-bottom: 32px;
     ">
-      <span style="font-size: 40px; display: block; margin-bottom: 12px;">🏆 ➔ 🔗</span>
-      <h2 style="
-        margin: 0 0 8px;
-        font-family: Georgia, serif;
-        font-size: 22px;
-        font-weight: 700;
-        color: #ffffff;
-      ">
-        Introduce: Share Results Globally!
-      </h2>
-      <p style="margin: 0 auto; max-width: 440px; font-size: 14px; color: #d4d4d8; line-height: 1.6;">
-        You can now instantly share your quiz scores, winning slots, points, and streaks directly to WhatsApp, Twitter, and Instagram stories in one elegant click!
+      <p style="margin: 0 0 16px; font-size: 15px; color: #d4d4d8; line-height: 1.7;">
+        <strong>The Curtain Call Daily Quiz</strong> just launched. 5 questions a day. 5 seconds per question. Get them all right and earn <strong style="color: #fbbf24;">₦200 per day</strong>.
+      </p>
+      <p style="margin: 0; font-size: 15px; color: #f97316; font-weight: 700; line-height: 1.6;">
+        Only 10 people can win each day. First come, first served.
       </p>
     </div>
 
-    <!-- Features Breakdown Section -->
-    <h3 style="
-      margin: 0 0 16px;
-      font-size: 12px;
-      font-weight: 800;
-      color: #71717a;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    ">
-      What's New on Curtain Call
-    </h3>
-
-    <!-- Feature 1: Universal Sharing -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
-      <tr>
-        <td valign="top" style="padding-top: 4px; width: 44px;">
-          <div style="
-            background: rgba(245, 158, 11, 0.1);
-            border-radius: 12px;
-            width: 32px;
-            height: 32px;
-            line-height: 32px;
-            text-align: center;
-            font-size: 16px;
-          ">🔗</div>
-        </td>
-        <td style="padding-left: 12px;">
-          <h4 style="margin: 0 0 4px; font-size: 15px; font-weight: 700; color: #ffffff;">Share Any Score</h4>
-          <p style="margin: 0; font-size: 13.5px; color: #a1a1aa; line-height: 1.6;">
-            Whether you claimed Winner Slot #1, earned a perfect 5/5, or just finished a fun run, you can now show off your score to friends. No score is too small to share!
-          </p>
-        </td>
-      </tr>
-    </table>
-
-    <!-- Feature 2: Premium Visual Copy -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px;">
-      <tr>
-        <td valign="top" style="padding-top: 4px; width: 44px;">
-          <div style="
-            background: rgba(239, 68, 68, 0.1);
-            border-radius: 12px;
-            width: 32px;
-            height: 32px;
-            line-height: 32px;
-            text-align: center;
-            font-size: 16px;
-          ">🔥</div>
-        </td>
-        <td style="padding-left: 12px;">
-          <h4 style="margin: 0 0 4px; font-size: 15px; font-weight: 700; color: #ffffff;">Show off Streaks & Points</h4>
-          <p style="margin: 0; font-size: 13.5px; color: #a1a1aa; line-height: 1.6;">
-            Your shared results include your active daily streak and points gained, immediately raising the competitive bar for your peers and social followers.
-          </p>
-        </td>
-      </tr>
-    </table>
-
-    <!-- Feature 3: Cash Conversion -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
-      <tr>
-        <td valign="top" style="padding-top: 4px; width: 44px;">
-          <div style="
-            background: rgba(74, 222, 128, 0.1);
-            border-radius: 12px;
-            width: 32px;
-            height: 32px;
-            line-height: 32px;
-            text-align: center;
-            font-size: 16px;
-          ">💰</div>
-        </td>
-        <td style="padding-left: 12px;">
-          <h4 style="margin: 0 0 4px; font-size: 15px; font-weight: 700; color: #ffffff;">Points to Cash, Instantly</h4>
-          <p style="margin: 0; font-size: 13.5px; color: #a1a1aa; line-height: 1.6;">
-            Points earned are accumulated securely in your wallet and can be fully converted directly to cash on demand into your producer account balance.
-          </p>
-        </td>
-      </tr>
-    </table>
-
-    <!-- Play Highlight -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="
-      background: #27272a;
-      border-radius: 16px;
-      margin-bottom: 24px;
-    ">
-      <tr>
-        <td style="padding: 20px; text-align: center;">
-          <p style="margin: 0; font-size: 14px; color: #d4d4d8; line-height: 1.5;">
-            Join today's competition and be the first to share your achievements!
-          </p>
-        </td>
-      </tr>
-    </table>
+    <!-- Hype Drop Line -->
+    <p style="margin: 0 0 24px; font-size: 13.5px; font-weight: 800; color: #4ade80; text-align: center; text-transform: uppercase; letter-spacing: 1px; line-height: 1.6;">
+      WE WILL DROP A NEW QUIZ EVERY DAY SO YOU CAN EARN WHILE YOU HAVE FUN!
+    </p>
+    
+    <!-- Urgency Note -->
+    <p style="margin: 0; font-size: 13px; color: #ef4444; font-weight: 700; text-align: center; letter-spacing: 2px; text-transform: uppercase;">
+      ⏳ Clock is ticking.
+    </p>
   `;
 
   return buildBaseLayout({
-    preheader: "🏆 Share your daily Curtain Call scores, streaks, and prizes instantly with the new sharing feature!",
-    title: "✨ Show Off Your Theatre Mastery!",
+    preheader: "🎭 5 questions. 5 seconds. Get them all right and earn ₦200 per day!",
+    title: "⚡ The Curtain Call Daily Quiz is Live!",
     bodyHtml: body,
-    ctaText: "Play & Share Today's Quiz →",
+    ctaText: "Take Today's Quiz →",
     ctaUrl: `${appUrl}/quiz`,
     signatureType: 'editors',
   });
