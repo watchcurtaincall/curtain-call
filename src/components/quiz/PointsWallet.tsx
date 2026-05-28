@@ -9,7 +9,7 @@ interface PointsWalletProps {
   onConverted?: (newBalance: number) => void;
 }
 
-const CONVERSION_RATE = 100; // 100 pts = ₦1
+const CONVERSION_RATE = 1; // 1 pt = ₦1
 const MIN_POINTS = 1000;
 
 export function PointsWallet({ userId, balance, onConverted }: PointsWalletProps) {
@@ -50,7 +50,7 @@ export function PointsWallet({ userId, balance, onConverted }: PointsWalletProps
         <div>
           <p className="font-serif font-bold text-white text-base">Points Converted!</p>
           <p className="text-zinc-400 text-xs mt-1">
-            ₦{nairaValue.toLocaleString()} added to your producer wallet.
+            ₦{nairaValue.toLocaleString()} added to your producer wallet for withdrawal.
           </p>
         </div>
       </div>
@@ -65,7 +65,7 @@ export function PointsWallet({ userId, balance, onConverted }: PointsWalletProps
         </div>
         <div>
           <p className="text-white font-serif font-bold text-sm">Quiz Points Wallet</p>
-          <p className="text-zinc-500 text-xs">Convert points to producer cash credits</p>
+          <p className="text-zinc-500 text-xs">Convert points to cash in your Producer Dashboard</p>
         </div>
       </div>
 
@@ -78,7 +78,7 @@ export function PointsWallet({ userId, balance, onConverted }: PointsWalletProps
         <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 text-center">
           <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Cash Value</p>
           <p className="text-2xl font-bold font-serif text-emerald-400 mt-1">₦{cashValue.toLocaleString()}</p>
-          <p className="text-[10px] text-zinc-600 mt-0.5">at 100pts/₦1</p>
+          <p className="text-[10px] text-zinc-600 mt-0.5">at 1000pts/₦1000</p>
         </div>
       </div>
 

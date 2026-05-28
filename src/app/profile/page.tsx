@@ -21,9 +21,10 @@ import { WithdrawModal } from '@/components/producer/WithdrawModal';
 import { NotificationsPanel } from '@/components/profile/NotificationsPanel';
 import { SettingsPanel } from '@/components/profile/SettingsPanel';
 import { EditReviewModal } from '@/components/profile/EditReviewModal';
+import { PointsWallet } from '@/components/quiz/PointsWallet';
 import Link from 'next/link';
 
-type Tab = 'dashboard' | 'tickets' | 'submissions' | 'reviews' | 'list' | 'badges' | 'stageography';
+type Tab = 'dashboard' | 'quiz-wallet' | 'tickets' | 'submissions' | 'reviews' | 'list' | 'badges' | 'stageography';
 
 
 
@@ -563,6 +564,7 @@ export default function ProfilePage() {
   // Tabs ordered Dashboard -> My Submissions
   const tabs: { id: Tab; label: string; Icon: React.FC<{ className?: string }> }[] = [
     { id: 'dashboard',     label: 'Dashboard',      Icon: Star          },
+    { id: 'quiz-wallet',   label: 'Quiz Wallet',    Icon: Zap           },
     { id: 'tickets',       label: 'My Tickets',     Icon: Ticket        },
     { id: 'submissions',   label: 'My Submissions', Icon: FileText      },
     { id: 'reviews',       label: 'My Reviews',     Icon: PenLine       },
@@ -866,6 +868,17 @@ export default function ProfilePage() {
               </div>
             </Link>
 
+          </div>
+        )}
+
+        {/* QUIZ WALLET */}
+        {tab === 'quiz-wallet' && (
+          <div className="flex flex-col gap-6 animate-fade-up max-w-2xl mx-auto">
+            <PointsWallet
+              userId={user.id}
+              balance={quizPoints}
+              onConverted={() => setQuizPoints(0)}
+            />
           </div>
         )}
 

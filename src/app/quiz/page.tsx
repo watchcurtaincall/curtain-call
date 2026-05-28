@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { QuizStatus, QuizQuestion } from '@/lib/types';
 import { QuizSession } from '@/components/quiz/QuizSession';
 import { StreakBadge } from '@/components/quiz/StreakBadge';
-import { PointsWallet } from '@/components/quiz/PointsWallet';
 import {
   Trophy, Users, Clock, Lock, Flame, Zap,
   RefreshCw, AlertTriangle, ChevronRight, Star,
@@ -29,7 +28,7 @@ export default function QuizPage() {
   const [pageState, setPageState] = useState<PageState>('loading');
   const [status, setStatus] = useState<QuizStatus | null>(null);
   const [slots, setSlots] = useState<SlotEntry[]>([]);
-  const [pointsBalance, setPointsBalance] = useState(0);
+
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [errorMsg, setErrorMsg] = useState('');
@@ -64,7 +63,7 @@ export default function QuizPage() {
     try {
       const res = await fetch(`/api/quiz/status?userId=${encodeURIComponent(user.id)}`);
       const data = await res.json();
-      if (res.ok) setPointsBalance(data.pointsBalance ?? 0);
+
     } catch { /* non-critical */ }
   }, [user]);
 
@@ -188,9 +187,10 @@ export default function QuizPage() {
   const hasAttempted = attempt && attempt.status !== 'none';
   const hasWon = attempt?.resultType === 'won';
   const isVoided = attempt?.status === 'voided';
-  const slotsLeft = status?.slotsRemaining ?? 3;
+  const slotsLeft = status?.slotsRemaining ?? 10;
   const questionsReady = status?.questionsReady ?? false;
   const streakCount = status?.streakCount ?? 0;
+  const totalSlots = status?.totalSlots ?? 10;
 
   return (
     <div className="min-h-screen bg-zinc-950 relative overflow-hidden">
@@ -201,17 +201,19 @@ export default function QuizPage() {
       <div className="relative container mx-auto px-4 py-10 max-w-4xl">
 
         {/* ── PAGE HEADER ── */}
-        <div className="flex items-center justify-between mb-10 animate-fade-down">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 animate-fade-down">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
                 <Trophy className="h-5 w-5 text-amber-400" />
               </div>
               <h1 className="text-2xl font-serif font-bold text-white">Daily Theatre Quiz</h1>
             </div>
-            <p className="text-zinc-500 text-sm">5 questions · 5 seconds each · {status?.totalSlots ?? 3} winner slots</p>
+            <p className="text-zinc-500 text-sm">5 questions · 5s each · {totalSlots} winner slots</p>
           </div>
-          <StreakBadge count={streakCount} />
+          <div className="self-start md:self-auto">
+            <StreakBadge count={streakCount} />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -220,18 +222,18 @@ export default function QuizPage() {
           <div className="lg:col-span-2 flex flex-col gap-5 animate-fade-up">
 
             {/* Status/CTA card */}
-            <div className="relative bg-zinc-900/60 border border-white/5 rounded-3xl overflow-hidden p-8">
+            <div className="relative bg-zinc-900/60 border border-white/5 rounded-3xl overflow-hidden p-6 sm:p-8">
               <div className="absolute top-0 right-0 w-60 h-60 bg-amber-500/5 rounded-full blur-[80px] pointer-events-none" />
 
               {/* No questions yet */}
               {!questionsReady && !hasAttempted && (
                 <div className="flex flex-col items-center gap-5 text-center py-4">
-                  <div className="w-16 h-16 rounded-[20px] bg-zinc-800 border border-white/5 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-[20px] bg-zinc-800 border border-white/5 flex items-center justify-center shrink-0">
                     <Clock className="h-8 w-8 text-zinc-500" />
                   </div>
                   <div>
                     <h2 className="text-xl font-serif font-bold text-white">Quiz not ready yet</h2>
-                    <p className="text-zinc-400 text-sm mt-1.5 max-w-sm mx-auto">Today's questions are being prepared. Check back soon — the quiz typically goes live at midnight.</p>
+                    <p className="text-zinc-400 text-sm mt-1.5 max-w-sm mx-auto">Check back soon — the quiz typically goes live at midnight.</p>
                   </div>
                 </div>
               )}
@@ -239,13 +241,13 @@ export default function QuizPage() {
               {/* Ready to play */}
               {questionsReady && !hasAttempted && (
                 <div className="flex flex-col items-center gap-6 text-center py-4">
-                  <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-amber-500 to-yellow-400 border border-amber-300/20 flex items-center justify-center shadow-2xl shadow-amber-900/40">
+                  <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-amber-500 to-yellow-400 border border-amber-300/20 flex items-center justify-center shadow-2xl shadow-amber-900/40 shrink-0">
                     <Zap className="h-10 w-10 text-white" />
                   </div>
                   <div>
                     <h2 className="text-2xl font-serif font-bold text-white">Today's Quiz is Live!</h2>
                     <p className="text-zinc-400 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
-                      Answer all 5 questions correctly within 5 seconds each to claim a winner slot and earn bonus points.
+                      Answer all 5 questions correctly to claim a winner slot and earn bonus points.
                     </p>
                   </div>
                   <div className="flex items-center gap-3 flex-wrap justify-center text-xs font-bold text-zinc-400 uppercase tracking-widest">
@@ -265,7 +267,7 @@ export default function QuizPage() {
                       id="start-quiz-btn"
                       onClick={handleStart}
                       disabled={pageState === 'starting'}
-                      className="bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 disabled:from-zinc-700 disabled:to-zinc-700 disabled:text-zinc-500 text-black font-bold px-10 py-4 rounded-2xl transition-all text-sm uppercase tracking-widest active:scale-95 shadow-lg shadow-amber-900/30 flex items-center gap-2"
+                      className="bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 disabled:from-zinc-700 disabled:to-zinc-700 disabled:text-zinc-500 text-black font-bold px-10 py-4 rounded-2xl transition-all text-sm uppercase tracking-widest active:scale-95 shadow-lg shadow-amber-900/30 flex items-center gap-2 w-full sm:w-auto justify-center"
                     >
                       {pageState === 'starting' ? (
                         <><RefreshCw className="h-4 w-4 animate-spin" /> Starting…</>
@@ -281,7 +283,7 @@ export default function QuizPage() {
               {/* Already completed */}
               {hasAttempted && attempt?.status === 'completed' && (
                 <div className="flex flex-col items-center gap-5 text-center py-4">
-                  <div className={`w-16 h-16 rounded-[20px] flex items-center justify-center ${hasWon ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-zinc-800 border border-white/5'}`}>
+                  <div className={`w-16 h-16 rounded-[20px] flex items-center justify-center shrink-0 ${hasWon ? 'bg-amber-500/10 border border-amber-500/20' : 'bg-zinc-800 border border-white/5'}`}>
                     {hasWon ? <Trophy className="h-8 w-8 text-amber-400" /> : <CheckCircle className="h-8 w-8 text-zinc-400" />}
                   </div>
                   <div>
@@ -301,7 +303,7 @@ export default function QuizPage() {
               {/* Voided */}
               {isVoided && (
                 <div className="flex flex-col items-center gap-5 text-center py-4">
-                  <div className="w-16 h-16 rounded-[20px] bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                  <div className="w-16 h-16 rounded-[20px] bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
                     <AlertTriangle className="h-8 w-8 text-red-400" />
                   </div>
                   <div>
@@ -314,23 +316,23 @@ export default function QuizPage() {
 
             {/* How it works */}
             <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-6">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-5">
                 <BookOpen className="h-4 w-4 text-zinc-500" />
                 <h3 className="text-sm font-bold text-white uppercase tracking-widest">How It Works</h3>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
-                  { icon: '🎭', title: '5 Theatre Questions', desc: 'Mixed difficulty — easy to hard, covering Nigerian theatre, Shakespeare, and more.' },
-                  { icon: '⚡', title: '5 Seconds Per Question', desc: 'Answer fast. Running out of time counts as a wrong answer.' },
-                  { icon: '🏆', title: '3 Winner Slots Daily', desc: 'First 3 people to answer all 5 correctly win bonus points.' },
-                  { icon: '🔥', title: 'Streak Bonuses', desc: 'Play every day to build a streak. Hit 7, 30 or 100 days for milestone rewards.' },
-                  { icon: '💰', title: 'Points → Cash', desc: 'Convert 1000 pts to ₦10 in your producer wallet at any time.' },
-                  { icon: '🚫', title: 'No Tab Switching', desc: 'Leaving the quiz tab instantly voids your session — no exceptions.' },
+                  { icon: <BookOpen className="h-5 w-5 text-blue-400"/>, title: '5 Questions', desc: 'Covering Nigerian theatre, Shakespeare, and more.' },
+                  { icon: <Zap className="h-5 w-5 text-amber-400"/>, title: '5s Per Question', desc: 'Answer fast. Running out of time counts as wrong.' },
+                  { icon: <Trophy className="h-5 w-5 text-yellow-400"/>, title: '10 Winner Slots', desc: 'First 10 people to answer all correctly win bonus points.' },
+                  { icon: <AlertTriangle className="h-5 w-5 text-red-400"/>, title: 'No Tab Switching', desc: 'Leaving the tab instantly voids your session.' },
                 ].map(item => (
-                  <div key={item.title} className="flex gap-3 p-3 bg-zinc-950/40 rounded-2xl border border-white/5">
-                    <span className="text-lg shrink-0">{item.icon}</span>
+                  <div key={item.title} className="flex gap-3 items-start">
+                    <div className="w-8 h-8 rounded-full bg-zinc-900 border border-white/5 flex items-center justify-center shrink-0 mt-0.5">
+                      {item.icon}
+                    </div>
                     <div>
-                      <p className="text-xs font-bold text-white">{item.title}</p>
+                      <p className="text-sm font-bold text-white">{item.title}</p>
                       <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">{item.desc}</p>
                     </div>
                   </div>
@@ -345,7 +347,7 @@ export default function QuizPage() {
             {/* Slots leaderboard */}
             <div className="bg-zinc-900/60 border border-white/5 rounded-3xl p-5">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
                   <Trophy className="h-3.5 w-3.5 text-amber-400" />
                 </div>
                 <h3 className="text-sm font-bold text-white">Today's Winners</h3>
@@ -368,39 +370,32 @@ export default function QuizPage() {
                       </span>
                     </div>
                   ))}
-                  {(status?.totalSlots ?? 3) - slots.length > 0 && (
-                    <p className="text-center text-zinc-600 text-xs mt-1">
-                      {(status?.totalSlots ?? 3) - slots.length} slot{(status?.totalSlots ?? 3) - slots.length !== 1 ? 's' : ''} remaining
+                  {totalSlots - slots.length > 0 && (
+                    <p className="text-center text-zinc-600 text-xs mt-2">
+                      {totalSlots - slots.length} slot{totalSlots - slots.length !== 1 ? 's' : ''} remaining
                     </p>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Points wallet */}
-            {user && (
-              <PointsWallet
-                userId={user.id}
-                balance={pointsBalance}
-                onConverted={() => setPointsBalance(0)}
-              />
-            )}
-
             {/* Streak info */}
             <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-5">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-4">
                 <Flame className="h-4 w-4 text-orange-400" />
                 <h3 className="text-sm font-bold text-white">Streak Milestones</h3>
               </div>
               <div className="flex flex-col gap-2">
                 {[
-                  { days: 7, badge: '🔥', label: '7-Day Streak', pts: '+500 pts' },
-                  { days: 30, badge: '⭐', label: '30-Day Streak', pts: '+2000 pts' },
-                  { days: 100, badge: '👑', label: '100-Day Streak', pts: '+10000 pts' },
+                  { days: 7, icon: <Flame className="h-4 w-4 text-orange-400"/>, label: '7-Day Streak', pts: '+500 pts' },
+                  { days: 30, icon: <Star className="h-4 w-4 text-yellow-400"/>, label: '30-Day Streak', pts: '+2000 pts' },
+                  { days: 100, icon: <Trophy className="h-4 w-4 text-amber-400"/>, label: '100-Day Streak', pts: '+10000 pts' },
                 ].map(m => (
-                  <div key={m.days} className={`flex items-center justify-between p-2.5 rounded-xl border ${streakCount >= m.days ? 'bg-amber-500/5 border-amber-500/20' : 'bg-zinc-950/40 border-white/5'}`}>
-                    <div className="flex items-center gap-2">
-                      <span>{m.badge}</span>
+                  <div key={m.days} className={`flex items-center justify-between p-3 rounded-xl border ${streakCount >= m.days ? 'bg-amber-500/5 border-amber-500/20' : 'bg-zinc-950/40 border-white/5'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${streakCount >= m.days ? 'bg-amber-500/20' : 'bg-zinc-900'}`}>
+                        {m.icon}
+                      </div>
                       <div>
                         <p className="text-xs font-bold text-white">{m.label}</p>
                       </div>
