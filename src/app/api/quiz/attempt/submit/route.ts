@@ -175,13 +175,16 @@ export async function POST(request: Request) {
     // 6. Streak and badge calculations
     let newStreakCount = 0;
     let email = '';
+    let name = 'Anonymous User';
 
     if (originalUserId.includes('@')) {
       email = originalUserId.toLowerCase();
+      name = email.split('@')[0];
     } else {
       const { data: authUser, error: authUserErr } = await supabaseServer.auth.admin.getUserById(originalUserId);
       if (!authUserErr && authUser?.user?.email) {
         email = authUser.user.email.toLowerCase();
+        name = authUser.user.user_metadata?.name || 'Anonymous User';
       }
     }
 
@@ -230,7 +233,7 @@ export async function POST(request: Request) {
           .from('profiles')
           .insert({
             email,
-            name: authUser.user.user_metadata?.name || 'Anonymous User',
+            name,
             quiz_streak: 1,
             quiz_last_completion_date: todayWATStr,
             quiz_badges: initialBadges,
