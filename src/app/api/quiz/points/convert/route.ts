@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { getDeterministicUUID } from '@/lib/quiz/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,18 +11,25 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const { userId, pointsAmount } = body;
+    let { userId: originalUserId, pointsAmount } = body;
 
-    if (!userId || typeof pointsAmount !== 'number' || pointsAmount < 1) {
+    if (!originalUserId || typeof pointsAmount !== 'number' || pointsAmount < 1) {
       return NextResponse.json({ error: 'Missing or invalid pointsAmount parameter' }, { status: 400 });
     }
 
+    const userId = getDeterministicUUID(originalUserId);
+
     // 1. Verify user's email and current points balance
-    const { data: authUser, error: authUserErr } = await supabaseServer.auth.admin.getUserById(userId);
-    if (authUserErr || !authUser?.user?.email) {
-      return NextResponse.json({ error: 'User email details not found' }, { status: 400 });
+    let email = '';
+    if (originalUserId.includes('@')) {
+      email = originalUserId.toLowerCase();
+    } else {
+      const { data: authUser, error: authUserErr } = await supabaseServer.auth.admin.getUserById(originalUserId);
+      if (authUserErr || !authUser?.user?.email) {
+        return NextResponse.json({ error: 'User email details not found' }, { status: 400 });
+      }
+      email = authUser.user.email.toLowerCase();
     }
-    const email = authUser.user.email.toLowerCase();
 
     const { data: wallet, error: walletErr } = await supabaseServer
       .from('quiz_points_wallet')

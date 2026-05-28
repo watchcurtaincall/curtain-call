@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { getDeterministicUUID } from '@/lib/quiz/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,11 +11,13 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const { attemptId, userId, reason } = body;
+    let { attemptId, userId, reason } = body;
 
     if (!attemptId || !userId || !reason) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
+    
+    userId = getDeterministicUUID(userId);
 
     const { error } = await supabaseServer
       .from('quiz_attempts')

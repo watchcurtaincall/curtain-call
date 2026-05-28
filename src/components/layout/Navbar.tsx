@@ -343,7 +343,17 @@ export function Navbar() {
       {/* Mobile fullscreen menu */}
       {isMenuOpen && (
         <div className="md:hidden fixed inset-0 top-16 z-40 bg-zinc-950/98 backdrop-blur-xl flex flex-col">
-          <nav className="flex flex-col px-6 pt-4 gap-1">
+          <div className="px-6 pt-6 pb-2">
+            <Link
+              href="/quiz"
+              onClick={close}
+              className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-extrabold text-base hover:from-amber-400 hover:to-yellow-300 transition-colors shadow-lg shadow-amber-900/20"
+            >
+              <Trophy className="h-5 w-5" />
+              Daily Theatre Quiz
+            </Link>
+          </div>
+          <nav className="flex flex-col px-6 pt-2 gap-1">
             {NAV_LINKS.map(({ href, label }) => {
               const active = pathname === href;
               return (
@@ -374,15 +384,6 @@ export function Navbar() {
           </nav>
 
           <div className="px-6 mt-auto pb-6 pt-4">
-            {/* Daily Quiz Gold Mobile CTA */}
-            <Link
-              href="/quiz"
-              onClick={close}
-              className="flex items-center justify-center gap-2 w-full py-4 mb-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-extrabold text-base hover:from-amber-400 hover:to-yellow-300 transition-colors shadow-lg shadow-amber-900/20"
-            >
-              <Trophy className="h-5 w-5" />
-              Daily Theatre Quiz
-            </Link>
 
             {user ? (
               <div className="flex flex-col gap-4">

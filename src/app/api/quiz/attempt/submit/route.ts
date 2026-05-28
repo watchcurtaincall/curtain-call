@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { toWATDateString, calculateNewStreak } from '@/lib/quiz/streakCalculation';
 import { QuizQuestionInternal } from '@/lib/types';
+import { getDeterministicUUID } from '@/lib/quiz/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,11 +13,13 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const { attemptId, userId, answers } = body;
+    const { attemptId, userId: originalUserId, answers } = body;
 
-    if (!attemptId || !userId || !Array.isArray(answers)) {
+    if (!attemptId || !originalUserId || !Array.isArray(answers)) {
       return NextResponse.json({ error: 'Missing or invalid parameters' }, { status: 400 });
     }
+
+    const userId = getDeterministicUUID(originalUserId);
 
     const todayWATStr = toWATDateString(new Date());
 
@@ -171,11 +174,18 @@ export async function POST(request: Request) {
 
     // 6. Streak and badge calculations
     let newStreakCount = 0;
-    const { data: authUser, error: authUserErr } = await supabaseServer.auth.admin.getUserById(userId);
+    let email = '';
 
-    if (!authUserErr && authUser?.user?.email) {
-      const email = authUser.user.email.toLowerCase();
-      
+    if (originalUserId.includes('@')) {
+      email = originalUserId.toLowerCase();
+    } else {
+      const { data: authUser, error: authUserErr } = await supabaseServer.auth.admin.getUserById(originalUserId);
+      if (!authUserErr && authUser?.user?.email) {
+        email = authUser.user.email.toLowerCase();
+      }
+    }
+
+    if (email) {
       const { data: profile, error: profileErr } = await supabaseServer
         .from('profiles')
         .select('quiz_streak, quiz_last_completion_date, quiz_badges')

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { toWATDateString } from '@/lib/quiz/streakCalculation';
 import { QuizQuestion, QuizQuestionInternal } from '@/lib/types';
+import { getDeterministicUUID } from '@/lib/quiz/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,11 +13,13 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json().catch(() => ({}));
-    const { userId } = body;
+    let { userId } = body;
 
     if (!userId) {
       return NextResponse.json({ error: 'Missing userId parameter' }, { status: 400 });
     }
+
+    userId = getDeterministicUUID(userId);
 
     const todayWATStr = toWATDateString(new Date());
 
