@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ClientDB, supabase } from './db';
 
 export interface MockUser {
+  id: string;
   name: string;
   email: string;
   avatar: string;
@@ -22,6 +23,7 @@ export interface MockUser {
 }
 
 const MOCK_USER: MockUser = {
+  id: 'adaeze@example.com',
   name: 'Adaeze Obi',
   email: 'adaeze@example.com',
   avatar: 'AO',
@@ -201,6 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const customUsername = existingProfile?.username || (existingProfile?.handle && !existingProfile.handle.startsWith('@') ? existingProfile.handle : undefined);
 
           const loggedUser = {
+            id: email,
             name: customName,
             email,
             avatar: customName.slice(0, 2).toUpperCase(),
@@ -265,6 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const customUsername = existingProfile?.username || (existingProfile?.handle && !existingProfile.handle.startsWith('@') ? existingProfile.handle : undefined);
 
           const loggedUser = {
+            id: email,
             name: customName,
             email,
             avatar: customName.slice(0, 2).toUpperCase(),
@@ -302,6 +306,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (cleanEmail === 'watchcurtaincall@gmail.com') {
       loggedUser = {
+        id: 'watchcurtaincall@gmail.com',
         name: 'CC Admin',
         email: 'watchcurtaincall@gmail.com',
         avatar: 'WCC',
@@ -335,6 +340,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const isEmailConfirmed = !!data.user.email_confirmed_at;
         
         loggedUser = {
+          id: cleanEmail,
           name,
           email: cleanEmail,
           avatar: name.slice(0, 2).toUpperCase(),
@@ -354,6 +360,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Local Simulation Fallback
       if (cleanEmail === 'watchcurtaincall@gmail.com') {
         loggedUser = {
+          id: 'watchcurtaincall@gmail.com',
           name: 'CC Admin',
           email: 'watchcurtaincall@gmail.com',
           avatar: 'WCC',
@@ -372,6 +379,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         const displayName = cleanEmail.split('@')[0];
         loggedUser = {
+          id: cleanEmail,
           name: displayName,
           email: cleanEmail,
           avatar: displayName.slice(0, 2).toUpperCase(),
@@ -458,6 +466,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const userHandle = username && username.trim() ? username.trim() : deriveHandle(displayName, cleanEmail);
     
     let loggedUser = {
+      id: cleanEmail,
       name: displayName,
       email: cleanEmail,
       avatar: displayName.slice(0, 2).toUpperCase(),

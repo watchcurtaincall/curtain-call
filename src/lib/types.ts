@@ -70,3 +70,63 @@ export interface Article {
 }
 
 
+
+// ── DAILY QUIZ TYPES ──
+
+export type QuizResultType = 'won' | 'consolation' | 'failed' | 'voided' | 'redeemed';
+export type QuizDifficulty = 'easy' | 'medium' | 'hard';
+export type QuizBadge = '7_day' | '30_day' | '100_day';
+
+// Client-facing question — correctAnswerIndex is intentionally omitted
+export interface QuizQuestion {
+  id: string;
+  text: string;
+  options: string[];        // always 4 items
+  difficulty: QuizDifficulty;
+  index: number;            // 0-4
+}
+
+// Internal question shape stored in quiz_days (includes correct answer)
+export interface QuizQuestionInternal extends QuizQuestion {
+  correctAnswerIndex: number;  // 0-3
+  theme: string;
+}
+
+export interface QuizAttempt {
+  id: string;
+  userId: string;
+  quizDate: string;
+  status: 'pending' | 'completed' | 'voided';
+  resultType?: QuizResultType;
+  score?: number;
+  pointsAwarded: number;
+  slotPosition?: number;
+  answers: Array<{ questionId: string; selectedIndex: number; elapsedMs: number }>;
+  startedAt: string;
+  completedAt?: string;
+}
+
+export interface QuizPointTransaction {
+  id: string;
+  userId: string;
+  quizDate?: string;
+  resultType: QuizResultType;
+  pointsDelta: number;
+  balanceAfter: number;
+  createdAt: string;
+}
+
+export interface QuizStatus {
+  quizDate: string;
+  slotsRemaining: number;
+  totalSlots: number;
+  userAttempt: {
+    status: 'none' | 'pending' | 'completed' | 'voided';
+    score?: number;
+    pointsAwarded?: number;
+    slotPosition?: number;
+    resultType?: QuizResultType;
+  };
+  streakCount: number;
+  questionsReady: boolean;
+}

@@ -38,7 +38,8 @@ export async function GET(request: Request) {
       notificationsRes,
       subscribersRes,
       profilesRes,
-      userProfileRes
+      userProfileRes,
+      quizCashCreditsRes
     ] = await Promise.all([
       // 1. productions - ordered by created_at DESC so newest always first
       supabaseServer.from('productions').select('*').order('created_at', { ascending: false }),
@@ -63,7 +64,9 @@ export async function GET(request: Request) {
       // 11. profiles (only for admin)
       isAdmin ? supabaseServer.from('profiles').select('*') : Promise.resolve({ data: [] }),
       // 12. user profile verification status check
-      email ? supabaseServer.from('profiles').select('is_verified').eq('email', email).maybeSingle() : Promise.resolve({ data: null })
+      email ? supabaseServer.from('profiles').select('is_verified').eq('email', email).maybeSingle() : Promise.resolve({ data: null }),
+      // 13. quiz_cash_credits for the authenticated user
+      email ? supabaseServer.from('quiz_cash_credits').select('*').order('created_at', { ascending: false }) : Promise.resolve({ data: [] })
     ]);
 
     // Handle and report errors on the server side
@@ -96,7 +99,8 @@ export async function GET(request: Request) {
         verificationCode: p.verification_code || undefined,
         createdAt: p.created_at
       })) : [],
-      userProfile: userProfileRes?.data || null
+      userProfile: userProfileRes?.data || null,
+      quizCashCredits: quizCashCreditsRes?.data || []
     }, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',

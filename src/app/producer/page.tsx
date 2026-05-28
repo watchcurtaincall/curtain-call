@@ -20,6 +20,7 @@ export default function ProducerDashboardPage() {
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [allPlays, setAllPlays] = useState<Production[]>([]);
   const [syncCount, setSyncCount] = useState(0);
+  const [quizCredits, setQuizCredits] = useState(0);
 
   const isPlayProducerManaged = (p: any) => {
     return p.isProducerManaged === true || p.ticketTiers !== undefined || p.status === 'Draft';
@@ -29,18 +30,22 @@ export default function ProducerDashboardPage() {
     if (typeof window === 'undefined') return;
     const handleSync = () => setSyncCount(prev => prev + 1);
     window.addEventListener('cc-db-synced', handleSync);
-    
-    // Background pull database sync on page mount
     syncFromSupabase();
-
-    return () => {
-      window.removeEventListener('cc-db-synced', handleSync);
-    };
+    return () => { window.removeEventListener('cc-db-synced', handleSync); };
   }, []);
 
   useEffect(() => {
     if (!user) return;
     setAllPlays(ClientDB.getProductions());
+  }, [user, syncCount]);
+
+  // Fetch quiz-to-cash credits for this producer
+  useEffect(() => {
+    if (!user) return;
+    fetch(`/api/quiz/status?userId=${encodeURIComponent(user.id)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setQuizCredits(data.cashCredits ?? 0); })
+      .catch(() => {});
   }, [user, syncCount]);
 
   // ── DYNAMIC WALLET CALCULATIONS ──
@@ -70,32 +75,41 @@ export default function ProducerDashboardPage() {
     const pendingWithdrawals = userWithdrawals.filter(w => w.status === 'Pending');
     const totalPending = pendingWithdrawals.reduce((acc, w) => acc + w.amount, 0);
     
-    const available = Math.max(0, totalEarned - totalWithdrawn - totalPending);
+    const available = Math.max(0, totalEarned + quizCredits - totalWithdrawn - totalPending);
     
+    const quizTx = quizCredits > 0 ? [{
+      label: 'Quiz Points Converted to Cash',
+      amount: `+₦${quizCredits.toLocaleString()}`,
+      date: 'Recently',
+      positive: true,
+      timestamp: Date.now() - 1,
+    }] : [];
+
     const transactions = [
+      ...quizTx,
       ...userTickets.map(t => ({
         label: `Ticket sale — ${t.productionTitle} (${t.tier}) (Net 95%)`,
         amount: `+₦${(t.price * 0.95).toLocaleString()}`,
         date: t.date || 'Recently',
         positive: true,
-        timestamp: t.timestamp || 0
+        timestamp: t.timestamp || 0,
       })),
       ...userWithdrawals.map(w => ({
         label: `Withdrawal to ${w.bankName} ····${w.accountNumber.slice(-4)}`,
         amount: `−₦${w.amount.toLocaleString()}`,
         date: w.timestamp ? w.timestamp.split(' ')[0] : 'Recently',
         positive: false,
-        timestamp: w.id ? Number(w.id.replace('w_req_', '')) : 0
+        timestamp: w.id ? Number(w.id.replace('w_req_', '')) : 0,
       }))
     ].sort((a, b) => b.timestamp - a.timestamp);
     
     setWalletMetrics({
       available,
-      totalEarned,
+      totalEarned: totalEarned + quizCredits,
       withdrawn: totalWithdrawn,
-      transactions
+      transactions,
     });
-  }, [user, allPlays, syncCount]);
+  }, [user, allPlays, syncCount, quizCredits]);
 
   const handleEndShow = (id: string) => {
     const play = allPlays.find(p => p.id === id);

@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/quiz/cron/generate",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/quiz/cron/email",
+      "schedule": "30 6 * * *"
+    }
+  ]
+}

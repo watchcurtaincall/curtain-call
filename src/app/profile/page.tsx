@@ -14,8 +14,9 @@ import {
   PenSquare, Target, Ticket, Mic2, Drama,
   FileText, Trophy, Library, Zap, Users, Crown, Sparkles, Shield, ShieldCheck,
   Plus, Wallet, TrendingUp, ArrowUpRight, BookOpen, AlertCircle, Trash2,
-  Search, X, Clapperboard, Calendar, QrCode
+  Search, X, Clapperboard, Calendar, QrCode, Flame
 } from 'lucide-react';
+import { StreakBadge } from '@/components/quiz/StreakBadge';
 import { WithdrawModal } from '@/components/producer/WithdrawModal';
 import { NotificationsPanel } from '@/components/profile/NotificationsPanel';
 import { SettingsPanel } from '@/components/profile/SettingsPanel';
@@ -38,6 +39,8 @@ export default function ProfilePage() {
   const [userSubmissions, setUserSubmissions] = useState<any[]>([]);
   const [allPlays, setAllPlays] = useState<Production[]>([]);
   const [syncCount, setSyncCount] = useState(0);
+  const [quizStreak, setQuizStreak] = useState(0);
+  const [quizPoints, setQuizPoints] = useState(0);
   const router = useRouter();
   
   const purchasedTickets = user ? ClientDB.getTickets().filter(t => t.buyerEmail?.toLowerCase() === user.email.toLowerCase()) : [];
@@ -156,6 +159,18 @@ export default function ProfilePage() {
     if (!user) return;
     const notifs = ClientDB.getNotifications(user.email);
     setUnreadNotifications(notifs.filter(n => !n.read).length);
+  }, [user, syncCount]);
+
+  // ── QUIZ STATE ──
+  useEffect(() => {
+    if (!user) return;
+    fetch(`/api/quiz/status?userId=${encodeURIComponent(user.id)}`)
+      .then(r => r.json())
+      .then(data => {
+        setQuizStreak(data.streakCount ?? 0);
+        setQuizPoints(data.pointsBalance ?? 0);
+      })
+      .catch(() => {});
   }, [user, syncCount]);
 
   const handleEndShow = (id: string) => {
@@ -823,6 +838,34 @@ export default function ProfilePage() {
               </div>
 
             </div>
+
+            {/* ── DAILY QUIZ CARD ── */}
+            <Link href="/quiz" className="group/quiz block relative rounded-[32px] overflow-hidden border border-amber-500/20 bg-gradient-to-br from-zinc-900/70 to-zinc-950/90 p-7 shadow-xl hover:border-amber-500/40 transition-all">
+              <div className="absolute top-0 right-0 w-[300px] h-[200px] bg-amber-500/5 rounded-full blur-[80px] pointer-events-none" />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                    <Trophy className="h-6 w-6 text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif font-bold text-white text-base">Daily Theatre Quiz</h3>
+                    <p className="text-xs text-zinc-400 mt-0.5">Answer 5 questions · Win slots · Earn points</p>
+                    <div className="flex items-center gap-3 mt-2 flex-wrap">
+                      <StreakBadge count={quizStreak} />
+                      {quizPoints > 0 && (
+                        <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider flex items-center gap-1">
+                          <Zap className="h-3 w-3" /> {quizPoints.toLocaleString()} pts
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <span className="shrink-0 bg-amber-500 group-hover/quiz:bg-amber-400 text-black font-bold px-6 py-3 rounded-2xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-amber-900/20">
+                  Play Today <ChevronRight className="h-4 w-4 stroke-[3]" />
+                </span>
+              </div>
+            </Link>
+
           </div>
         )}
 

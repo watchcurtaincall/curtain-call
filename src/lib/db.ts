@@ -1484,6 +1484,13 @@ export const ClientDB = {
     return stored ? JSON.parse(stored) : [];
   },
 
+  // ── QUIZ CASH CREDITS ──
+  getQuizCashCredits(): any[] {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem('curtain_quiz_cash_credits');
+    return stored ? JSON.parse(stored) : [];
+  },
+
   purchaseTicket(ticket: any): void {
     if (typeof window === 'undefined') return;
     const current = this.getTickets();
@@ -1929,6 +1936,11 @@ export const syncFromSupabase = async () => {
       
       const finalTickets = [ ...unsynced, ...finalRemote ];
       localStorage.setItem('curtain_tickets', JSON.stringify(finalTickets));
+    }
+
+    // Process Quiz Cash Credits
+    if (data.quizCashCredits) {
+      localStorage.setItem('curtain_quiz_cash_credits', JSON.stringify(data.quizCashCredits));
     }
 
     // 9. Process Notifications
