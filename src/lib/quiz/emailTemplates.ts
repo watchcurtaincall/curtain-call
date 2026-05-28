@@ -11,6 +11,7 @@ interface BaseEmailOptions {
   ctaText?: string;
   ctaUrl?: string;
   unsubscribedUrl?: string;
+  signatureType?: 'welcome' | 'support' | 'editors';
 }
 
 /**
@@ -23,6 +24,7 @@ export function buildBaseLayout({
   ctaText,
   ctaUrl,
   unsubscribedUrl = "https://curtaincall.com.ng/profile",
+  signatureType,
 }: BaseEmailOptions): string {
   const ctaButtonHtml = ctaText && ctaUrl
     ? `
@@ -53,6 +55,45 @@ export function buildBaseLayout({
     `
     : '';
 
+  // Deriving the dynamic signature text depending on email intent
+  let signatureTextHtml = '';
+  if (signatureType === 'welcome') {
+    signatureTextHtml = `
+      Sincerely,<br/>
+      <strong style="color: #ffffff; font-style: normal;">Babatunde Lawal</strong><br/>
+      <span style="font-size: 12px; color: #88888b; font-style: normal; font-family: -apple-system, sans-serif;">Founder and Managing Editor,<br/>Curtain Call</span>
+    `;
+  } else if (signatureType === 'support') {
+    signatureTextHtml = `
+      Sincerely,<br/>
+      <strong style="color: #ffffff; font-style: normal;">Oyin</strong><br/>
+      <span style="font-size: 12px; color: #88888b; font-style: normal; font-family: -apple-system, sans-serif;">Support Team,<br/>Curtain Call</span>
+    `;
+  } else if (signatureType === 'editors') {
+    signatureTextHtml = `
+      Sincerely,<br/>
+      <strong style="color: #ffffff; font-style: normal;">The CC Editors.</strong>
+    `;
+  } else {
+    signatureTextHtml = `
+      Sincerely,<br/>
+      <strong style="color: #ffffff; font-style: normal;">The Curtain Call Curation Board</strong>
+    `;
+  }
+
+  const signatureBlockHtml = `
+    <!-- ── Elegant Signature ── -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 32px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 20px;">
+      <tr>
+        <td>
+          <p style="margin: 0; font-size: 14px; color: #a1a1aa; line-height: 1.6; font-family: Georgia, serif; font-style: italic;">
+            ${signatureTextHtml}
+          </p>
+        </td>
+      </tr>
+    </table>
+  `;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -79,7 +120,7 @@ export function buildBaseLayout({
           max-width: 600px;
           width: 100%;
         ">
-          <!-- Branded Premium Header with Subtle Red/Crimson Theater Glow -->
+          <!-- Branded Premium Header with Subtle Red/Crimson Glow -->
           <tr>
             <td style="
               background: linear-gradient(180deg, #7f1d1d 0%, #3b0712 100%);
@@ -112,6 +153,7 @@ export function buildBaseLayout({
           <tr>
             <td style="padding: 44px 40px 48px;">
               ${bodyHtml}
+              ${signatureBlockHtml}
               ${ctaButtonHtml}
             </td>
           </tr>
@@ -250,6 +292,7 @@ export function getDailyQuizReminderHtml(name: string, date: string, slots: numb
     bodyHtml: body,
     ctaText: "Take Today's Quiz →",
     ctaUrl: quizUrl,
+    signatureType: 'editors',
   });
 }
 
@@ -394,6 +437,7 @@ export function getFeatureAnnouncementHtml(name: string, appUrl: string): string
     bodyHtml: body,
     ctaText: "Play & Share Today's Quiz →",
     ctaUrl: `${appUrl}/quiz`,
+    signatureType: 'editors',
   });
 }
 
@@ -455,5 +499,6 @@ export function getVerificationEmailHtml(name: string, code: string): string {
     preheader: `🎭 Your Curtain Call secure verification code is ${code}`,
     title: "🔐 Confirm Your Account",
     bodyHtml: body,
+    signatureType: 'welcome',
   });
 }
