@@ -407,7 +407,7 @@ export default function AdminDashboardPage() {
   }, [refreshTrigger, isAuthorized]);
 
   useEffect(() => {
-    if (activeTab === 'quiz-analytics' && !quizStats && !loadingQuizStats) {
+    if ((activeTab === 'quiz-analytics' || activeTab === 'email-logs') && !quizStats && !loadingQuizStats) {
       setLoadingQuizStats(true);
       fetch('/api/admin/quiz-stats')
         .then(r => r.json())
@@ -1545,18 +1545,17 @@ This file was retrieved from the Curtain Call Curation Vault.
                   </div>
                   <div className="bg-zinc-950 border border-white/5 p-6 rounded-3xl relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                      <Mail className="h-16 w-16 text-amber-500" />
+                      <X className="h-16 w-16 text-zinc-500" />
                     </div>
-                    <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2">Avg. Open Rate</p>
-                    <p className="text-4xl font-serif font-bold text-amber-400">{quizStats.totals.openRate}%</p>
-                    <p className="text-xs text-zinc-500 mt-1">{quizStats.totals.emailsOpened} / {quizStats.totals.emailsSent} emails opened</p>
+                    <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2">Total Failed</p>
+                    <p className="text-4xl font-serif font-bold text-zinc-400">{quizStats.totals.failed.toLocaleString()}</p>
                   </div>
                 </div>
 
                 <div className="bg-zinc-950 border border-white/5 rounded-3xl overflow-hidden mt-6">
                   <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
                     <h3 className="text-sm font-bold text-white uppercase tracking-wider">Per-Day Breakdown</h3>
-                    <button onClick={() => exportToCSV(quizStats.daily, 'quiz_analytics.csv', ['date', 'attempts', 'passed', 'won', 'emailsSent', 'emailsOpened'])} className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors">
+                    <button onClick={() => exportToCSV(quizStats.daily, 'quiz_analytics.csv', ['date', 'attempts', 'passed', 'failed', 'won'])} className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors">
                       <Download className="h-3 w-3" /> Export CSV
                     </button>
                   </div>
@@ -1567,8 +1566,8 @@ This file was retrieved from the Curtain Call Curation Vault.
                           <th className="px-6 py-4 font-bold">Date (WAT)</th>
                           <th className="px-6 py-4 font-bold">Attempts</th>
                           <th className="px-6 py-4 font-bold">Passed</th>
+                          <th className="px-6 py-4 font-bold">Failed</th>
                           <th className="px-6 py-4 font-bold">Winners</th>
-                          <th className="px-6 py-4 font-bold">Open Rate</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1584,13 +1583,10 @@ This file was retrieved from the Curtain Call Curation Vault.
                               <span className="text-sm text-emerald-400 font-bold">{day.passed}</span>
                             </td>
                             <td className="px-6 py-4">
-                              <span className="text-sm text-red-400 font-bold">{day.won}</span>
+                              <span className="text-sm text-zinc-400 font-bold">{day.failed}</span>
                             </td>
                             <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-amber-400">{day.emailsSent > 0 ? ((day.emailsOpened / day.emailsSent) * 100).toFixed(1) : 0}%</span>
-                                <span className="text-xs text-zinc-600">({day.emailsOpened}/{day.emailsSent})</span>
-                              </div>
+                              <span className="text-sm text-red-400 font-bold">{day.won}</span>
                             </td>
                           </tr>
                         )) : (
@@ -3383,9 +3379,64 @@ This file was retrieved from the Curtain Call Curation Vault.
               <h2 className="text-2xl font-serif font-bold text-white flex items-center gap-2">
                 <FileText className="h-5 w-5 text-red-500" /> Transactional Notification Logs
               </h2>
-              <p className="text-zinc-500 text-sm mt-1">Audit trail of all transactional notifications dispatched by Resend API or simulated</p>
+              <p className="text-zinc-500 text-sm mt-1">Audit trail and open-rate analytics for all transactional notifications</p>
             </div>
 
+            {/* Platform Email Analytics */}
+            {quizStats && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-zinc-900/40 border border-white/5 p-6 rounded-3xl relative overflow-hidden group">
+                  <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2">Total Emails Sent</p>
+                  <p className="text-4xl font-serif font-bold text-white">{quizStats.totals.emailsSent.toLocaleString()}</p>
+                </div>
+                <div className="bg-zinc-900/40 border border-white/5 p-6 rounded-3xl relative overflow-hidden group">
+                  <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2">Total Opened</p>
+                  <p className="text-4xl font-serif font-bold text-amber-400">{quizStats.totals.emailsOpened.toLocaleString()}</p>
+                </div>
+                <div className="bg-zinc-900/40 border border-white/5 p-6 rounded-3xl relative overflow-hidden group">
+                  <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2">Average Open Rate</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-4xl font-serif font-bold text-amber-400">{quizStats.totals.openRate}%</p>
+                    <p className="text-xs text-zinc-500">overall</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Detailed Email Stats per Campaign */}
+            {quizStats && quizStats.daily.length > 0 && (
+              <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6 shadow-lg flex flex-col gap-4">
+                <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                  <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Campaign Open Rates</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-white/5 text-zinc-500 font-mono">
+                        <th className="py-3 font-semibold uppercase tracking-wider">Campaign Date</th>
+                        <th className="py-3 font-semibold uppercase tracking-wider">Sent</th>
+                        <th className="py-3 font-semibold uppercase tracking-wider">Opened</th>
+                        <th className="py-3 font-semibold uppercase tracking-wider">Open Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {quizStats.daily.filter((d: any) => d.emailsSent > 0).map((day: any) => (
+                        <tr key={day.date} className="border-b border-white/5 hover:bg-zinc-900/30 transition-all">
+                          <td className="py-4 font-mono text-zinc-300">{day.date}</td>
+                          <td className="py-4 text-white font-mono">{day.emailsSent}</td>
+                          <td className="py-4 text-amber-400 font-mono">{day.emailsOpened}</td>
+                          <td className="py-4 text-amber-400 font-mono font-bold">
+                            {day.emailsSent > 0 ? ((day.emailsOpened / day.emailsSent) * 100).toFixed(1) : 0}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Transactional Logs */}
             <div className="bg-zinc-900/20 border border-white/5 rounded-3xl p-6 shadow-lg flex flex-col gap-4">
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
                 <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Dispatched Logs</span>

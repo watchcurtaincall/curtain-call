@@ -47,6 +47,7 @@ export async function GET(request: Request) {
           date: a.quiz_date,
           attempts: 0,
           passed: 0,
+          failed: 0,
           won: 0,
           emailsSent: 0,
           emailsOpened: 0
@@ -54,7 +55,11 @@ export async function GET(request: Request) {
       }
       
       dailyStats[a.quiz_date].attempts++;
-      if (a.score === 5) dailyStats[a.quiz_date].passed++;
+      if (a.score === 5) {
+        dailyStats[a.quiz_date].passed++;
+      } else {
+        dailyStats[a.quiz_date].failed++;
+      }
       if (a.result_type === 'won') dailyStats[a.quiz_date].won++;
     }
 
@@ -74,6 +79,7 @@ export async function GET(request: Request) {
           date: d.quiz_date,
           attempts: 0,
           passed: 0,
+          failed: 0,
           won: 0,
           emailsSent: 0,
           emailsOpened: 0
@@ -90,6 +96,7 @@ export async function GET(request: Request) {
       totals: {
         attempts: totalAttempts,
         passed: totalPassed,
+        failed: totalAttempts - totalPassed,
         won: totalWon,
         emailsSent: totalEmailsSent,
         emailsOpened: totalEmailsOpened,
