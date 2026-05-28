@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from "next/link";
-import { Search, User, Menu, X, Ticket, Coins, TrendingUp, QrCode, ArrowRight } from "lucide-react";
+import { Search, User, Menu, X, Ticket, Coins, TrendingUp, QrCode, ArrowRight, Trophy } from "lucide-react";
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { ClientDB } from '@/lib/db';
@@ -297,6 +297,15 @@ export function Navbar() {
                 {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
               </button>
 
+              {/* Daily Quiz Gold CTA Button */}
+              <Link
+                href="/quiz"
+                className="hidden md:flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black font-extrabold px-4 py-2 rounded-xl transition-all text-xs uppercase tracking-wider active:scale-95 shadow-md shadow-amber-900/20 whitespace-nowrap"
+              >
+                <Trophy className="h-3.5 w-3.5" />
+                Daily Quiz
+              </Link>
+
               {/* Sign in / avatar — desktop */}
               {user ? (
                 <Link
@@ -365,6 +374,16 @@ export function Navbar() {
           </nav>
 
           <div className="px-6 mt-auto pb-6 pt-4">
+            {/* Daily Quiz Gold Mobile CTA */}
+            <Link
+              href="/quiz"
+              onClick={close}
+              className="flex items-center justify-center gap-2 w-full py-4 mb-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-400 text-black font-extrabold text-base hover:from-amber-400 hover:to-yellow-300 transition-colors shadow-lg shadow-amber-900/20"
+            >
+              <Trophy className="h-5 w-5" />
+              Daily Theatre Quiz
+            </Link>
+
             {user ? (
               <div className="flex flex-col gap-4">
                 <Link

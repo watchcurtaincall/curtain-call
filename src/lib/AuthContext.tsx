@@ -149,6 +149,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem('cc_authed_user', JSON.stringify(parsed));
         }
         
+        if (parsed && parsed.email && !parsed.id) {
+          parsed.id = parsed.email.toLowerCase();
+          localStorage.setItem('cc_authed_user', JSON.stringify(parsed));
+        }
+        
         if (parsed && defaultVerified.includes(parsed.email.toLowerCase()) && !parsed.isVerified) {
           parsed.isVerified = true;
           localStorage.setItem('cc_authed_user', JSON.stringify(parsed));
