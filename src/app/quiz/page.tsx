@@ -9,7 +9,7 @@ import { StreakBadge } from '@/components/quiz/StreakBadge';
 import {
   Trophy, Users, Clock, Lock, Flame, Zap,
   RefreshCw, AlertTriangle, ChevronRight, Star,
-  BookOpen, CheckCircle
+  BookOpen, CheckCircle, Share2, Copy, Check
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -19,6 +19,97 @@ interface SlotEntry {
   position: number;
   userId: string;
   claimedAt: string;
+}
+
+// ── Share Result Button ──────────────────────────────────────
+function ShareResultButton({ score, pointsAwarded, slotPosition, hasWon, streakCount }: {
+  score: number;
+  pointsAwarded: number;
+  slotPosition?: number;
+  hasWon: boolean;
+  streakCount: number;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  const buildShareText = () => {
+    const lines: string[] = [];
+    lines.push('🎭 Curtain Call — Daily Theatre Quiz');
+    lines.push('');
+
+    if (hasWon && slotPosition) {
+      lines.push(`🏆 I scored ${score}/5 and claimed Winner Slot #${slotPosition}!`);
+    } else if (score === 5) {
+      lines.push(`⭐ I scored a perfect ${score}/5!`);
+    } else {
+      lines.push(`🎬 I scored ${score}/5 on today's quiz.`);
+    }
+
+    if (streakCount > 1) {
+      lines.push(`🔥 ${streakCount}-day streak`);
+    }
+
+    if (pointsAwarded > 0) {
+      lines.push(`💰 +${pointsAwarded} points earned`);
+    }
+
+    lines.push('');
+    lines.push('Think you can beat me? Take the quiz 👇');
+    lines.push('https://curtaincall.com.ng/quiz');
+
+    return lines.join('\n');
+  };
+
+  const handleShare = async () => {
+    const text = buildShareText();
+
+    // Use native Web Share API if available (mobile)
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({ text });
+        return;
+      } catch {
+        // User cancelled or share failed — fall through to copy
+      }
+    }
+
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Last resort: prompt
+      prompt('Copy your result:', text);
+    }
+  };
+
+  return (
+    <div className="flex gap-2 mt-1">
+      <button
+        onClick={handleShare}
+        className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-black font-bold px-6 py-3 rounded-2xl transition-all text-xs uppercase tracking-widest active:scale-95 shadow-lg shadow-amber-900/30"
+      >
+        <Share2 className="h-4 w-4" />
+        Share Result
+      </button>
+      <button
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(buildShareText());
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2500);
+          } catch {}
+        }}
+        className={`flex items-center gap-1.5 px-4 py-3 rounded-2xl border text-xs font-bold uppercase tracking-widest transition-all active:scale-95 ${
+          copied
+            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+            : 'bg-zinc-900 border-white/10 text-zinc-300 hover:border-white/20'
+        }`}
+      >
+        {copied ? <><Check className="h-4 w-4" /> Copied!</> : <><Copy className="h-4 w-4" /> Copy</>}
+      </button>
+    </div>
+  );
 }
 
 export default function QuizPage() {
@@ -298,6 +389,13 @@ export default function QuizPage() {
                     </p>
                     <p className="text-zinc-600 text-xs mt-2">Come back tomorrow for another chance!</p>
                   </div>
+                  <ShareResultButton
+                    score={attempt.score ?? 0}
+                    pointsAwarded={attempt.pointsAwarded ?? 0}
+                    slotPosition={attempt.slotPosition}
+                    hasWon={hasWon ?? false}
+                    streakCount={streakCount}
+                  />
                 </div>
               )}
 
