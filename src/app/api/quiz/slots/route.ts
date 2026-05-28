@@ -25,9 +25,28 @@ export async function GET() {
 
     const slotsRemaining = quizDay ? quizDay.slots_remaining : 10;
 
+    // Fetch claimed slots
+    const { data: attempts, error: slotsErr } = await supabaseServer
+      .from('quiz_attempts')
+      .select('slot_position, user_id, completed_at')
+      .eq('quiz_date', todayWATStr)
+      .not('slot_position', 'is', null)
+      .order('slot_position', { ascending: true });
+
+    if (slotsErr) {
+      console.error('[API Quiz Slots] Fetch attempts error:', slotsErr);
+    }
+
+    const slots = (attempts || []).map(a => ({
+      position: a.slot_position,
+      userId: a.user_id,
+      claimedAt: a.completed_at
+    }));
+
     return NextResponse.json({
       slotsRemaining,
       quizDate: todayWATStr,
+      slots
     }, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',

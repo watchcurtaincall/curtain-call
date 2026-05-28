@@ -34,6 +34,7 @@ export async function GET(request: Request) {
     // 2. Fetch user's attempt for today
     let userAttempt = { status: 'none' as const };
     let streakCount = 0;
+    let pointsBalance = 0;
 
     if (userId) {
       const { data: attempt, error: attemptErr } = await supabaseServer
@@ -64,11 +65,6 @@ export async function GET(request: Request) {
       }
 
       // 3. Fetch user's profile for streak count
-      // Wait, profiles is indexed by email in supabase_schema.sql! Let's check!
-      // In supabase_schema.sql: CREATE TABLE IF NOT EXISTS profiles ( email TEXT PRIMARY KEY, ... )
-      // So profiles table uses email as the primary key/identifier!
-      // How do we get the email of the authenticated user?
-      // Since we have the userId, we can fetch their auth email from auth.users via service role.
       const { data: authUser, error: authUserErr } = await supabaseServer.auth.admin.getUserById(userId);
       if (authUserErr || !authUser?.user) {
         console.error('[API Quiz Status] Error fetching auth user details:', authUserErr);
@@ -88,6 +84,16 @@ export async function GET(request: Request) {
           }
         }
       }
+
+      // 4. Fetch points balance
+      const { data: wallet } = await supabaseServer
+        .from('quiz_points_wallet')
+        .select('balance')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (wallet) {
+        pointsBalance = wallet.balance;
+      }
     }
 
     return NextResponse.json({
@@ -96,6 +102,7 @@ export async function GET(request: Request) {
       totalSlots: 10,
       userAttempt,
       streakCount,
+      pointsBalance,
       questionsReady,
     }, {
       headers: {
