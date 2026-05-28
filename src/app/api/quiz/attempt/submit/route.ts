@@ -206,13 +206,51 @@ export async function POST(request: Request) {
           new Date()
         );
 
-        // Award milestone badges
+        // Award milestone badges & points
         const currentBadges = Array.isArray(profile.quiz_badges) ? [...profile.quiz_badges] : [];
         const updatedBadges = new Set(currentBadges);
+        let bonusPoints = 0;
 
-        if (newStreakCount >= 7) updatedBadges.add('7_day');
-        if (newStreakCount >= 30) updatedBadges.add('30_day');
-        if (newStreakCount >= 100) updatedBadges.add('100_day');
+        if (newStreakCount >= 7 && !updatedBadges.has('7_day')) {
+          updatedBadges.add('7_day');
+          bonusPoints += 500;
+        }
+        if (newStreakCount >= 30 && !updatedBadges.has('30_day')) {
+          updatedBadges.add('30_day');
+          bonusPoints += 1500;
+        }
+        if (newStreakCount >= 100 && !updatedBadges.has('100_day')) {
+          updatedBadges.add('100_day');
+          bonusPoints += 5000;
+        }
+
+        if (bonusPoints > 0) {
+          pointsAwarded += bonusPoints;
+          newPointsBalance += bonusPoints;
+
+          // Update wallet with new balance including bonuses
+          const { error: bonusWalletErr } = await supabaseServer
+            .from('quiz_points_wallet')
+            .update({
+              balance: newPointsBalance,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('user_id', userId);
+
+          if (bonusWalletErr) console.error('[API Quiz Submit] Bonus wallet update error:', bonusWalletErr);
+
+          // Log bonus transaction
+          await supabaseServer
+            .from('quiz_point_transactions')
+            .insert({
+              user_id: userId,
+              quiz_date: todayWATStr,
+              result_type: 'won', // Count milestone bonus as a "win"
+              points_delta: bonusPoints,
+              balance_after: newPointsBalance,
+              attempt_id: attemptId,
+            });
+        }
 
         const { error: profileUpdateErr } = await supabaseServer
           .from('profiles')

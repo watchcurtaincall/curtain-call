@@ -248,7 +248,7 @@ export default function QuizPage() {
                   <div>
                     <h2 className="text-2xl font-serif font-bold text-white">Today's Quiz is Live!</h2>
                     <p className="text-zinc-400 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
-                      Answer all 5 questions correctly to claim a winner slot and earn bonus points.
+                      Answer all 5 questions to earn 200 points.
                     </p>
                   </div>
                   <div className="flex items-center gap-3 flex-wrap justify-center text-xs font-bold text-zinc-400 uppercase tracking-widest">
@@ -389,8 +389,8 @@ export default function QuizPage() {
               <div className="flex flex-col gap-2">
                 {[
                   { days: 7, icon: <Flame className="h-4 w-4 text-orange-400"/>, label: '7-Day Streak', pts: '+500 pts' },
-                  { days: 30, icon: <Star className="h-4 w-4 text-yellow-400"/>, label: '30-Day Streak', pts: '+2000 pts' },
-                  { days: 100, icon: <Trophy className="h-4 w-4 text-amber-400"/>, label: '100-Day Streak', pts: '+10000 pts' },
+                  { days: 30, icon: <Star className="h-4 w-4 text-yellow-400"/>, label: '30-Day Streak', pts: '+1500 pts' },
+                  { days: 100, icon: <Trophy className="h-4 w-4 text-amber-400"/>, label: '100-Day Streak', pts: '+5000 pts' },
                 ].map(m => (
                   <div key={m.days} className={`flex items-center justify-between p-3 rounded-xl border ${streakCount >= m.days ? 'bg-amber-500/5 border-amber-500/20' : 'bg-zinc-950/40 border-white/5'}`}>
                     <div className="flex items-center gap-3">
