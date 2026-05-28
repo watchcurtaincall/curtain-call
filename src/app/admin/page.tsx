@@ -243,6 +243,7 @@ export default function AdminDashboardPage() {
   const [declineItem, setDeclineItem] = useState<{ id: string; name: string; type: 'artist' | 'play' | 'article' | 'critic' | 'withdrawal'; email: string } | null>(null);
   const [declineReason, setDeclineReason] = useState('');
   const [emailLogs, setEmailLogs] = useState<any[]>([]);
+  const [loadingEmailLogs, setLoadingEmailLogs] = useState(false);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [queueSubTab, setQueueSubTab] = useState<'pending' | 'history'>('pending');
   const [historySearch, setHistorySearch] = useState('');
@@ -363,6 +364,7 @@ export default function AdminDashboardPage() {
     setVerifiedCritics(storedCritics ? JSON.parse(storedCritics) : defaultApproved);
 
     if (typeof window !== 'undefined') {
+      // Temporary logs might still be displayed until API fetches
       setEmailLogs(ClientDB.getEmailLogs());
     }
   };
@@ -425,6 +427,24 @@ export default function AdminDashboardPage() {
         .finally(() => setLoadingQuizStats(false));
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'email-logs' && emailLogs.length === 0 && !loadingEmailLogs) {
+      setLoadingEmailLogs(true);
+      fetch('/api/admin/email-logs')
+        .then(r => r.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setEmailLogs(data);
+          }
+        })
+        .catch(err => {
+          console.error('Failed to fetch Resend logs', err);
+        })
+        .finally(() => setLoadingEmailLogs(false));
+    }
+  }, [activeTab]);
+
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -1375,7 +1395,7 @@ This file was retrieved from the Curtain Call Curation Vault.
         
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (() => {
-          const totalRevenue = ClientDB.getTickets ? ClientDB.getTickets().reduce((acc: number, t: any) => acc + (t.price || 0), 0) : 0;
+          const totalRevenue = ClientDB.getTickets ? ClientDB.getTickets().reduce((acc: number, t: any) => acc + ((t.price || 0) * 0.05), 0) : 0;
           const totalPlays = ClientDB.getProductions ? ClientDB.getProductions().length : 0;
           const totalArtists = ClientDB.getArtists ? ClientDB.getArtists().length : 0;
           const totalCritics = verifiedCritics.length;
@@ -3460,11 +3480,17 @@ This file was retrieved from the Curtain Call Curation Vault.
                       <th className="py-3 font-semibold uppercase tracking-wider">Recipient</th>
                       <th className="py-3 font-semibold uppercase tracking-wider">Subject</th>
                       <th className="py-3 font-semibold uppercase tracking-wider">Timestamp</th>
-                      <th className="py-3 font-semibold uppercase tracking-wider">Delivery Mode</th>
+                      <th className="py-3 font-semibold uppercase tracking-wider">Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {emailLogs.length === 0 ? (
+                    {loadingEmailLogs ? (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-zinc-600 font-mono">
+                          Loading transaction logs...
+                        </td>
+                      </tr>
+                    ) : emailLogs.length === 0 ? (
                       <tr>
                         <td colSpan={4} className="py-8 text-center text-zinc-600 font-mono">
                           No email transactional logs found.
@@ -3472,13 +3498,26 @@ This file was retrieved from the Curtain Call Curation Vault.
                       </tr>
                     ) : (
                       emailLogs.map((log: any, idx: number) => (
-                        <tr key={idx} className="border-b border-white/5 hover:bg-zinc-900/30 transition-all">
-                          <td className="py-4 font-mono text-zinc-300">{log.to}</td>
-                          <td className="py-4 font-semibold text-white">{log.subject}</td>
-                          <td className="py-4 text-zinc-500 font-mono">{log.timestamp}</td>
+                        <tr key={log.id || idx} className="border-b border-white/5 hover:bg-zinc-900/30 transition-all">
+                          <td className="py-4 font-mono text-zinc-300 truncate max-w-[200px]" title={Array.isArray(log.to) ? log.to.join(', ') : log.to}>
+                            {Array.isArray(log.to) ? log.to[0] : log.to} {Array.isArray(log.to) && log.to.length > 1 && `(+${log.to.length - 1})`}
+                          </td>
+                          <td className="py-4 font-semibold text-white truncate max-w-[300px]" title={log.subject}>{log.subject}</td>
+                          <td className="py-4 text-zinc-500 font-mono">
+                            {log.created_at ? new Date(log.created_at).toLocaleString() : log.timestamp}
+                          </td>
                           <td className="py-4">
-                            {log.simulated ? (
-                              <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-mono text-[9px] uppercase">
+                            {log.last_event ? (
+                              <span className={`px-2 py-0.5 rounded font-mono text-[9px] uppercase border ${
+                                log.last_event === 'delivered' ? 'bg-green-500/10 border-green-500/20 text-green-400' :
+                                log.last_event === 'opened' || log.last_event === 'clicked' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+                                log.last_event === 'bounced' || log.last_event === 'complained' ? 'bg-red-500/10 border-red-500/20 text-red-400' :
+                                'bg-zinc-500/10 border-zinc-500/20 text-zinc-400'
+                              }`}>
+                                {log.last_event}
+                              </span>
+                            ) : log.simulated ? (
+                              <span className="bg-zinc-500/10 border border-zinc-500/20 text-zinc-400 px-2 py-0.5 rounded font-mono text-[9px] uppercase">
                                 Simulated
                               </span>
                             ) : (
