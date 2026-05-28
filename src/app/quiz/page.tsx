@@ -45,7 +45,7 @@ export default function QuizPage() {
       setPageState(prev => prev === 'loading' ? 'idle' : prev);
     } catch (err: any) {
       setErrorMsg(err.message);
-      setPageState('error');
+      setPageState(prev => prev === 'loading' ? 'error' : prev);
     }
   }, [user]);
 
