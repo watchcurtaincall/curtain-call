@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { ClientDB, syncFromSupabase } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
-import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download, QrCode, Camera, RefreshCw, Star } from 'lucide-react';
+import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download, QrCode, Camera, RefreshCw, Star, BarChart } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-type AdminTab = 'overview' | 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'email-logs';
+type AdminTab = 'overview' | 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'email-logs' | 'quiz-analytics';
 
 // ── Stageography Adder Sub-component (used inside Edit Artist modal) ──
 function AdminStageographyAdder({ onAdd }: { onAdd: (credit: { productionId: string; productionTitle: string; role: string }) => void }) {
@@ -101,6 +101,8 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [quizStats, setQuizStats] = useState<any>(null);
+  const [loadingQuizStats, setLoadingQuizStats] = useState(false);
 
   // Gate Scanner state variables
   const [scanInput, setScanInput] = useState('');
@@ -403,6 +405,26 @@ export default function AdminDashboardPage() {
       return () => window.removeEventListener('cc-db-synced', loadQueues);
     }
   }, [refreshTrigger, isAuthorized]);
+
+  useEffect(() => {
+    if (activeTab === 'quiz-analytics' && !quizStats && !loadingQuizStats) {
+      setLoadingQuizStats(true);
+      fetch('/api/admin/quiz-stats')
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            setQuizStats(data);
+          } else {
+            showToast('Failed to load quiz stats', 'error');
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          showToast('Failed to fetch quiz stats', 'error');
+        })
+        .finally(() => setLoadingQuizStats(false));
+    }
+  }, [activeTab]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -1278,6 +1300,7 @@ This file was retrieved from the Curtain Call Curation Vault.
           <nav className="flex flex-col gap-1">
             {[
               { id: 'overview', name: 'Overview', icon: LayoutGrid },
+              { id: 'quiz-analytics', name: 'Quiz Analytics', icon: BarChart },
               { id: 'queue', name: 'Queue & History', icon: ShieldAlert, badge: pendingTotal },
               { id: 'withdrawals', name: 'Withdrawals', icon: Banknote, badge: withdrawals.filter(w => w.status === 'Pending').length },
               { id: 'blog', name: 'Publish Blog', icon: FileText },
@@ -1468,6 +1491,124 @@ This file was retrieved from the Curtain Call Curation Vault.
 
 
         {/* SUBMISSIONS APPROVAL QUEUE */}
+        {activeTab === 'quiz-analytics' && (
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-serif font-bold text-white tracking-wide">Daily Quiz Analytics</h2>
+                <p className="text-sm text-zinc-400 mt-1">Holistic view of quiz engagement and campaign performance.</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setQuizStats(null);
+                  setActiveTab('overview'); 
+                  setTimeout(() => setActiveTab('quiz-analytics'), 50);
+                }}
+                className="bg-zinc-900 border border-white/10 hover:bg-zinc-800 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${loadingQuizStats ? 'animate-spin text-red-500' : 'text-zinc-400'}`} /> Refresh Stats
+              </button>
+            </div>
+
+            {loadingQuizStats ? (
+              <div className="flex flex-col items-center justify-center h-64 border border-white/5 rounded-3xl bg-zinc-900/50">
+                <RefreshCw className="h-8 w-8 text-red-500 animate-spin mb-4" />
+                <p className="text-zinc-400 text-sm animate-pulse">Aggregating real-time stats...</p>
+              </div>
+            ) : !quizStats ? (
+              <div className="flex flex-col items-center justify-center h-64 border border-white/5 rounded-3xl bg-zinc-900/50">
+                <p className="text-zinc-500 text-sm">Failed to load stats. Check database connection.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-zinc-950 border border-white/5 p-6 rounded-3xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Users className="h-16 w-16 text-white" />
+                    </div>
+                    <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2">Total Attempts</p>
+                    <p className="text-4xl font-serif font-bold text-white">{quizStats.totals.attempts.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-zinc-950 border border-white/5 p-6 rounded-3xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Award className="h-16 w-16 text-emerald-500" />
+                    </div>
+                    <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2">Total Passed (5/5)</p>
+                    <p className="text-4xl font-serif font-bold text-emerald-400">{quizStats.totals.passed.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-zinc-950 border border-white/5 p-6 rounded-3xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Banknote className="h-16 w-16 text-red-500" />
+                    </div>
+                    <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2">Total Winners</p>
+                    <p className="text-4xl font-serif font-bold text-red-400">{quizStats.totals.won.toLocaleString()}</p>
+                  </div>
+                  <div className="bg-zinc-950 border border-white/5 p-6 rounded-3xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                      <Mail className="h-16 w-16 text-amber-500" />
+                    </div>
+                    <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-2">Avg. Open Rate</p>
+                    <p className="text-4xl font-serif font-bold text-amber-400">{quizStats.totals.openRate}%</p>
+                    <p className="text-xs text-zinc-500 mt-1">{quizStats.totals.emailsOpened} / {quizStats.totals.emailsSent} emails opened</p>
+                  </div>
+                </div>
+
+                <div className="bg-zinc-950 border border-white/5 rounded-3xl overflow-hidden mt-6">
+                  <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Per-Day Breakdown</h3>
+                    <button onClick={() => exportToCSV(quizStats.daily, 'quiz_analytics.csv', ['date', 'attempts', 'passed', 'won', 'emailsSent', 'emailsOpened'])} className="text-xs text-zinc-400 hover:text-white flex items-center gap-1 transition-colors">
+                      <Download className="h-3 w-3" /> Export CSV
+                    </button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-white/5 text-xs uppercase tracking-wider text-zinc-500 bg-zinc-900/30">
+                          <th className="px-6 py-4 font-bold">Date (WAT)</th>
+                          <th className="px-6 py-4 font-bold">Attempts</th>
+                          <th className="px-6 py-4 font-bold">Passed</th>
+                          <th className="px-6 py-4 font-bold">Winners</th>
+                          <th className="px-6 py-4 font-bold">Open Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {quizStats.daily.length > 0 ? quizStats.daily.map((day: any) => (
+                          <tr key={day.date} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="text-sm font-medium text-white">{day.date}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm text-zinc-300">{day.attempts}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm text-emerald-400 font-bold">{day.passed}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm text-red-400 font-bold">{day.won}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-amber-400">{day.emailsSent > 0 ? ((day.emailsOpened / day.emailsSent) * 100).toFixed(1) : 0}%</span>
+                                <span className="text-xs text-zinc-600">({day.emailsOpened}/{day.emailsSent})</span>
+                              </div>
+                            </td>
+                          </tr>
+                        )) : (
+                          <tr>
+                            <td colSpan={5} className="px-6 py-12 text-center text-sm text-zinc-500">
+                              No quiz data available yet.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {activeTab === 'queue' && (
           <div className="flex flex-col gap-8 animate-fade-up">
             

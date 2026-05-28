@@ -79,6 +79,17 @@ export async function POST(req: NextRequest) {
 
   console.log(`[CronEmail] ✅ Sent ${sent}/${users.length} quiz reminder emails for ${today}`);
 
+  if (sent > 0) {
+    try {
+      await supabaseServer.rpc('increment_email_sent', {
+        p_quiz_date: today,
+        p_count: sent
+      });
+    } catch (e) {
+      console.error('[CronEmail] Failed to increment email sent count', e);
+    }
+  }
+
   return NextResponse.json({
     message: 'Email cron complete',
     date: today,

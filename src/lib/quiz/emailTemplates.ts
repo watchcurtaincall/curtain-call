@@ -12,6 +12,7 @@ interface BaseEmailOptions {
   ctaUrl?: string;
   unsubscribedUrl?: string;
   signatureType?: 'welcome' | 'support' | 'editors';
+  campaignId?: string;
 }
 
 /**
@@ -25,6 +26,7 @@ export function buildBaseLayout({
   ctaUrl,
   unsubscribedUrl = "https://curtaincall.com.ng/profile",
   signatureType,
+  campaignId,
 }: BaseEmailOptions): string {
   const ctaButtonHtml = ctaText && ctaUrl
     ? `
@@ -195,6 +197,7 @@ export function buildBaseLayout({
       </td>
     </tr>
   </table>
+  ${campaignId ? `<!-- ── Analytics Pixel ── --><img src="https://curtaincall.com.ng/api/pixel/${campaignId}" width="1" height="1" style="display:none; visibility:hidden; width:1px; height:1px;" alt="" />` : ''}
 </body>
 </html>`;
 }
@@ -265,6 +268,7 @@ export function getDailyQuizReminderHtml(name: string, date: string, slots: numb
     ctaText: "Play Now",
     ctaUrl: quizUrl,
     signatureType: 'editors',
+    campaignId: date,
   });
 }
 
@@ -314,6 +318,7 @@ export function getFeatureAnnouncementHtml(name: string, appUrl: string): string
     ctaText: "Play Now",
     ctaUrl: `${appUrl}/quiz`,
     signatureType: 'welcome',
+    campaignId: 'launch-feature',
   });
 }
 
