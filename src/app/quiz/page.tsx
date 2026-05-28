@@ -22,7 +22,7 @@ interface SlotEntry {
 }
 
 export default function QuizPage() {
-  const { user } = useAuth();
+  const { user, isInitializing } = useAuth();
   const router = useRouter();
 
   const [pageState, setPageState] = useState<PageState>('loading');
@@ -68,11 +68,12 @@ export default function QuizPage() {
   }, [user]);
 
   useEffect(() => {
+    if (isInitializing) return;
     if (!user) { setPageState('unauthenticated'); return; }
     fetchStatus();
     fetchSlots();
     fetchPoints();
-  }, [user, fetchStatus, fetchSlots, fetchPoints]);
+  }, [user, isInitializing, fetchStatus, fetchSlots, fetchPoints]);
 
   // Poll slots every 30s while idle
   useEffect(() => {

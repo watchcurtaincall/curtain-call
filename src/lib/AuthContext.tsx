@@ -42,6 +42,7 @@ const MOCK_USER: MockUser = {
 
 interface AuthContextType {
   user: MockUser | null;
+  isInitializing: boolean;
   login: (email: string, password?: string) => Promise<void>;
   signUp: (email: string, password?: string, name?: string, username?: string) => Promise<void>;
   logout: () => void;
@@ -52,6 +53,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  isInitializing: true,
   login: async () => {},
   signUp: async () => {},
   logout: () => {},
@@ -132,6 +134,7 @@ const fetchVerificationStatusFromServer = async (email: string): Promise<boolean
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<MockUser | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -162,6 +165,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         setUser(JSON.parse(savedUser));
       }
+    } else {
+      setIsInitializing(false);
     }
 
     if (supabase) {
@@ -228,6 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem('cc_authed', 'true');
           localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
         }
+        setIsInitializing(false);
       });
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -631,7 +637,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signUp, logout, updateProfile, verifyCode, resendVerificationCode }}>
+    <AuthContext.Provider value={{ user, isInitializing, login, signUp, logout, updateProfile, verifyCode, resendVerificationCode }}>
       {children}
     </AuthContext.Provider>
   );
