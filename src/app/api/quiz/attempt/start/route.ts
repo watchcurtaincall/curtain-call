@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { toWATDateString } from '@/lib/quiz/streakCalculation';
 import { QuizQuestion, QuizQuestionInternal } from '@/lib/types';
-import { getDeterministicUUID } from '@/lib/quiz/auth';
+import { resolveRealUserId } from '@/lib/quiz/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing userId parameter' }, { status: 400 });
     }
 
-    userId = getDeterministicUUID(userId);
+    userId = await resolveRealUserId(userId);
 
     const todayWATStr = toWATDateString(new Date());
 
