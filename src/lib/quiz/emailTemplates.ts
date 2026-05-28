@@ -13,6 +13,7 @@ interface BaseEmailOptions {
   unsubscribedUrl?: string;
   signatureType?: 'welcome' | 'support' | 'editors';
   campaignId?: string;
+  emailToTrack?: string;
 }
 
 /**
@@ -27,6 +28,7 @@ export function buildBaseLayout({
   unsubscribedUrl = "https://curtaincall.com.ng/profile",
   signatureType,
   campaignId,
+  emailToTrack,
 }: BaseEmailOptions): string {
   const ctaButtonHtml = ctaText && ctaUrl
     ? `
@@ -197,7 +199,7 @@ export function buildBaseLayout({
       </td>
     </tr>
   </table>
-  ${campaignId ? `<!-- ── Analytics Pixel ── --><img src="https://curtaincall.com.ng/api/pixel/${campaignId}" width="1" height="1" style="display:none; visibility:hidden; width:1px; height:1px;" alt="" />` : ''}
+  ${campaignId ? `<!-- ── Analytics Pixel ── --><img src="https://curtaincall.com.ng/api/pixel/${campaignId}${emailToTrack ? `?email=${encodeURIComponent(emailToTrack)}` : ''}" width="1" height="1" style="display:none; visibility:hidden; width:1px; height:1px;" alt="" />` : ''}
 </body>
 </html>`;
 }
@@ -206,7 +208,7 @@ export function buildBaseLayout({
  * Redesigned Daily Quiz Reminder Email
  * Features 5 distinct copy versions that rotate day-to-day so it never feels bland!
  */
-export function getDailyQuizReminderHtml(name: string, date: string, slots: number, quizUrl: string): string {
+export function getDailyQuizReminderHtml(name: string, email: string, date: string, slots: number, quizUrl: string): string {
   const shortName = name.split(' ')[0];
 
   // Rotate copy day-to-day based on calendar date to avoid duplication fatigue
@@ -269,6 +271,7 @@ export function getDailyQuizReminderHtml(name: string, date: string, slots: numb
     ctaUrl: quizUrl,
     signatureType: 'editors',
     campaignId: date,
+    emailToTrack: email,
   });
 }
 
@@ -276,7 +279,7 @@ export function getDailyQuizReminderHtml(name: string, date: string, slots: numb
  * Stunning Redesigned Feature Announcement Email
  * Signed by Babatunde Lawal
  */
-export function getFeatureAnnouncementHtml(name: string, appUrl: string): string {
+export function getFeatureAnnouncementHtml(name: string, email: string, appUrl: string): string {
   const shortName = name.split(' ')[0];
 
   const body = `
@@ -319,6 +322,7 @@ export function getFeatureAnnouncementHtml(name: string, appUrl: string): string
     ctaUrl: `${appUrl}/quiz`,
     signatureType: 'welcome',
     campaignId: 'launch-feature',
+    emailToTrack: email,
   });
 }
 

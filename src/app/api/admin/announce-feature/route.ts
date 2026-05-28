@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
   // Loop through and send the beautiful announcement email
   for (const user of users) {
     try {
-      const emailHtml = getFeatureAnnouncementHtml(user.name || user.email, APP_URL);
+      const emailHtml = getFeatureAnnouncementHtml(user.name || user.email, user.email, APP_URL);
       
       const res = await fetch(`${APP_URL}/api/send-email`, {
         method: 'POST',

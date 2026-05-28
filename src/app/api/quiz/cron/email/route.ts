@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
           subject: `${shortName} Your daily quiz is live - play now`,
           html: getDailyQuizReminderHtml(
             user.name || user.email,
+            user.email,
             today,
             quizDay.winner_slots_total,
             `${APP_URL}/quiz`

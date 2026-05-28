@@ -15,12 +15,27 @@ export async function GET(
 ) {
   try {
     const { campaignId: quizDate } = await params;
+    const url = new URL(request.url);
+    const email = url.searchParams.get('email');
 
     if (quizDate && supabaseServer) {
-      // Increment the opened count
+      // Increment the total opened count
       await supabaseServer.rpc('increment_email_opened', {
         p_quiz_date: quizDate,
       });
+
+      // Track the specific user open if email is provided
+      if (email) {
+        await supabaseServer
+          .from('email_opens')
+          .upsert({
+            campaign_id: quizDate,
+            email: email,
+            opened_at: new Date().toISOString()
+          }, { onConflict: 'campaign_id,email' })
+          .select()
+          .single();
+      }
     }
 
     // Return the transparent pixel with correct headers

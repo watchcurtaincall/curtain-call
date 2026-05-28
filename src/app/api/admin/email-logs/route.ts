@@ -21,7 +21,25 @@ export async function GET() {
     }
 
     const json = await res.json();
-    return NextResponse.json(json.data || []);
+    let emails = json.data || [];
+
+    // Fetch our custom open tracking
+    const { supabaseServer } = await import('@/lib/supabaseServer');
+    if (supabaseServer) {
+      const { data: opens } = await supabaseServer.from('email_opens').select('email, campaign_id');
+      if (opens && opens.length > 0) {
+        const openSet = new Set(opens.map((o: any) => o.email.toLowerCase()));
+        emails = emails.map((email: any) => {
+          const toEmail = Array.isArray(email.to) ? email.to[0] : email.to;
+          if (toEmail && openSet.has(toEmail.toLowerCase())) {
+            email.last_event = 'opened';
+          }
+          return email;
+        });
+      }
+    }
+
+    return NextResponse.json(emails);
   } catch (error: any) {
     console.error('[Admin Email Logs API Error]:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
