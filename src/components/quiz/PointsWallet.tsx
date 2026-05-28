@@ -10,15 +10,17 @@ interface PointsWalletProps {
 }
 
 const CONVERSION_RATE = 1; // 1 pt = ₦1
-const MIN_POINTS = 1000;
+const MIN_POINTS = 1;
 
 export function PointsWallet({ userId, balance, onConverted }: PointsWalletProps) {
   const [state, setState] = useState<'idle' | 'converting' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [nairaValue, setNairaValue] = useState(0);
+  const [convertAmountStr, setConvertAmountStr] = useState<string>('');
 
   const cashValue = Math.floor(balance / CONVERSION_RATE);
-  const canConvert = balance >= MIN_POINTS;
+  const convertAmount = parseInt(convertAmountStr, 10);
+  const canConvert = balance >= MIN_POINTS && convertAmount > 0 && convertAmount <= balance;
 
   const handleConvert = async () => {
     if (!canConvert || state === 'converting') return;
@@ -28,13 +30,14 @@ export function PointsWallet({ userId, balance, onConverted }: PointsWalletProps
       const res = await fetch('/api/quiz/points/convert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, pointsToConvert: balance }),
+        body: JSON.stringify({ userId, pointsAmount: convertAmount }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Conversion failed');
-      setNairaValue(data.nairaAdded);
+      setNairaValue(convertAmount);
       setState('success');
-      onConverted?.(0);
+      onConverted?.(balance - convertAmount);
+      setConvertAmountStr('');
     } catch (err: any) {
       setErrorMsg(err.message || 'Conversion failed');
       setState('error');
@@ -53,6 +56,7 @@ export function PointsWallet({ userId, balance, onConverted }: PointsWalletProps
             ₦{nairaValue.toLocaleString()} added to your producer wallet for withdrawal.
           </p>
         </div>
+        <button onClick={() => setState('idle')} className="mt-2 text-amber-500 text-sm font-bold">Convert More</button>
       </div>
     );
   }
@@ -78,7 +82,28 @@ export function PointsWallet({ userId, balance, onConverted }: PointsWalletProps
         <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 text-center">
           <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Cash Value</p>
           <p className="text-2xl font-bold font-serif text-emerald-400 mt-1">₦{cashValue.toLocaleString()}</p>
-          <p className="text-[10px] text-zinc-600 mt-0.5">at 1000pts/₦1000</p>
+          <p className="text-[10px] text-zinc-600 mt-0.5">at 1pt = ₦1</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-xs text-zinc-400 font-bold uppercase tracking-widest">Amount to Convert (pts)</label>
+        <div className="flex gap-2">
+          <input
+            type="number"
+            value={convertAmountStr}
+            onChange={(e) => setConvertAmountStr(e.target.value)}
+            placeholder="e.g. 500"
+            className="flex-1 bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500/50"
+            min={1}
+            max={balance}
+          />
+          <button
+            onClick={() => setConvertAmountStr(balance.toString())}
+            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-3 rounded-xl text-xs font-bold"
+          >
+            MAX
+          </button>
         </div>
       </div>
 
@@ -97,15 +122,9 @@ export function PointsWallet({ userId, balance, onConverted }: PointsWalletProps
         {state === 'converting' ? (
           <><Loader2 className="h-4 w-4 animate-spin" /> Converting…</>
         ) : (
-          <>Convert All to Cash <ArrowRight className="h-4 w-4" /></>
+          <>Convert to Cash <ArrowRight className="h-4 w-4" /></>
         )}
       </button>
-
-      {!canConvert && (
-        <p className="text-center text-zinc-600 text-xs">
-          Minimum {MIN_POINTS.toLocaleString()} pts needed to convert ({MIN_POINTS - balance} more to go)
-        </p>
-      )}
     </div>
   );
 }

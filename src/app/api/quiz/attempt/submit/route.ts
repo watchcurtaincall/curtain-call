@@ -63,29 +63,20 @@ export async function POST(request: Request) {
     let slotPosition: number | null = null;
 
     if (allCorrect) {
+      resultType = 'won';
+      pointsAwarded = 200;
+      
+      // Optional: still try to claim a slot for leaderboard/bragging rights, but points are guaranteed.
       try {
-        // Atomic slot claiming RPC
         const { data: slot, error: rpcErr } = await supabaseServer.rpc('claim_winner_slot', {
           p_quiz_date: todayWATStr,
           p_attempt_id: attemptId
         });
-
-        if (rpcErr) {
-          console.error('[API Quiz Submit] claim_winner_slot RPC error:', rpcErr);
-          resultType = 'consolation';
-          pointsAwarded = 20;
-        } else if (slot !== null && slot !== undefined) {
-          resultType = 'won';
-          pointsAwarded = 100;
+        if (!rpcErr && slot !== null && slot !== undefined) {
           slotPosition = slot;
-        } else {
-          resultType = 'consolation';
-          pointsAwarded = 20;
         }
       } catch (rpcEx) {
         console.error('[API Quiz Submit] claim_winner_slot RPC exception:', rpcEx);
-        resultType = 'consolation';
-        pointsAwarded = 20;
       }
     } else {
       resultType = 'failed';
