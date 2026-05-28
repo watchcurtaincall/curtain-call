@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: user.email,
-          subject: '✨ Curtain Call Update: Share Your Theatre Scores & Streaks Globally!',
+          subject: 'We just launched something new — and you can earn from it',
           html: emailHtml,
         }),
       });

@@ -201,96 +201,68 @@ export function buildBaseLayout({
 
 /**
  * Redesigned Daily Quiz Reminder Email
+ * Features 5 distinct copy versions that rotate day-to-day so it never feels bland!
  */
 export function getDailyQuizReminderHtml(name: string, date: string, slots: number, quizUrl: string): string {
-  const displayDate = new Date(date).toLocaleDateString('en-GB', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-  });
-  
   const shortName = name.split(' ')[0];
+
+  // Rotate copy day-to-day based on calendar date to avoid duplication fatigue
+  const dayIndex = new Date(date).getDate();
+
+  const variations = [
+    // Version 1: Classic & Direct
+    `The CC Daily Quiz is live and ${slots} winner slots are still open.
+     <br/><br/>
+     Get all 5 questions right before the slots run out and earn <strong>₦200 today</strong>.`,
+    
+    // Version 2: Competitive edge
+    `Clock is ticking! Today's CC Daily Quiz is officially live and the ${slots} winner slots are already filling up fast.
+     <br/><br/>
+     Think you can get all 5 right? Do it now, secure your spot, and walk away with <strong>₦200 today</strong> straight to your wallet.`,
+     
+    // Version 3: High Energy / Action
+    `5 questions. 5 seconds per slide. <strong>₦200 cash reward</strong> waiting right now.
+     <br/><br/>
+     Today's CC Daily Quiz is live, but only the first ${slots} perfect submissions claim the prize. Get in there before the slots are gone!`,
+     
+    // Version 4: Knowledge test
+    `How well do you know your theatre? Let's put your stage knowledge to the test.
+     <br/><br/>
+     Today's CC Daily Quiz is live! Get all 5 questions correct before the ${slots} winner slots run out and claim your <strong>₦200 today</strong>.`,
+     
+    // Version 5: Early Bird / Spotlight
+    `The daily spotlight is on and today's theatre questions are waiting!
+     <br/><br/>
+     Complete all 5 correctly before the other ${slots} winners beat you to it, and bag your <strong>₦200 prize today</strong>.`
+  ];
+
+  const selectedCopy = variations[dayIndex % variations.length];
 
   const body = `
     <p style="margin: 0 0 24px; font-size: 16px; color: #d4d4d8; line-height: 1.6;">
       Hi <strong style="color: #ffffff;">${shortName}</strong>,
     </p>
     <p style="margin: 0 0 28px; font-size: 15px; color: #a1a1aa; line-height: 1.75;">
-      The spotlights are up, the audience is seated, and today's 5-question theatre trivia is officially **live**. Answer fast, protect your streak, and claim one of the premium winner slots!
+      ${selectedCopy}
     </p>
-
-    <!-- Sleek Glassmorphism Stats Showcase -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 32px; border-collapse: separate; border-spacing: 8px 0;">
+    
+    <!-- Rule warning card -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(239, 68, 68, 0.02); border: 1px solid rgba(239, 68, 68, 0.1); border-radius: 16px; margin-bottom: 24px;">
       <tr>
-        <!-- Stat 1: Questions -->
-        <td style="
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 20px;
-          padding: 20px 10px;
-          text-align: center;
-          width: 33%;
-        ">
-          <p style="margin: 0; font-size: 24px; font-weight: 900; color: #f59e0b; line-height: 1.2;">5</p>
-          <p style="margin: 6px 0 0; font-size: 10px; color: #71717a; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Trivia Qs</p>
-        </td>
-
-        <!-- Stat 2: Slots -->
-        <td style="
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 20px;
-          padding: 20px 10px;
-          text-align: center;
-          width: 33%;
-        ">
-          <p style="margin: 0; font-size: 24px; font-weight: 900; color: #f97316; line-height: 1.2;">${slots}</p>
-          <p style="margin: 6px 0 0; font-size: 10px; color: #71717a; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Win Slots</p>
-        </td>
-
-        <!-- Stat 3: Timer -->
-        <td style="
-          background: rgba(255, 255, 255, 0.02);
-          border: 1px solid rgba(255, 255, 255, 0.05);
-          border-radius: 20px;
-          padding: 20px 10px;
-          text-align: center;
-          width: 33%;
-        ">
-          <p style="margin: 0; font-size: 24px; font-weight: 900; color: #ef4444; line-height: 1.2;">5s</p>
-          <p style="margin: 6px 0 0; font-size: 10px; color: #71717a; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Per Slide</p>
-        </td>
-      </tr>
-    </table>
-
-    <!-- Beautiful Information Card -->
-    <table width="100%" cellpadding="0" cellspacing="0" style="
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.03) 0%, rgba(245, 158, 11, 0.03) 100%);
-      border: 1px solid rgba(245, 158, 11, 0.1);
-      border-radius: 20px;
-      margin-bottom: 24px;
-    ">
-      <tr>
-        <td style="padding: 24px 28px;">
-          <h3 style="margin: 0 0 10px; font-size: 15px; font-weight: 700; color: #fbbf24; font-family: Georgia, serif;">
-            💰 Play for Real Value
-          </h3>
-          <p style="margin: 0; font-size: 13.5px; color: #a1a1aa; line-height: 1.6;">
-            Every successful run adds points to your wallet. Convert your points to cash directly into your <strong>Producer Wallet</strong> whenever you choose.
+        <td style="padding: 16px; text-align: center;">
+          <p style="margin: 0; font-size: 12.5px; color: #fca5a5; line-height: 1.5;">
+            ⚠️ <strong>Crucial rule:</strong> Do not leave the page once you start. Switching tabs voids your attempt immediately.
           </p>
         </td>
       </tr>
     </table>
-
-    <p style="margin: 0 0 12px; font-size: 12px; color: #52525b; text-align: center; line-height: 1.6;">
-      ⚡ Slots fill up fast — be first to answer all 5 correctly!<br/>
-      🚨 Do not leave the tab or minimize the browser or your attempt will instantly be voided.
-    </p>
   `;
 
   return buildBaseLayout({
-    preheader: `🎭 Complete today's daily theatre quiz for a chance to win one of ${slots} winner slots!`,
-    title: `🎭 Today's Theatre Quiz is Live!`,
+    preheader: "⚡ Today's CC Daily Quiz is live - play now to win ₦200!",
+    title: "🎭 Daily Quiz is Live — Play Now",
     bodyHtml: body,
-    ctaText: "Take Today's Quiz →",
+    ctaText: "Play Now",
     ctaUrl: quizUrl,
     signatureType: 'editors',
   });
@@ -298,6 +270,7 @@ export function getDailyQuizReminderHtml(name: string, date: string, slots: numb
 
 /**
  * Stunning Redesigned Feature Announcement Email
+ * Signed by Babatunde Lawal
  */
 export function getFeatureAnnouncementHtml(name: string, appUrl: string): string {
   const shortName = name.split(' ')[0];
@@ -307,45 +280,40 @@ export function getFeatureAnnouncementHtml(name: string, appUrl: string): string
       Hi <strong style="color: #ffffff;">${shortName}</strong>,
     </p>
     
-    <p style="margin: 0 0 20px; font-size: 18px; font-weight: 700; color: #ffffff; line-height: 1.5; font-family: Georgia, serif; text-align: center;">
-      Quick question — how well do you know Nigerian theatre?
+    <p style="margin: 0 0 20px; font-size: 15.5px; color: #d4d4d8; line-height: 1.75;">
+      We just launched the <strong>Curtain Call Daily Quiz</strong> — a new way to test your theatre knowledge and earn while doing it.
     </p>
     
-    <!-- Campaign Highlights Card -->
-    <div style="
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 24px;
-      padding: 28px 24px;
-      margin-bottom: 28px;
-      text-align: center;
-    ">
-      <p style="margin: 0 0 16px; font-size: 15px; color: #d4d4d8; line-height: 1.7;">
-        <strong>The Curtain Call Daily Quiz</strong> just launched. 5 questions a day. 5 seconds per question. Get them all right and earn <strong style="color: #fbbf24;">₦200 per day</strong>.
-      </p>
-      <p style="margin: 0; font-size: 15px; color: #f97316; font-weight: 700; line-height: 1.6;">
-        Only 10 people can win each day. First come, first served.
-      </p>
-    </div>
+    <p style="margin: 0 0 24px; font-size: 15px; color: #a1a1aa; line-height: 1.75;">
+      5 questions every day. 5 seconds per question. Get them all right and earn <strong>₦200 straight to your wallet</strong>. Only the first 10 correct completions win each day — after that, the quiz closes until tomorrow.
+    </p>
+    
+    <!-- Rule card -->
+    <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(239, 68, 68, 0.03); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 20px; margin-bottom: 24px;">
+      <tr>
+        <td style="padding: 20px 24px;">
+          <h4 style="margin: 0 0 6px; font-size: 14px; font-weight: 700; color: #ef4444; text-transform: uppercase; letter-spacing: 1px;">
+            ⚠️ One rule:
+          </h4>
+          <p style="margin: 0; font-size: 13.5px; color: #fca5a5; line-height: 1.6;">
+            Don't leave the page once you start. Switching tabs voids your attempt immediately.
+          </p>
+        </td>
+      </tr>
+    </table>
 
-    <!-- Hype Drop Line -->
-    <p style="margin: 0 0 24px; font-size: 13.5px; font-weight: 800; color: #4ade80; text-align: center; text-transform: uppercase; letter-spacing: 1px; line-height: 1.6;">
-      WE WILL DROP A NEW QUIZ EVERY DAY SO YOU CAN EARN WHILE YOU HAVE FUN!
-    </p>
-    
-    <!-- Urgency Note -->
-    <p style="margin: 0; font-size: 13px; color: #ef4444; font-weight: 700; text-align: center; letter-spacing: 2px; text-transform: uppercase;">
-      ⏳ Clock is ticking.
+    <p style="margin: 0 0 12px; font-size: 15.5px; color: #ffffff; line-height: 1.75; text-align: center; font-weight: 600;">
+      Today's quiz is already live — play now and share your result!
     </p>
   `;
 
   return buildBaseLayout({
-    preheader: "🎭 5 questions. 5 seconds. Get them all right and earn ₦200 per day!",
-    title: "⚡ The Curtain Call Daily Quiz is Live!",
+    preheader: "⚡ We just launched the Curtain Call Daily Quiz — test your knowledge and earn ₦200!",
+    title: "✨ We just launched something new — and you can earn from it",
     bodyHtml: body,
-    ctaText: "Take Today's Quiz →",
+    ctaText: "Play Now",
     ctaUrl: `${appUrl}/quiz`,
-    signatureType: 'editors',
+    signatureType: 'welcome',
   });
 }
 

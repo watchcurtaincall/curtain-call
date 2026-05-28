@@ -50,12 +50,13 @@ export async function POST(req: NextRequest) {
 
   for (const user of users) {
     try {
+      const shortName = (user.name || user.email).split(' ')[0];
       const res = await fetch(`${APP_URL}/api/send-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: user.email,
-          subject: `🎭 Today's Theatre Quiz is Live! ${quizDay.winner_slots_total} winner slots available`,
+          subject: `${shortName} Your daily quiz is live - play now`,
           html: getDailyQuizReminderHtml(
             user.name || user.email,
             today,
