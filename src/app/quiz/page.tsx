@@ -301,7 +301,7 @@ export default function QuizPage() {
               </div>
               <h1 className="text-2xl font-serif font-bold text-white">Daily Theatre Quiz</h1>
             </div>
-            <p className="text-zinc-500 text-sm">5 questions · 5s each · {totalSlots} winner slots</p>
+            <p className="text-zinc-500 text-sm">5 questions · 8s each · {totalSlots} winner slots</p>
           </div>
           <div className="self-start md:self-auto">
             <StreakBadge count={streakCount} />
@@ -345,7 +345,7 @@ export default function QuizPage() {
                   <div className="flex items-center gap-3 flex-wrap justify-center text-xs font-bold text-zinc-400 uppercase tracking-widest">
                     <span className="flex items-center gap-1.5"><Star className="h-3.5 w-3.5 text-amber-400" /> 5 Questions</span>
                     <span className="text-zinc-700">·</span>
-                    <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-blue-400" /> 5s Each</span>
+                    <span className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5 text-blue-400" /> 8s Each</span>
                     <span className="text-zinc-700">·</span>
                     <span className="flex items-center gap-1.5 text-red-400"><Trophy className="h-3.5 w-3.5" /> {slotsLeft} Slots Left</span>
                   </div>
@@ -422,7 +422,7 @@ export default function QuizPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   { icon: <BookOpen className="h-5 w-5 text-blue-400"/>, title: '5 Questions', desc: 'Covering Nigerian theatre, Shakespeare, and more.' },
-                  { icon: <Zap className="h-5 w-5 text-amber-400"/>, title: '5s Per Question', desc: 'Answer fast. Running out of time counts as wrong.' },
+                  { icon: <Zap className="h-5 w-5 text-amber-400"/>, title: '8s Per Question', desc: 'Answer fast. Running out of time counts as wrong.' },
                   { icon: <Trophy className="h-5 w-5 text-yellow-400"/>, title: '10 Winner Slots', desc: 'First 10 people to answer all correctly win bonus points.' },
                   { icon: <AlertTriangle className="h-5 w-5 text-red-400"/>, title: 'No Tab Switching', desc: 'Leaving the tab instantly voids your session.' },
                 ].map(item => (
