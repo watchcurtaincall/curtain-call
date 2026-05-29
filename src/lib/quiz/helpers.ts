@@ -3,7 +3,7 @@ import { QuizPointTransaction } from '@/lib/types';
 export interface AnswerRecord {
   questionId: string;
   selectedIndex: number;  // -1 for timeout
-  elapsedMs: number;      // 0-5000
+  elapsedMs: number;      // 0-8000
 }
 
 export function buildAnswerRecord(

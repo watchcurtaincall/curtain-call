@@ -64,7 +64,7 @@ export function QuizSession({ attemptId, userId, questions, onComplete }: QuizSe
   const isSessionActive = sessionState === 'active';
 
   const handleAnswer = useCallback(async (selectedIndex: number) => {
-    const elapsedMs = Math.min(Date.now() - questionStartTimeRef.current, 5000);
+    const elapsedMs = Math.min(Date.now() - questionStartTimeRef.current, 8000);
     const record: AnswerRecord = {
       questionId: currentQuestion.id,
       selectedIndex,

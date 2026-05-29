@@ -226,7 +226,7 @@ export function getDailyQuizReminderHtml(name: string, email: string, date: stri
      Think you can get all 5 right? Do it now, secure your spot, and walk away with <strong>₦200 today</strong> straight to your wallet.`,
      
     // Version 3: High Energy / Action
-    `5 questions. 5 seconds per slide. <strong>₦200 cash reward</strong> waiting right now.
+    `5 questions. 8 seconds per slide. <strong>₦200 cash reward</strong> waiting right now.
      <br/><br/>
      Today's CC Daily Quiz is live, but only the first ${slots} perfect submissions claim the prize. Get in there before the slots are gone!`,
      
@@ -292,7 +292,7 @@ export function getFeatureAnnouncementHtml(name: string, email: string, appUrl: 
     </p>
     
     <p style="margin: 0 0 24px; font-size: 15px; color: #a1a1aa; line-height: 1.75;">
-      5 questions every day. 5 seconds per question. Get them all right and earn <strong>₦200 straight to your wallet</strong>. Only the first 10 correct completions win each day — after that, the quiz closes until tomorrow.
+      5 questions every day. 8 seconds per question. Get them all right and earn <strong>₦200 straight to your wallet</strong>. Only the first 10 correct completions win each day — after that, the quiz closes until tomorrow.
     </p>
     
     <!-- Rule card -->
