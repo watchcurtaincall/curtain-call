@@ -7,6 +7,7 @@ import { ClientDB } from '@/lib/db';
 import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Calendar, Image as ImageIcon, FileText, ArrowLeft, Mail, Search } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import RichTextEditor from '@/components/RichTextEditor';
 
 type SubmitType = 'maker' | 'play' | 'blog';
 
@@ -1242,13 +1243,9 @@ export default function SubmitPortalPage() {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Article Content / Draft</label>
-                <textarea
-                  required
-                  rows={8}
-                  placeholder="Write your editorial piece here... Markdown or plain text drafts are accepted."
+                <RichTextEditor
                   value={blogForm.content}
-                  onChange={e => setBlogForm({ ...blogForm, content: e.target.value })}
-                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors placeholder:text-zinc-600 resize-none [scrollbar-width:none]"
+                  onChange={content => setBlogForm({ ...blogForm, content })}
                 />
               </div>
 

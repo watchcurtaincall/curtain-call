@@ -122,8 +122,12 @@ export default function ArticleDetailPage() {
         </div>
 
         {/* Dynamic Rich Text Chronicle Body */}
-        <div className="text-zinc-300 text-base md:text-lg leading-relaxed flex flex-col gap-6 font-serif font-light whitespace-pre-line prose prose-invert max-w-none">
-          {article.content || "No chronicle text content provided."}
+        <div className="text-zinc-300 text-base md:text-lg leading-relaxed flex flex-col gap-6 font-serif font-light prose prose-invert max-w-none">
+          {article.content ? (
+            <div dangerouslySetInnerHTML={{ __html: article.content }} />
+          ) : (
+            "No chronicle text content provided."
+          )}
         </div>
 
         {/* Footer/Share panel */}

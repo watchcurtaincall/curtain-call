@@ -8,6 +8,7 @@ import { Artist, Production, Article } from '@/lib/types';
 import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download, QrCode, Camera, RefreshCw, Star, BarChart } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import RichTextEditor from '@/components/RichTextEditor';
 
 type AdminTab = 'overview' | 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'email-logs' | 'quiz-analytics';
 
@@ -4837,15 +4838,13 @@ This file was retrieved from the Curtain Call Curation Vault.
             <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4">
               <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Full Content</p>
               {isEditingArticle ? (
-                <textarea
-                  rows={12}
+                <RichTextEditor
                   value={editedArticle.content || ''}
-                  onChange={e => setEditedArticle({ ...editedArticle, content: e.target.value })}
-                  className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-300 leading-relaxed focus:outline-none focus:border-amber-500 transition-colors resize-none [scrollbar-width:none]"
+                  onChange={content => setEditedArticle({ ...editedArticle, content })}
                 />
               ) : (
-                <div className="max-h-64 overflow-y-auto [scrollbar-width:none]">
-                  <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{editedArticle.content || '—'}</p>
+                <div className="max-h-64 overflow-y-auto [scrollbar-width:none] prose prose-invert max-w-none">
+                  <div dangerouslySetInnerHTML={{ __html: editedArticle.content || '—' }} />
                 </div>
               )}
             </div>
