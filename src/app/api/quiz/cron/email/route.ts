@@ -3,7 +3,7 @@ import { supabaseServer } from '@/lib/supabaseServer';
 import { getDailyQuizReminderHtml } from '@/lib/quiz/emailTemplates';
 
 const CRON_SECRET = process.env.CRON_SECRET;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://curtain-call.vercel.app';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.curtaincall.com.ng';
 
 // Vercel cron sends GET requests
 export async function GET(req: NextRequest) {
@@ -31,20 +31,18 @@ async function handler(req: NextRequest) {
   // Verify today's questions are ready
   const { data: quizDay } = await supabaseServer
     .from('quiz_days')
-    .select('questions_generated, winner_slots_total')
+    .select('generation_status, slots_remaining')
     .eq('quiz_date', today)
     .maybeSingle();
 
-  if (!quizDay?.questions_generated) {
+  if (!quizDay || quizDay.generation_status !== 'generated') {
     return NextResponse.json({ error: 'Questions not generated yet for today' }, { status: 400 });
   }
 
-  // Fetch all verified users who have opted in to quiz notifications
+  // Fetch all users
   const { data: users, error: usersErr } = await supabaseServer
     .from('profiles')
-    .select('email, name')
-    .eq('email_verified', true)
-    .eq('quiz_notifications', true);
+    .select('email, name');
 
   if (usersErr) {
     console.error('[CronEmail] Failed to fetch users:', usersErr);
@@ -73,7 +71,7 @@ async function handler(req: NextRequest) {
             user.name || user.email,
             user.email,
             today,
-            quizDay.winner_slots_total,
+            quizDay.slots_remaining || 10,
             `${APP_URL}/quiz`
           ),
         }),

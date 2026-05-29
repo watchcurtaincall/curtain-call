@@ -31,7 +31,7 @@ async function handler(req: NextRequest) {
   // Idempotency: check if today's quiz_day row already exists
   const { data: existing, error: checkErr } = await supabaseServer
     .from('quiz_days')
-    .select('quiz_date, questions_generated')
+    .select('quiz_date, generation_status')
     .eq('quiz_date', today)
     .maybeSingle();
 
@@ -40,7 +40,7 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ error: checkErr.message }, { status: 500 });
   }
 
-  if (existing?.questions_generated) {
+  if (existing?.generation_status === 'generated') {
     return NextResponse.json({
       message: 'Questions already generated for today',
       date: today,
@@ -51,18 +51,16 @@ async function handler(req: NextRequest) {
   // Generate questions
   const { questions, source } = await generateQuizQuestions();
 
-  // Upsert the quiz_day row
+  // Upsert the quiz_day row using correct schema columns
   const { error: upsertErr } = await supabaseServer
     .from('quiz_days')
     .upsert(
       {
         quiz_date: today,
         questions: questions,
-        questions_generated: true,
-        winner_slots_total: 10,
-        winner_slots_remaining: 10,
-        generated_at: new Date().toISOString(),
-        generation_source: source,
+        generation_status: 'generated',
+        slots_remaining: 10,
+        slots_claimed: 0,
       },
       { onConflict: 'quiz_date' }
     );
