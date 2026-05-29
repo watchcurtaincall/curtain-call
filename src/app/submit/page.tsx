@@ -120,6 +120,33 @@ export default function SubmitPortalPage() {
   });
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const [blogLimitMessage, setBlogLimitMessage] = useState<string | null>(null);
+
+  // Check article limits
+  useEffect(() => {
+    if (activeTab === 'blog') {
+      const currentMonth = new Date().getMonth();
+      const currentYear = new Date().getFullYear();
+      
+      const allArticles = [...ClientDB.getArticles(), ...ClientDB.getPendingArticles()];
+      
+      const articlesThisMonth = allArticles.filter(a => {
+        const date = new Date(a.date || Date.now());
+        return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      });
+
+      const globalCount = articlesThisMonth.length;
+      const userCount = articlesThisMonth.filter(a => a.submitterEmail === user?.email).length;
+
+      if (globalCount >= 10) {
+        setBlogLimitMessage("We have reached our platform submission limit of 10 articles for this month. Please try again next month.");
+      } else if (userCount >= 3) {
+        setBlogLimitMessage("You have reached your personal submission limit of 3 articles for this month. Please try again next month.");
+      } else {
+        setBlogLimitMessage(null);
+      }
+    }
+  }, [activeTab, user]);
 
   // Compression helper for images
   const handleImageUpload = async (
@@ -1123,8 +1150,18 @@ export default function SubmitPortalPage() {
 
           {/* SUBMIT A BLOG / CHRONICLE */}
           {activeTab === 'blog' && (
-            <form onSubmit={handleBlogSubmit} className="flex flex-col gap-6 animate-fade-up">
-              <div className="flex items-center gap-2 mb-2">
+            <div className="flex flex-col gap-6 animate-fade-up">
+              {blogLimitMessage ? (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 text-center shadow-inner flex flex-col items-center justify-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
+                    <BookOpen className="h-6 w-6" />
+                  </div>
+                  <h3 className="font-serif font-bold text-white text-xl">Submissions Closed for Now</h3>
+                  <p className="text-sm text-zinc-400 leading-relaxed max-w-md mx-auto">{blogLimitMessage}</p>
+                </div>
+              ) : (
+                <form onSubmit={handleBlogSubmit} className="flex flex-col gap-6">
+                  <div className="flex items-center gap-2 mb-2">
                 <BookOpen className="h-5 w-5 text-red-500" />
                 <h3 className="font-serif font-bold text-white text-lg">Submit a Blog / Chronicle</h3>
               </div>
@@ -1281,10 +1318,10 @@ export default function SubmitPortalPage() {
                 type="submit"
                 disabled={loading}
                 className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-red-900/20 text-sm mt-2 flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {loading ? 'Submitting draft specs...' : 'Submit Draft for Editorial Review'}
               </button>
             </form>
+              )}
+            </div>
           )}
 
         </div>
