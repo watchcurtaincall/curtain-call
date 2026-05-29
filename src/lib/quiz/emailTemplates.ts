@@ -288,11 +288,15 @@ export function getFeatureAnnouncementHtml(name: string, email: string, appUrl: 
     </p>
     
     <p style="margin: 0 0 20px; font-size: 15.5px; color: #d4d4d8; line-height: 1.75;">
-      We just launched the <strong>Curtain Call Daily Quiz</strong> — a new way to test your theatre knowledge and earn while doing it.
+      We now accept article submissions on Curtain Call — and every approved article earns you <strong>₦2,000 straight to your wallet</strong>.
+    </p>
+    
+    <p style="margin: 0 0 20px; font-size: 15px; color: #a1a1aa; line-height: 1.75;">
+      We are looking for writing about Nigerian theatre — reviews, essays, opinions, interviews, history, culture. If you have something to say about this industry, this is your platform.
     </p>
     
     <p style="margin: 0 0 24px; font-size: 15px; color: #a1a1aa; line-height: 1.75;">
-      5 questions every day. 8 seconds per question. Get them all right and earn <strong>₦200 straight to your wallet</strong>. Only the first 10 correct completions win each day — after that, the quiz closes until tomorrow.
+      Only 10 articles are accepted every month. Once those slots are gone, submissions close until the next cycle.
     </p>
     
     <!-- Rule card -->
@@ -300,28 +304,24 @@ export function getFeatureAnnouncementHtml(name: string, email: string, appUrl: 
       <tr>
         <td style="padding: 20px 24px;">
           <h4 style="margin: 0 0 6px; font-size: 14px; font-weight: 700; color: #ef4444; text-transform: uppercase; letter-spacing: 1px;">
-            ⚠️ One rule:
+            ⚠️ One thing to note:
           </h4>
           <p style="margin: 0; font-size: 13.5px; color: #fca5a5; line-height: 1.6;">
-            Don't leave the page once you start. Switching tabs voids your attempt immediately.
+            We encourage using AI tools for research, but any article SOLELY written by AI will be rejected. We are paying for your voice, not a prompt.
           </p>
         </td>
       </tr>
     </table>
-
-    <p style="margin: 0 0 12px; font-size: 15.5px; color: #ffffff; line-height: 1.75; text-align: center; font-weight: 600;">
-      Today's quiz is already live — play now and share your result!
-    </p>
   `;
 
   return buildBaseLayout({
-    preheader: "⚡ We just launched the Curtain Call Daily Quiz — test your knowledge and earn ₦200!",
-    title: "✨ We just launched something new — and you can earn from it",
+    preheader: "Earn ₦2,000 for your writing about Nigerian theatre.",
+    title: "Write for Curtain Call — and get paid for it",
     bodyHtml: body,
-    ctaText: "Play Now",
-    ctaUrl: `${appUrl}/quiz`,
+    ctaText: "Submit your article here",
+    ctaUrl: `${appUrl}/submit`,
     signatureType: 'welcome',
-    campaignId: 'launch-feature',
+    campaignId: 'launch-articles',
     emailToTrack: email,
   });
 }

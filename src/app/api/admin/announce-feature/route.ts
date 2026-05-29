@@ -3,7 +3,7 @@ import { supabaseServer } from '@/lib/supabaseServer';
 import { getFeatureAnnouncementHtml } from '@/lib/quiz/emailTemplates';
 
 const CRON_SECRET = process.env.CRON_SECRET;
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://curtain-call.vercel.app';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://curtaincall.com.ng';
 
 export async function POST(req: NextRequest) {
   // Simple validation to ensure only authorized system requests trigger announcements
@@ -19,8 +19,7 @@ export async function POST(req: NextRequest) {
   // Fetch all verified users to announce the new feature
   const { data: users, error: usersErr } = await supabaseServer
     .from('profiles')
-    .select('email, name')
-    .eq('email_verified', true);
+    .select('email, name');
 
   if (usersErr) {
     console.error('[AnnounceFeature] Failed to fetch users:', usersErr);
@@ -45,7 +44,7 @@ export async function POST(req: NextRequest) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: user.email,
-          subject: 'We just launched something new — and you can earn from it',
+          subject: 'Write for Curtain Call — and get paid for it',
           html: emailHtml,
         }),
       });

@@ -32,7 +32,7 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
 
 // Initial Mock Articles fallback
 // Initial Mock Articles fallback
-const MOCK_ARTICLES: Article[] = [
+export const MOCK_ARTICLES: Article[] = [
   {
     id: 'art1',
     title: 'The Renaissance of Nigerian Historical Epics on Stage',

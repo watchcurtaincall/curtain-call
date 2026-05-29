@@ -94,6 +94,54 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function ProductionPage({ params }: Props) {
-  return <ProductionPageClient params={params} />;
+export default async function ProductionPage({ params }: Props) {
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+  
+  let prodData = null;
+  
+  if (supabase) {
+    const { data } = await supabase.from('productions').select('*').eq('id', id).maybeSingle();
+    prodData = data;
+    if (!prodData) {
+      const { data: slugData } = await supabase.from('productions').select('*').eq('slug', id).maybeSingle();
+      prodData = slugData;
+    }
+  } else {
+    const { MOCK_PRODUCTIONS } = require('@/lib/mock');
+    prodData = MOCK_PRODUCTIONS.find((p: any) => p.id === id || p.slug === id);
+  }
+
+  const jsonLd = prodData ? {
+    "@context": "https://schema.org",
+    "@type": "TheaterEvent",
+    "name": prodData.title,
+    "description": prodData.synopsis,
+    "image": prodData.poster_url || prodData.posterUrl,
+    "startDate": prodData.show_start_date || "2026-06-01T19:00",
+    "endDate": prodData.show_end_date || "2026-06-30T22:00",
+    "eventStatus": "https://schema.org/EventScheduled",
+    "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+    "location": {
+      "@type": "Place",
+      "name": prodData.venue || "Theater",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Lagos",
+        "addressCountry": "NG"
+      }
+    }
+  } : null;
+
+  return (
+    <>
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      )}
+      <ProductionPageClient params={params} />
+    </>
+  );
 }
