@@ -36,6 +36,7 @@ export async function GET(request: Request) {
     let streakCount = 0;
     let pointsBalance = 0;
     let cashCredits = 0;
+    let cashTransactions: any[] = [];
 
     if (userId) {
       const { data: attempt, error: attemptErr } = await supabaseServer
@@ -99,11 +100,12 @@ export async function GET(request: Request) {
       // 5. Fetch cash credits
       const { data: credits } = await supabaseServer
         .from('quiz_cash_credits')
-        .select('amount_naira')
+        .select('amount_naira, created_at, source')
         .eq('user_id', userId);
       
       if (credits) {
         cashCredits = credits.reduce((sum, row) => sum + Number(row.amount_naira), 0);
+        cashTransactions = credits;
       }
     }
 
@@ -116,6 +118,7 @@ export async function GET(request: Request) {
       pointsBalance,
       // Pass cashCredits so Producer Dashboard can show converted funds
       cashCredits,
+      cashTransactions,
       questionsReady,
     }, {
       headers: {

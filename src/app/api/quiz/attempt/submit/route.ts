@@ -151,6 +151,17 @@ export async function POST(request: Request) {
         });
 
       if (txnErr) console.error('[API Quiz Submit] Log transaction error:', txnErr);
+
+      // 5b. Deposit cash directly into producer wallet (₦1 per point)
+      const { error: cashErr } = await supabaseServer
+        .from('quiz_cash_credits')
+        .insert({
+          user_id: userId,
+          amount_naira: pointsAwarded,
+          source: 'quiz_win',
+        });
+
+      if (cashErr) console.error('[API Quiz Submit] Cash deposit error:', cashErr);
     } else {
       // Fetch current balance even if 0 points awarded
       const { data: wallet } = await supabaseServer
@@ -240,6 +251,15 @@ export async function POST(request: Request) {
               points_delta: bonusPoints,
               balance_after: newPointsBalance,
               attempt_id: attemptId,
+            });
+
+          // Deposit streak bonus cash directly into producer wallet
+          await supabaseServer
+            .from('quiz_cash_credits')
+            .insert({
+              user_id: userId,
+              amount_naira: bonusPoints,
+              source: 'streak_bonus',
             });
         }
 

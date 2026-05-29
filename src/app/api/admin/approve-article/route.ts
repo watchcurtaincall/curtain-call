@@ -38,7 +38,8 @@ export async function POST(request: Request) {
       .from('quiz_cash_credits')
       .insert({
         user_id: userId,
-        amount_naira: 2000
+        amount_naira: 2000,
+        source: 'article_approval',
       })
       .select();
 

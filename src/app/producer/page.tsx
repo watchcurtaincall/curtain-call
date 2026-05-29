@@ -21,6 +21,7 @@ export default function ProducerDashboardPage() {
   const [allPlays, setAllPlays] = useState<Production[]>([]);
   const [syncCount, setSyncCount] = useState(0);
   const [quizCredits, setQuizCredits] = useState(0);
+  const [cashTransactions, setCashTransactions] = useState<any[]>([]);
 
   const isPlayProducerManaged = (p: any) => {
     return p.isProducerManaged === true || p.ticketTiers !== undefined || p.status === 'Draft';
@@ -44,7 +45,12 @@ export default function ProducerDashboardPage() {
     if (!user) return;
     fetch(`/api/quiz/status?userId=${encodeURIComponent(user.id)}`)
       .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data) setQuizCredits(data.cashCredits ?? 0); })
+      .then(data => { 
+        if (data) {
+          setQuizCredits(data.cashCredits ?? 0); 
+          setCashTransactions(data.cashTransactions ?? []);
+        }
+      })
       .catch(() => {});
   }, [user, syncCount]);
 
@@ -77,13 +83,20 @@ export default function ProducerDashboardPage() {
     
     const available = Math.max(0, totalEarned + quizCredits - totalWithdrawn - totalPending);
     
-    const quizTx = quizCredits > 0 ? [{
-      label: 'Quiz Points Converted to Cash',
-      amount: `+₦${quizCredits.toLocaleString()}`,
-      date: 'Recently',
-      positive: true,
-      timestamp: Date.now() - 1,
-    }] : [];
+    const quizTx = cashTransactions.map(tx => {
+      let label = 'Quiz Points Converted to Cash';
+      if (tx.source === 'article_approval') label = 'Editorial Submission Approved';
+      else if (tx.source === 'streak_bonus') label = 'Quiz Streak Bonus';
+      else if (tx.source === 'quiz_win') label = 'Quiz Earnings';
+      
+      return {
+        label,
+        amount: `+₦${tx.amount_naira.toLocaleString()}`,
+        date: new Date(tx.created_at).toLocaleDateString(),
+        positive: true,
+        timestamp: new Date(tx.created_at).getTime(),
+      };
+    });
 
     const transactions = [
       ...quizTx,
@@ -109,7 +122,7 @@ export default function ProducerDashboardPage() {
       withdrawn: totalWithdrawn,
       transactions,
     });
-  }, [user, allPlays, syncCount, quizCredits]);
+  }, [user, allPlays, syncCount, quizCredits, cashTransactions]);
 
   const handleEndShow = (id: string) => {
     const play = allPlays.find(p => p.id === id);
@@ -234,7 +247,7 @@ export default function ProducerDashboardPage() {
                 <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4">
                   <div className="flex items-center gap-1.5 mb-1 text-zinc-500">
                     <TrendingUp className="h-4 w-4 text-emerald-400" />
-                    <p className="text-[9px] font-bold uppercase tracking-wider">Gross Sales</p>
+                    <p className="text-[9px] font-bold uppercase tracking-wider">Gross Income</p>
                   </div>
                   <p className="text-lg font-bold font-serif text-white">₦{walletMetrics.totalEarned.toLocaleString()}</p>
                 </div>
