@@ -1318,6 +1318,8 @@ export default function SubmitPortalPage() {
                 type="submit"
                 disabled={loading}
                 className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-red-900/20 text-sm mt-2 flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {loading ? 'Submitting draft specs...' : 'Submit Draft for Editorial Review'}
               </button>
             </form>
               )}
