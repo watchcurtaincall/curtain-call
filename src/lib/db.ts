@@ -1093,6 +1093,18 @@ export const ClientDB = {
     }
   },
 
+  updatePendingArticle(article: Article): void {
+    if (typeof window === 'undefined') return;
+    const pending = this.getPendingArticles();
+    const index = pending.findIndex(a => a.id === article.id);
+    if (index !== -1) {
+      const updated = [...pending];
+      updated[index] = article;
+      localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(updated));
+      syncToCloud('articles', mapArticleToDb(article));
+    }
+  },
+
   approveArticle(id: string): void {
     if (typeof window === 'undefined') return;
     const pending = this.getPendingArticles();

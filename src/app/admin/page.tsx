@@ -271,6 +271,8 @@ export default function AdminDashboardPage() {
   const [previewArtist, setPreviewArtist] = useState<Artist | null>(null);
   const [previewPlay, setPreviewPlay] = useState<Production | null>(null);
   const [previewArticle, setPreviewArticle] = useState<Article | null>(null);
+  const [isEditingArticle, setIsEditingArticle] = useState(false);
+  const [editedArticle, setEditedArticle] = useState<Article | null>(null);
 
   // Image upload refs for edit modals
   const editArtistImageRef = useRef<HTMLInputElement>(null);
@@ -1868,10 +1870,14 @@ This file was retrieved from the Curtain Call Curation Vault.
                         
                         <div className="flex items-center gap-2 mt-4 flex-wrap">
                           <button
-                            onClick={() => setPreviewArticle(article)}
+                            onClick={() => {
+                              setPreviewArticle(article);
+                              setEditedArticle(article);
+                              setIsEditingArticle(false);
+                            }}
                             className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-all"
                           >
-                            <Eye className="h-3.5 w-3.5" /> Preview
+                            <Eye className="h-3.5 w-3.5" /> Preview & Edit
                           </button>
                           <button
                             onClick={() => handleApproveArticle(article.id, article.title, article.submitterEmail)}
@@ -4736,57 +4742,134 @@ This file was retrieved from the Curtain Call Curation Vault.
         </div>
       )}
 
-      {/* Article full preview */}
-      {previewArticle && (
+      {/* Article full preview & edit modal */}
+      {previewArticle && editedArticle && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-zinc-900 border border-white/10 rounded-3xl max-w-2xl w-full p-6 md:p-8 flex flex-col gap-5 shadow-2xl animate-fade-up my-auto">
+          <div className="bg-zinc-900 border border-white/10 rounded-3xl max-w-2xl w-full p-6 md:p-8 flex flex-col gap-5 shadow-2xl animate-fade-up my-auto max-h-[90vh] overflow-y-auto [scrollbar-width:none]">
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
               <div>
                 <span className="text-[9px] font-mono uppercase tracking-widest text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded">Pending Review</span>
                 <h3 className="font-serif font-bold text-lg text-white mt-1">Chronicle / Article Submission</h3>
               </div>
-              <button onClick={() => setPreviewArticle(null)} className="text-zinc-500 hover:text-white p-1"><X className="h-5 w-5" /></button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    if (isEditingArticle) {
+                      // Save edits
+                      ClientDB.updatePendingArticle(editedArticle);
+                      setPreviewArticle(editedArticle);
+                      loadQueues();
+                      showToast('Article edits saved successfully.');
+                    }
+                    setIsEditingArticle(!isEditingArticle);
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border ${
+                    isEditingArticle
+                      ? 'bg-green-600 hover:bg-green-700 text-white border-green-600'
+                      : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/20'
+                  }`}
+                >
+                  {isEditingArticle ? <><Check className="h-3.5 w-3.5" /> Save Edits</> : <><Edit className="h-3.5 w-3.5" /> Edit Article</>}
+                </button>
+                <button onClick={() => { setPreviewArticle(null); setEditedArticle(null); setIsEditingArticle(false); }} className="text-zinc-500 hover:text-white p-1"><X className="h-5 w-5" /></button>
+              </div>
             </div>
 
-            {previewArticle.imageUrl && (
+            {/* Cover Image */}
+            {editedArticle.imageUrl && (
               <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-white/10 bg-zinc-950">
-                <img src={previewArticle.imageUrl} alt={previewArticle.title} className="w-full h-full object-cover" />
+                <img src={editedArticle.imageUrl} alt={editedArticle.title} className="w-full h-full object-cover" />
               </div>
             )}
 
+            {/* Title */}
             <div>
-              <h2 className="font-serif font-bold text-2xl text-white leading-tight">{previewArticle.title}</h2>
-              <div className="flex items-center gap-3 mt-1.5">
-                <p className="text-red-400 font-bold uppercase tracking-widest text-xs">{previewArticle.author}</p>
-                {previewArticle.date && <p className="text-zinc-600 text-xs font-mono">{previewArticle.date}</p>}
-                {previewArticle.submitterEmail && <p className="text-zinc-600 text-xs font-mono">{previewArticle.submitterEmail}</p>}
-              </div>
+              {isEditingArticle ? (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Article Title</label>
+                  <input
+                    type="text"
+                    value={editedArticle.title}
+                    onChange={e => setEditedArticle({ ...editedArticle, title: e.target.value })}
+                    className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-3 text-lg text-white font-serif font-bold focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+              ) : (
+                <h2 className="font-serif font-bold text-2xl text-white leading-tight">{editedArticle.title}</h2>
+              )}
+
+              {/* Author */}
+              {isEditingArticle ? (
+                <div className="flex flex-col gap-1.5 mt-3">
+                  <label className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Author Name</label>
+                  <input
+                    type="text"
+                    value={editedArticle.author}
+                    onChange={e => setEditedArticle({ ...editedArticle, author: e.target.value })}
+                    className="bg-zinc-950 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center gap-3 mt-1.5">
+                  <p className="text-red-400 font-bold uppercase tracking-widest text-xs">{editedArticle.author}</p>
+                  {editedArticle.date && <p className="text-zinc-600 text-xs font-mono">{editedArticle.date}</p>}
+                  {editedArticle.submitterEmail && <p className="text-zinc-600 text-xs font-mono">{editedArticle.submitterEmail}</p>}
+                </div>
+              )}
             </div>
 
-            {previewArticle.excerpt && (
-              <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4">
-                <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Excerpt</p>
-                <p className="text-sm text-zinc-300 italic leading-relaxed">{previewArticle.excerpt}</p>
-              </div>
-            )}
+            {/* Excerpt */}
+            <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4">
+              <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Excerpt / Hook</p>
+              {isEditingArticle ? (
+                <input
+                  type="text"
+                  value={editedArticle.excerpt}
+                  onChange={e => setEditedArticle({ ...editedArticle, excerpt: e.target.value })}
+                  className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-zinc-300 italic focus:outline-none focus:border-amber-500 transition-colors"
+                />
+              ) : (
+                <p className="text-sm text-zinc-300 italic leading-relaxed">{editedArticle.excerpt || '—'}</p>
+              )}
+            </div>
 
-            {previewArticle.content && (
-              <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 max-h-64 overflow-y-auto">
-                <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Full Content</p>
-                <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{previewArticle.content}</p>
-              </div>
-            )}
+            {/* Full Content */}
+            <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4">
+              <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Full Content</p>
+              {isEditingArticle ? (
+                <textarea
+                  rows={12}
+                  value={editedArticle.content || ''}
+                  onChange={e => setEditedArticle({ ...editedArticle, content: e.target.value })}
+                  className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-zinc-300 leading-relaxed focus:outline-none focus:border-amber-500 transition-colors resize-none [scrollbar-width:none]"
+                />
+              ) : (
+                <div className="max-h-64 overflow-y-auto [scrollbar-width:none]">
+                  <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{editedArticle.content || '—'}</p>
+                </div>
+              )}
+            </div>
 
+            {/* Action Buttons */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/5">
-              <button onClick={() => setPreviewArticle(null)} className="bg-zinc-950 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider">Close</button>
+              <button onClick={() => { setPreviewArticle(null); setEditedArticle(null); setIsEditingArticle(false); }} className="bg-zinc-950 border border-white/5 hover:bg-zinc-800 text-zinc-400 hover:text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider">Close</button>
               <button
-                onClick={() => { handleRejectArticle(previewArticle.id, previewArticle.title); setPreviewArticle(null); }}
+                onClick={() => { handleRejectArticle(editedArticle.id, editedArticle.title, editedArticle.submitterEmail); setPreviewArticle(null); setEditedArticle(null); setIsEditingArticle(false); }}
                 className="bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white border border-red-500/20 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
               ><Trash2 className="h-3.5 w-3.5" /> Decline</button>
               <button
-                onClick={() => { handleApproveArticle(previewArticle.id, previewArticle.title); setPreviewArticle(null); }}
+                onClick={() => {
+                  // Save any pending edits before approving
+                  if (isEditingArticle) {
+                    ClientDB.updatePendingArticle(editedArticle);
+                  }
+                  handleApproveArticle(editedArticle.id, editedArticle.title, editedArticle.submitterEmail);
+                  setPreviewArticle(null);
+                  setEditedArticle(null);
+                  setIsEditingArticle(false);
+                }}
                 className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all"
-              ><Check className="h-3.5 w-3.5" /> Approve</button>
+              ><Check className="h-3.5 w-3.5" /> Approve & Pay ₦2k</button>
             </div>
           </div>
         </div>
