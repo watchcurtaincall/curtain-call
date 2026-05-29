@@ -4,14 +4,26 @@ import { generateQuizQuestions } from '@/lib/quiz/questionGeneration';
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
+// Vercel cron sends GET requests
+export async function GET(req: NextRequest) {
+  return handler(req);
+}
 export async function POST(req: NextRequest) {
+  return handler(req);
+}
+
+async function handler(req: NextRequest) {
   // Validate cron secret to prevent public triggering
   const authHeader = req.headers.get('authorization');
   if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD in UTC
+  // Use WAT (UTC+1) for date calculation
+  const now = new Date();
+  const watOffset = 60; // WAT is UTC+1
+  const watDate = new Date(now.getTime() + watOffset * 60 * 1000);
+  const today = watDate.toISOString().split('T')[0];
   if (!supabaseServer) {
     return NextResponse.json({ error: 'Supabase server client not initialized' }, { status: 500 });
   }
