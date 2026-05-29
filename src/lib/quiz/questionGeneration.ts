@@ -16,7 +16,7 @@ function pickFallbackQuestions(count = 5): QuizQuestionInternal[] {
   const shuffled = shuffleArray(FALLBACK_QUESTIONS);
   return shuffled.slice(0, count).map((q, i) => ({
     ...q,
-    id: `fallback_${Date.now()}_${i}`,
+    id: crypto.randomUUID(),
     index: i,
   }));
 }
@@ -36,7 +36,7 @@ function parseGeminiQuestions(raw: string): QuizQuestionInternal[] | null {
         typeof q.theme !== 'string'
       ) return null;
     }
-    return parsed.map((q: any, i: number) => ({ ...q, id: `ai_${Date.now()}_${i}`, index: i }));
+    return parsed.map((q: any, i: number) => ({ ...q, id: crypto.randomUUID(), index: i }));
   } catch {
     return null;
   }
