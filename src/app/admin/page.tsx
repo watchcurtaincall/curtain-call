@@ -535,6 +535,41 @@ export default function AdminDashboardPage() {
             </p>
           </div>
         `;
+      } else if (type === 'article') {
+        rejectionHtml = `
+          <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
+              <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+            </div>
+            
+            <h2 style="font-family: serif; color: #ef4444; font-size: 22px; margin-top: 0; text-align: center;">Article Submission Update ❌</h2>
+            
+            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+              Thank you for submitting your chronicle draft <strong>"${name}"</strong> to the Curtain Call platform.
+            </p>
+            
+            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+              At this time, our editorial board has reviewed your submission and decided to <strong>decline</strong> it for publishing on our main feed. As a result, no payment has been dispatched to your wallet.
+            </p>
+            
+            <div style="background-color: rgba(239, 68, 68, 0.03); border: 1px solid rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 20px; margin: 30px 0;">
+              <p style="color: #ef4444; font-size: 11px; text-transform: uppercase; tracking-wider: 1px; font-weight: bold; margin: 0 0 10px 0;">Curator's Rejection Reason & Notes:</p>
+              <p style="color: #fca5a5; font-size: 15px; line-height: 1.6; margin: 0; font-style: italic;">
+                "${reasonText}"
+              </p>
+            </div>
+            
+            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+              <strong>Good news:</strong> You can resubmit your draft for curation review at any time! We highly encourage you to review the notes above, make the necessary edits, and submit again to receive your ₦2,000 publishing reward once approved.
+            </p>
+            
+            <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+              Sincerely,<br/>
+              <strong>The Curtain Call Curation Board</strong>
+            </p>
+          </div>
+        `;
       } else {
         rejectionHtml = `
           <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
@@ -697,37 +732,59 @@ export default function AdminDashboardPage() {
     try {
       ClientDB.approveArticle(id);
 
-      const approvalHtml = `
-        <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
-            <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
-          </div>
-          
-          <h2 style="font-family: serif; color: #22c55e; font-size: 22px; margin-top: 0;">Article Approved & Published! 🎉</h2>
-          
-          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
-            We are absolutely thrilled to inform you that your chronicle submission <strong>${title}</strong> has been <strong>approved</strong> and published!
-          </p>
-          
-          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
-            It is now featured live on our editorial home feed for readers worldwide.
-          </p>
-          
-          <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
-            Thank you for sharing your thoughts with our theatre culture community!
-            <br/><br/>
-            Sincerely,<br/>
-            <strong>The Curtain Call Curation Board</strong>
-          </p>
-        </div>
-      `;
-
       if (email) {
-        await ClientDB.sendEmail(email, `Chronicle Submission Approved: "${title}" 🎭`, approvalHtml);
+        // 1. Credit ₦2,000 to user's wallet securely via server API
+        try {
+          await fetch('/api/admin/approve-article', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ articleId: id, email, title })
+          });
+        } catch (creditErr) {
+          console.error('[Admin Page] Failed to credit wallet via API:', creditErr);
+        }
+
+        // 2. Prepare the premium email with wallet credit information & withdraw button
+        const approvalHtml = `
+          <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
+              <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+            </div>
+            
+            <h2 style="font-family: serif; color: #22c55e; font-size: 22px; margin-top: 0; text-align: center;">Article Approved & Paid! ₦2,000 Dispatched 🎉</h2>
+            
+            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+              We are absolutely thrilled to inform you that your chronicle submission <strong>${title}</strong> has been <strong>approved</strong> and published live on our editorial home feed!
+            </p>
+            
+            <div style="background-color: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.15); border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center;">
+              <p style="color: #a1a1aa; font-size: 13px; margin: 0 0 5px 0;">Editorial Contribution Reward:</p>
+              <p style="color: #22c55e; font-size: 24px; font-weight: bold; margin: 0 0 5px 0;">+₦2,000.00</p>
+              <p style="color: #8af7a9; font-size: 12px; margin: 0 0 15px 0;">Dispatched to your Producer Hub Wallet</p>
+              
+              <div style="margin-top: 15px;">
+                <a href="${window.location.origin}/producer" style="display: inline-block; background-color: #22c55e; hover:background-color:#16a34a; color: #ffffff; font-weight: bold; font-size: 14px; text-decoration: none; padding: 12px 28px; border-radius: 8px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);">
+                  Check Now & Withdraw
+                </a>
+              </div>
+            </div>
+            
+            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+              It is now featured live for readers worldwide. Thank you for sharing your thoughts with our theatre culture community!
+            </p>
+            
+            <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+              Sincerely,<br/>
+              <strong>The Curtain Call Curation Board</strong>
+            </p>
+          </div>
+        `;
+
+        await ClientDB.sendEmail(email, `Chronicle Approved & ₦2,000 Dispatched: "${title}" 🎭`, approvalHtml);
       }
 
-      showToast(`Article "${title}" has been approved and published to the chronicles feed.`);
+      showToast(`Article "${title}" has been approved. ₦2,000 credited to contributor's wallet.`);
       loadQueues();
     } catch (err) {
       showToast('Failed to approve article draft', 'error');

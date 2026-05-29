@@ -27,7 +27,7 @@ export default function SubmitPortalPage() {
     if (user?.email) {
       setMakerForm(prev => ({ ...prev, email: prev.email || user.email }));
       setPlayForm(prev => ({ ...prev, email: prev.email || user.email }));
-      setBlogForm(prev => ({ ...prev, email: prev.email || user.email }));
+      setBlogForm(prev => ({ ...prev, email: prev.email || user.email, author: prev.author || user.name || '' }));
     }
   }, [user]);
 
@@ -116,6 +116,7 @@ export default function SubmitPortalPage() {
     excerpt: '',
     content: '',
     email: user?.email || '',
+    author: user?.name || '',
   });
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -287,7 +288,7 @@ export default function SubmitPortalPage() {
         day: 'numeric',
         year: 'numeric',
       }),
-      author: blogForm.email ? blogForm.email.split('@')[0] : 'Contributor',
+      author: blogForm.author || (blogForm.email ? blogForm.email.split('@')[0] : 'Contributor'),
       imageUrl: coverPreview || '',
       submitterEmail: blogForm.email || user?.email || 'guest@curtaincall.com',
       curationStatus: 'Pending' as const,
@@ -332,7 +333,7 @@ export default function SubmitPortalPage() {
                   productionType: 'Professional',
                   externalTicketUrl: ''
                 });
-                setBlogForm({ title: '', category: 'Critique', excerpt: '', content: '', email: user?.email || '' });
+                setBlogForm({ title: '', category: 'Critique', excerpt: '', content: '', email: user?.email || '', author: user?.name || '' });
                 setHeadshotPreview(null);
                 setPosterPreview(null);
                 setCoverPreview(null);
@@ -1127,9 +1128,41 @@ export default function SubmitPortalPage() {
                 <BookOpen className="h-5 w-5 text-red-500" />
                 <h3 className="font-serif font-bold text-white text-lg">Submit a Blog / Chronicle</h3>
               </div>
-              <p className="text-xs text-zinc-500 leading-relaxed -mt-3 mb-2">
+              <p className="text-xs text-zinc-500 leading-relaxed -mt-3 mb-1">
                 Submit an in-depth interview, theatrical review, or chronicle for our Editorial section.
               </p>
+
+              {/* Editorial Rewards Banner */}
+              <div className="bg-zinc-950/60 border border-red-500/20 rounded-2xl p-5 shadow-inner backdrop-blur-md relative overflow-hidden flex flex-col gap-3">
+                <div className="absolute top-0 right-0 bg-red-500/10 text-red-400 font-mono text-[9px] uppercase tracking-wider font-bold px-3 py-1 rounded-bl-xl border-l border-b border-red-500/10">
+                  Creator Incentive Program
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2.5 bg-red-500/10 rounded-xl text-red-500 shrink-0 mt-0.5">
+                    <span className="font-serif text-lg font-bold">₦</span>
+                  </div>
+                  <div>
+                    <h4 className="text-white text-sm font-bold font-serif mb-1">Earn ₦2,000 Per Approved Article</h4>
+                    <p className="text-zinc-400 text-xs leading-relaxed">
+                      We value premium theatrical journalism. Submitting your chronicle draft has clear benefits:
+                    </p>
+                  </div>
+                </div>
+                <ul className="text-xs text-zinc-500 space-y-2 border-t border-white/5 pt-3 pl-2 mt-1">
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                    <span><strong>₦2,000 Cash:</strong> Credited straight to your Producer Hub wallet on approval.</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                    <span><strong>Instant Dispatch:</strong> Get notified instantly via email to review your funds and withdraw.</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
+                    <span><strong>Interactive Curation:</strong> If rejected, you'll receive detailed notes so you can edit and resubmit!</span>
+                  </li>
+                </ul>
+              </div>
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Article Title</label>
@@ -1218,6 +1251,18 @@ export default function SubmitPortalPage() {
                     <span className="text-[10px] text-zinc-600 font-mono">Re-compressed on-the-fly to save space</span>
                   </div>
                 )}
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Author / Submitter Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. John Doe"
+                  value={blogForm.author}
+                  onChange={e => setBlogForm({ ...blogForm, author: e.target.value })}
+                  className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
+                />
               </div>
 
               <div className="flex flex-col gap-1.5">
