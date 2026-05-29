@@ -40,7 +40,7 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ error: checkErr.message }, { status: 500 });
   }
 
-  if (existing?.generation_status === 'generated') {
+  if (existing?.generation_status === 'ready' || existing?.generation_status === 'fallback' || existing?.generation_status === 'generated') {
     return NextResponse.json({
       message: 'Questions already generated for today',
       date: today,
@@ -58,7 +58,7 @@ async function handler(req: NextRequest) {
       {
         quiz_date: today,
         questions: questions,
-        generation_status: 'generated',
+        generation_status: 'ready',
         slots_remaining: 10,
         slots_claimed: 0,
       },

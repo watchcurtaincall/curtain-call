@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     }
 
     const questionsReady = quizDay 
-      ? (quizDay.generation_status === 'ready' || quizDay.generation_status === 'fallback') 
+      ? (quizDay.generation_status === 'ready' || quizDay.generation_status === 'fallback' || quizDay.generation_status === 'generated') 
       : false;
     const slotsRemaining = quizDay ? quizDay.slots_remaining : 10;
 

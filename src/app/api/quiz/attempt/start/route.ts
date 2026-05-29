@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: quizDayErr.message }, { status: 500 });
     }
 
-    if (!quizDay || (quizDay.generation_status !== 'ready' && quizDay.generation_status !== 'fallback')) {
+    if (!quizDay || (quizDay.generation_status !== 'ready' && quizDay.generation_status !== 'fallback' && quizDay.generation_status !== 'generated')) {
       return NextResponse.json({ error: 'Quiz is not ready for today' }, { status: 400 });
     }
 

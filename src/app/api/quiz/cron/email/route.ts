@@ -35,7 +35,7 @@ async function handler(req: NextRequest) {
     .eq('quiz_date', today)
     .maybeSingle();
 
-  if (!quizDay || quizDay.generation_status !== 'generated') {
+  if (!quizDay || (quizDay.generation_status !== 'ready' && quizDay.generation_status !== 'fallback' && quizDay.generation_status !== 'generated')) {
     return NextResponse.json({ error: 'Questions not generated yet for today' }, { status: 400 });
   }
 
