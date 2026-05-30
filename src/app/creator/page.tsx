@@ -276,6 +276,14 @@ export default function CreatorDashboardPage() {
                 </div>
               </div>
 
+              <button
+                onClick={() => setShowWithdraw(true)}
+                disabled={walletMetrics.available <= 0}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:border-transparent text-white font-bold py-4 rounded-2xl transition-all text-xs uppercase tracking-widest active:scale-95 shadow-lg shadow-emerald-950/20 border border-emerald-400/20 cursor-pointer"
+              >
+                Withdraw payout to bank
+              </button>
+
               {/* EARNINGS GRAPH */}
               <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 h-48 w-full flex flex-col">
                 <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 mb-2">14-Day Earnings Trend</p>
@@ -295,14 +303,6 @@ export default function CreatorDashboardPage() {
                   </ResponsiveContainer>
                 </div>
               </div>
-
-              <button
-                onClick={() => setShowWithdraw(true)}
-                disabled={walletMetrics.available <= 0}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-800 disabled:text-zinc-600 disabled:border-transparent text-white font-bold py-4 rounded-2xl transition-all text-xs uppercase tracking-widest active:scale-95 shadow-lg shadow-emerald-950/20 border border-emerald-400/20 cursor-pointer"
-              >
-                Withdraw payout to bank
-              </button>
             </div>
 
             {/* Transaction Logs (Col 7) */}
