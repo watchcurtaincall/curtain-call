@@ -110,29 +110,30 @@ async function handler(req: NextRequest) {
 
   let primaryFailed = false;
 
-  // Primary Bulk: MailerSend
-  if (mailerSendApiKey && mailerSendApiKey !== 'mlsn_your_api_key_here') {
+  // Primary Bulk: Resend
+  if (resendApiKey && resendApiKey !== 're_your_resend_api_key_here') {
     try {
-      const msRes = await fetch('https://api.mailersend.com/v1/bulk-email', {
+      const res = await fetch('https://api.resend.com/emails/batch', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${mailerSendApiKey}`,
+          'Authorization': `Bearer ${resendApiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(mailerSendPayload),
+        body: JSON.stringify(resendPayload),
       });
 
-      if (msRes.ok || msRes.status === 202) {
-        sent = users.length; // bulk api returns 202 accepted
-        console.log('[CronEmail] Successfully batched via MailerSend.');
+      if (res.ok) {
+        const json = await res.json();
+        sent = json.data ? json.data.length : users.length;
+        console.log('[CronEmail] Successfully batched via Resend.');
       } else {
-        const errorText = await msRes.text();
-        console.error('[CronEmail] MailerSend Bulk API error:', errorText);
+        const errorText = await res.text();
+        console.error('[CronEmail] Resend Batch API error:', errorText);
         primaryFailed = true;
-        errors.push(`MailerSend Error: ${errorText}`);
+        errors.push(`Resend Error: ${errorText}`);
       }
     } catch (err: any) {
-      console.error('[CronEmail] MailerSend Batch exception:', err);
+      console.error('[CronEmail] Resend Batch exception:', err);
       primaryFailed = true;
       errors.push(err.message);
     }
@@ -140,35 +141,34 @@ async function handler(req: NextRequest) {
     primaryFailed = true;
   }
 
-  // Fallback Bulk: Resend
+  // Fallback Bulk: MailerSend
   if (primaryFailed) {
-    if (!resendApiKey || resendApiKey === 're_your_resend_api_key_here') {
-      console.warn('[CronEmail] Resend key missing too. Simulating.');
+    if (!mailerSendApiKey || mailerSendApiKey === 'mlsn_your_api_key_here') {
+      console.warn('[CronEmail] MailerSend key missing too. Simulating.');
       sent = users.length;
     } else {
-      console.log('[CronEmail] Attempting delivery via Resend (Fallback)...');
+      console.log('[CronEmail] Attempting delivery via MailerSend (Fallback)...');
       try {
-        const res = await fetch('https://api.resend.com/emails/batch', {
+        const msRes = await fetch('https://api.mailersend.com/v1/bulk-email', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${resendApiKey}`,
+            'Authorization': `Bearer ${mailerSendApiKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(resendPayload),
+          body: JSON.stringify(mailerSendPayload),
         });
 
-        if (res.ok) {
-          const json = await res.json();
-          sent = json.data ? json.data.length : users.length;
-          console.log('[CronEmail] Successfully batched via Resend.');
+        if (msRes.ok || msRes.status === 202) {
+          sent = users.length; // bulk api returns 202 accepted
+          console.log('[CronEmail] Successfully batched via MailerSend.');
         } else {
-          const errorText = await res.text();
-          console.error('[CronEmail] Resend Batch API error:', errorText);
+          const errorText = await msRes.text();
+          console.error('[CronEmail] MailerSend Batch API error:', errorText);
           failed = users.length;
-          errors.push(`Resend Error: ${errorText}`);
+          errors.push(`MailerSend Error: ${errorText}`);
         }
       } catch (err: any) {
-        console.error('[CronEmail] Resend Batch exception:', err);
+        console.error('[CronEmail] MailerSend Batch exception:', err);
         failed = users.length;
         errors.push(err.message);
       }

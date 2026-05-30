@@ -84,26 +84,9 @@ Timestamp: ${new Date().toISOString()}
 
     // Routing Logic based on Email Type
     if (type === 'bulk') {
-      // Primary: MailerSend, Fallback: Resend
+      // Primary: Resend, Fallback: MailerSend
       try {
-        console.log('[Email Dispatcher] Routing to MailerSend (Primary for Bulk)');
-        const result = await sendViaMailerSend();
-        return NextResponse.json(result);
-      } catch (err: any) {
-        primaryErrorData = err;
-        console.warn('[Email Dispatcher] MailerSend failed, falling back to Resend...', err);
-        try {
-          const fallbackResult = await sendViaResend();
-          return NextResponse.json(fallbackResult);
-        } catch (fallbackErr: any) {
-          console.error('[Email Dispatcher] CRITICAL: Both bulk providers failed', { primary: err, fallback: fallbackErr });
-          return NextResponse.json({ error: 'All providers failed', details: { primary: err, fallback: fallbackErr } }, { status: 500 });
-        }
-      }
-    } else {
-      // Primary: Resend, Fallback: MailerSend (Transactional/Default)
-      try {
-        console.log('[Email Dispatcher] Routing to Resend (Primary for Transactional)');
+        console.log('[Email Dispatcher] Routing to Resend (Primary for Bulk)');
         const result = await sendViaResend();
         return NextResponse.json(result);
       } catch (err: any) {
@@ -113,9 +96,26 @@ Timestamp: ${new Date().toISOString()}
           const fallbackResult = await sendViaMailerSend();
           return NextResponse.json(fallbackResult);
         } catch (fallbackErr: any) {
-           // If MailerSend fails and the key is missing, simulate for dev
-           if (fallbackErr.message === 'Missing MailerSend Key') {
-             console.warn('[Email Dispatcher] Fallback MailerSend API Key Missing. Simulating delivery.');
+          console.error('[Email Dispatcher] CRITICAL: Both bulk providers failed', { primary: err, fallback: fallbackErr });
+          return NextResponse.json({ error: 'All providers failed', details: { primary: err, fallback: fallbackErr } }, { status: 500 });
+        }
+      }
+    } else {
+      // Primary: MailerSend, Fallback: Resend (Transactional/Default)
+      try {
+        console.log('[Email Dispatcher] Routing to MailerSend (Primary for Transactional)');
+        const result = await sendViaMailerSend();
+        return NextResponse.json(result);
+      } catch (err: any) {
+        primaryErrorData = err;
+        console.warn('[Email Dispatcher] MailerSend failed, falling back to Resend...', err);
+        try {
+          const fallbackResult = await sendViaResend();
+          return NextResponse.json(fallbackResult);
+        } catch (fallbackErr: any) {
+           // If Resend fails and the key is missing, simulate for dev
+           if (fallbackErr.message === 'Missing Resend Key') {
+             console.warn('[Email Dispatcher] Fallback Resend API Key Missing. Simulating delivery.');
              return NextResponse.json({ success: true, simulated: true, provider: 'simulation' });
            }
           console.error('[Email Dispatcher] CRITICAL: Both transactional providers failed', { primary: err, fallback: fallbackErr });
