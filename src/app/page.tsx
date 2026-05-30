@@ -142,7 +142,7 @@ export default function Home() {
               <Sparkles className="h-6 w-6 text-amber-500 shrink-0" />
               Trending Theatremakers
             </h2>
-            <p className="text-zinc-400 text-sm mt-1.5 font-normal">Spotlighting the minds behind the contemporary West African theatrical renaissance</p>
+            <p className="text-zinc-400 text-sm mt-1.5 font-normal">Spotlighting the creative minds behind contemporary African theatre.</p>
           </div>
           <Link href="/artists" className="text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-widest border border-white/10 px-4 py-2 rounded-full transition-all shrink-0 whitespace-nowrap hover:bg-white/5">
             Explore Directory
@@ -194,7 +194,7 @@ export default function Home() {
               <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_#e50914]"></span>
               Currently Showing
             </h2>
-            <p className="text-zinc-400 text-sm mt-1.5">Live stage performance experiences happening right now in Lagos and beyond</p>
+            <p className="text-zinc-400 text-sm mt-1.5">Live stage performances happening now in Lagos and beyond.</p>
           </div>
           <Link href="/discovery?filter=showing" className="text-xs font-bold text-red-500 hover:text-red-400 uppercase tracking-widest border border-red-500/20 px-4 py-2 rounded-full transition-all shrink-0 whitespace-nowrap hover:bg-red-500/5">
             View All Shows
@@ -213,7 +213,7 @@ export default function Home() {
         <div className="flex items-end justify-between gap-4 mb-10 pb-5 border-b border-white/5 relative">
           <div className="flex-1 min-w-0">
             <h2 className="text-3xl font-serif font-bold text-white tracking-tight">Coming Soon</h2>
-            <p className="text-zinc-400 text-sm mt-1.5">Highly anticipated premieres and dramatic showcases. Secure your ticket tiers early.</p>
+            <p className="text-zinc-400 text-sm mt-1.5">Highly anticipated premieres and showcases. Secure your tickets early.</p>
           </div>
           <Link href="/discovery?filter=upcoming" className="text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-widest border border-white/10 px-4 py-2 rounded-full transition-all shrink-0 whitespace-nowrap hover:bg-white/5">
             View Upcoming
@@ -243,7 +243,7 @@ export default function Home() {
                   <Award className="h-6 w-6 text-red-500 shrink-0" />
                   Critic&apos;s Choice
                 </h2>
-                <p className="text-zinc-400 text-sm mt-1.5">The highest reviewed stage productions and musicals rated by verified guild critics</p>
+                <p className="text-zinc-400 text-sm mt-1.5">The highest-reviewed stage productions and musicals rated by verified critics.</p>
               </div>
               <div className="absolute bottom-0 left-0 w-24 h-[1px] bg-gradient-to-r from-red-500 to-transparent" />
             </div>
@@ -262,7 +262,7 @@ export default function Home() {
                   <Heart className="h-6 w-6 text-amber-500 shrink-0" />
                   Audience Favorites
                 </h2>
-                <p className="text-zinc-400 text-sm mt-1.5">Crowd-favorite theatrical masterpieces deeply loved by passionate theatregoers</p>
+                <p className="text-zinc-400 text-sm mt-1.5">Fan-favorite productions deeply loved by passionate theatregoers.</p>
               </div>
               <div className="absolute bottom-0 left-0 w-24 h-[1px] bg-gradient-to-r from-amber-500 to-transparent" />
             </div>
@@ -284,7 +284,7 @@ export default function Home() {
               <BookOpen className="h-6 w-6 text-red-500 shrink-0" />
               Recent Chronicles
             </h2>
-            <p className="text-zinc-400 text-sm mt-1.5">Expert cultural analysis, historic stage documentations, and critiques from our curators</p>
+            <p className="text-zinc-400 text-sm mt-1.5">Expert cultural analysis, historic documentation, and stage critiques.</p>
           </div>
           <Link href="/editorial" className="text-xs font-bold text-zinc-400 hover:text-white uppercase tracking-widest border border-white/10 px-4 py-2 rounded-full transition-all shrink-0 whitespace-nowrap hover:bg-white/5">
             View All Chronicles
@@ -385,7 +385,7 @@ export default function Home() {
 
               <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-5 mt-2 relative z-10">
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  Want to publish a stage critique, historical chronicle, or regional theatre spotlight? Get in touch with our editorial curators.
+                  Want to publish a stage critique, historical chronicle, or regional theatre spotlight? Get in touch with us.
                 </p>
                 <Link 
                   href="/submit"
