@@ -1189,7 +1189,7 @@ export default function SubmitPortalPage() {
                 <ul className="text-xs text-zinc-500 space-y-2 border-t border-white/5 pt-3 pl-2 mt-1">
                   <li className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />
-                    <span><strong>₦2,000 Cash:</strong> Credited straight to your Producer Hub wallet on approval.</span>
+                    <span><strong>₦2,000 Cash:</strong> Credited straight to your Creator Hub wallet on approval.</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0" />

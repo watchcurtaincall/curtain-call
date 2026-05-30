@@ -69,7 +69,7 @@ export function PointsWallet({ userId, balance, onConverted }: PointsWalletProps
         </div>
         <div>
           <p className="text-white font-serif font-bold text-sm">Quiz Points Wallet</p>
-          <p className="text-zinc-500 text-xs">Convert points to cash in your Producer Dashboard</p>
+          <p className="text-zinc-500 text-xs">Convert points to cash in your Creator Hub</p>
         </div>
       </div>
 

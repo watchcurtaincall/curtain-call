@@ -1,9 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, MapPin, Calendar } from 'lucide-react';
+import { Star, MapPin, Calendar, Ticket } from 'lucide-react';
 import { Production } from '@/lib/types';
 
-export function ProductionCard({ production }: { production: Production }) {
+export function ProductionCard({ production, showTicketBadge }: { production: Production, showTicketBadge?: boolean }) {
   return (
     <Link
       href={`/productions/${production.slug || production.id}`}
@@ -28,27 +28,40 @@ export function ProductionCard({ production }: { production: Production }) {
         {/* Cinematic vignette */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-black/5" />
 
-        {/* Status badge: top-left */}
-        <div className={`absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase backdrop-blur-md border ${
-          production.status === 'Currently Showing'
-            ? 'bg-red-600/90 border-red-500/50 text-white'
-            : production.status === 'Recently Concluded'
-            ? 'bg-amber-600/90 border-amber-500/50 text-white'
-            : 'bg-zinc-950/80 border-white/10 text-zinc-300'
-        }`}>
-          {production.status}
-        </div>
+        {/* Badges Container: top-left with wrap to prevent overlap on narrow mobile screens */}
+        <div className="absolute top-2.5 left-2.5 right-2.5 flex flex-wrap items-start gap-1.5 z-10 pr-2 pointer-events-none">
+          {/* Ticket Badge (if requested by parent) */}
+          {showTicketBadge && (
+            <div className="bg-zinc-950/90 text-white font-mono text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-lg border border-white/10 backdrop-blur-sm flex items-center gap-1 group-hover:border-red-500/40 transition-colors pointer-events-auto">
+              <Ticket className="h-2.5 w-2.5 text-red-500" />
+              {production.externalTicketUrl ? "External" : "Direct Buy"}
+            </div>
+          )}
 
-        {/* Production type tag (Student vs Professional): top-right to prevent overlap! */}
-        {production.productionType && (
-          <div className={`absolute top-2.5 right-2.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase backdrop-blur-md border whitespace-nowrap ${
-            production.productionType === 'Student'
-              ? 'bg-blue-600/85 border-blue-500/50 text-white'
-              : 'bg-emerald-600/85 border-emerald-500/50 text-white'
-          }`}>
-            {production.productionType}
-          </div>
-        )}
+          {/* Status badge */}
+          {production.status && (
+            <div className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase backdrop-blur-md border pointer-events-auto ${
+              production.status === 'Currently Showing'
+                ? 'bg-red-600/90 border-red-500/50 text-white'
+                : production.status === 'Recently Concluded'
+                ? 'bg-amber-600/90 border-amber-500/50 text-white'
+                : 'bg-zinc-950/80 border-white/10 text-zinc-300'
+            }`}>
+              {production.status}
+            </div>
+          )}
+
+          {/* Production type tag (Student vs Professional) */}
+          {production.productionType && (
+            <div className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase backdrop-blur-md border whitespace-nowrap pointer-events-auto ${
+              production.productionType === 'Student'
+                ? 'bg-blue-600/85 border-blue-500/50 text-white'
+                : 'bg-emerald-600/85 border-emerald-500/50 text-white'
+            }`}>
+              {production.productionType}
+            </div>
+          )}
+        </div>
 
         {/* Score chips: bottom-left */}
         <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 z-10">

@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
           to: user.email,
           subject: 'Write for Curtain Call — and get paid for it',
           html: emailHtml,
+          type: 'bulk'
         }),
       });
 

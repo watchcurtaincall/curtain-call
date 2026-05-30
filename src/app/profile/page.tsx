@@ -17,14 +17,13 @@ import {
   Search, X, Clapperboard, Calendar, QrCode, Flame
 } from 'lucide-react';
 import { StreakBadge } from '@/components/quiz/StreakBadge';
-import { WithdrawModal } from '@/components/producer/WithdrawModal';
+import { WithdrawModal } from '@/components/creator/WithdrawModal';
 import { NotificationsPanel } from '@/components/profile/NotificationsPanel';
 import { SettingsPanel } from '@/components/profile/SettingsPanel';
 import { EditReviewModal } from '@/components/profile/EditReviewModal';
-import { PointsWallet } from '@/components/quiz/PointsWallet';
 import Link from 'next/link';
 
-type Tab = 'dashboard' | 'quiz-wallet' | 'tickets' | 'submissions' | 'reviews' | 'list' | 'badges' | 'stageography';
+type Tab = 'dashboard' | 'tickets' | 'submissions' | 'reviews' | 'list' | 'badges' | 'stageography';
 
 
 
@@ -112,11 +111,18 @@ export default function ProfilePage() {
     // Fetch real database records
     const dbTickets = ClientDB.getTickets();
     const dbWithdrawals = ClientDB.getWithdrawals();
+    const dbCashCredits = ClientDB.getQuizCashCredits();
     
     // Filter tickets sold for their plays
     const userTickets = dbTickets.filter(t => userPlayIds.includes(t.productionId));
     const grossEarnings = userTickets.reduce((acc, t) => acc + t.price, 0);
-    const totalEarned = grossEarnings * 0.95; // 5% platform fee deducted
+    const totalTicketEarned = grossEarnings * 0.95; // 5% platform fee deducted
+
+    // Filter cash credits
+    const userCashCredits = dbCashCredits.filter((c: any) => c.user_id === user.id);
+    const totalCashCredits = userCashCredits.reduce((acc: number, c: any) => acc + c.amount_naira, 0);
+    
+    const totalEarned = totalTicketEarned + totalCashCredits;
     
     // Filter withdrawals requested by them
     const userWithdrawals = dbWithdrawals.filter(w => w.email.toLowerCase() === user.email.toLowerCase());
@@ -136,6 +142,13 @@ export default function ProfilePage() {
         date: t.date || 'Recently',
         positive: true,
         timestamp: t.timestamp || 0
+      })),
+      ...userCashCredits.map((c: any) => ({
+        label: c.source === 'editorial_reward' ? 'Editorial Reward Payout' : 'Quiz Reward Payout',
+        amount: `+₦${c.amount_naira.toLocaleString()}`,
+        date: c.created_at ? new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently',
+        positive: true,
+        timestamp: c.created_at ? new Date(c.created_at).getTime() : 0
       })),
       ...userWithdrawals.map(w => ({
         label: `Withdrawal to ${w.bankName} ····${w.accountNumber.slice(-4)}`,
@@ -564,7 +577,6 @@ export default function ProfilePage() {
   // Tabs ordered Dashboard -> My Submissions
   const tabs: { id: Tab; label: string; Icon: React.FC<{ className?: string }> }[] = [
     { id: 'dashboard',     label: 'Dashboard',      Icon: Star          },
-    { id: 'quiz-wallet',   label: 'Quiz Wallet',    Icon: Zap           },
     { id: 'tickets',       label: 'My Tickets',     Icon: Ticket        },
     { id: 'submissions',   label: 'My Submissions', Icon: FileText      },
     { id: 'reviews',       label: 'My Reviews',     Icon: PenLine       },
@@ -708,7 +720,7 @@ export default function ProfilePage() {
         {tab === 'dashboard' && (
           <div className="flex flex-col gap-8 animate-fade-up">
             
-            {/* 👔 ALWAYS VISIBLE Producer Hub Navigation Link - CANNOT MISS */}
+            {/* 👔 ALWAYS VISIBLE Creator Hub Navigation Link - CANNOT MISS */}
             <div className="relative rounded-[32px] overflow-hidden border-2 border-emerald-500/25 bg-gradient-to-br from-zinc-900/60 to-zinc-950/90 p-8 shadow-2xl backdrop-blur-xl transition-all duration-300 group/hub animate-pulse">
               <div className="absolute top-0 right-0 w-[400px] h-[200px] bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none" />
               <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
@@ -723,14 +735,14 @@ export default function ProfilePage() {
                     </p>
                   </div>
                 </div>
-                <Link href="/producer" className="bg-emerald-500 hover:bg-emerald-600 text-black font-bold px-8 py-4 rounded-2xl transition-all text-xs uppercase tracking-widest shadow-lg shadow-emerald-950/20 active:scale-95 cursor-pointer flex items-center gap-2 shrink-0">
-                  <span>Open Producer Hub</span>
+                <Link href="/creator" className="bg-emerald-500 hover:bg-emerald-600 text-black font-bold px-8 py-4 rounded-2xl transition-all text-xs uppercase tracking-widest shadow-lg shadow-emerald-950/20 active:scale-95 cursor-pointer flex items-center gap-2 shrink-0">
+                  <span>Open Creator Hub</span>
                   <ArrowUpRight className="h-4 w-4 stroke-[3]" />
                 </Link>
               </div>
             </div>
 
-            {/* Premium Info Grid below the Producer's Hub banner */}
+            {/* Premium Info Grid below the Creator Hub banner */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               {/* 🏆 Rank Progression & Achievements */}
@@ -871,16 +883,6 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* QUIZ WALLET */}
-        {tab === 'quiz-wallet' && (
-          <div className="flex flex-col gap-6 animate-fade-up max-w-2xl mx-auto">
-            <PointsWallet
-              userId={user.id}
-              balance={quizPoints}
-              onConverted={() => setQuizPoints(0)}
-            />
-          </div>
-        )}
 
         {/* MY TICKETS TAB */}
         {tab === 'tickets' && (

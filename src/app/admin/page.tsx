@@ -764,10 +764,10 @@ export default function AdminDashboardPage() {
             <div style="background-color: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.15); border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center;">
               <p style="color: #a1a1aa; font-size: 13px; margin: 0 0 5px 0;">Editorial Contribution Reward:</p>
               <p style="color: #22c55e; font-size: 24px; font-weight: bold; margin: 0 0 5px 0;">+₦2,000.00</p>
-              <p style="color: #8af7a9; font-size: 12px; margin: 0 0 15px 0;">Dispatched to your Producer Hub Wallet</p>
+              <p style="color: #8af7a9; font-size: 12px; margin: 0 0 15px 0;">Dispatched to your Creator Hub Wallet</p>
               
               <div style="margin-top: 15px;">
-                <a href="${window.location.origin}/producer" style="display: inline-block; background-color: #22c55e; hover:background-color:#16a34a; color: #ffffff; font-weight: bold; font-size: 14px; text-decoration: none; padding: 12px 28px; border-radius: 8px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);">
+                <a href="${window.location.origin}/creator" style="display: inline-block; background-color: #22c55e; hover:background-color:#16a34a; color: #ffffff; font-weight: bold; font-size: 14px; text-decoration: none; padding: 12px 28px; border-radius: 8px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);">
                   Check Now & Withdraw
                 </a>
               </div>

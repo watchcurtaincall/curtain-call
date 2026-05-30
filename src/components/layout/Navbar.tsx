@@ -149,7 +149,7 @@ export function Navbar() {
                         if (href === '#sell-tickets') {
                           e.preventDefault();
                           if (user) {
-                            router.push('/producer');
+                            router.push('/creator');
                           } else {
                             setIsSellTicketsOpen(true);
                           }
@@ -354,7 +354,7 @@ export function Navbar() {
                     if (href === '#sell-tickets') {
                       e.preventDefault();
                        if (user) {
-                         router.push('/producer');
+                         router.push('/creator');
                        } else {
                         setIsSellTicketsOpen(true);
                       }
@@ -502,7 +502,7 @@ export function Navbar() {
                   Close & Explore
                 </button>
                 <Link
-                  href="/login?redirect=/producer"
+                  href="/login?redirect=/creator"
                   onClick={() => setIsSellTicketsOpen(false)}
                   className="flex-1 bg-white hover:bg-zinc-100 text-black font-bold py-3.5 rounded-xl transition-all text-xs uppercase tracking-wider text-center flex items-center justify-center gap-1.5 shadow-xl shadow-white/5"
                 >

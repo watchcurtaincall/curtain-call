@@ -16,7 +16,7 @@ Curtain Call connects audiences, critics, and producers. We provide:
 ## Key Sections
 - **Plays (/plays):** Browse our archive of stage plays including synopsis, casting, and reviews.
 - **Editorial (/editorial):** Read articles, essays, and interviews about the Nigerian theatre industry. 
-- **Quiz (/quiz):** Play the daily Curtain Call trivia quiz to win cash directly to your Producer Wallet.
+- **Quiz (/quiz):** Play the daily Curtain Call trivia quiz to win cash directly to your Creator Wallet.
 - **Submit (/submit):** Writers can submit articles about the industry. We accept up to 10 articles per month. Approved articles earn ₦2,000.
 
 ## For Producers

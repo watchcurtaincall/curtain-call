@@ -11,10 +11,10 @@ import {
   X, CheckCircle, Circle, AlertCircle, Trash2, PenSquare, Eye,
   ShieldCheck, FileText, Calendar, MapPin, Clock, ArrowRight, User, Settings, Sparkles, Flame, Check, Shield
 } from 'lucide-react';
-import { WithdrawModal } from '@/components/producer/WithdrawModal';
+import { WithdrawModal } from '@/components/creator/WithdrawModal';
 import Link from 'next/link';
 
-export default function ProducerDashboardPage() {
+export default function CreatorDashboardPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [showWithdraw, setShowWithdraw] = useState(false);
@@ -149,12 +149,12 @@ export default function ProducerDashboardPage() {
         <div className="w-20 h-20 rounded-[24px] bg-zinc-900 border border-white/10 flex items-center justify-center shadow-2xl animate-pulse">
           <Wallet className="h-9 w-9 text-red-500" />
         </div>
-        <h1 className="text-3xl font-serif font-bold text-white tracking-tight">Producer Dashboard Access Restricted</h1>
+        <h1 className="text-3xl font-serif font-bold text-white tracking-tight">Creator Hub Access Restricted</h1>
         <p className="text-zinc-400 text-sm max-w-sm leading-relaxed">
           Please sign in to access listed productions, admissions scanners, and audience wallet metrics.
         </p>
         <Link href="/login" className="bg-white text-black font-bold px-8 py-3.5 rounded-xl hover:bg-zinc-200 transition-all shadow-lg text-xs uppercase tracking-widest">
-          Sign In as Producer
+          Sign In as Creator
         </Link>
       </div>
     );
@@ -181,7 +181,7 @@ export default function ProducerDashboardPage() {
           </Link>
 
           <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1 rounded-full font-bold uppercase tracking-widest font-mono">
-            Producer Hub
+            Creator Hub
           </span>
         </div>
 

@@ -372,7 +372,7 @@ export function getVerificationEmailHtml(name: string, code: string): string {
     </div>
 
     <p style="margin: 0 0 24px; font-size: 13px; color: #71717a; line-height: 1.6; text-align: center;">
-      This security measure helps us protect your Cast Credits, ticket allocations, and Producer Wallet conversions.
+      This security measure helps us protect your Cast Credits, ticket allocations, and Creator Wallet conversions.
     </p>
     
     <p style="margin: 0; font-size: 12px; color: #52525b; line-height: 1.6; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 24px;">

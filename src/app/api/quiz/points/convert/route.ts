@@ -108,7 +108,7 @@ export async function POST(request: Request) {
       success: true,
       newPointsBalance,
       newProducerBalance,
-      message: `Successfully converted ${pointsAmount} points into ₦${pointsAmount.toLocaleString()} in your Producer Hub Wallet.`
+      message: `Successfully converted ${pointsAmount} points into ₦${pointsAmount.toLocaleString()} in your Creator Hub Wallet.`
     });
   } catch (err: any) {
     console.error('[API Points Convert] POST exception:', err);

@@ -116,7 +116,7 @@ export async function GET(request: Request) {
       userAttempt,
       streakCount,
       pointsBalance,
-      // Pass cashCredits so Producer Dashboard can show converted funds
+      // Pass cashCredits so Creator Hub can show converted funds
       cashCredits,
       cashTransactions,
       questionsReady,

@@ -55,61 +55,123 @@ async function handler(req: NextRequest) {
 
   // Send emails in a single batch via Resend Batch API to avoid Vercel 10s timeout
   const resendApiKey = process.env.RESEND_API_KEY;
+  const mailerSendApiKey = process.env.MAILERSEND_API_KEY;
   let sent = 0;
   let failed = 0;
   const errors: string[] = [];
 
-  if (!resendApiKey || resendApiKey === 're_your_resend_api_key_here') {
-    console.warn('[CronEmail] Resend key missing or placeholder. Simulating.');
-    sent = users.length;
-  } else {
+  const resendPayload = users.map(user => {
+    const shortName = (user.name || user.email).split(' ')[0];
+    const html = getDailyQuizReminderHtml(
+      user.name || user.email,
+      user.email,
+      today,
+      quizDay.slots_remaining || 10,
+      `${APP_URL}/quiz`
+    );
+    const textAlternative = html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return {
+      from: 'Curtain Call <notifications@curtaincall.com.ng>',
+      to: [user.email],
+      subject: `${shortName} Your daily quiz is live - play now`,
+      html,
+      text: textAlternative
+    };
+  });
+
+  const mailerSendPayload = users.map(user => {
+    const shortName = (user.name || user.email).split(' ')[0];
+    const html = getDailyQuizReminderHtml(
+      user.name || user.email,
+      user.email,
+      today,
+      quizDay.slots_remaining || 10,
+      `${APP_URL}/quiz`
+    );
+    const textAlternative = html
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return {
+      from: { email: 'notifications@curtaincall.com.ng', name: 'Curtain Call' },
+      to: [{ email: user.email }],
+      subject: `${shortName} Your daily quiz is live - play now`,
+      html,
+      text: textAlternative
+    };
+  });
+
+  let primaryFailed = false;
+
+  // Primary Bulk: MailerSend
+  if (mailerSendApiKey && mailerSendApiKey !== 'mlsn_your_api_key_here') {
     try {
-      const batchPayload = users.map(user => {
-        const shortName = (user.name || user.email).split(' ')[0];
-        const html = getDailyQuizReminderHtml(
-          user.name || user.email,
-          user.email,
-          today,
-          quizDay.slots_remaining || 10,
-          `${APP_URL}/quiz`
-        );
-        const textAlternative = html
-          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-          .replace(/<[^>]+>/g, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-
-        return {
-          from: 'Curtain Call <notifications@curtaincall.com.ng>',
-          to: [user.email],
-          subject: `${shortName} Your daily quiz is live - play now`,
-          html,
-          text: textAlternative
-        };
-      });
-
-      const res = await fetch('https://api.resend.com/emails/batch', {
+      const msRes = await fetch('https://api.mailersend.com/v1/bulk-email', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${resendApiKey}`,
+          'Authorization': `Bearer ${mailerSendApiKey}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(batchPayload),
+        body: JSON.stringify(mailerSendPayload),
       });
 
-      if (res.ok) {
-        const json = await res.json();
-        sent = json.data ? json.data.length : users.length;
+      if (msRes.ok || msRes.status === 202) {
+        sent = users.length; // bulk api returns 202 accepted
+        console.log('[CronEmail] Successfully batched via MailerSend.');
       } else {
-        const errorText = await res.text();
-        console.error('[CronEmail] Resend Batch API error:', errorText);
-        failed = users.length;
-        errors.push(`Resend Error: ${errorText}`);
+        const errorText = await msRes.text();
+        console.error('[CronEmail] MailerSend Bulk API error:', errorText);
+        primaryFailed = true;
+        errors.push(`MailerSend Error: ${errorText}`);
       }
     } catch (err: any) {
-      console.error('[CronEmail] Batch exception:', err);
-      failed = users.length;
+      console.error('[CronEmail] MailerSend Batch exception:', err);
+      primaryFailed = true;
       errors.push(err.message);
+    }
+  } else {
+    primaryFailed = true;
+  }
+
+  // Fallback Bulk: Resend
+  if (primaryFailed) {
+    if (!resendApiKey || resendApiKey === 're_your_resend_api_key_here') {
+      console.warn('[CronEmail] Resend key missing too. Simulating.');
+      sent = users.length;
+    } else {
+      console.log('[CronEmail] Attempting delivery via Resend (Fallback)...');
+      try {
+        const res = await fetch('https://api.resend.com/emails/batch', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(resendPayload),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          sent = json.data ? json.data.length : users.length;
+          console.log('[CronEmail] Successfully batched via Resend.');
+        } else {
+          const errorText = await res.text();
+          console.error('[CronEmail] Resend Batch API error:', errorText);
+          failed = users.length;
+          errors.push(`Resend Error: ${errorText}`);
+        }
+      } catch (err: any) {
+        console.error('[CronEmail] Resend Batch exception:', err);
+        failed = users.length;
+        errors.push(err.message);
+      }
     }
   }
 

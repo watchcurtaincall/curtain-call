@@ -78,7 +78,7 @@ export default function BoxOfficeTicketsPage() {
         </div>
 
         <Link
-          href="/producer"
+          href="/creator"
           className="flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-bold px-5 py-3.5 rounded-2xl transition-all shadow-xl text-xs uppercase tracking-widest shrink-0 active:scale-98"
         >
           <Ticket className="h-4.5 w-4.5 text-red-500 shrink-0" /> Sell Production Tickets
@@ -163,12 +163,7 @@ export default function BoxOfficeTicketsPage() {
               .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
               .map(production => (
                 <div key={production.id} className="relative group">
-                  <ProductionCard production={production} />
-                  {/* Buy/Get Ticket Floating Trigger badge overlay */}
-                  <div className="absolute top-3 left-3 bg-zinc-950/90 text-white font-mono text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-xl shadow-lg border border-white/10 backdrop-blur-sm flex items-center gap-1 group-hover:border-red-500/40 transition-colors pointer-events-none">
-                    <Ticket className="h-3 w-3 text-red-500" />
-                    {production.externalTicketUrl ? "External" : "Direct Buy"}
-                  </div>
+                  <ProductionCard production={production} showTicketBadge={true} />
                 </div>
               ))}
           </div>
