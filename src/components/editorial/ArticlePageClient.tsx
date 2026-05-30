@@ -125,22 +125,9 @@ export function ArticleDetailPageClient({ initialArticle, id }: Props) {
         </div>
 
         {/* Dynamic Rich Text Chronicle Body */}
-        <div className="text-zinc-300 text-base md:text-[19px] leading-relaxed flex flex-col gap-6 font-serif font-light max-w-none tracking-wide">
+        <div className="text-zinc-300 text-base md:text-lg leading-relaxed flex flex-col gap-6 font-serif font-light prose prose-invert max-w-none">
           {article.content ? (
-            article.content.includes('<p>') ? (
-              <div dangerouslySetInnerHTML={{ __html: article.content }} className="prose prose-invert prose-lg prose-p:leading-loose prose-a:text-emerald-400" />
-            ) : (
-              article.content.split('\n\n').map((paragraph, idx) => (
-                <p key={idx} className="leading-loose">
-                  {paragraph.split('\n').map((line, i) => (
-                    <span key={i}>
-                      {line}
-                      {i < paragraph.split('\n').length - 1 && <br />}
-                    </span>
-                  ))}
-                </p>
-              ))
-            )
+            <div dangerouslySetInnerHTML={{ __html: article.content }} />
           ) : (
             "No chronicle text content provided."
           )}
