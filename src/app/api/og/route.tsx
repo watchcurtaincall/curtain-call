@@ -13,6 +13,26 @@ export async function GET(req: NextRequest) {
     const posterUrl = searchParams.get('posterUrl') || '';
     const status = searchParams.get('status') || 'Currently Showing';
 
+    let posterBase64 = '';
+    if (posterUrl) {
+      try {
+        // Fetch the image with a short timeout to prevent hanging the edge function
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const imgRes = await fetch(posterUrl, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
+        if (imgRes.ok) {
+          const arrayBuffer = await imgRes.arrayBuffer();
+          const base64 = Buffer.from(arrayBuffer).toString('base64');
+          const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+          posterBase64 = `data:${contentType};base64,${base64}`;
+        }
+      } catch (err) {
+        console.error('OG Image fetch failed', err);
+      }
+    }
+
     // The image template
     return new ImageResponse(
       (
@@ -47,7 +67,7 @@ export async function GET(req: NextRequest) {
 
           <div style={{ display: 'flex', width: '100%', padding: '60px', alignItems: 'center' }}>
             {/* Left Side: Poster (if any) */}
-            {posterUrl ? (
+            {posterBase64 ? (
               <div
                 style={{
                   display: 'flex',
@@ -62,7 +82,7 @@ export async function GET(req: NextRequest) {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={posterUrl}
+                  src={posterBase64}
                   alt="Poster"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 />
