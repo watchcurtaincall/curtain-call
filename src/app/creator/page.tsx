@@ -9,7 +9,7 @@ import { ProductionCard } from '@/components/shared/ProductionCard';
 import {
   Drama, Wallet, QrCode, ArrowLeft, ArrowUpRight, TrendingUp, Plus,
   X, CheckCircle, Circle, AlertCircle, Trash2, PenSquare, Eye,
-  ShieldCheck, FileText, Calendar, MapPin, Clock, ArrowRight, User, Settings, Sparkles, Flame, Check, Shield, Download
+  ShieldCheck, FileText, Calendar, MapPin, Clock, ArrowRight, User, Settings, Sparkles, Flame, Check, Shield, Download, Banknote
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/creator/WithdrawModal';
 import Link from 'next/link';
