@@ -1465,7 +1465,7 @@ This file was retrieved from the Curtain Call Curation Vault.
             <div className="flex flex-col gap-8 animate-fade-up">
               <div>
                 <h1 className="text-3xl font-serif font-bold text-white">Curation Control Dashboard</h1>
-                <p className="text-zinc-500 text-sm mt-1">Holistic status, analytics dossier, and curator utilities audit trail</p>
+                <p className="text-zinc-500 text-sm mt-1">Holistic status, analytics, and curator utilities</p>
               </div>
 
               {/* Glowing Metric Cards */}

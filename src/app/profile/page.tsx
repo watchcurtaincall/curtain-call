@@ -896,7 +896,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <h3 className="font-serif font-bold text-white text-base">My Ticket Wallet</h3>
-                  <p className="text-[10px] text-zinc-550 font-mono uppercase tracking-widest mt-0.5 font-bold">Your active event access passes</p>
+                  <p className="text-[10px] text-zinc-550 font-mono uppercase tracking-widest mt-0.5 font-bold">Your active event passes</p>
                 </div>
               </div>
               <span className="text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
@@ -909,7 +909,7 @@ export default function ProfilePage() {
                 <Ticket className="h-10 w-10 text-zinc-800 mb-3 group-hover/wallet:text-red-500 transition-colors animate-pulse" />
                 <p className="text-zinc-300 font-serif font-bold text-base">No ticket vouchers booked</p>
                 <p className="text-xs text-zinc-500 mt-2 max-w-sm leading-relaxed mx-auto">
-                  Explore our theatrical archives and verified Broad Street broadway shows to claim your digital ticketing gate passes!
+                  Explore theatrical shows and claim your digital ticket passes!
                 </p>
                 <Link href="/" className="mt-5 bg-white hover:bg-zinc-200 text-black font-bold px-6 py-3 rounded-xl transition-all text-xs uppercase tracking-widest">
                   Browse Stage Shows
@@ -969,7 +969,7 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between border-b border-white/5 pb-4">
               <div>
                 <h2 className="font-serif font-bold text-white text-lg">Curation Status Tracker</h2>
-                <p className="text-zinc-500 text-xs mt-0.5">Track your submitted theatremakers, playbills, and drafts.</p>
+                <p className="text-zinc-500 text-xs mt-0.5">Track your submitted theatremakers, productions, and drafts.</p>
               </div>
               <Link href="/submit" className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-xl transition-all text-xs">
                 <Plus className="h-3.5 w-3.5" /> Submit New
@@ -983,7 +983,7 @@ export default function ProfilePage() {
                 </div>
                 <h3 className="font-serif font-bold text-white text-lg mb-1">No Submissions Found</h3>
                 <p className="text-zinc-500 text-sm max-w-sm leading-relaxed mb-6">
-                  You haven&apos;t submitted any stage playbills, theatremaker profiles, or chronicle drafts yet. Contribute to begin!
+                  You haven&apos;t submitted any productions, profiles, or drafts yet. Contribute to begin!
                 </p>
                 <Link href="/submit" className="bg-white text-black font-bold px-5 py-2.5 rounded-xl hover:bg-zinc-200 transition-colors text-sm">
                   Submit Record
@@ -1222,7 +1222,7 @@ function ProfileStageographyTab({ userEmail }: { userEmail: string }) {
         <Clapperboard className="h-10 w-10 text-zinc-700" />
         <h3 className="font-serif font-bold text-white text-lg">No Artist Profile Found</h3>
         <p className="text-zinc-500 text-sm max-w-sm leading-relaxed">
-          Your Stageography is linked to your approved theatremaker profile. Submit an artist profile first and once approved, you can document your production credits here.
+          Submit an artist profile first. Once approved, you can document your production credits here.
         </p>
         <Link href="/submit?tab=artist" className="text-sm font-bold text-red-500 hover:text-red-400 underline underline-offset-4 transition-colors">
           Submit Theatremaker Profile

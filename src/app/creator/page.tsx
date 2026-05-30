@@ -205,7 +205,7 @@ export default function CreatorDashboardPage() {
         </div>
         <h1 className="text-3xl font-serif font-bold text-white tracking-tight">Creator Hub Access Restricted</h1>
         <p className="text-zinc-400 text-sm max-w-sm leading-relaxed">
-          Please sign in to access listed productions, admissions scanners, and audience wallet metrics.
+          Please sign in to manage your productions, ticket scanners, and earnings.
         </p>
         <Link href="/login" className="bg-white text-black font-bold px-8 py-3.5 rounded-xl hover:bg-zinc-200 transition-all shadow-lg text-xs uppercase tracking-widest">
           Sign In as Creator
@@ -254,7 +254,7 @@ export default function CreatorDashboardPage() {
                   <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-tight">Welcome back, {user.name}</h1>
                   <Sparkles className="h-5 w-5 text-amber-500 fill-amber-550/10" />
                 </div>
-                <p className="text-zinc-400 text-sm mt-1">Direct and manage listed productions, admissions scanners, and audience wallets</p>
+                <p className="text-zinc-400 text-sm mt-1">Manage your productions, ticket scanners, and earnings.</p>
               </div>
             </div>
 
@@ -349,7 +349,7 @@ export default function CreatorDashboardPage() {
               
               <div>
                 <h3 className="font-serif font-bold text-lg text-white">Payout & Admissions Feed</h3>
-                <p className="text-[9px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Real-time audit log of ticket revenue deposits</p>
+                <p className="text-[9px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Real-time log of ticket revenue and payouts</p>
               </div>
               
               <div className="flex-1 flex flex-col divide-y divide-white/5 max-h-[290px] overflow-y-auto pr-2 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.05)_transparent]">
@@ -391,7 +391,7 @@ export default function CreatorDashboardPage() {
                 <Drama className="h-10 w-10 text-zinc-800 animate-pulse" />
                 <div>
                   <p className="font-bold text-zinc-300">No active plays listed</p>
-                  <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">Create a show listing and activate custom ticket tiers to start selling admissions.</p>
+                  <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">Create a show listing and ticket tiers to start selling.</p>
                 </div>
                 <Link href="/create" className="inline-flex items-center gap-2 bg-white text-black font-bold px-6 py-3 rounded-2xl transition-all text-xs uppercase tracking-widest mt-2 hover:bg-zinc-200">
                   <Plus className="h-4 w-4 stroke-[3]" /> Add Show Listing
