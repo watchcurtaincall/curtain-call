@@ -413,17 +413,17 @@ export default function CreatorDashboardPage() {
                       </Link>
                       <button
                         onClick={() => handleExportAttendees(p.id, p.title || 'Show')}
-                        className="flex-1 bg-zinc-950 border border-white/10 hover:bg-zinc-900 hover:border-blue-500/30 text-blue-400 hover:text-blue-300 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
+                        className="flex-[2] bg-zinc-950 border border-white/10 hover:bg-zinc-900 hover:border-blue-500/30 text-blue-400 hover:text-blue-300 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
                         title="Export Attendees"
                       >
-                        <Download className="h-3 w-3" />
+                        <Download className="h-3 w-3" /> Guests
                       </button>
                       <button
                         onClick={() => handleEndShow(p.id)}
                         className="flex-1 bg-zinc-950 border border-white/10 hover:bg-red-950/20 hover:border-red-500/30 text-zinc-400 hover:text-red-400 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
                         title="End Show"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-3 w-3" /> End
                       </button>
                     </div>
                   </div>
@@ -498,7 +498,7 @@ export default function CreatorDashboardPage() {
                         className="flex-1 bg-zinc-950 border border-white/10 hover:bg-zinc-900 hover:border-blue-500/30 text-blue-400 hover:text-blue-300 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
                         title="Export Attendees"
                       >
-                        <Download className="h-3 w-3" />
+                        <Download className="h-3 w-3" /> Guests
                       </button>
                     </div>
                   </div>
