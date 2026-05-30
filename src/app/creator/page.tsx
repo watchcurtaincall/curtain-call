@@ -63,6 +63,7 @@ export default function CreatorDashboardPage() {
     transactions: [] as any[],
     chartData: [] as any[]
   });
+  const [salesModalPlayId, setSalesModalPlayId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -224,6 +225,7 @@ export default function CreatorDashboardPage() {
       <div className="fixed bottom-0 right-0 w-[450px] h-[450px] bg-emerald-950/5 rounded-full blur-[140px] pointer-events-none z-0 mix-blend-screen" />
       
       {showWithdraw && <WithdrawModal availableBalance={walletMetrics.available} onClose={() => { setShowWithdraw(false); setSyncCount(c => c+1); }} />}
+      {salesModalPlayId && <SalesModal playId={salesModalPlayId} onClose={() => setSalesModalPlayId(null)} />}
 
       <div className="relative z-10 container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl pt-8 flex flex-col gap-12">
         
@@ -404,23 +406,30 @@ export default function CreatorDashboardPage() {
                     <div className="flex-1">
                       <ProductionCard production={p} />
                     </div>
-                    <div className="flex gap-2 mt-1 shrink-0 z-10 relative">
+                    <div className="grid grid-cols-2 gap-2 mt-1 shrink-0 z-10 relative">
                       <Link
                         href={`/create?edit=${p.id}`}
-                        className="flex-1 bg-zinc-950 border border-white/10 hover:bg-zinc-900 hover:border-red-500/30 text-zinc-300 hover:text-white font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase text-center flex items-center justify-center gap-1 cursor-pointer"
+                        className="bg-zinc-950 border border-white/10 hover:bg-zinc-900 hover:border-red-500/30 text-zinc-300 hover:text-white font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase text-center flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <PenSquare className="h-3 w-3 text-red-500" /> Edit
                       </Link>
                       <button
                         onClick={() => handleExportAttendees(p.id, p.title || 'Show')}
-                        className="flex-[2] bg-zinc-950 border border-white/10 hover:bg-zinc-900 hover:border-blue-500/30 text-blue-400 hover:text-blue-300 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
+                        className="bg-zinc-950 border border-white/10 hover:bg-zinc-900 hover:border-blue-500/30 text-blue-400 hover:text-blue-300 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
                         title="Export Attendees"
                       >
                         <Download className="h-3 w-3" /> Guests
                       </button>
                       <button
+                        onClick={() => setSalesModalPlayId(p.id)}
+                        className="bg-zinc-950 border border-white/10 hover:bg-emerald-950/20 hover:border-emerald-500/30 text-emerald-400 hover:text-emerald-300 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
+                        title="Sales Analytics"
+                      >
+                        <Banknote className="h-3 w-3" /> Sales
+                      </button>
+                      <button
                         onClick={() => handleEndShow(p.id)}
-                        className="flex-1 bg-zinc-950 border border-white/10 hover:bg-red-950/20 hover:border-red-500/30 text-zinc-400 hover:text-red-400 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
+                        className="bg-zinc-950 border border-white/10 hover:bg-red-950/20 hover:border-red-500/30 text-zinc-400 hover:text-red-400 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
                         title="End Show"
                       >
                         <Trash2 className="h-3 w-3" /> End
@@ -486,19 +495,26 @@ export default function CreatorDashboardPage() {
                     <div className="flex-1">
                       <ProductionCard production={p} />
                     </div>
-                    <div className="flex gap-2 mt-1 shrink-0 z-10 relative">
+                    <div className="grid grid-cols-2 gap-2 mt-1 shrink-0 z-10 relative">
                       <Link
                         href={`/create?edit=${p.id}`}
-                        className="flex-[2] bg-zinc-950 border border-white/10 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase text-center flex items-center justify-center gap-1 cursor-pointer"
+                        className="bg-zinc-950 border border-white/10 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase text-center flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <PenSquare className="h-3 w-3 text-red-500" /> Edit Archive
                       </Link>
                       <button
                         onClick={() => handleExportAttendees(p.id, p.title || 'Show')}
-                        className="flex-1 bg-zinc-950 border border-white/10 hover:bg-zinc-900 hover:border-blue-500/30 text-blue-400 hover:text-blue-300 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
+                        className="bg-zinc-950 border border-white/10 hover:bg-zinc-900 hover:border-blue-500/30 text-blue-400 hover:text-blue-300 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
                         title="Export Attendees"
                       >
                         <Download className="h-3 w-3" /> Guests
+                      </button>
+                      <button
+                        onClick={() => setSalesModalPlayId(p.id)}
+                        className="col-span-2 bg-zinc-950 border border-white/10 hover:bg-emerald-950/20 hover:border-emerald-500/30 text-emerald-400 hover:text-emerald-300 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
+                        title="Sales Analytics"
+                      >
+                        <Banknote className="h-3 w-3" /> View Archive Sales
                       </button>
                     </div>
                   </div>
@@ -821,6 +837,87 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
           </div>
         </div>
 
+      </div>
+    </div>
+  );
+}
+
+// ── Sales Modal Component ──
+function SalesModal({ playId, onClose }: { playId: string; onClose: () => void }) {
+  const [play, setPlay] = useState<any>(null);
+  const [salesData, setSalesData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const prod = ClientDB.getProductionById(playId);
+    if (!prod) return;
+    setPlay(prod);
+    
+    const allTickets = ClientDB.getTickets();
+    const showTickets = allTickets.filter(t => t.productionId === playId);
+    
+    const tiers = prod.ticketTiers || [];
+    const data = tiers.map((tier: any) => {
+      const soldTickets = showTickets.filter(t => t.tier === tier.name);
+      return {
+        name: tier.name,
+        capacity: parseInt(tier.capacity) || 0,
+        sold: soldTickets.length,
+        revenue: soldTickets.reduce((acc, t) => acc + (t.price || 0), 0)
+      };
+    });
+    setSalesData(data);
+  }, [playId]);
+
+  if (!play) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div className="bg-zinc-950 border border-white/10 rounded-[32px] w-full max-w-lg overflow-hidden shadow-[0_0_50px_rgba(229,9,20,0.1)] relative">
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600" />
+        <div className="p-6 sm:p-8 flex flex-col gap-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-serif font-bold text-white tracking-tight leading-tight">Sales Dashboard</h2>
+              <p className="text-xs text-red-400 mt-1 uppercase tracking-widest font-mono font-bold truncate max-w-[280px]">
+                {play.title}
+              </p>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-white/10 transition-colors shrink-0">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {salesData.length === 0 ? (
+              <div className="bg-zinc-900/50 border border-white/5 rounded-2xl p-6 text-center text-zinc-500 text-xs font-mono">
+                No ticket tiers configured for this production.
+              </div>
+            ) : salesData.map((d, i) => {
+              const percentage = d.capacity > 0 ? Math.min(100, Math.round((d.sold / d.capacity) * 100)) : 0;
+              return (
+                <div key={i} className="bg-zinc-900/50 border border-white/5 rounded-2xl p-4 flex flex-col gap-3 relative overflow-hidden group">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-white/5 group-hover:bg-red-500/50 transition-colors" />
+                  <div className="flex justify-between items-end pl-2">
+                    <div>
+                      <h4 className="text-sm font-bold text-white uppercase tracking-widest">{d.name}</h4>
+                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-mono mt-0.5">Tickets Sold</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-serif font-bold text-zinc-200"><span className="text-white">{d.sold}</span> <span className="text-zinc-600 text-xs font-sans font-normal">/ {d.capacity}</span></p>
+                      <p className="text-[10px] text-emerald-400 font-mono font-bold tracking-widest mt-0.5">₦{d.revenue.toLocaleString()}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Progress bar */}
+                  <div className="h-1.5 w-full bg-zinc-950 rounded-full overflow-hidden mt-1 pl-2">
+                    <div className="h-full bg-red-600 rounded-full transition-all duration-1000 ease-out" style={{ width: `${percentage}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+        </div>
       </div>
     </div>
   );
