@@ -44,8 +44,7 @@ export async function GET(req: NextRequest) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#09090b', // zinc-950
-            backgroundImage: 'linear-gradient(to bottom right, #450a0a, #000000)',
+            backgroundColor: '#09090b',
             color: 'white',
             fontFamily: 'sans-serif',
             position: 'relative',
@@ -76,7 +75,6 @@ export async function GET(req: NextRequest) {
                   borderRadius: '24px',
                   overflow: 'hidden',
                   marginRight: '60px',
-                  boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
                   border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}
               >
@@ -135,9 +133,7 @@ export async function GET(req: NextRequest) {
                   fontWeight: 900,
                   margin: '0 0 20px 0',
                   lineHeight: 1.1,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 3,
-                  WebkitBoxOrient: 'vertical',
+                  display: 'flex',
                   overflow: 'hidden',
                 }}
               >
