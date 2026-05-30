@@ -935,7 +935,7 @@ export default function AdminDashboardPage() {
     setLoading(true);
 
     const newArticle: Article = {
-      id: `dynamic_article_${Date.now()}`,
+      id: `${blogForm.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')}-${Date.now().toString().slice(-4)}`,
       title: blogForm.title,
       excerpt: blogForm.excerpt,
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),

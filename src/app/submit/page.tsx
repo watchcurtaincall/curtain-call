@@ -307,7 +307,7 @@ export default function SubmitPortalPage() {
     setLoading(true);
 
     const newArticle = {
-      id: `pending_article_${Date.now()}`,
+      id: `${blogForm.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')}-${Date.now().toString().slice(-4)}`,
       title: blogForm.title,
       excerpt: blogForm.excerpt,
       content: blogForm.content,
