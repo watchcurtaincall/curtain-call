@@ -114,6 +114,7 @@ export default function SubmitPortalPage() {
     author: user?.name || '',
   });
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const [blogLimitMessage, setBlogLimitMessage] = useState<string | null>(null);
 
   useEffect(() => {
