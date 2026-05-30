@@ -103,7 +103,6 @@ export async function GET(req: NextRequest) {
                   border: status === 'Currently Showing' || status === 'Coming Soon' ? '1px solid rgba(248, 113, 113, 0.5)' : '1px solid rgba(255, 255, 255, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
-                  width: 'fit-content'
                 }}
               >
                 {status}

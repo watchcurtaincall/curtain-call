@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/creator/WithdrawModal';
 import Link from 'next/link';
-import { LineChart, Line, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, Tooltip, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 
 export default function CreatorDashboardPage() {
   const { user, logout } = useAuth();
@@ -281,7 +281,9 @@ export default function CreatorDashboardPage() {
                 <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 mb-2">14-Day Earnings Trend</p>
                 <div className="flex-1 w-full min-h-0">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={walletMetrics.chartData}>
+                    <LineChart data={walletMetrics.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <XAxis dataKey="date" stroke="#52525b" fontSize={9} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#52525b" fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => `₦${v >= 1000 ? (v/1000)+'k' : v}`} />
                       <Tooltip 
                         contentStyle={{ backgroundColor: '#09090b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)' }}
                         itemStyle={{ color: '#34d399', fontWeight: 'bold' }}
