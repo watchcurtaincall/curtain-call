@@ -9,7 +9,7 @@ import { ProductionCard } from '@/components/shared/ProductionCard';
 import {
   Drama, Wallet, QrCode, ArrowLeft, ArrowUpRight, TrendingUp, Plus,
   X, CheckCircle, Circle, AlertCircle, Trash2, PenSquare, Eye,
-  ShieldCheck, FileText, Calendar, MapPin, Clock, ArrowRight, User, Settings, Sparkles, Flame, Check, Shield
+  ShieldCheck, FileText, Calendar, MapPin, Clock, ArrowRight, User, Settings, Sparkles, Flame, Check, Shield, Download
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/creator/WithdrawModal';
 import Link from 'next/link';
@@ -157,6 +157,44 @@ export default function CreatorDashboardPage() {
       ClientDB.deleteProduction(id);
       setSyncCount(prev => prev + 1);
     }
+  };
+
+  const handleExportAttendees = (productionId: string, productionTitle: string) => {
+    const allTickets = ClientDB.getTickets();
+    const showTickets = allTickets.filter(t => t.productionId === productionId);
+
+    if (showTickets.length === 0) {
+      alert(`No attendees found for "${productionTitle}".`);
+      return;
+    }
+
+    const headers = ['Ticket ID', 'Gate Pass Code', 'Reference', 'Tier', 'Price (NGN)', 'Purchase Date', 'Buyer Email'];
+    const csvRows = [headers.join(',')];
+
+    showTickets.forEach(t => {
+      const row = [
+        t.id,
+        t.gatePass || '',
+        t.reference || '',
+        t.tier || '',
+        t.price || 0,
+        t.date || '',
+        t.userEmail || ''
+      ];
+      const escapedRow = row.map(v => `"${String(v).replace(/"/g, '""')}"`);
+      csvRows.push(escapedRow.join(','));
+    });
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Attendees_${productionTitle.replace(/[^a-zA-Z0-9]/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (!user) {
@@ -374,10 +412,18 @@ export default function CreatorDashboardPage() {
                         <PenSquare className="h-3 w-3 text-red-500" /> Edit
                       </Link>
                       <button
+                        onClick={() => handleExportAttendees(p.id, p.title || 'Show')}
+                        className="flex-1 bg-zinc-950 border border-white/10 hover:bg-zinc-900 hover:border-blue-500/30 text-blue-400 hover:text-blue-300 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
+                        title="Export Attendees"
+                      >
+                        <Download className="h-3 w-3" />
+                      </button>
+                      <button
                         onClick={() => handleEndShow(p.id)}
                         className="flex-1 bg-zinc-950 border border-white/10 hover:bg-red-950/20 hover:border-red-500/30 text-zinc-400 hover:text-red-400 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
+                        title="End Show"
                       >
-                        End
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
                   </div>
@@ -440,12 +486,21 @@ export default function CreatorDashboardPage() {
                     <div className="flex-1">
                       <ProductionCard production={p} />
                     </div>
-                    <Link
-                      href={`/create?edit=${p.id}`}
-                      className="w-full bg-zinc-950 border border-white/10 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase text-center flex items-center justify-center gap-1 mt-1 shrink-0 cursor-pointer"
-                    >
-                      <PenSquare className="h-3 w-3 text-red-500" /> Edit Archive Specs
-                    </Link>
+                    <div className="flex gap-2 mt-1 shrink-0 z-10 relative">
+                      <Link
+                        href={`/create?edit=${p.id}`}
+                        className="flex-[2] bg-zinc-950 border border-white/10 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase text-center flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <PenSquare className="h-3 w-3 text-red-500" /> Edit Archive
+                      </Link>
+                      <button
+                        onClick={() => handleExportAttendees(p.id, p.title || 'Show')}
+                        className="flex-1 bg-zinc-950 border border-white/10 hover:bg-zinc-900 hover:border-blue-500/30 text-blue-400 hover:text-blue-300 font-bold py-2.5 rounded-xl transition-all text-[10px] tracking-widest uppercase flex items-center justify-center gap-1 cursor-pointer"
+                        title="Export Attendees"
+                      >
+                        <Download className="h-3 w-3" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
