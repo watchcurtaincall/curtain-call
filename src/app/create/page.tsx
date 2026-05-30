@@ -93,17 +93,7 @@ function CreateProductionForm() {
 
   useEffect(() => { getBanks().then(setBanks); }, []);
 
-  const resolveAccount_ = useCallback(async (accNum: string, bank: Bank | null) => {
-    if (accNum.length !== 10 || !bank) return;
-    setResolving(true); setResolveError(''); setResolvedName('');
-    try {
-      const r = await resolveAccount(accNum, bank.code);
-      setResolvedName(r.account_name);
-      set('accountName', r.account_name);
-    } catch {
-      setResolveError('Could not verify account. Please check the details.');
-    } finally { setResolving(false); }
-  }, []);
+
 
   const [form, setForm] = useState<FormData>({
     title: '', genre: '', synopsis: '',
@@ -114,6 +104,22 @@ function CreateProductionForm() {
     posterUrl: '',
     castAndCrew: [],
   });
+
+  const set = useCallback((key: keyof FormData, val: unknown) => {
+    setForm(p => ({ ...p, [key]: val }));
+  }, []);
+
+  const resolveAccount_ = useCallback(async (accNum: string, bank: Bank | null) => {
+    if (accNum.length !== 10 || !bank) return;
+    setResolving(true); setResolveError(''); setResolvedName('');
+    try {
+      const r = await resolveAccount(accNum, bank.code);
+      setResolvedName(r.account_name);
+      set('accountName', r.account_name);
+    } catch {
+      setResolveError('Could not verify account. Please check the details.');
+    } finally { setResolving(false); }
+  }, [set]);
 
   // Edit Mode Loader
   useEffect(() => {
@@ -208,8 +214,7 @@ function CreateProductionForm() {
     );
   }
 
-  const set = (key: keyof FormData, val: unknown) =>
-    setForm(p => ({ ...p, [key]: val }));
+
 
   // Dates
   const addDate = () => set('dates', [...form.dates, { date: '', time: '19:00' }]);

@@ -24,13 +24,7 @@ export default function SubmitPortalPage() {
     }
   }, [user, router]);
 
-  useEffect(() => {
-    if (user?.email) {
-      setMakerForm(prev => ({ ...prev, email: prev.email || user.email }));
-      setPlayForm(prev => ({ ...prev, email: prev.email || user.email }));
-      setBlogForm(prev => ({ ...prev, email: prev.email || user.email, author: prev.author || user.name || '' }));
-    }
-  }, [user]);
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -120,8 +114,15 @@ export default function SubmitPortalPage() {
     author: user?.name || '',
   });
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
   const [blogLimitMessage, setBlogLimitMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (user?.email) {
+      setMakerForm(prev => ({ ...prev, email: prev.email || user.email }));
+      setPlayForm(prev => ({ ...prev, email: prev.email || user.email }));
+      setBlogForm(prev => ({ ...prev, email: prev.email || user.email, author: prev.author || user.name || '' }));
+    }
+  }, [user]);
 
   // Check article limits
   useEffect(() => {

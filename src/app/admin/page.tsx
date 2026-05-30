@@ -105,6 +105,11 @@ export default function AdminDashboardPage() {
   const [quizStats, setQuizStats] = useState<any>(null);
   const [loadingQuizStats, setLoadingQuizStats] = useState(false);
 
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
   // Gate Scanner state variables
   const [scanInput, setScanInput] = useState('');
   const [scanResult, setScanResult] = useState<{
@@ -449,10 +454,7 @@ export default function AdminDashboardPage() {
   }, [activeTab]);
 
 
-  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
+
 
   const verifySignupUser = async (profile: any) => {
     if (!confirm(`Mark ${profile.name} (${profile.email}) as verified?`)) return;
