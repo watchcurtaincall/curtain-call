@@ -23,11 +23,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       // Query by ID first, then fallback to matching by slug
       let prodData = null;
       
-      // If id looks like a standard production ID (e.g. play1, prod_1), query ID
-      const { data } = await supabase
-        .from('productions')
-        .select('title, synopsis, poster_url')
-        .eq('id', id)
+        const { data } = await supabase
+          .from('productions')
+          .select('title, synopsis, poster_url, venue, status')
+          .eq('id', id)
         .maybeSingle();
       
       prodData = data;
@@ -36,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       if (!prodData) {
         const { data: slugData } = await supabase
           .from('productions')
-          .select('title, synopsis, poster_url')
+          .select('title, synopsis, poster_url, venue, status')
           .eq('slug', id)
           .maybeSingle();
         prodData = slugData;
@@ -53,6 +52,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             imageUrl = `https://curtaincall.com.ng${imageUrl}`;
           }
         }
+        const encodedTitle = encodeURIComponent(prodData.title || 'Curtain Call');
+        const encodedVenue = encodeURIComponent(prodData.venue || '');
+        const encodedPoster = encodeURIComponent(imageUrl === "https://curtaincall.com.ng/og-default.png" ? "" : imageUrl);
+        const encodedStatus = encodeURIComponent(prodData.status || 'Currently Showing');
+        imageUrl = `https://curtaincall.com.ng/api/og?title=${encodedTitle}&venue=${encodedVenue}&posterUrl=${encodedPoster}&status=${encodedStatus}`;
       }
     } else {
       // Fallback to static mock data if supabase config isn't loaded
@@ -69,6 +73,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             imageUrl = `https://curtaincall.com.ng${imageUrl}`;
           }
         }
+        const encodedTitle = encodeURIComponent(play.title || 'Curtain Call');
+        const encodedVenue = encodeURIComponent(play.venue || '');
+        const encodedPoster = encodeURIComponent(imageUrl === "https://curtaincall.com.ng/og-default.png" ? "" : imageUrl);
+        const encodedStatus = encodeURIComponent(play.status || 'Currently Showing');
+        imageUrl = `https://curtaincall.com.ng/api/og?title=${encodedTitle}&venue=${encodedVenue}&posterUrl=${encodedPoster}&status=${encodedStatus}`;
       }
     }
   } catch (error) {

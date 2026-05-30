@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { WithdrawModal } from '@/components/creator/WithdrawModal';
 import Link from 'next/link';
+import { LineChart, Line, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function CreatorDashboardPage() {
   const { user, logout } = useAuth();
@@ -59,7 +60,8 @@ export default function CreatorDashboardPage() {
     available: 0,
     totalEarned: 0,
     withdrawn: 0,
-    transactions: [] as any[]
+    transactions: [] as any[],
+    chartData: [] as any[]
   });
 
   useEffect(() => {
@@ -116,11 +118,25 @@ export default function CreatorDashboardPage() {
       }))
     ].sort((a, b) => b.timestamp - a.timestamp);
     
+    // Process transactions into chartData (last 14 days)
+    const last14Days = [...Array(14)].map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (13 - i));
+      return d.toLocaleDateString(); // "M/D/YYYY" or local equivalent
+    });
+
+    const chartData = last14Days.map(dateStr => {
+      const dayTxs = transactions.filter(tx => tx.positive && tx.date === dateStr);
+      const earned = dayTxs.reduce((acc, tx) => acc + parseInt(tx.amount.replace(/[^0-9]/g, '') || '0'), 0);
+      return { date: dateStr.split('/')[0] + '/' + dateStr.split('/')[1], earnings: earned };
+    });
+    
     setWalletMetrics({
       available,
       totalEarned: totalEarned + quizCredits,
       withdrawn: totalWithdrawn,
       transactions,
+      chartData,
     });
   }, [user, allPlays, syncCount, quizCredits, cashTransactions]);
 
@@ -257,6 +273,24 @@ export default function CreatorDashboardPage() {
                     <p className="text-[9px] font-bold uppercase tracking-wider">Paid Out</p>
                   </div>
                   <p className="text-lg font-bold font-serif text-white">₦{walletMetrics.withdrawn.toLocaleString()}</p>
+                </div>
+              </div>
+
+              {/* EARNINGS GRAPH */}
+              <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 h-48 w-full flex flex-col">
+                <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 mb-2">14-Day Earnings Trend</p>
+                <div className="flex-1 w-full min-h-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={walletMetrics.chartData}>
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#09090b', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)' }}
+                        itemStyle={{ color: '#34d399', fontWeight: 'bold' }}
+                        formatter={(value: any) => [`₦${Number(value).toLocaleString()}`, 'Earnings']}
+                        labelStyle={{ color: '#a1a1aa', fontWeight: 'bold', marginBottom: '4px' }}
+                      />
+                      <Line type="monotone" dataKey="earnings" stroke="#34d399" strokeWidth={3} dot={{ r: 3, fill: '#09090b', stroke: '#34d399', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#34d399', stroke: '#fff', strokeWidth: 2 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
 
