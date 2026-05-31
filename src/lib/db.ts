@@ -876,7 +876,22 @@ export const ClientDB = {
     } else {
       list = JSON.parse(stored);
     }
-    return sortItemsByDateAdded(list);
+    
+    // Dynamically calculate read time
+    const mapped = list.map((a: any) => {
+      if (!a.readTime) {
+        if (a.content) {
+          const words = a.content.trim().split(/\s+/).length;
+          const minutes = Math.max(1, Math.ceil(words / 200));
+          a.readTime = `${minutes} min read`;
+        } else {
+          a.readTime = '5 min read';
+        }
+      }
+      return a;
+    });
+    
+    return sortItemsByDateAdded(mapped);
   },
 
   saveArticle(article: Article): void {

@@ -65,6 +65,7 @@ export interface Article {
   author: string;
   imageUrl: string;
   content?: string;
+  readTime?: string;
   submitterEmail?: string;
   curationStatus?: 'Pending' | 'Approved' | 'Declined';
 }

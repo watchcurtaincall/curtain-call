@@ -111,7 +111,7 @@ export function ArticleDetailPageClient({ initialArticle, id }: Props) {
               <span className="w-1 h-1 rounded-full bg-zinc-700"></span>
               <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5 text-red-500" /> {article.author}</span>
               <span className="w-1 h-1 rounded-full bg-zinc-700"></span>
-              <span className="flex items-center gap-1.5"><BookOpen className="h-3.5 w-3.5 text-red-500" /> 4 min read</span>
+              <span className="flex items-center gap-1.5"><BookOpen className="h-3.5 w-3.5 text-red-500" /> {article.readTime || '5 min read'}</span>
             </div>
           </div>
         </div>
