@@ -669,12 +669,12 @@ export const ClientDB = {
 
   // ── ARTISTS DATABASE ──
   getArtists(): Artist[] {
-    if (typeof window === 'undefined') return MOCK_ARTISTS;
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem(ARTISTS_KEY);
     let list: Artist[];
     if (!stored) {
-      localStorage.setItem(ARTISTS_KEY, JSON.stringify(MOCK_ARTISTS));
-      list = MOCK_ARTISTS;
+      localStorage.setItem(ARTISTS_KEY, JSON.stringify([]));
+      list = [];
     } else {
       list = JSON.parse(stored);
       let migrated = false;
@@ -755,12 +755,12 @@ export const ClientDB = {
 
   // ── PRODUCTIONS DATABASE ──
   getProductions(): Production[] {
-    if (typeof window === 'undefined') return MOCK_PRODUCTIONS;
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem(PRODUCTIONS_KEY);
     let list: Production[];
     if (!stored) {
-      localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify(MOCK_PRODUCTIONS));
-      list = MOCK_PRODUCTIONS;
+      localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([]));
+      list = [];
     } else {
       list = JSON.parse(stored);
     }
@@ -842,12 +842,12 @@ export const ClientDB = {
 
   // ── EDITORIAL / BLOG DATABASE ──
   getArticles(): Article[] {
-    if (typeof window === 'undefined') return MOCK_ARTICLES;
+    if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem(ARTICLES_KEY);
     let list: Article[];
     if (!stored) {
-      localStorage.setItem(ARTICLES_KEY, JSON.stringify(MOCK_ARTICLES));
-      list = MOCK_ARTICLES;
+      localStorage.setItem(ARTICLES_KEY, JSON.stringify([]));
+      list = [];
     } else {
       list = JSON.parse(stored);
     }
