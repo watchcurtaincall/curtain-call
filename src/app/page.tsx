@@ -10,36 +10,54 @@ import { ClientDB, syncFromSupabase, sortItemsByDateAdded } from '@/lib/db';
 import { Production, Artist } from '@/lib/types';
 import { useState, useEffect } from 'react';
 
+let isFirstMount = true;
+
+function getInitialLocalData() {
+  const allArticles = ClientDB.getArticles();
+  const sortedArtists = ClientDB.getArtists()
+    .sort((a, b) => {
+      const diff = (b.hits || 0) - (a.hits || 0);
+      if (diff !== 0) return diff;
+      return a.name.localeCompare(b.name);
+    })
+    .slice(0, 6);
+
+  return {
+    productions: sortItemsByDateAdded(ClientDB.getProductions()),
+    trendingPeople: sortedArtists,
+    recentArticles: allArticles.slice(0, 3),
+    featuredHighlights: allArticles.length > 3 ? allArticles.slice(3, 6) : allArticles.slice(0, 3),
+    loading: !localStorage.getItem('cc_last_sync_time')
+  };
+}
+
 export default function Home() {
-  const [productions, setProductions] = useState<Production[]>([]);
-  const [trendingPeople, setTrendingPeople] = useState<Artist[]>([]);
-  const [recentArticles, setRecentArticles] = useState<any[]>([]);
-  const [featuredHighlights, setFeaturedHighlights] = useState<any[]>([]);
-  const [mounted, setMounted] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [initialData] = useState(() => {
+    if (typeof window !== 'undefined' && !isFirstMount) {
+      return getInitialLocalData();
+    }
+    return null;
+  });
+
+  const [productions, setProductions] = useState<Production[]>(initialData?.productions || []);
+  const [trendingPeople, setTrendingPeople] = useState<Artist[]>(initialData?.trendingPeople || []);
+  const [recentArticles, setRecentArticles] = useState<any[]>(initialData?.recentArticles || []);
+  const [featuredHighlights, setFeaturedHighlights] = useState<any[]>(initialData?.featuredHighlights || []);
+  const [mounted, setMounted] = useState(initialData ? true : false);
+  const [loading, setLoading] = useState(initialData ? initialData.loading : true);
 
   // Dynamically load data from client-side active database on mount
   useEffect(() => {
+    isFirstMount = false;
     setMounted(true);
     const hasSyncedBefore = localStorage.getItem('cc_last_sync_time');
 
     const loadData = () => {
-      // Sort plays by date added so newly added plays appear at the top!
-      setProductions(sortItemsByDateAdded(ClientDB.getProductions()));
-
-      // ── Trending Theatremakers (Deterministic cross-device sorting)
-      const sortedArtists = ClientDB.getArtists()
-        .sort((a, b) => {
-          const diff = (b.hits || 0) - (a.hits || 0);
-          if (diff !== 0) return diff;
-          return a.name.localeCompare(b.name);
-        })
-        .slice(0, 6);
-      setTrendingPeople(sortedArtists);
-      
-      const allArticles = ClientDB.getArticles();
-      setRecentArticles(allArticles.slice(0, 3));
-      setFeaturedHighlights(allArticles.length > 3 ? allArticles.slice(3, 6) : allArticles.slice(0, 3));
+      const data = getInitialLocalData();
+      setProductions(data.productions);
+      setTrendingPeople(data.trendingPeople);
+      setRecentArticles(data.recentArticles);
+      setFeaturedHighlights(data.featuredHighlights);
       
       // If we have completed a sync previously, we bypass the loading phase entirely to load in 0ms!
       if (hasSyncedBefore) {
