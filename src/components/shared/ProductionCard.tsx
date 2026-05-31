@@ -40,7 +40,7 @@ export function ProductionCard({ production, showTicketBadge }: { production: Pr
 
           {/* Status badge */}
           {production.status && (
-            <div className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase backdrop-blur-md border pointer-events-auto ${
+            <div className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase backdrop-blur-md border whitespace-nowrap pointer-events-auto ${
               production.status === 'Currently Showing'
                 ? 'bg-red-600/90 border-red-500/50 text-white'
                 : production.status === 'Recently Concluded'
