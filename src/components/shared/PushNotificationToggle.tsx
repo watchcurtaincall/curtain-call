@@ -43,7 +43,19 @@ export function PushNotificationToggle() {
     setIsLoading(true);
 
     try {
-      const registration = await navigator.serviceWorker.ready;
+      let registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) {
+        console.log('No service worker found, attempting to register...');
+        registration = await navigator.serviceWorker.register('/sw.js');
+      }
+      
+      if (!registration) {
+        alert('Service Worker is not supported or not configured (check if PWA is disabled in dev mode).');
+        setIsLoading(false);
+        return;
+      }
+      
+      await navigator.serviceWorker.ready;
       
       // Request permission
       const permission = await Notification.requestPermission();
