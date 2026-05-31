@@ -7,10 +7,20 @@ import { Article } from '@/lib/types';
 import Link from 'next/link';
 import { Calendar, User, BookOpen, ArrowRight } from 'lucide-react';
 
+let isFirstMount = true;
+
 export default function EditorialPage() {
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [initialData] = useState(() => {
+    if (typeof window !== 'undefined' && !isFirstMount) {
+      return ClientDB.getArticles();
+    }
+    return null;
+  });
+
+  const [articles, setArticles] = useState<Article[]>(initialData || []);
 
   useEffect(() => {
+    isFirstMount = false;
     const loadData = () => {
       const allArticles = ClientDB.getArticles();
       setArticles(allArticles);

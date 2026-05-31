@@ -7,8 +7,17 @@ import { ProductionCard } from '@/components/shared/ProductionCard';
 import { Search, PlusCircle, Drama, Info, FileText } from 'lucide-react';
 import Link from 'next/link';
 
+let isFirstMount = true;
+
 export default function DocumentedPlaysPage() {
-  const [productions, setProductions] = useState<Production[]>([]);
+  const [initialData] = useState(() => {
+    if (typeof window !== 'undefined' && !isFirstMount) {
+      return sortItemsByDateAdded(ClientDB.getProductions().filter(p => p.status !== 'Draft'));
+    }
+    return null;
+  });
+
+  const [productions, setProductions] = useState<Production[]>(initialData || []);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,6 +30,7 @@ export default function DocumentedPlaysPage() {
 
   // Load dynamically from the ClientDB on mount
   useEffect(() => {
+    isFirstMount = false;
     const loadData = () => {
       // Sort plays by date added so newly added plays appear at the top!
       setProductions(sortItemsByDateAdded(ClientDB.getProductions().filter(p => p.status !== 'Draft')));

@@ -7,13 +7,23 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { User } from 'lucide-react';
 
+let isFirstMount = true;
+
 export default function ArtistsDirectoryPage() {
-  const [artists, setArtists] = useState<Artist[]>([]);
+  const [initialData] = useState(() => {
+    if (typeof window !== 'undefined' && !isFirstMount) {
+      return sortItemsByDateAdded(ClientDB.getArtists());
+    }
+    return null;
+  });
+
+  const [artists, setArtists] = useState<Artist[]>(initialData || []);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20; // 2 items per row, 10 rows
 
   // Load dynamically from the ClientDB on mount
   useEffect(() => {
+    isFirstMount = false;
     const loadData = () => {
       // Sort artists by date added so newly added theatremakers appear at the top!
       setArtists(sortItemsByDateAdded(ClientDB.getArtists()));
