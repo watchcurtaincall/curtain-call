@@ -48,8 +48,28 @@ async function handler(req: NextRequest) {
     });
   }
 
+  // Fetch the last 7 days of questions to prevent repetition
+  const { data: pastDays } = await supabaseServer
+    .from('quiz_days')
+    .select('questions')
+    .lt('quiz_date', today)
+    .order('quiz_date', { ascending: false })
+    .limit(7);
+
+  let recentQuestionsContext = '';
+  if (pastDays && pastDays.length > 0) {
+    const pastQuestions = pastDays
+      .flatMap(day => day.questions || [])
+      .map(q => q.text)
+      .filter(Boolean);
+    
+    if (pastQuestions.length > 0) {
+      recentQuestionsContext = pastQuestions.map(q => `- ${q}`).join('\n');
+    }
+  }
+
   // Generate questions
-  const { questions, source } = await generateQuizQuestions();
+  const { questions, source } = await generateQuizQuestions(recentQuestionsContext);
 
   // Upsert the quiz_day row using correct schema columns
   const { error: upsertErr } = await supabaseServer

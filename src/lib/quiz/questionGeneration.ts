@@ -63,10 +63,15 @@ JSON schema for each question:
   "theme": string
 }`;
 
-export async function generateQuizQuestions(): Promise<{
+export async function generateQuizQuestions(recentQuestionsContext?: string): Promise<{
   questions: QuizQuestionInternal[];
   source: 'ai' | 'fallback';
 }> {
+  const finalPrompt = `${PROMPT}
+  
+${recentQuestionsContext ? `Here are the questions that have been asked recently. Under no circumstances should you repeat these exact questions, and you should try to avoid these specific topics if possible:
+${recentQuestionsContext}` : ''}`;
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     console.warn('[QuestionGen] No GEMINI_API_KEY, using fallback questions.');
@@ -78,7 +83,7 @@ export async function generateQuizQuestions(): Promise<{
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: PROMPT }] }],
+        contents: [{ parts: [{ text: finalPrompt }] }],
         generationConfig: {
           temperature: 0.8,
           maxOutputTokens: 2048,
