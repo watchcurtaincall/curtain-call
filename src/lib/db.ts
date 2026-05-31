@@ -1813,7 +1813,15 @@ export const syncFromSupabase = async () => {
 
     // 3. Process Articles
     if (data.articles) {
-      const mappedRemote = data.articles.map(mapArticleFromDb);
+      const currentLocalArticles = JSON.parse(localStorage.getItem(ARTICLES_KEY) || '[]');
+      const mappedRemote = data.articles.map((row: any) => {
+        const mapped = mapArticleFromDb(row);
+        if (row.views === undefined) {
+           const local = currentLocalArticles.find((a: any) => a.id === row.id);
+           if (local && local.views !== undefined) mapped.views = local.views;
+        }
+        return mapped;
+      });
       const approved = mappedRemote.filter((a: any) => a.curationStatus === 'Approved');
 
       localStorage.setItem(ARTICLES_KEY, JSON.stringify(approved));

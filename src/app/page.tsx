@@ -65,7 +65,7 @@ export default function Home() {
 
   if (!mounted || loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col gap-16 pb-24">
+      <div className="min-h-[300vh] bg-zinc-950 flex flex-col gap-16 pb-24">
         {/* Premium Shimmer Hero Block */}
         <div className="relative w-full h-[80vh] min-h-[580px] bg-zinc-900/10 animate-pulse flex items-end p-8 md:p-16 border-b border-white/5 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
