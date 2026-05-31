@@ -5,6 +5,7 @@ import { Newsletter } from "@/components/layout/Newsletter";
 import { Footer } from "@/components/layout/Footer";
 import { Providers } from '@/lib/Providers';
 import { Analytics } from "@vercel/analytics/react";
+import { GoogleAnalytics } from '@next/third-parties/google';
 import "./globals.css";
 
 const outfit = Outfit({
@@ -39,6 +40,7 @@ export default function RootLayout({
           <Footer />
         </Providers>
         <Analytics />
+        <GoogleAnalytics gaId="G-DHM49ZCC5H" />
         {/* Global SEO Structured Data */}
         <script
           type="application/ld+json"
