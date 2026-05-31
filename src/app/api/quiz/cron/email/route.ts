@@ -55,7 +55,6 @@ async function handler(req: NextRequest) {
 
   // Send emails in a single batch via Resend Batch API to avoid Vercel 10s timeout
   const resendApiKey = process.env.RESEND_API_KEY;
-  const mailerSendApiKey = process.env.MAILERSEND_API_KEY;
   let sent = 0;
   let failed = 0;
   const errors: string[] = [];
@@ -84,29 +83,7 @@ async function handler(req: NextRequest) {
     };
   });
 
-  const mailerSendPayload = users.map(user => {
-    const shortName = (user.name || user.email).split(' ')[0];
-    const html = getDailyQuizReminderHtml(
-      user.name || user.email,
-      user.email,
-      today,
-      quizDay.slots_remaining || 10,
-      `${APP_URL}/quiz`
-    );
-    const textAlternative = html
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
 
-    return {
-      from: { email: 'notifications@curtaincall.com.ng', name: 'Curtain Call' },
-      to: [{ email: user.email }],
-      subject: `${shortName} Your daily quiz is live - play now`,
-      html,
-      text: textAlternative
-    };
-  });
 
   let primaryFailed = false;
 
@@ -141,34 +118,50 @@ async function handler(req: NextRequest) {
     primaryFailed = true;
   }
 
-  // Fallback Bulk: MailerSend
+  // Fallback Bulk: Brevo
   if (primaryFailed) {
-    if (!mailerSendApiKey || mailerSendApiKey === 'mlsn_your_api_key_here') {
-      console.warn('[CronEmail] MailerSend key missing too. Simulating.');
+    const brevoApiKey = process.env.BREVO_API_KEY;
+    if (!brevoApiKey) {
+      console.warn('[CronEmail] Brevo key missing too. Simulating.');
       sent = users.length;
     } else {
-      console.log('[CronEmail] Attempting delivery via MailerSend (Fallback)...');
+      console.log('[CronEmail] Attempting delivery via Brevo (Fallback)...');
       try {
-        const msRes = await fetch('https://api.mailersend.com/v1/bulk-email', {
+        const brevoPayload = {
+          sender: { name: 'Curtain Call', email: 'notifications@curtaincall.com.ng' },
+          messageVersions: users.map(user => {
+            const shortName = (user.name || user.email).split(' ')[0];
+            const html = getDailyQuizReminderHtml(user.name || user.email, user.email, today, quizDay.slots_remaining || 10, `${APP_URL}/quiz`);
+            const textAlternative = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            return {
+              to: [{ email: user.email }],
+              subject: `${shortName} Your daily quiz is live - play now`,
+              htmlContent: html,
+              textContent: textAlternative
+            };
+          })
+        };
+
+        const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${mailerSendApiKey}`,
+            'api-key': brevoApiKey,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(mailerSendPayload),
+          body: JSON.stringify(brevoPayload),
         });
 
-        if (msRes.ok || msRes.status === 202) {
-          sent = users.length; // bulk api returns 202 accepted
-          console.log('[CronEmail] Successfully batched via MailerSend.');
+        if (brevoRes.ok || brevoRes.status === 202) {
+          sent = users.length;
+          console.log('[CronEmail] Successfully batched via Brevo.');
         } else {
-          const errorText = await msRes.text();
-          console.error('[CronEmail] MailerSend Batch API error:', errorText);
+          const errorText = await brevoRes.text();
+          console.error('[CronEmail] Brevo Batch API error:', errorText);
           failed = users.length;
-          errors.push(`MailerSend Error: ${errorText}`);
+          errors.push(`Brevo Error: ${errorText}`);
         }
       } catch (err: any) {
-        console.error('[CronEmail] MailerSend Batch exception:', err);
+        console.error('[CronEmail] Brevo Batch exception:', err);
         failed = users.length;
         errors.push(err.message);
       }

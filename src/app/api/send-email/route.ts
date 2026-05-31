@@ -54,46 +54,47 @@ Timestamp: ${new Date().toISOString()}
       return { success: true, provider: 'resend' };
     };
 
-    const sendViaMailerSend = async () => {
-      if (!mailerSendApiKey || mailerSendApiKey === 'mlsn_your_api_key_here') throw new Error('Missing MailerSend Key');
-      const mailerSendRes = await fetch('https://api.mailersend.com/v1/email', {
+    const sendViaBrevo = async () => {
+      const brevoApiKey = process.env.BREVO_API_KEY;
+      if (!brevoApiKey) throw new Error('Missing Brevo Key');
+      const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${mailerSendApiKey}`,
+          'api-key': brevoApiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: {
+          sender: {
             email: 'notifications@curtaincall.com.ng',
             name: 'Curtain Call'
           },
           to: Array.isArray(to) ? to.map(email => ({ email })) : [{ email: to }],
           subject,
-          html,
-          text: textAlternative,
+          htmlContent: html,
+          textContent: textAlternative,
         }),
       });
-      if (!mailerSendRes.ok) {
-        const errorData = await mailerSendRes.json().catch(() => ({}));
-        throw { provider: 'mailersend', status: mailerSendRes.status, data: errorData };
+      if (!brevoRes.ok) {
+        const errorData = await brevoRes.json().catch(() => ({}));
+        throw { provider: 'brevo', status: brevoRes.status, data: errorData };
       }
-      return { success: true, provider: 'mailersend' };
+      return { success: true, provider: 'brevo' };
     };
 
     let primaryErrorData = null;
 
     // Routing Logic based on Email Type
     if (type === 'bulk') {
-      // Primary: Resend, Fallback: MailerSend
+      // Primary: Resend, Fallback: Brevo
       try {
         console.log('[Email Dispatcher] Routing to Resend (Primary for Bulk)');
         const result = await sendViaResend();
         return NextResponse.json(result);
       } catch (err: any) {
         primaryErrorData = err;
-        console.warn('[Email Dispatcher] Resend failed, falling back to MailerSend...', err);
+        console.warn('[Email Dispatcher] Resend failed, falling back to Brevo...', err);
         try {
-          const fallbackResult = await sendViaMailerSend();
+          const fallbackResult = await sendViaBrevo();
           return NextResponse.json(fallbackResult);
         } catch (fallbackErr: any) {
           console.error('[Email Dispatcher] CRITICAL: Both bulk providers failed', { primary: err, fallback: fallbackErr });
@@ -101,14 +102,14 @@ Timestamp: ${new Date().toISOString()}
         }
       }
     } else {
-      // Primary: MailerSend, Fallback: Resend (Transactional/Default)
+      // Primary: Brevo, Fallback: Resend (Transactional/Default)
       try {
-        console.log('[Email Dispatcher] Routing to MailerSend (Primary for Transactional)');
-        const result = await sendViaMailerSend();
+        console.log('[Email Dispatcher] Routing to Brevo (Primary for Transactional)');
+        const result = await sendViaBrevo();
         return NextResponse.json(result);
       } catch (err: any) {
         primaryErrorData = err;
-        console.warn('[Email Dispatcher] MailerSend failed, falling back to Resend...', err);
+        console.warn('[Email Dispatcher] Brevo failed, falling back to Resend...', err);
         try {
           const fallbackResult = await sendViaResend();
           return NextResponse.json(fallbackResult);
