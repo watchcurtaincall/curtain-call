@@ -128,7 +128,7 @@ async function handler(req: NextRequest) {
       console.log('[CronEmail] Attempting delivery via Brevo (Fallback)...');
       try {
         const brevoPayload = {
-          sender: { name: 'Curtain Call', email: 'notifications@curtaincall.com.ng' },
+          sender: { name: 'Curtain Call', email: 'watchcurtaincall@gmail.com' },
           messageVersions: users.map(user => {
             const shortName = (user.name || user.email).split(' ')[0];
             const html = getDailyQuizReminderHtml(user.name || user.email, user.email, today, quizDay.slots_remaining || 10, `${APP_URL}/quiz`);
