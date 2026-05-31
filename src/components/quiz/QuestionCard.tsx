@@ -36,12 +36,12 @@ export function QuestionCard({ question, onAnswer }: QuestionCardProps) {
       </div>
 
       {/* Question Text */}
-      <h3 className="text-lg sm:text-xl font-serif font-bold text-white leading-snug text-center py-4">
+      <h3 className="text-2xl sm:text-3xl font-serif font-black text-white leading-snug text-center py-4">
         {question.text}
       </h3>
 
       {/* Options Grid */}
-      <div className="grid grid-cols-1 gap-3 mt-2">
+      <div className="grid grid-cols-1 gap-4 mt-2">
         {question.options.map((option, idx) => {
           const isSelected = selectedIdx === idx;
           const isAnySelected = selectedIdx !== null;
@@ -53,7 +53,7 @@ export function QuestionCard({ question, onAnswer }: QuestionCardProps) {
               type="button"
               disabled={isAnySelected}
               onClick={() => handleSelect(idx)}
-              className={`w-full text-left p-4.5 rounded-2xl border transition-all text-xs font-medium relative overflow-hidden active:scale-[0.99] flex items-center gap-3 cursor-pointer ${
+              className={`w-full text-left p-5 rounded-2xl border transition-all text-base sm:text-lg font-bold relative overflow-hidden active:scale-[0.99] flex items-center gap-4 cursor-pointer ${
                 isSelected
                   ? 'bg-gradient-to-r from-red-550/15 to-amber-550/15 border-red-500/50 text-white shadow-[0_0_15px_rgba(239,68,68,0.15)]'
                   : 'bg-zinc-950/70 border-white/5 text-zinc-300 hover:border-white/15 hover:text-white'

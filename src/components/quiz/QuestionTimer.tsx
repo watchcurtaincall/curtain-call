@@ -7,7 +7,7 @@ interface QuestionTimerProps {
 }
 
 export function QuestionTimer({ onExpire }: QuestionTimerProps) {
-  const duration = 8000; // 8 seconds
+  const duration = 15000; // 15 seconds
   const [timeLeft, setTimeLeft] = useState(duration);
   const startTimeRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
