@@ -1976,9 +1976,10 @@ export const syncFromSupabase = async () => {
 
     localStorage.setItem('cc_last_sync_time', Date.now().toString());
     console.log('[Curtain Call Database] Unified sync successfully completed with Supabase cloud in one round-trip!');
-    window.dispatchEvent(new Event('cc-db-synced'));
   } catch (err) {
     console.error('[Supabase Sync] Pull error:', err);
+  } finally {
+    window.dispatchEvent(new Event('cc-db-synced'));
   }
 };
 
