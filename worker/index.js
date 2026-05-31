@@ -1,15 +1,12 @@
-/// <reference lib="webworker" />
-declare let self: ServiceWorkerGlobalScope;
-
 // To disable all workbox logging during development
 self.__WB_DISABLE_DEV_LOGS = true;
 
 // Listen to push events
 self.addEventListener('push', (event) => {
-  const data = event.data?.json() ?? {};
+  const data = event.data ? event.data.json() : {};
   
   const title = data.title || 'Curtain Call';
-  const options: NotificationOptions = {
+  const options = {
     body: data.body || 'You have a new notification.',
     icon: '/icon-192x192.png',
     badge: '/icon-192x192.png',
@@ -27,7 +24,7 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   // If a URL was passed in the data payload, open it
-  const urlToOpen = event.notification.data?.url || '/';
+  const urlToOpen = event.notification.data ? event.notification.data.url : '/';
   
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
