@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -18,6 +18,7 @@ export function ArticleDetailPageClient({ initialArticle, id }: Props) {
 
   const [article, setArticle] = useState<Article | null>(initialArticle);
   const [loading, setLoading] = useState(!initialArticle);
+  const hasViewedRef = useRef(false);
 
   useEffect(() => {
     const loadArticle = () => {
@@ -25,6 +26,10 @@ export function ArticleDetailPageClient({ initialArticle, id }: Props) {
       const found = allArticles.find(a => a.id === id);
       if (found) {
         setArticle(found);
+        if (!hasViewedRef.current) {
+          hasViewedRef.current = true;
+          ClientDB.incrementArticleView(id);
+        }
       }
       setLoading(false);
     };

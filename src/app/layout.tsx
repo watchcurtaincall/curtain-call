@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Newsletter } from "@/components/layout/Newsletter";
 import { Footer } from "@/components/layout/Footer";
 import { Providers } from '@/lib/Providers';
+import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -37,6 +38,7 @@ export default function RootLayout({
           <Newsletter />
           <Footer />
         </Providers>
+        <Analytics />
         {/* Global SEO Structured Data */}
         <script
           type="application/ld+json"

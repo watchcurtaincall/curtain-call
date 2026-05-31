@@ -356,13 +356,10 @@ export default function Home() {
 
               <div className="flex flex-col gap-4 divide-y divide-white/5 relative z-10">
                 {featuredHighlights.map((feat, index) => {
-                  const getViews = (id: string) => {
-                    const map: Record<string, string> = {
-                      art1: '4.2k reads',
-                      art2: '3.8k reads',
-                      art3: '2.9k reads',
-                    };
-                    return map[id] || '1.8k reads';
+                  const formatViews = (views?: number) => {
+                    if (!views) return '0 reads';
+                    if (views >= 1000) return `${(views / 1000).toFixed(1)}k reads`;
+                    return `${views} reads`;
                   };
                   return (
                     <div key={feat.id} className={`${index > 0 ? 'pt-4' : ''} group`}>
@@ -376,7 +373,7 @@ export default function Home() {
                         {feat.title}
                       </Link>
                       <span className="text-[9px] text-zinc-500 mt-1 block uppercase font-bold tracking-wider">
-                        {getViews(feat.id)}
+                        {formatViews(feat.views)}
                       </span>
                     </div>
                   );

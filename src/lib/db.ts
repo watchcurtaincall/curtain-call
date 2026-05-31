@@ -921,6 +921,19 @@ export const ClientDB = {
     deleteFromCloud('articles', id);
   },
 
+  incrementArticleView(id: string): void {
+    if (typeof window === 'undefined') return;
+    const articles = this.getArticles();
+    const index = articles.findIndex(a => a.id === id);
+    if (index !== -1) {
+      const updated = [...articles];
+      updated[index] = { ...updated[index], views: (updated[index].views || 0) + 1 };
+      localStorage.setItem(ARTICLES_KEY, JSON.stringify(updated));
+      // Sync to cloud (so other users see the updated view count eventually)
+      syncToCloud('articles', mapArticleToDb(updated[index]));
+    }
+  },
+
   // ── CMS PENDING SUBMISSIONS QUEUE ──
   getPendingArtists(): Artist[] {
     if (typeof window === 'undefined') return [];
