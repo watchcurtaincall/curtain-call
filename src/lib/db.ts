@@ -2,6 +2,7 @@
 
 import { MOCK_ARTISTS, MOCK_PRODUCTIONS, MOCK_REVIEWS } from './mock';
 import { Artist, Production, Article } from './types';
+import { getWelcomeNewsletterHtml, getCriticApprovedHtml, getCriticApplicationRejectedHtml } from '@/lib/quiz/emailTemplates';
 import { createClient } from '@supabase/supabase-js';
 
 const ARTISTS_KEY = 'curtain_call_artists';
@@ -566,35 +567,7 @@ export const ClientDB = {
 
       // Send Welcome Email ONLY for brand new newsletter subscriptions
       const subject = "Welcome to Curtain Call | The Front Row Seat";
-      const htmlContent = `
-        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <span style="font-size: 24px; font-weight: bold; color: #ffffff; font-family: Georgia, serif;">Curtain Call Editorial</span>
-            <div style="height: 2px; width: 60px; background-color: #dc2626; margin: 15px auto 0;"></div>
-          </div>
-          
-          <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; font-family: Georgia, serif; margin-bottom: 15px;">Welcome to The Front Row Seat!</h2>
-          
-          <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
-            You have successfully subscribed to the premium Curtain Call weekly theatre newsletter.
-          </p>
-          
-          <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 25px;">
-            <p style="font-size: 13px; color: #f4f4f5; font-weight: bold; margin: 0 0 5px;">Your Subscribed Email:</p>
-            <code style="font-size: 13px; color: #22c55e; font-family: monospace;">${emailLower}</code>
-          </div>
-          
-          <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center;">
-            Get ready for weekly ticket exclusives, interview features, curated reviews, and show listings straight from our cultural editors.
-          </p>
-          
-          <div style="border-top: 1px solid #27272a; margin-top: 30px; padding-top: 20px; text-align: center;">
-            <p style="font-size: 10px; color: #71717a; margin: 0;">
-              Curtain Call Ltd · 10 Glover Road, Ikoyi, Lagos
-            </p>
-          </div>
-        </div>
-      `;
+      const htmlContent = getWelcomeNewsletterHtml(emailLower);
 
       this.sendEmail(emailLower, subject, htmlContent).catch(err => {
         console.error('Failed to dispatch welcome email:', err);
@@ -1242,25 +1215,7 @@ export const ClientDB = {
       });
 
       // 2. Dispatch congratulatory email
-      const welcomeHtml = `
-        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <span style="font-size: 24px; font-weight: bold; color: #ffffff; font-family: Georgia, serif;">Curtain Call Curation</span>
-            <div style="height: 2px; width: 60px; background-color: #dc2626; margin: 15px auto 0;"></div>
-          </div>
-          <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; font-family: Georgia, serif; margin-bottom: 15px;">Congratulations, ${app.name}!</h2>
-          <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
-            Your application to become a **Verified Critic** has been approved by the Curtain Call curation board!
-          </p>
-          <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 25px;">
-            <p style="font-size: 13px; color: #f4f4f5; font-weight: bold; margin: 0 0 5px;">Verified Email Account:</p>
-            <code style="font-size: 13px; color: #22c55e; font-family: monospace;">${app.email}</code>
-          </div>
-          <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center;">
-            You can now post official professional scores and reviews across the plays archive.
-          </p>
-        </div>
-      `;
+      const welcomeHtml = getCriticApprovedHtml(app.name, app.email);
       this.sendEmail(app.email, 'Curtain Call: Verified Critic Approved! 🎭', welcomeHtml).catch(err => {
         console.error('[Sync] Failed to send critic approval email:', err);
       });
@@ -1288,18 +1243,7 @@ export const ClientDB = {
       });
 
       // 2. Dispatch email rejection
-      const rejectionHtml = `
-        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <span style="font-size: 24px; font-weight: bold; color: #ffffff; font-family: Georgia, serif;">Curtain Call Curation</span>
-            <div style="height: 2px; width: 60px; background-color: #dc2626; margin: 15px auto 0;"></div>
-          </div>
-          <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; font-family: Georgia, serif; margin-bottom: 15px;">Hello, ${app.name}</h2>
-          <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
-            Thank you for applying to be a Verified Critic. After reviewing your application, we are unable to approve your critic status at this time.
-          </p>
-        </div>
-      `;
+      const rejectionHtml = getCriticApplicationRejectedHtml();
       this.sendEmail(app.email, 'Curtain Call: Critic Application Status 🎭', rejectionHtml).catch(err => {
         console.error('[Sync] Failed to send critic rejection email:', err);
       });

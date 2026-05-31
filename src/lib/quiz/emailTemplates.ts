@@ -78,3 +78,54 @@ export function getCriticApplicationRejectedHtml(): string {
 export function getProductionSubmissionRejectedHtml(): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color:#FFFFFF; font-family:Arial, sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF;"><tr><td align="center" style="padding:40px 20px;"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;"><tr><td align="center" style="padding-bottom:20px; border-bottom:1px solid #8B1C31;"><div style="font-family:Georgia, serif; font-size:32px; font-weight:bold; color:#8B1C31; letter-spacing:1px;">Curtain Call</div></td></tr><tr><td style="padding:40px 0;"><h1 style="margin:0 0 20px 0; font-family:Georgia, serif; font-size:24px; color:#1A1A1A; line-height:1.3; font-weight:bold;">Update on your production submission</h1><p style="margin:0 0 20px 0; font-family:Arial, sans-serif; font-size:16px; color:#555555; line-height:1.6;">Thank you for submitting a production to the Curtain Call archive. To maintain a high standard of accuracy, we could not approve this entry as submitted.</p><div style="background-color:#FDF5F6; border-left:3px solid #8B1C31; padding:20px; margin:30px 0;"><p style="margin:0 0 8px 0; font-family:Arial, sans-serif; font-size:15px; color:#1A1A1A; font-weight:bold;">Curation note:</p><div style="font-family:Arial, sans-serif; font-size:15px; color:#1A1A1A; line-height:1.6; white-space:pre-wrap;">The cast list is missing the lead actor, and the performance dates overlap incorrectly with the venue's verified calendar.\n\nAlso, please ensure that you use the high-resolution poster artwork instead of the cropped social media banner.</div></div><p style="margin:0 0 20px 0; font-family:Arial, sans-serif; font-size:16px; color:#555555; line-height:1.6;">Our database thrives on detailed, accurate history. You are welcome to correct these details and submit the production again.</p><p style="margin:30px 0 0 0; font-family:Georgia, serif; font-size:16px; color:#1A1A1A; line-height:1.6;">Best regards,<br><strong>Oyin</strong><br><span style="font-size:14px; color:#555555; font-family:Arial, sans-serif;">CC Support</span></p><table cellpadding="0" cellspacing="0" width="100%" style="margin-top:40px;"><tr><td align="left"><a href="https://curtaincall.com.ng/submit" style="display:inline-block; background-color:#8B1C31; color:#FFFFFF; font-family:Arial, sans-serif; font-size:16px; font-weight:bold; text-decoration:none; padding:16px 40px; border-radius:4px;">Resubmit Production</a></td></tr></table></td></tr><tr><td align="center" style="padding-top:30px; border-top:1px solid #8B1C31;"><p style="margin:0 0 12px 0; font-family:Georgia, serif; font-size:14px; color:#555555; font-style:italic;">Documenting Nigerian Theatre and its Creators.</p><p style="margin:0; font-family:Arial, sans-serif; font-size:12px; color:#888888;"><a href="https://curtaincall.com.ng" style="color:#888888; text-decoration:underline;">curtaincall.com.ng</a> &nbsp;&bull;&nbsp; <a href="#" style="color:#888888; text-decoration:underline;">Unsubscribe</a></p></td></tr></table></td></tr></table></body></html>`;
 }
+
+// 11. Welcome Newsletter
+export function getWelcomeNewsletterHtml(emailLower: string): string {
+  return `
+    <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <span style="font-size: 24px; font-weight: bold; color: #ffffff; font-family: Georgia, serif;">Curtain Call Editorial</span>
+        <div style="height: 2px; width: 60px; background-color: #dc2626; margin: 15px auto 0;"></div>
+      </div>
+      <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; font-family: Georgia, serif; margin-bottom: 15px;">Welcome to The Front Row Seat!</h2>
+      <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
+        You have successfully subscribed to the premium Curtain Call weekly theatre newsletter.
+      </p>
+      <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 25px;">
+        <p style="font-size: 13px; color: #f4f4f5; font-weight: bold; margin: 0 0 5px;">Your Subscribed Email:</p>
+        <code style="font-size: 13px; color: #22c55e; font-family: monospace;">${emailLower}</code>
+      </div>
+      <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center;">
+        Get ready for weekly ticket exclusives, interview features, curated reviews, and show listings straight from our cultural editors.
+      </p>
+      <div style="border-top: 1px solid #27272a; margin-top: 30px; padding-top: 20px; text-align: center;">
+        <p style="font-size: 10px; color: #71717a; margin: 0;">
+          Curtain Call Ltd · 10 Glover Road, Ikoyi, Lagos
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+// 12. Critic Approved
+export function getCriticApprovedHtml(name: string, email: string): string {
+  return `
+    <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <span style="font-size: 24px; font-weight: bold; color: #ffffff; font-family: Georgia, serif;">Curtain Call Curation</span>
+        <div style="height: 2px; width: 60px; background-color: #dc2626; margin: 15px auto 0;"></div>
+      </div>
+      <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; font-family: Georgia, serif; margin-bottom: 15px;">Congratulations, ${name}!</h2>
+      <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
+        Your application to become a **Verified Critic** has been approved by the Curtain Call curation board!
+      </p>
+      <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 25px;">
+        <p style="font-size: 13px; color: #f4f4f5; font-weight: bold; margin: 0 0 5px;">Verified Email Account:</p>
+        <code style="font-size: 13px; color: #22c55e; font-family: monospace;">${email}</code>
+      </div>
+      <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center;">
+        You can now post official professional scores and reviews across the plays archive.
+      </p>
+    </div>
+  `;
+}
