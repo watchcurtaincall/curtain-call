@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { ClientDB, syncFromSupabase } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
-import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download, QrCode, Camera, RefreshCw, Star, BarChart } from 'lucide-react';
+import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download, QrCode, Camera, RefreshCw, Star, BarChart, BellRing } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import RichTextEditor from '@/components/RichTextEditor';
+import { AdminPushNotificationsPanel } from '@/components/admin/PushPanel';
 
-type AdminTab = 'overview' | 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'email-logs' | 'quiz-analytics';
+type AdminTab = 'overview' | 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'email-logs' | 'quiz-analytics' | 'push-notifications';
 
 // ── Stageography Adder Sub-component (used inside Edit Artist modal) ──
 function AdminStageographyAdder({ onAdd }: { onAdd: (credit: { productionId: string; productionTitle: string; role: string }) => void }) {
@@ -1390,6 +1391,7 @@ This file was retrieved from the Curtain Call Curation Vault.
               { id: 'direct-play', name: 'Add Play', icon: Drama },
               { id: 'manage', name: 'Manage Directory', icon: FolderEdit },
               { id: 'subscribers', name: 'Subscribers & Signups', icon: Users },
+              { id: 'push-notifications', name: 'Push Notifications', icon: BellRing },
               { id: 'email-logs', name: 'Email Logs', icon: Mail }
             ].map(item => {
               const Icon = item.icon;
@@ -1448,6 +1450,7 @@ This file was retrieved from the Curtain Call Curation Vault.
           <option value="direct-play">Add Play</option>
           <option value="manage">Manage Directory</option>
           <option value="subscribers">Subscribers</option>
+          <option value="push-notifications">Push Notifications</option>
           <option value="email-logs">Email Logs</option>
         </select>
       </div>
@@ -4555,6 +4558,8 @@ This file was retrieved from the Curtain Call Curation Vault.
             </div>
           );
         })()}
+
+        {activeTab === 'push-notifications' && <AdminPushNotificationsPanel />}
 
       {/* Decline Reason Modal */}
       {declineItem && (
