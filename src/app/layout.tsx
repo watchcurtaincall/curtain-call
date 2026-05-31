@@ -18,6 +18,12 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://www.curtaincall.com.ng'),
   title: "Curtain Call | Digital Home for Theatre Culture in Africa",
   description: "Discover, review, and archive African theatre productions.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Curtain Call",
+  },
 };
 
 export default function RootLayout({
