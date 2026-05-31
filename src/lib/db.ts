@@ -301,7 +301,8 @@ const mapArticleToDb = (art: any) => ({
   content: art.content || '',
   submitter_email: art.submitterEmail || null,
   curation_status: art.curationStatus || 'Approved',
-  decline_reason: art.declineReason || null
+  decline_reason: art.declineReason || null,
+  views: art.views || 0
 });
 
 const mapArticleFromDb = (row: any) => ({
@@ -314,7 +315,8 @@ const mapArticleFromDb = (row: any) => ({
   content: row.content,
   submitterEmail: row.submitter_email,
   curationStatus: row.curation_status,
-  declineReason: row.decline_reason || null
+  declineReason: row.decline_reason || null,
+  views: row.views || 0
 });
 
 const mapCriticAppToDb = (c: any) => ({
