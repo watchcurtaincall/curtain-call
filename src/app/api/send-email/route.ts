@@ -65,7 +65,7 @@ Timestamp: ${new Date().toISOString()}
         },
         body: JSON.stringify({
           sender: {
-            email: 'watchcurtaincall@gmail.com',
+            email: 'notifications@curtaincall.com.ng',
             name: 'Curtain Call'
           },
           to: Array.isArray(to) ? to.map(email => ({ email })) : [{ email: to }],
