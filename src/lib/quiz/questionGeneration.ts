@@ -1,7 +1,7 @@
 import { QuizQuestionInternal } from '@/lib/types';
 import { FALLBACK_QUESTIONS } from './fallbackQuestions';
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
 function shuffleArray<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -23,8 +23,8 @@ function pickFallbackQuestions(count = 5): QuizQuestionInternal[] {
 
 function parseGeminiQuestions(raw: string): QuizQuestionInternal[] | null {
   try {
-    // Strip markdown code fences if present
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+    // Strip markdown code fences if present anywhere
+    const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
     const parsed = JSON.parse(cleaned);
     if (!Array.isArray(parsed) || parsed.length !== 5) return null;
     for (const q of parsed) {
