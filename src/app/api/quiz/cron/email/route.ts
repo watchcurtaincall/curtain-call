@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
 import { getDailyQuizReminderHtml } from '@/lib/quiz/emailTemplates';
+import webpush from 'web-push';
 
 const CRON_SECRET = process.env.CRON_SECRET;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.curtaincall.com.ng';
@@ -181,11 +182,54 @@ async function handler(req: NextRequest) {
     }
   }
 
+  // --- Push Notifications ---
+  let pushSent = 0;
+  let pushFailed = 0;
+  try {
+    if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+      webpush.setVapidDetails(
+        'mailto:hello@curtaincall.com.ng',
+        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        process.env.VAPID_PRIVATE_KEY
+      );
+
+      const { data: subs, error: subsErr } = await supabaseServer.from('push_subscriptions').select('id, subscription');
+      
+      if (!subsErr && subs && subs.length > 0) {
+        const payload = JSON.stringify({
+          title: "Today's quiz is live!",
+          body: "The daily theatre quiz is ready. Claim your winner slot!",
+          data: { url: "/quiz" }
+        });
+
+        const promises = subs.map(async (row) => {
+          try {
+            await webpush.sendNotification(row.subscription, payload);
+            pushSent++;
+          } catch (err: any) {
+            pushFailed++;
+            if (err.statusCode === 410 || err.statusCode === 404) {
+              await supabaseServer.from('push_subscriptions').delete().eq('id', row.id);
+            }
+          }
+        });
+        await Promise.allSettled(promises);
+        console.log(`[CronEmail] ✅ Sent ${pushSent} push notifications for ${today}`);
+      }
+    } else {
+      console.warn('[CronEmail] Missing VAPID keys. Skipping push notifications.');
+    }
+  } catch (pushErr) {
+    console.error('[CronEmail] Failed to send push notifications:', pushErr);
+  }
+
   return NextResponse.json({
     message: 'Email cron complete',
     date: today,
-    sent,
-    failed,
+    emailSent: sent,
+    emailFailed: failed,
+    pushSent,
+    pushFailed,
     errors: errors.slice(0, 5),
   });
 }
