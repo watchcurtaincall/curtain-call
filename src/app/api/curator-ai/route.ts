@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const contextBio = bio ? `Here is some basic context bio:\n${bio}` : '';
 
     const systemPrompt = `You are a curatorial assistant for "Curtain Call", the premier encyclopedia of theatrical and dramatic arts in West Africa.
-Your task is to draft a highly professional, academic, Wikipedia-style artist profile structure based on the provided artist name, their discipline/role, and any optional bio details.
+Your task is to draft a highly professional, academic, Wikipedia-style artist profile structure based strictly on the provided artist name, their discipline/role, and the optional bio details.
 
 You must reply with a valid JSON object containing exactly three string fields:
 1. "career": A structured narrative of their major theatrical milestones, regional festival participations, play productions, or notable creative stages.
@@ -26,9 +26,9 @@ You must reply with a valid JSON object containing exactly three string fields:
 Rules:
 - Keep the tone strictly formal, scholarly, and encyclopedic.
 - Write about this person as a major theatrical figure.
-- Do NOT include generic placeholder words like "Lagos", "Nigeria", "Lagos Theatremaker", or "Curtain Call" unless they are explicitly referenced in the context. Keep the focus entirely on their professional artistic legacy.
+- You MUST strictly use ONLY the details provided in the bio. DO NOT invent, hallucinate, or assume any unverified plays, festivals, awards, or historical facts.
+- If the bio lacks enough detail to confidently write a career, style, or achievements section without inventing facts, return empty strings for those fields: { "career": "", "style": "", "achievements": [] }. It is better to leave it empty than to lie.
 - DO NOT use markdown formatting inside the fields. Return only plain text.
-- If there is absolutely no way to infer or write something realistic based on the context bio, return empty strings for the fields: { "career": "", "style": "", "achievements": [] }
 
 JSON Schema:
 {

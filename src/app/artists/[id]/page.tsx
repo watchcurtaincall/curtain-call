@@ -127,6 +127,7 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
   const showCareer = artist.career || '';
   const showStyle = artist.style || '';
   const showAchievements = artist.achievements && artist.achievements.length > 0 ? artist.achievements : [];
+  const showAwards = artist.awards && artist.awards.length > 0 ? artist.awards : [];
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20 selection:bg-red-600 selection:text-white">
@@ -274,6 +275,48 @@ export default function ArtistPage({ params }: { params: Promise<{ id: string }>
                     </li>
                   ))}
                 </ul>
+              </article>
+            )}
+
+            {/* SECTION 5: AWARDS & RECOGNITIONS */}
+            {showAwards.length > 0 && (
+              <article className="prose prose-invert max-w-none">
+                <h2 className="text-xl sm:text-2xl font-serif font-bold text-white border-b border-white/10 pb-2.5 flex items-center gap-2">
+                  <Award className="h-5 w-5 text-amber-500 shrink-0" /> Awards & Recognitions
+                </h2>
+                <div className="mt-5 overflow-hidden rounded-2xl border border-white/5 bg-zinc-900/30">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-zinc-950/80 text-zinc-400 font-mono text-[10px] uppercase tracking-wider">
+                      <tr>
+                        <th className="px-4 py-3 font-medium">Year</th>
+                        <th className="px-4 py-3 font-medium">Award</th>
+                        <th className="px-4 py-3 font-medium hidden sm:table-cell">Category</th>
+                        <th className="px-4 py-3 font-medium text-right">Result</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {[...showAwards].sort((a, b) => parseInt(b.year) - parseInt(a.year)).map((award, idx) => (
+                        <tr key={idx} className="hover:bg-zinc-800/30 transition-colors">
+                          <td className="px-4 py-4 text-zinc-300 font-mono">{award.year}</td>
+                          <td className="px-4 py-4">
+                            <span className="font-bold text-white">{award.title}</span>
+                            <div className="sm:hidden text-xs text-zinc-500 mt-0.5">{award.category}</div>
+                          </td>
+                          <td className="px-4 py-4 text-zinc-400 hidden sm:table-cell">{award.category}</td>
+                          <td className="px-4 py-4 text-right">
+                            <span className={`inline-flex items-center justify-center px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-lg border ${
+                              award.status === 'won' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.1)]' :
+                              award.status === 'nominated' ? 'bg-zinc-800/80 text-zinc-300 border-white/10' :
+                              'bg-zinc-950/80 text-zinc-500 border-white/5'
+                            }`}>
+                              {award.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </article>
             )}
 

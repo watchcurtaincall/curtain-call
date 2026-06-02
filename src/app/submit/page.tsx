@@ -58,6 +58,8 @@ export default function SubmitPortalPage() {
 
   // Stageography submission states
   const [scenography, setScenography] = useState<{ productionId: string; productionTitle: string; role: string }[]>([]);
+  const [awards, setAwards] = useState<{ title: string; category: string; year: string; status: 'won' | 'nominated' | 'lost' }[]>([]);
+  const [awardForm, setAwardForm] = useState({ title: '', category: '', year: new Date().getFullYear().toString(), status: 'won' as const });
   const [stageSearchQ, setStageSearchQ] = useState('');
   const [stageRole, setStageRole] = useState('');
   const [stageSelected, setStageSelected] = useState<{ id: string; title: string } | null>(null);
@@ -251,6 +253,7 @@ export default function SubmitPortalPage() {
       bio: makerForm.bio,
       dateOfBirth: makerForm.dob || undefined,
       scenography: scenography || [],
+      awards: awards || [],
       submitterEmail: makerForm.email || user?.email || 'guest@curtaincall.com',
       curationStatus: 'Pending' as const,
       createdAt: new Date().toISOString(),
@@ -348,6 +351,8 @@ export default function SubmitPortalPage() {
               onClick={() => {
                 setIsSubmitted(false);
                 setMakerForm({ name: '', dob: '', discipline: 'Actor', customDiscipline: '', bio: '', email: user?.email || '' });
+                setScenography([]);
+                setAwards([]);
                 setPlayForm({
                   title: '',
                   playwright: '',
@@ -674,6 +679,95 @@ export default function SubmitPortalPage() {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* ── AWARDS BUILDER ── */}
+              <div className="flex flex-col gap-3 pt-3 border-t border-white/5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-1 h-3.5 bg-amber-500 rounded-full inline-block" />
+                  Awards & Recognitions (Optional)
+                </label>
+                <p className="text-[11px] text-zinc-500 leading-relaxed -mt-1.5">
+                  Log official awards, nominations, and recognitions for this artist.
+                </p>
+
+                {awards.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {awards.map((award, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-zinc-950 border border-white/5 rounded-xl px-3 py-2.5 gap-2 animate-fade-up">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-white truncate">{award.title} ({award.year})</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[9px] bg-zinc-800 text-zinc-300 border border-white/10 px-1.5 py-0.5 rounded font-mono uppercase tracking-wider truncate">{award.category}</span>
+                            <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                              award.status === 'won' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/20' :
+                              award.status === 'nominated' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/20' :
+                              'bg-zinc-800 text-zinc-400 border border-white/5'
+                            }`}>
+                              {award.status}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setAwards(awards.filter((_, i) => i !== idx))}
+                          className="text-zinc-500 hover:text-red-400 transition-colors p-1.5 shrink-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-2 bg-zinc-950/40 border border-white/5 rounded-2xl p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Award Name (e.g. AMVCA)"
+                      value={awardForm.title}
+                      onChange={e => setAwardForm({ ...awardForm, title: e.target.value })}
+                      className="bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 transition-colors"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Category (e.g. Best Actor)"
+                      value={awardForm.category}
+                      onChange={e => setAwardForm({ ...awardForm, category: e.target.value })}
+                      className="bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 transition-colors"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      placeholder="Year"
+                      value={awardForm.year}
+                      onChange={e => setAwardForm({ ...awardForm, year: e.target.value })}
+                      className="w-24 bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 transition-colors"
+                    />
+                    <select
+                      value={awardForm.status}
+                      onChange={e => setAwardForm({ ...awardForm, status: e.target.value as any })}
+                      className="flex-1 bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-red-500 transition-colors"
+                    >
+                      <option value="won">Won</option>
+                      <option value="nominated">Nominated</option>
+                      <option value="lost">Lost</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!awardForm.title.trim() || !awardForm.category.trim() || !awardForm.year.trim()) return;
+                        setAwards([...awards, { ...awardForm, title: awardForm.title.trim(), category: awardForm.category.trim() }]);
+                        setAwardForm({ title: '', category: '', year: new Date().getFullYear().toString(), status: 'won' });
+                      }}
+                      disabled={!awardForm.title.trim() || !awardForm.category.trim() || !awardForm.year.trim()}
+                      className="bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-700 text-white font-bold px-4 py-2 rounded-xl text-xs uppercase tracking-wider transition-all shrink-0 flex items-center justify-center"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
 

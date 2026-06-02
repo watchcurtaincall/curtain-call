@@ -10,10 +10,67 @@ import Link from 'next/link';
 import Image from 'next/image';
 import RichTextEditor from '@/components/RichTextEditor';
 import { AdminPushNotificationsPanel } from '@/components/admin/PushPanel';
+import { ProductionCard } from '@/components/shared/ProductionCard';
 
 type AdminTab = 'overview' | 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'email-logs' | 'quiz-analytics' | 'push-notifications';
 
 // ── Stageography Adder Sub-component (used inside Edit Artist modal) ──
+
+function AdminAwardsAdder({ onAdd }: { onAdd: (award: { title: string; category: string; year: string; status: 'won' | 'nominated' | 'lost' }) => void }) {
+  const [awardForm, setAwardForm] = useState({ title: '', category: '', year: new Date().getFullYear().toString(), status: 'won' as const });
+
+  return (
+    <div className="flex flex-col gap-2 bg-zinc-950/40 border border-white/5 rounded-2xl p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <input
+          type="text"
+          placeholder="Award Name (e.g. AMVCA)"
+          value={awardForm.title}
+          onChange={e => setAwardForm({ ...awardForm, title: e.target.value })}
+          className="bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[11px] text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 transition-colors"
+        />
+        <input
+          type="text"
+          placeholder="Category (e.g. Best Actor)"
+          value={awardForm.category}
+          onChange={e => setAwardForm({ ...awardForm, category: e.target.value })}
+          className="bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[11px] text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 transition-colors"
+        />
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="number"
+          placeholder="Year"
+          value={awardForm.year}
+          onChange={e => setAwardForm({ ...awardForm, year: e.target.value })}
+          className="w-20 bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[11px] text-white focus:outline-none focus:border-red-500 placeholder:text-zinc-600 transition-colors"
+        />
+        <select
+          value={awardForm.status}
+          onChange={e => setAwardForm({ ...awardForm, status: e.target.value as any })}
+          className="flex-1 bg-zinc-950 border border-white/5 rounded-xl px-3 py-2 text-[11px] text-white focus:outline-none focus:border-red-500 transition-colors"
+        >
+          <option value="won">Won</option>
+          <option value="nominated">Nominated</option>
+          <option value="lost">Lost</option>
+        </select>
+        <button
+          type="button"
+          onClick={() => {
+            if (!awardForm.title.trim() || !awardForm.category.trim() || !awardForm.year.trim()) return;
+            onAdd({ ...awardForm, title: awardForm.title.trim(), category: awardForm.category.trim() });
+            setAwardForm({ title: '', category: '', year: new Date().getFullYear().toString(), status: 'won' });
+          }}
+          disabled={!awardForm.title.trim() || !awardForm.category.trim() || !awardForm.year.trim()}
+          className="bg-zinc-800 hover:bg-zinc-700 disabled:bg-zinc-900 disabled:text-zinc-700 text-white font-bold px-3 py-2 rounded-xl text-[10px] uppercase tracking-wider transition-all shrink-0 flex items-center justify-center"
+        >
+          <Plus className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function AdminStageographyAdder({ onAdd }: { onAdd: (credit: { productionId: string; productionTitle: string; role: string }) => void }) {
   const [searchQ, setSearchQ] = useState('');
   const [role, setRole] = useState('');
@@ -1034,6 +1091,43 @@ export default function AdminDashboardPage() {
       setDraftingAI(false);
     }
   };
+
+  const handleEditDraftAI = async () => {
+    if (!editingArtist || !editingArtist.name.trim() || !editingArtist.bio?.trim()) {
+      showToast('Please fill out Name and Biography first so the AI has context to draft from.', 'error');
+      return;
+    }
+    try {
+      setDraftingAI(true);
+      showToast('Engaging Gemini API curatorial board draft assistant...');
+      const res = await fetch('/api/curator-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editingArtist.name,
+          roleType: editingArtist.roleType,
+          bio: editingArtist.bio
+        })
+      });
+      const resData = await res.json();
+      if (!res.ok || !resData.success) {
+        throw new Error(resData.error || 'Failed to engage curator assistant');
+      }
+      const draft = resData.data;
+      setEditingArtist(prev => prev ? ({
+        ...prev,
+        career: draft.career || '',
+        style: draft.style || '',
+        achievements: (draft.achievements || [])
+      }) : null);
+      showToast('Successfully generated verified career draft elements!', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'Curation draft engine failed.', 'error');
+    } finally {
+      setDraftingAI(false);
+    }
+  };
+
 
   const handleCrawlPlay = async () => {
     if (!playForm.title.trim()) {
@@ -3657,7 +3751,18 @@ This file was retrieved from the Curtain Call Curation Vault.
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Biography</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Biography</label>
+                  <button
+                    type="button"
+                    disabled={draftingAI}
+                    onClick={handleEditDraftAI}
+                    className="text-[10px] font-bold text-red-500 hover:text-red-400 uppercase tracking-wider flex items-center gap-1 transition-all disabled:opacity-50"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 animate-pulse" />
+                    <span>{draftingAI ? 'Drafting Details...' : 'Smart AI Draft Biography'}</span>
+                  </button>
+                </div>
                 <textarea
                   required
                   rows={3}
@@ -3776,6 +3881,53 @@ This file was retrieved from the Curtain Call Curation Vault.
                     if (!isDuplicate) {
                       setEditingArtist({ ...editingArtist, scenography: [...existing, credit] });
                     }
+                  }}
+                />
+              </div>
+
+              {/* ── AWARDS SECTION ── */}
+              <div className="flex flex-col gap-3 pt-3 border-t border-white/5">
+                <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-1 h-3.5 bg-amber-500 rounded-full inline-block" />
+                  Awards & Recognitions (Optional)
+                </label>
+
+                {(editingArtist.awards || []).length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    {(editingArtist.awards || []).map((award, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-zinc-950/60 border border-white/5 rounded-xl px-3 py-2 gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-white truncate">{award.title} ({award.year})</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[9px] bg-zinc-800 text-zinc-300 border border-white/10 px-1.5 py-0.5 rounded font-mono uppercase tracking-wider truncate">{award.category}</span>
+                            <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                              award.status === 'won' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/20' :
+                              award.status === 'nominated' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/20' :
+                              'bg-zinc-800 text-zinc-400 border border-white/5'
+                            }`}>
+                              {award.status}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = (editingArtist.awards || []).filter((_, i) => i !== idx);
+                            setEditingArtist({ ...editingArtist, awards: updated });
+                          }}
+                          className="text-zinc-500 hover:text-red-400 transition-colors p-1 shrink-0"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <AdminAwardsAdder
+                  onAdd={(award) => {
+                    const existing = editingArtist.awards || [];
+                    setEditingArtist({ ...editingArtist, awards: [...existing, award] });
                   }}
                 />
               </div>

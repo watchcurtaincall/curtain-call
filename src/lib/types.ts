@@ -1,5 +1,12 @@
 export type ProductionStatus = 'Currently Showing' | 'Coming Soon' | 'Past Production' | 'Recently Concluded' | 'Draft';
 
+export interface ArtistAward {
+  title: string;
+  category: string;
+  year: string;
+  status: 'won' | 'nominated' | 'lost';
+}
+
 export interface Artist {
   id: string;
   slug?: string;        // Clean URL slug e.g. "james-brown" — used as the URL path segment
@@ -23,6 +30,7 @@ export interface Artist {
   career?: string;
   style?: string;
   achievements?: string[];
+  awards?: ArtistAward[];
 }
 
 export interface Production {

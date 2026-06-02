@@ -88,84 +88,86 @@ async function handler(req: NextRequest) {
 
   let primaryFailed = false;
 
-  // Primary Bulk: Resend
-  if (resendApiKey && resendApiKey !== 're_your_resend_api_key_here') {
+  // Primary Bulk: Brevo
+  const brevoApiKey = process.env.BREVO_API_KEY;
+  if (brevoApiKey) {
+    console.log('[CronEmail] Attempting delivery via Brevo (Primary)...');
     try {
-      const res = await fetch('https://api.resend.com/emails/batch', {
+      const brevoPayload = {
+        sender: { name: 'Curtain Call', email: 'notifications@curtaincall.com.ng' },
+        messageVersions: users.map(user => {
+          const shortName = (user.name || user.email).split(' ')[0];
+          const html = getDailyQuizReminderHtml(user.name || user.email, user.email, today, quizDay.slots_remaining || 10, `${APP_URL}/quiz`);
+          const textAlternative = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          return {
+            to: [{ email: user.email }],
+            subject: `${shortName} Your daily quiz is live - play now`,
+            htmlContent: html,
+            textContent: textAlternative
+          };
+        })
+      };
+
+      const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${resendApiKey}`,
+          'api-key': brevoApiKey,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(resendPayload),
+        body: JSON.stringify(brevoPayload),
       });
 
-      if (res.ok) {
-        const json = await res.json();
-        sent = json.data ? json.data.length : users.length;
-        console.log('[CronEmail] Successfully batched via Resend.');
+      if (brevoRes.ok || brevoRes.status === 202) {
+        sent = users.length;
+        console.log('[CronEmail] Successfully batched via Brevo.');
       } else {
-        const errorText = await res.text();
-        console.error('[CronEmail] Resend Batch API error:', errorText);
+        const errorText = await brevoRes.text();
+        console.error('[CronEmail] Brevo Batch API error:', errorText);
         primaryFailed = true;
-        errors.push(`Resend Error: ${errorText}`);
+        errors.push(`Brevo Error: ${errorText}`);
       }
     } catch (err: any) {
-      console.error('[CronEmail] Resend Batch exception:', err);
+      console.error('[CronEmail] Brevo Batch exception:', err);
       primaryFailed = true;
       errors.push(err.message);
     }
   } else {
+    console.warn('[CronEmail] Brevo key missing. Falling back to Resend.');
     primaryFailed = true;
   }
 
-  // Fallback Bulk: Brevo
+  // Fallback Bulk: Resend
   if (primaryFailed) {
-    const brevoApiKey = process.env.BREVO_API_KEY;
-    if (!brevoApiKey) {
-      console.warn('[CronEmail] Brevo key missing too. Simulating.');
-      sent = users.length;
-    } else {
-      console.log('[CronEmail] Attempting delivery via Brevo (Fallback)...');
+    if (resendApiKey && resendApiKey !== 're_your_resend_api_key_here') {
+      console.log('[CronEmail] Attempting delivery via Resend (Fallback)...');
       try {
-        const brevoPayload = {
-          sender: { name: 'Curtain Call', email: 'notifications@curtaincall.com.ng' },
-          messageVersions: users.map(user => {
-            const shortName = (user.name || user.email).split(' ')[0];
-            const html = getDailyQuizReminderHtml(user.name || user.email, user.email, today, quizDay.slots_remaining || 10, `${APP_URL}/quiz`);
-            const textAlternative = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-            return {
-              to: [{ email: user.email }],
-              subject: `${shortName} Your daily quiz is live - play now`,
-              htmlContent: html,
-              textContent: textAlternative
-            };
-          })
-        };
-
-        const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+        const res = await fetch('https://api.resend.com/emails/batch', {
           method: 'POST',
           headers: {
-            'api-key': brevoApiKey,
+            'Authorization': `Bearer ${resendApiKey}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(brevoPayload),
+          body: JSON.stringify(resendPayload),
         });
 
-        if (brevoRes.ok || brevoRes.status === 202) {
-          sent = users.length;
-          console.log('[CronEmail] Successfully batched via Brevo.');
+        if (res.ok) {
+          const json = await res.json();
+          sent = json.data ? json.data.length : users.length;
+          console.log('[CronEmail] Successfully batched via Resend.');
         } else {
-          const errorText = await brevoRes.text();
-          console.error('[CronEmail] Brevo Batch API error:', errorText);
+          const errorText = await res.text();
+          console.error('[CronEmail] Resend Batch API error:', errorText);
           failed = users.length;
-          errors.push(`Brevo Error: ${errorText}`);
+          errors.push(`Resend Error: ${errorText}`);
         }
       } catch (err: any) {
-        console.error('[CronEmail] Brevo Batch exception:', err);
+        console.error('[CronEmail] Resend Batch exception:', err);
         failed = users.length;
         errors.push(err.message);
       }
+    } else {
+      console.warn('[CronEmail] Both Brevo and Resend keys missing. Simulating.');
+      sent = users.length;
     }
   }
 
@@ -209,7 +211,7 @@ async function handler(req: NextRequest) {
           } catch (err: any) {
             pushFailed++;
             if (err.statusCode === 410 || err.statusCode === 404) {
-              await supabaseServer.from('push_subscriptions').delete().eq('id', row.id);
+              await supabaseServer!.from('push_subscriptions').delete().eq('id', row.id);
             }
           }
         });

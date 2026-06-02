@@ -234,7 +234,8 @@ const mapArtistToDb = (a: any) => ({
     __scenography: a.scenography || [],
     __career: a.career || '',
     __style: a.style || '',
-    __achievements: a.achievements || []
+    __achievements: a.achievements || [],
+    __awards: a.awards || []
   },
   submitter_email: a.submitterEmail || null,
   curation_status: a.curationStatus || 'Approved',
@@ -252,6 +253,7 @@ const mapArtistFromDb = (row: any) => {
   delete socialLinks.__career;
   delete socialLinks.__style;
   delete socialLinks.__achievements;
+  delete socialLinks.__awards;
 
   let parsedCreatedAt = row.created_at || null;
   if (!parsedCreatedAt) {
@@ -287,7 +289,8 @@ const mapArtistFromDb = (row: any) => {
     scenography: social.__scenography || [],
     career: social.__career || '',
     style: social.__style || '',
-    achievements: social.__achievements || []
+    achievements: social.__achievements || [],
+    awards: social.__awards || [],
   };
 };
 
