@@ -37,7 +37,8 @@ function parseGeminiQuestions(raw: string): QuizQuestionInternal[] | null {
       ) return null;
     }
     return parsed.map((q: any, i: number) => ({ ...q, id: crypto.randomUUID(), index: i }));
-  } catch {
+  } catch (e) {
+    console.error("JSON parse error:", e);
     return null;
   }
 }
@@ -86,8 +87,21 @@ ${recentQuestionsContext}` : ''}`;
         contents: [{ parts: [{ text: finalPrompt }] }],
         generationConfig: {
           temperature: 0.8,
-          maxOutputTokens: 2048,
           responseMimeType: 'application/json',
+          responseSchema: {
+            type: "ARRAY",
+            items: {
+              type: "OBJECT",
+              properties: {
+                text: { type: "STRING" },
+                options: { type: "ARRAY", items: { type: "STRING" } },
+                correctAnswerIndex: { type: "INTEGER" },
+                difficulty: { type: "STRING" },
+                theme: { type: "STRING" }
+              },
+              required: ["text", "options", "correctAnswerIndex", "difficulty", "theme"]
+            }
+          }
         },
       }),
     });
@@ -98,6 +112,8 @@ ${recentQuestionsContext}` : ''}`;
     }
 
     const data = await res.json();
+    const finishReason = data?.candidates?.[0]?.finishReason;
+    console.log('[QuestionGen] Finish Reason:', finishReason);
     const rawText: string = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 
     const questions = parseGeminiQuestions(rawText);
