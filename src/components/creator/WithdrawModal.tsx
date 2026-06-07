@@ -187,6 +187,47 @@ export function WithdrawModal({ availableBalance, onClose }: WithdrawModalProps)
       `;
 
       await ClientDB.sendEmail(recipient, subject, emailHtml);
+      
+      // Send notification to Admin
+      const adminRecipient = 'watchcurtaincall@gmail.com';
+      const adminSubject = `ACTION REQUIRED: New Withdrawal Request 💸 - ₦${parsedAmount.toLocaleString()}`;
+      const adminEmailHtml = `
+        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
+          <h2 style="font-family: Georgia, serif; color: #ffffff; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">New Withdrawal Request Pending</h2>
+          <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+            A creator has submitted a withdrawal request. Please review and process it from the Admin Dashboard.
+          </p>
+          <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Creator Email</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #ffffff; text-align: right; font-weight: bold;">${recipient}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Amount Requested</td>
+                <td style="padding: 8px 0; font-size: 14px; color: #eab308; text-align: right; font-weight: bold;">₦${parsedAmount.toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Target Bank</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${selectedBank?.name}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Account Number</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-family: monospace;">${accountNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Account Name</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${resolvedName}</td>
+              </tr>
+            </table>
+          </div>
+          <p style="color: #71717a; font-size: 11px; line-height: 1.6; text-align: center; font-family: monospace;">
+            Curtain Call Admin Automated Notification
+          </p>
+        </div>
+      `;
+      await ClientDB.sendEmail(adminRecipient, adminSubject, adminEmailHtml);
+
       setStep('success');
     } catch (err: any) {
       setErrorMsg(err.message || 'Transfer initiation failed. Please try again.');
