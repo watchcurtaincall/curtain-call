@@ -144,16 +144,30 @@ function CreateProductionForm() {
           setIsEditMode(true);
           
           const isTiersArray = Array.isArray(prod.ticketTiers);
-          const tiers = isTiersArray && prod.ticketTiers.length > 0 ? prod.ticketTiers.map((t: any) => ({
-            id: t?.id || `tier-${Date.now()}-${Math.floor(Math.random()*1000)}`,
-            name: t?.name || '',
-            price: t?.price ? String(t.price) : '',
-            capacity: t?.capacity ? String(t.capacity) : '',
-            description: t?.description || ''
-          })) : [{ id: `tier-${Date.now()}-${Math.floor(Math.random()*1000)}`, name: 'General', price: '', capacity: '', description: '' }];
+          let tiers = [{ id: `tier-${Date.now()}-${Math.floor(Math.random()*1000)}`, name: 'General', price: '', capacity: '', description: '' }];
+          if (isTiersArray && prod.ticketTiers.length > 0) {
+            const validTiers = prod.ticketTiers.filter(Boolean).map((t: any) => ({
+              id: t?.id || `tier-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+              name: t?.name || '',
+              price: t?.price ? String(t.price) : '',
+              capacity: t?.capacity ? String(t.capacity) : '',
+              description: t?.description || ''
+            }));
+            if (validTiers.length > 0) tiers = validTiers;
+          }
 
           const isDatesArray = Array.isArray(prod.dates);
-          const dates = (isDatesArray && prod.dates.length > 0) ? prod.dates : (prod.showDate ? [{ date: prod.showDate, time: prod.showTime || '19:00', endTime: prod.endTime || '' }] : [{ date: '', time: '19:00', endTime: '' }]);
+          let dates = [{ date: '', time: '19:00', endTime: '' }];
+          if (isDatesArray && prod.dates.length > 0) {
+            const validDates = prod.dates.filter(Boolean).map((d: any) => ({
+              date: d?.date || '',
+              time: d?.time || '19:00',
+              endTime: d?.endTime || ''
+            }));
+            if (validDates.length > 0) dates = validDates;
+          } else if (prod.showDate) {
+            dates = [{ date: prod.showDate, time: prod.showTime || '19:00', endTime: prod.endTime || '' }];
+          }
 
           setForm({
             eventType: prod.eventType || '',
@@ -171,7 +185,7 @@ function CreateProductionForm() {
             bankName: prod.bankName || '',
             bankCode: prod.bankCode || '',
             posterUrl: prod.posterUrl || '',
-            castAndCrew: Array.isArray(prod.castAndCrew) ? prod.castAndCrew.filter(Boolean) : []
+            castAndCrew: Array.isArray(prod.castAndCrew) ? prod.castAndCrew.filter(Boolean).map((m: any) => typeof m === 'object' ? { name: m?.name || '', role: m?.role || '', category: m?.category || 'Cast' } : { name: String(m), role: '', category: 'Cast' }) : []
           });
 
           if (prod.bankName && banks.length > 0) {
