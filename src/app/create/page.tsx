@@ -67,8 +67,14 @@ const emptyTier = (): TicketTier => ({ id: `tier-${Date.now()}-${Math.floor(Math
 // ─── Mini date-picker helpers ────────────────────────────
 function formatDate(d: string) {
   if (!d) return '';
-  const [y, m, day] = d.split('-');
-  return new Date(+y, +m - 1, +day).toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short' });
+  try {
+    const [y, m, day] = d.split('-');
+    const date = new Date(+y, +m - 1, +day);
+    if (isNaN(date.getTime())) return d;
+    return date.toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short' });
+  } catch (e) {
+    return d;
+  }
 }
 
 // ─── Main Component ──────────────────────────────────────
@@ -189,7 +195,7 @@ function CreateProductionForm() {
           });
 
           if (prod.bankName && banks.length > 0) {
-            const bank = banks.find((b: any) => b.name.toLowerCase() === prod.bankName.toLowerCase()) || null;
+            const bank = banks.find((b: any) => b.name?.toLowerCase() === prod.bankName?.toLowerCase()) || null;
             setSelectedBank(bank);
           }
           if (prod.accountName) {
@@ -220,7 +226,7 @@ function CreateProductionForm() {
           return f;
         });
         if (!selectedBank) {
-          const bank = banks.find((b: any) => b.code === savedBank.bankCode || b.name.toLowerCase() === savedBank.bankName.toLowerCase()) || null;
+          const bank = banks.find((b: any) => b.code === savedBank.bankCode || b.name?.toLowerCase() === savedBank.bankName?.toLowerCase()) || null;
           setSelectedBank(bank);
         }
         if (!resolvedName) {
