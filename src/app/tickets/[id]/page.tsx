@@ -356,13 +356,12 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   const isTheatre = !production?.eventType || production?.eventType === 'Theatre';
 
   return (
-    <div className="min-h-screen relative bg-zinc-950 overflow-x-hidden pb-24 lg:pb-0">
+    <div className="relative bg-zinc-950 overflow-x-hidden pb-28 lg:pb-0">
       <div 
-        className="fixed inset-0 bg-cover bg-center z-0 opacity-20 mix-blend-luminosity transform scale-105 pointer-events-none" 
+        className="fixed inset-0 bg-cover bg-center z-0 opacity-15 pointer-events-none" 
         style={{ backgroundImage: `url(${production?.posterUrl || ''})` }}
       />
-      <div className="fixed inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/95 to-zinc-950/80 z-0 pointer-events-none" />
-      <div className="fixed inset-0 backdrop-blur-3xl z-0 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/97 to-zinc-950/85 z-0 pointer-events-none" />
 
       {successData ? (
         <div className="relative z-10 flex items-center justify-center min-h-screen p-4 py-20">
