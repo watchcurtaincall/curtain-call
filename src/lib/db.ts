@@ -1746,8 +1746,8 @@ export const syncFromSupabase = async () => {
 
   try {
     console.log('[Curtain Call Database] Starting high-speed parallel sync with Supabase cloud...');
-    const url = `/api/sync-data?email=${encodeURIComponent(email)}`;
-    const res = await fetch(url);
+    const url = `/api/sync-data?email=${encodeURIComponent(email)}&t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
 
     if (!res.ok) {
       console.error('[Supabase Sync] Unified sync API failed:', res.statusText);
