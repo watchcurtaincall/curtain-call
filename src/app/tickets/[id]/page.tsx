@@ -555,7 +555,6 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                             <span className="text-lg font-bold tracking-tight text-white">
                               ₦{tier.price.toLocaleString()}
                             </span>
-                            <span className="text-[10px] text-zinc-500 uppercase tracking-widest bg-zinc-900 px-2 py-0.5 rounded-full">includes fees</span>
                           </div>
                           {tier.description && (
                             <p className="text-xs text-zinc-400 mt-2 max-w-sm leading-relaxed">
@@ -749,8 +748,8 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             </div>
           </div>
 
-          {/* Right Column: Order Summary (Desktop Only) */}
-          <div className="hidden lg:block w-[350px] xl:w-[400px] shrink-0 sticky top-24 pt-11">
+          {/* Right Column: Order Summary (Desktop & Mobile) */}
+          <div className="w-full lg:w-[350px] xl:w-[400px] shrink-0 lg:sticky top-24 lg:pt-11 pb-24 lg:pb-0">
             <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-xl">
               <h3 className="text-lg font-serif font-bold text-white mb-6 border-b border-white/5 pb-4">Summary</h3>
               
