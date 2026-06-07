@@ -1571,6 +1571,22 @@ This file was retrieved from the Curtain Call Curation Vault.
           const totalArtists = ClientDB.getArtists ? ClientDB.getArtists().length : 0;
           const totalCritics = verifiedCritics.length;
           const totalSubscribers = subscribers.length;
+          const allDbTickets = ClientDB.getTickets ? ClientDB.getTickets() : [];
+          
+          const revenueBreakdown = (ClientDB.getProductions ? ClientDB.getProductions() : []).map(play => {
+            const playTickets = allDbTickets.filter((t: any) => t.productionId === play.id);
+            const soldCount = playTickets.length;
+            const gross = playTickets.reduce((acc: number, t: any) => acc + (t.price || 0), 0);
+            const platformRevenue = gross * 0.05;
+            return {
+              id: play.id,
+              title: play.title,
+              producer: play.submitterEmail || 'Platform',
+              soldCount,
+              gross,
+              platformRevenue
+            };
+          }).filter(p => p.soldCount > 0).sort((a, b) => b.platformRevenue - a.platformRevenue);
 
           return (
             <div className="flex flex-col gap-8 animate-fade-up">
@@ -1674,6 +1690,45 @@ This file was retrieved from the Curtain Call Curation Vault.
                       ))
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* Revenue Breakdown Table */}
+              <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-6 shadow-lg">
+                <div className="mb-6">
+                  <h3 className="font-serif font-bold text-lg text-white">Revenue & Sales Breakdown</h3>
+                  <p className="text-zinc-500 text-xs mt-0.5">Detailed breakdown of ticket sales and platform revenue across all productions.</p>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/5">
+                        <th className="pb-3 text-xs font-mono font-bold text-zinc-500 uppercase tracking-wider">Production Title</th>
+                        <th className="pb-3 text-xs font-mono font-bold text-zinc-500 uppercase tracking-wider">Producer Email</th>
+                        <th className="pb-3 text-xs font-mono font-bold text-zinc-500 uppercase tracking-wider text-right">Tickets Sold</th>
+                        <th className="pb-3 text-xs font-mono font-bold text-zinc-500 uppercase tracking-wider text-right">Gross Sales</th>
+                        <th className="pb-3 text-xs font-mono font-bold text-emerald-500 uppercase tracking-wider text-right">Platform Revenue (5%)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm">
+                      {revenueBreakdown.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-zinc-500 font-mono text-xs">No sales data found.</td>
+                        </tr>
+                      ) : (
+                        revenueBreakdown.map(row => (
+                          <tr key={row.id} className="border-b border-white/5 hover:bg-zinc-800/30 transition-colors">
+                            <td className="py-4 font-serif font-bold text-white">{row.title}</td>
+                            <td className="py-4 text-zinc-400 font-mono text-[10px] truncate max-w-[150px]">{row.producer}</td>
+                            <td className="py-4 text-right text-zinc-300 font-medium">{row.soldCount}</td>
+                            <td className="py-4 text-right text-zinc-300">₦{row.gross.toLocaleString()}</td>
+                            <td className="py-4 text-right font-bold text-emerald-400">₦{row.platformRevenue.toLocaleString()}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
