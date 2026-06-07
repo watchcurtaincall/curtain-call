@@ -808,22 +808,22 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             </div>
           </div>
 
-          {/* Sticky Mobile Bottom Bar */}
-          {checkoutStep < 3 && (
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-zinc-900 border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50 animate-in slide-in-from-bottom-full duration-300">
-               <button
-                 disabled={checkoutStep === 1 ? totalTickets === 0 : !canProceedToPayment()}
-                 onClick={() => setCheckoutStep(s => (s + 1) as 2 | 3)}
-                 className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:bg-red-600 text-white rounded-2xl py-3.5 px-6 flex justify-between items-center transition-all disabled:cursor-not-allowed shadow-xl"
-               >
-                  <span className="text-xl font-bold tracking-tight">₦{totalAmount.toLocaleString()}</span>
-                  <span className="bg-white text-red-600 px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-1">
-                    Continue
-                  </span>
-               </button>
-            </div>
-          )}
+        </div>
+      )}
 
+      {/* Sticky Mobile Bottom Bar */}
+      {!success && checkoutStep < 3 && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-zinc-900 border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50 animate-in slide-in-from-bottom-full duration-300">
+           <button
+             disabled={checkoutStep === 1 ? totalTickets === 0 : !canProceedToPayment()}
+             onClick={() => setCheckoutStep(s => (s + 1) as 2 | 3)}
+             className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:bg-red-600 text-white rounded-2xl py-3.5 px-6 flex justify-between items-center transition-all disabled:cursor-not-allowed shadow-xl"
+           >
+              <span className="text-xl font-bold tracking-tight">₦{totalAmount.toLocaleString()}</span>
+              <span className="bg-white text-red-600 px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-1">
+                Continue
+              </span>
+           </button>
         </div>
       )}
 
