@@ -114,8 +114,8 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
         setBuyerEmail(user.email);
         setConfirmEmail(user.email);
       }
-      if (user.displayName && !firstName) {
-        const parts = user.displayName.split(' ');
+      if (user.name && !firstName) {
+        const parts = user.name.split(' ');
         setFirstName(parts[0] || '');
         if (parts.length > 1) setLastName(parts.slice(1).join(' '));
       }
