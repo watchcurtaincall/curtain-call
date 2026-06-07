@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -5,7 +6,7 @@ import { ClientDB } from '@/lib/db';
 import { Production } from '@/lib/types';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, Ticket as TicketIcon, Mail, CheckCircle2, QrCode, Calendar, MapPin, Clock, Info, Loader2 } from 'lucide-react';
+import { ArrowLeft, Ticket as TicketIcon, Mail, CheckCircle2, QrCode, Calendar, MapPin, Clock, Info, Loader2, Plus, Minus, CreditCard, Users, UserCircle, ChevronRight, Check } from 'lucide-react';
 import { PaystackButton } from '@/components/payments/PaystackButton';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -16,7 +17,7 @@ function generateQRCodeSVG(text: string) {
   }
   
   const size = 15;
-  const cells: boolean[][] = Array(size).fill(null).map(() => Array(size).fill(false));
+  const cells = Array(size).fill(null).map(() => Array(size).fill(false));
   
   const drawFinder = (x: number, y: number) => {
     for (let dy = 0; dy < 5; dy++) {
@@ -46,7 +47,7 @@ function generateQRCodeSVG(text: string) {
     }
   }
 
-  const rects: any[] = [];
+  const rects = [];
   const cellSize = 10;
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -79,7 +80,7 @@ function generateBarcodeSVG(text: string) {
   }
   
   const barsCount = 38;
-  const bars: any[] = [];
+  const bars = [];
   let currentX = 0;
   
   for (let i = 0; i < barsCount; i++) {
@@ -113,21 +114,24 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   const { user } = useAuth();
   const [production, setProduction] = useState<Production | null>(null);
   const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState('');
-  const [selectedTier, setSelectedTier] = useState({ name: 'General Admission', price: 5000, description: '' });
-  const [quantity, setQuantity] = useState(1);
+  
+  // Checkout State
+  const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3>(1);
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [buyerEmail, setBuyerEmail] = useState('');
+  const [attendees, setAttendees] = useState<Record<string, {name: string; email: string}>>({});
+  
   const [successData, setSuccessData] = useState<{
     reference: string;
-    tier: string;
-    quantity: number;
-    tickets: { reference: string; gatePass: string }[];
+    totalPaid: number;
+    tickets: { reference: string; gatePass: string; tier: string; email: string; name: string }[];
   } | null>(null);
 
   useEffect(() => {
-    if (user?.email && !email) {
-      setEmail(user.email);
+    if (user?.email && !buyerEmail) {
+      setBuyerEmail(user.email);
     }
-  }, [user, email]);
+  }, [user, buyerEmail]);
 
   useEffect(() => {
     params.then(resolved => {
@@ -152,9 +156,8 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
         setProduction(prod);
         setSuccessData({
           reference: matchedTicket.reference,
-          tier: matchedTicket.tier,
-          quantity: 1,
-          tickets: [{ reference: matchedTicket.reference, gatePass: matchedTicket.gatePass }]
+          totalPaid: matchedTicket.price || 0,
+          tickets: [{ reference: matchedTicket.reference, gatePass: matchedTicket.gatePass, tier: matchedTicket.tier, email: matchedTicket.buyerEmail || '', name: 'Guest' }]
         });
         setLoading(false);
         return;
@@ -167,10 +170,6 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
           return;
         }
         setProduction(fetched);
-        if (fetched.ticketTiers && fetched.ticketTiers.length > 0) {
-          const firstTier = fetched.ticketTiers[0];
-          setSelectedTier({ name: firstTier.name, price: Number(firstTier.price) || 0, description: firstTier.description || '' });
-        }
       }
       setLoading(false);
     });
@@ -189,129 +188,164 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   }
 
   const tiersToUse = (production?.ticketTiers && production.ticketTiers.length > 0)
-    ? production.ticketTiers.map(t => ({ name: t.name, price: Number(t.price) || 0, description: t.description || '' }))
+    ? production.ticketTiers.map(t => ({ name: t.name, price: Number(t.price) || 0, description: t.description || '', capacity: Number(t.capacity) || 0 }))
     : [
-        { name: 'General Admission', price: 5000, description: 'Standard entry pass' },
-        { name: 'VIP Pass', price: 15000, description: 'Front row seating with complimentary drinks' },
-        { name: 'VVIP Premium Cabin', price: 40000, description: 'Access to backstage, premium lounge, and valet' },
+        { name: 'General Admission', price: 5000, description: 'Standard entry pass', capacity: 100 },
+        { name: 'VIP Pass', price: 15000, description: 'Front row seating with complimentary drinks', capacity: 50 },
+        { name: 'VVIP Premium Cabin', price: 40000, description: 'Access to backstage, premium lounge, and valet', capacity: 20 },
       ];
 
+  // Cart Logic
+  const handleQuantityChange = (tierName: string, delta: number) => {
+    setCart(prev => {
+      const next = { ...prev };
+      const current = next[tierName] || 0;
+      const updated = Math.max(0, current + delta);
+      if (updated === 0) delete next[tierName];
+      else next[tierName] = updated;
+      return next;
+    });
+  };
+
+  const totalTickets = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+  const totalAmount = Object.entries(cart).reduce((sum, [tierName, qty]) => {
+    const tier = tiersToUse.find(t => t.name === tierName);
+    return sum + ((tier?.price || 0) * qty);
+  }, 0);
+
   const handlePaymentSuccess = async (reference: string) => {
-    const recipient = email || 'guest@curtaincall.ng';
-    const purchasedTickets: { reference: string; gatePass: string }[] = [];
+    const purchasedTickets: { reference: string; gatePass: string; tier: string; email: string; name: string }[] = [];
 
     try {
-      ClientDB.saveProfile({
-        email: recipient.toLowerCase(),
-        name: recipient.split('@')[0],
-        joinDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-        isVerified: true
-      });
-    } catch (e) {}
-
-    for (let i = 0; i < quantity; i++) {
-      const ticketRef = quantity > 1 ? `${reference}-${i + 1}` : reference;
-      const randDigits = Math.floor(100 + Math.random() * 900);
-      const gatePass = `CC-${randDigits}`;
-      purchasedTickets.push({ reference: ticketRef, gatePass });
-
-      if (production) {
-        ClientDB.purchaseTicket({
-          productionId: production.id,
-          productionTitle: production.title,
-          buyerEmail: recipient,
-          tier: selectedTier.name,
-          price: selectedTier.price,
-          reference: ticketRef,
-          gatePass
+      if (buyerEmail) {
+        ClientDB.saveProfile({
+          email: buyerEmail.toLowerCase(),
+          name: buyerEmail.split('@')[0],
+          joinDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          isVerified: true
         });
       }
-    }
+    } catch (e) {}
+
+    let globalTicketIndex = 1;
+
+    Object.entries(cart).forEach(([tierName, qty]) => {
+      const tierDef = tiersToUse.find(t => t.name === tierName);
+      if (!tierDef) return;
+
+      for (let i = 0; i < qty; i++) {
+        const attendeeKey = `${tierName}-${i}`;
+        const attendeeInfo = attendees[attendeeKey] || {};
+        
+        const recipientEmail = (attendeeInfo.email && attendeeInfo.email.trim() !== '') ? attendeeInfo.email : buyerEmail;
+        const recipientName = (attendeeInfo.name && attendeeInfo.name.trim() !== '') ? attendeeInfo.name : 'Guest';
+
+        const ticketRef = totalTickets > 1 ? `${reference}-${globalTicketIndex}` : reference;
+        const randDigits = Math.floor(100 + Math.random() * 900);
+        const gatePass = `CC-${randDigits}`;
+        
+        purchasedTickets.push({ 
+           reference: ticketRef, 
+           gatePass, 
+           tier: tierName, 
+           email: recipientEmail, 
+           name: recipientName 
+        });
+
+        if (production) {
+          ClientDB.purchaseTicket({
+            productionId: production.id,
+            productionTitle: production.title,
+            buyerEmail: recipientEmail,
+            tier: tierName,
+            price: tierDef.price,
+            reference: ticketRef,
+            gatePass
+          });
+        }
+        globalTicketIndex++;
+      }
+    });
 
     setSuccessData({
       reference,
-      tier: selectedTier.name,
-      quantity,
+      totalPaid: totalAmount,
       tickets: purchasedTickets
     });
 
-    // Send Ticket Email via Resend
-    const subject = `Your Curtain Call Admission Pass: ${production?.title || 'Event Ticket'}`;
+    const ticketsByEmail = purchasedTickets.reduce((acc, t) => {
+      if (!acc[t.email]) acc[t.email] = [];
+      acc[t.email].push(t);
+      return acc;
+    }, {} as Record<string, typeof purchasedTickets>);
+
     const showDateFormatted = production?.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     }) : 'Scheduled Date';
 
-    const ticketRows = purchasedTickets.map((t, idx) => `
-      <tr style="border-top: 1px dashed rgba(255,255,255,0.08);">
-        <td style="padding: 12px 0; font-size: 13px; color: #a1a1aa;">Pass #${idx + 1} (${selectedTier.name})</td>
-        <td style="padding: 12px 0; font-size: 13px; color: #22c55e; text-align: right; font-weight: bold; font-family: monospace;">${t.gatePass}</td>
-      </tr>
-    `).join('');
+    for (const [recipientEmail, tix] of Object.entries(ticketsByEmail)) {
+      const subject = `Your Curtain Call Admission Pass: ${production?.title || 'Event Ticket'}`;
+      
+      const ticketRows = tix.map((t, idx) => `
+        <tr style="border-top: 1px dashed rgba(255,255,255,0.08);">
+          <td style="padding: 12px 0; font-size: 13px; color: #a1a1aa;">Pass #${idx + 1} (${t.tier})</td>
+          <td style="padding: 12px 0; font-size: 13px; color: #22c55e; text-align: right; font-weight: bold; font-family: monospace;">${t.gatePass}</td>
+        </tr>
+      `).join('');
 
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-        <div style="text-align: center; margin-bottom: 25px;">
-          <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Admission Pass</span>
-          <div style="height: 2px; width: 80px; background-color: #dc2626; margin: 15px auto 0;"></div>
-        </div>
-        
-        <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 20px;">
-          Your seats have been reserved. Present the digital passes at the gates.
-        </p>
-        
-        <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
-          <div style="margin-bottom: 20px;">
-            <span style="font-size: 9px; color: #dc2626; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Admit ${quantity} Person${quantity > 1 ? 's' : ''}</span>
-            <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; margin: 4px 0 0; font-family: Georgia, serif;">${production?.title}</h2>
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 25px;">
+            <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Admission Pass</span>
+            <div style="height: 2px; width: 80px; background-color: #dc2626; margin: 15px auto 0;"></div>
           </div>
           
-          <div style="border-top: 1px dashed #27272a; margin: 20px 0;"></div>
+          <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 20px;">
+            Your seats have been reserved. Present the digital passes at the gates.
+          </p>
           
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Event Date</td>
-              <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${showDateFormatted}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Venue</td>
-              <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${production?.venue}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Total Paid</td>
-              <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold; font-family: monospace; font-size: 13px;">₦${(selectedTier.price * quantity).toLocaleString()}</td>
-            </tr>
-          </table>
+          <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
+            <div style="margin-bottom: 20px;">
+              <span style="font-size: 9px; color: #dc2626; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Admit ${tix.length} Person${tix.length > 1 ? 's' : ''}</span>
+              <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; margin: 4px 0 0; font-family: Georgia, serif;">${production?.title}</h2>
+            </div>
+            
+            <div style="border-top: 1px dashed #27272a; margin: 20px 0;"></div>
+            
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Event Date</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${showDateFormatted}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Venue</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${production?.venue}</td>
+              </tr>
+            </table>
 
-          <div style="border-top: 1px dashed #27272a; margin: 20px 0;"></div>
-          <h3 style="font-size: 12px; color: #ffffff; text-transform: uppercase; font-weight: bold; margin-bottom: 10px; font-family: Georgia, serif;">Admissions Gate Passes:</h3>
-          <table style="width: 100%; border-collapse: collapse;">
-            ${ticketRows}
-          </table>
+            <div style="border-top: 1px dashed #27272a; margin: 20px 0;"></div>
+            <h3 style="font-size: 12px; color: #ffffff; text-transform: uppercase; font-weight: bold; margin-bottom: 10px; font-family: Georgia, serif;">Admissions Gate Passes:</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              ${ticketRows}
+            </table>
+          </div>
+
+          <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
+            Don't forget to mark your calendar! The event is scheduled to take place at <strong>${production?.venue}</strong> on <strong>${showDateFormatted}</strong>. We recommend arriving early.
+          </p>
         </div>
+      `;
 
-        <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
-          Don't forget to mark your calendar! The event is scheduled to take place at <strong>${production?.venue}</strong> on <strong>${showDateFormatted}</strong>. We recommend arriving early.
-        </p>
-        
-        <p style="font-size: 11px; color: #71717a; text-align: center; font-family: monospace; line-height: 1.5; margin: 0;">
-          CURTAIN CALL DIGITAL TICKETING AGENT · POWERED BY RESEND
-        </p>
-      </div>
-    `;
-
-    try {
-      await ClientDB.sendEmail(recipient, subject, htmlContent);
-    } catch (err) {}
+      try {
+        await ClientDB.sendEmail(recipientEmail, subject, htmlContent);
+      } catch (err) {}
+    }
   };
 
   const isTheatre = !production?.eventType || production?.eventType === 'Theatre';
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 py-20 bg-zinc-950 overflow-hidden">
-      {/* Immersive Blurred Background */}
       <div 
         className="absolute inset-0 bg-cover bg-center z-0 opacity-40 mix-blend-luminosity transform scale-105" 
         style={{ backgroundImage: `url(${production?.posterUrl || ''})` }}
@@ -320,7 +354,6 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       <div className="absolute inset-0 backdrop-blur-3xl z-0" />
 
       {successData ? (
-        /* ── GORGEOUS PREMIUM SUCCESS RECEIPT PASS ── */
         <div className="relative z-10 max-w-xl w-full bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 text-center shadow-[0_0_80px_rgba(34,197,94,0.15)] overflow-hidden animate-fade-up print-wrapper">
           <style>{`
             @media print {
@@ -343,7 +376,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
  
           <h1 className="text-2xl font-serif font-bold text-white mb-1 no-print">Tickets Secured!</h1>
           <p className="text-xs text-zinc-400 mb-8 no-print">
-            Your {successData.quantity} admission pass{successData.quantity > 1 ? 'es have' : ' has'} been secured and sent to <span className="text-zinc-200 font-semibold">{email || 'guest@curtaincall.ng'}</span>.
+            Your ${successData.tickets.length} admission pass${successData.tickets.length > 1 ? 'es have' : ' has'} been secured and sent via email.
           </p>
  
           <div className="flex flex-col gap-5 overflow-y-auto max-h-[500px] pr-1.5 [scrollbar-width:none] mb-8 print-ticket-container">
@@ -355,7 +388,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                   <div>
                     <div className="flex justify-between items-start gap-2">
                       <div>
-                        <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono font-bold block mb-1">Pass #{index + 1} of {successData.quantity}</span>
+                        <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono font-bold block mb-1">Pass #${index + 1} of ${successData.tickets.length}</span>
                         <h3 className="text-lg font-serif font-bold text-white truncate">
                           {production.title}
                         </h3>
@@ -377,20 +410,20 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                     </div>
                   </div>
  
-                  <div className="grid grid-cols-3 gap-x-4 gap-y-2 text-xs border-t border-dashed border-white/10 pt-3 print-dashed-line">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-xs border-t border-dashed border-white/10 pt-3 print-dashed-line">
                     <div>
                       <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-mono block mb-0.5">Tier</span>
-                      <span className="text-white font-bold">{successData.tier}</span>
+                      <span className="text-white font-bold">{t.tier}</span>
                     </div>
                     <div>
+                      <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-mono block mb-0.5">Attendee</span>
+                      <span className="text-white font-bold truncate max-w-[100px] block">{t.name}</span>
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
                       <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-mono block mb-0.5">Date</span>
                       <span className="text-white font-bold">
                         {production.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' }) : 'Scheduled'}
                       </span>
-                    </div>
-                    <div>
-                      <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-mono block mb-0.5">Time</span>
-                      <span className="text-white font-bold">{production.showTime || '7:00 PM'}</span>
                     </div>
                   </div>
                   
@@ -437,191 +470,309 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
           </div>
         </div>
       ) : (
-        /* ── TWO COLUMN PREMIUM CHECKOUT UI ── */
-        <div className="relative z-10 w-full max-w-5xl flex flex-col lg:flex-row gap-6 lg:gap-10 items-stretch animate-fade-up">
+        <div className="relative z-10 w-full max-w-6xl flex flex-col lg:flex-row gap-6 lg:gap-8 items-start animate-fade-up">
           
-          {/* Left Column: Event Context */}
-          <div className="flex-1 lg:max-w-[400px] flex flex-col">
+          {/* Left Column: Event Context & Multistep Form */}
+          <div className="flex-[1.5] w-full flex flex-col gap-6">
             <Link
               href={isTheatre ? `/productions/${production.slug || production.id}` : `/events/${production.slug || production.id}`}
-              className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors uppercase tracking-wider font-bold mb-6 w-fit"
+              className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors uppercase tracking-wider font-bold w-fit bg-zinc-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/5"
             >
               <ArrowLeft className="h-3.5 w-3.5" /> Back to Event
             </Link>
 
-            <div className="bg-zinc-900/60 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden flex-1 shadow-2xl flex flex-col">
-              <div className="h-48 sm:h-64 relative bg-zinc-800">
-                <img src={production.posterUrl || ''} alt={production.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 to-transparent" />
-                <div className="absolute bottom-4 left-4 right-4">
-                   <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded mb-2 uppercase tracking-widest border backdrop-blur-md ${
-                     isTheatre
-                       ? 'bg-purple-500/20 text-purple-100 border-purple-500/30'
-                       : 'bg-red-500/20 text-red-100 border-red-500/30'
-                   }`}>
-                     {production.customEventType || production.eventType || 'Theatre'}
-                   </span>
-                   <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white leading-tight drop-shadow-md">
-                     {production.title}
-                   </h2>
-                </div>
+            {/* Stepper Header */}
+            <div className="bg-zinc-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-1 flex">
+                <div className={`flex-1 h-full ${checkoutStep >= 1 ? 'bg-red-500' : 'bg-zinc-800'} transition-colors duration-500`} />
+                <div className={`flex-1 h-full ${checkoutStep >= 2 ? 'bg-red-500' : 'bg-zinc-800'} transition-colors duration-500`} />
+                <div className={`flex-1 h-full ${checkoutStep >= 3 ? 'bg-red-500' : 'bg-zinc-800'} transition-colors duration-500`} />
               </div>
 
-              <div className="p-6 flex flex-col gap-5 flex-1">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-zinc-950/50 rounded-2xl p-4 border border-white/5">
-                    <Calendar className="h-4 w-4 text-zinc-400 mb-2" />
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block mb-0.5">Date</span>
-                    <span className="text-sm text-white font-medium">
-                      {production.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBA'}
-                    </span>
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 bg-white text-black rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.15)]">
+                    {checkoutStep === 1 && <TicketIcon className="h-6 w-6" />}
+                    {checkoutStep === 2 && <Users className="h-6 w-6" />}
+                    {checkoutStep === 3 && <CreditCard className="h-6 w-6" />}
                   </div>
-                  <div className="bg-zinc-950/50 rounded-2xl p-4 border border-white/5">
-                    <Clock className="h-4 w-4 text-zinc-400 mb-2" />
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block mb-0.5">Time</span>
-                    <span className="text-sm text-white font-medium">{production.showTime || 'TBA'}</span>
-                  </div>
-                </div>
-
-                <div className="bg-zinc-950/50 rounded-2xl p-4 border border-white/5 flex items-start gap-3">
-                  <MapPin className="h-4 w-4 text-zinc-400 shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold block mb-0.5">Location</span>
-                    <span className="text-sm text-white font-medium leading-snug block">{production.venue}</span>
-                    {production.city && <span className="text-xs text-zinc-400 block mt-0.5">{production.city}</span>}
+                    <h1 className="text-2xl font-bold text-white tracking-tight">
+                      {checkoutStep === 1 && 'Choose Tickets'}
+                      {checkoutStep === 2 && 'Assign Attendees'}
+                      {checkoutStep === 3 && 'Secure Payment'}
+                    </h1>
+                    <p className="text-sm text-zinc-400 mt-0.5">
+                      {checkoutStep === 1 && 'Select from available tiers below.'}
+                      {checkoutStep === 2 && 'Who is attending?'}
+                      {checkoutStep === 3 && 'Final step to secure your entry.'}
+                    </p>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Checkout Interactive Form */}
-          <div className="flex-[1.5] bg-zinc-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="h-12 w-12 bg-white text-black rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.15)]">
-                <TicketIcon className="h-6 w-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white tracking-tight">Select Tickets</h1>
-                <p className="text-sm text-zinc-400 mt-0.5">Secure your entry pass instantly.</p>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-8 flex-1">
-              
-              {/* Tiers List */}
-              <div className="flex flex-col gap-3">
-                {tiersToUse.map(tier => (
-                  <div
-                    key={tier.name}
-                    onClick={() => setSelectedTier(tier)}
-                    className={`relative overflow-hidden p-5 rounded-2xl border cursor-pointer transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group ${
-                      selectedTier.name === tier.name
-                        ? 'bg-red-500/10 border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.1)]'
-                        : 'bg-zinc-950/40 border-white/5 hover:border-white/15 hover:bg-zinc-950/80'
-                    }`}
+                {checkoutStep > 1 && (
+                  <button 
+                    onClick={() => setCheckoutStep(s => (s - 1) as 1 | 2 | 3)}
+                    className="text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors"
                   >
-                    {/* Active Gradient Border Overlay */}
-                    {selectedTier.name === tier.name && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 to-transparent pointer-events-none" />
-                    )}
+                    Go Back
+                  </button>
+                )}
+              </div>
 
-                    <div className="relative z-10">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${selectedTier.name === tier.name ? 'border-red-500' : 'border-zinc-700 group-hover:border-zinc-500'}`}>
-                          {selectedTier.name === tier.name && <div className="w-2 h-2 bg-red-500 rounded-full" />}
+              {/* STEP 1: CHOOSE TICKETS */}
+              {checkoutStep === 1 && (
+                <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                  {tiersToUse.map(tier => {
+                    const qty = cart[tier.name] || 0;
+                    return (
+                      <div
+                        key={tier.name}
+                        className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                          qty > 0
+                            ? 'bg-red-500/5 border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.05)]'
+                            : 'bg-zinc-950/40 border-white/5 hover:border-white/10'
+                        }`}
+                      >
+                        <div className="relative z-10 flex-1">
+                          <h3 className="font-bold text-base text-white">
+                            {tier.name}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-lg font-bold font-mono tracking-tight text-white">
+                              ₦{tier.price.toLocaleString()}
+                            </span>
+                            <span className="text-[10px] text-zinc-500 uppercase tracking-widest">includes fees</span>
+                          </div>
+                          {tier.description && (
+                            <p className="text-xs text-zinc-400 mt-2 max-w-sm leading-relaxed">
+                              {tier.description}
+                            </p>
+                          )}
                         </div>
-                        <h3 className={`font-bold text-base transition-colors ${selectedTier.name === tier.name ? 'text-white' : 'text-zinc-300'}`}>
-                          {tier.name}
-                        </h3>
+
+                        <div className="relative z-10 flex items-center justify-between sm:justify-end gap-4 sm:min-w-[120px]">
+                           <span className="text-xs text-zinc-500 font-bold sm:hidden">Quantity</span>
+                           <div className="flex items-center bg-zinc-950 rounded-xl border border-white/10 p-1 shrink-0">
+                             <button 
+                               onClick={() => handleQuantityChange(tier.name, -1)}
+                               disabled={qty === 0}
+                               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-800 disabled:opacity-30 transition-colors"
+                             >
+                               <Minus className="h-4 w-4 text-white" />
+                             </button>
+                             <div className="w-10 text-center font-bold text-white tabular-nums">
+                               {qty}
+                             </div>
+                             <button 
+                               onClick={() => handleQuantityChange(tier.name, 1)}
+                               className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-800 transition-colors"
+                             >
+                               <Plus className="h-4 w-4 text-white" />
+                             </button>
+                           </div>
+                        </div>
                       </div>
-                      {tier.description && (
-                        <p className="text-xs text-zinc-500 mt-2 pl-6 max-w-sm leading-relaxed flex items-start gap-1.5">
-                          <Info className="h-3 w-3 shrink-0 mt-0.5 opacity-50" />
-                          {tier.description}
-                        </p>
+                    )
+                  })}
+                  
+                  <div className="mt-6 border-t border-white/5 pt-6 flex justify-end">
+                    <button
+                      disabled={totalTickets === 0}
+                      onClick={() => setCheckoutStep(2)}
+                      className="bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-[0_0_30px_rgba(220,38,38,0.2)] disabled:opacity-40 disabled:hover:bg-red-600 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      Continue to Contact <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: CONTACT & ATTENDEES */}
+              {checkoutStep === 2 && (
+                <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-right-4 duration-300">
+                  
+                  {/* Primary Buyer Details */}
+                  <div className="bg-zinc-950/50 border border-white/5 rounded-2xl p-5 sm:p-6">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-zinc-400" /> Primary Contact
+                    </h3>
+                    <p className="text-xs text-zinc-400 mb-4">We will send your payment receipt and all tickets to this email by default.</p>
+                    
+                    <input
+                      type="email"
+                      required
+                      value={buyerEmail}
+                      onChange={e => setBuyerEmail(e.target.value)}
+                      placeholder="Email Address"
+                      className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition-all shadow-inner"
+                    />
+                  </div>
+
+                  {/* Individual Attendees */}
+                  <div className="flex flex-col gap-4">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 px-1">
+                      <Users className="h-4 w-4 text-zinc-400" /> Ticket Assignment
+                    </h3>
+                    <p className="text-xs text-zinc-400 mb-2 px-1">You are buying <strong>{totalTickets}</strong> ticket(s). You can optionally assign a name and a different email for each ticket. If left blank, they will be sent to the primary contact.</p>
+
+                    <div className="flex flex-col gap-4">
+                      {Object.entries(cart).flatMap(([tierName, qty]) => 
+                        Array.from({ length: qty }).map((_, idx) => {
+                          const key = `${tierName}-${idx}`;
+                          const att = attendees[key] || { name: '', email: '' };
+                          
+                          return (
+                            <div key={key} className="bg-zinc-950/30 border border-white/5 rounded-2xl p-5 relative overflow-hidden group hover:border-white/10 transition-colors">
+                              <div className="absolute top-0 left-0 w-1 h-full bg-red-600/50" />
+                              <div className="flex items-center gap-2 mb-4">
+                                <UserCircle className="h-5 w-5 text-zinc-500" />
+                                <h4 className="font-bold text-sm text-white">{tierName}</h4>
+                                <span className="text-[10px] text-zinc-500 font-mono tracking-widest ml-auto">TICKET {idx + 1}</span>
+                              </div>
+                              
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <input
+                                  type="text"
+                                  placeholder="Attendee Name (Optional)"
+                                  value={att.name}
+                                  onChange={e => setAttendees(prev => ({...prev, [key]: {...prev[key], name: e.target.value}}))}
+                                  className="w-full bg-zinc-900/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
+                                />
+                                <input
+                                  type="email"
+                                  placeholder="Attendee Email (Optional)"
+                                  value={att.email}
+                                  onChange={e => setAttendees(prev => ({...prev, [key]: {...prev[key], email: e.target.value}}))}
+                                  className="w-full bg-zinc-900/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
+                                />
+                              </div>
+                            </div>
+                          );
+                        })
                       )}
                     </div>
+                  </div>
 
-                    <div className="relative z-10 flex flex-col sm:items-end pl-6 sm:pl-0">
-                      <span className={`text-xl font-bold font-mono tracking-tight transition-colors ${selectedTier.name === tier.name ? 'text-white' : 'text-zinc-400'}`}>
-                        ₦{tier.price.toLocaleString()}
-                      </span>
-                      <span className="text-[10px] text-zinc-600 uppercase tracking-widest mt-1 hidden sm:block">Per Ticket</span>
+                  <div className="mt-2 border-t border-white/5 pt-6 flex justify-end">
+                    <button
+                      disabled={!buyerEmail || !/^[^s@]+@[^s@]+.[^s@]+$/.test(buyerEmail)}
+                      onClick={() => setCheckoutStep(3)}
+                      className="bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-[0_0_30px_rgba(220,38,38,0.2)] disabled:opacity-40 disabled:hover:bg-red-600 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      Proceed to Payment <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: SECURE PAYMENT */}
+              {checkoutStep === 3 && (
+                <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-300">
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-4">
+                    <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center shadow-xl">
+                      <Check className="h-8 w-8 text-green-500" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-white mb-1">Ready to complete your order</h3>
+                      <p className="text-sm text-zinc-400">You will be securely redirected to Paystack to complete your ₦{totalAmount.toLocaleString()} purchase.</p>
                     </div>
                   </div>
-                ))}
-              </div>
 
-              {/* Purchase Config */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-auto pt-8 border-t border-white/5">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1.5">
-                    <Mail className="h-3 w-3" /> Delivery Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="Where should we send tickets?"
-                    className={`w-full bg-zinc-950 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-all shadow-inner ${
-                      email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-                        ? 'border-red-500/50 focus:border-red-500 focus:ring-1 focus:ring-red-500'
-                        : 'border-white/5 focus:border-white/20'
-                    }`}
-                  />
-                </div>
+                  <div className="bg-zinc-950/50 border border-white/5 rounded-2xl p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-sm text-zinc-400 font-bold uppercase tracking-widest">Delivery Email</span>
+                      <span className="text-sm text-white font-medium">{buyerEmail}</span>
+                    </div>
+                    <div className="border-t border-dashed border-white/10 my-4" />
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm text-zinc-400 font-bold uppercase tracking-widest">Total Tickets</span>
+                      <span className="text-sm text-white font-medium">{totalTickets}</span>
+                    </div>
+                  </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
-                    Quantity
-                  </label>
-                  <select
-                    value={quantity}
-                    onChange={e => setQuantity(Number(e.target.value))}
-                    className="w-full bg-zinc-950 border border-white/5 hover:border-white/10 focus:border-white/20 rounded-xl px-4 py-3.5 text-sm text-white focus:outline-none transition-all shadow-inner cursor-pointer appearance-none"
-                    style={{ backgroundImage: `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem center', backgroundSize: '1em' }}
-                  >
-                    {[...Array(10)].map((_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1} Ticket{i > 0 ? 's' : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              {/* Total & Checkout Action */}
-              <div className="bg-zinc-950/50 border border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-5 mt-2">
-                <div>
-                  <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold block mb-1">Total Amount</span>
-                  <div className="text-3xl font-bold text-white font-mono tracking-tight">
-                    <span className="text-zinc-500 text-xl font-sans mr-1">₦</span>
-                    {(selectedTier.price * quantity).toLocaleString()}
+                  <div className="mt-4">
+                    <PaystackButton
+                      productionTitle={production.title}
+                      productionId={production.id}
+                      tierName="Multiple Tickets"
+                      priceNGN={totalAmount}
+                      userEmail={buyerEmail}
+                      disabled={false}
+                      onSuccess={handlePaymentSuccess}
+                      className="w-full bg-white text-black font-bold py-5 px-8 rounded-xl hover:bg-zinc-100 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-base shadow-[0_0_40px_rgba(255,255,255,0.15)]"
+                    />
+                    <div className="flex items-center justify-center gap-1.5 mt-4 opacity-60">
+                       <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22S2 16.5 2 10V5L12 2L22 5V10C22 16.5 12 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                       <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400">Secured Checkout by Paystack</span>
+                    </div>
                   </div>
                 </div>
-
-                <div className="w-full sm:w-auto min-w-[200px]">
-                  <PaystackButton
-                    productionTitle={production.title}
-                    productionId={production.id}
-                    tierName={selectedTier.name}
-                    priceNGN={selectedTier.price * quantity}
-                    userEmail={email}
-                    disabled={!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
-                    onSuccess={handlePaymentSuccess}
-                    className="w-full bg-white text-black font-bold py-4 px-8 rounded-xl hover:bg-zinc-100 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-sm shadow-[0_0_30px_rgba(255,255,255,0.15)] disabled:opacity-40 disabled:hover:scale-100 disabled:cursor-not-allowed"
-                  />
-                  <div className="flex items-center justify-center gap-1.5 mt-3 opacity-60">
-                     <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 22S2 16.5 2 10V5L12 2L22 5V10C22 16.5 12 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                     <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-400">Secured Checkout</span>
-                  </div>
-                </div>
-              </div>
-
+              )}
             </div>
           </div>
+
+          {/* Right Column: Order Summary (Sticky) */}
+          <div className="w-full lg:w-[350px] shrink-0 lg:sticky lg:top-24 mt-6 lg:mt-0 lg:pt-11 order-first lg:order-last">
+            <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-xl">
+              <h3 className="text-lg font-serif font-bold text-white mb-6 border-b border-white/5 pb-4">Order Summary</h3>
+              
+              <div className="flex items-start gap-4 mb-6">
+                <div className="w-16 h-20 rounded-lg overflow-hidden shrink-0 bg-zinc-800">
+                  <img src={production.posterUrl || ''} className="w-full h-full object-cover" alt="" />
+                </div>
+                <div className="flex flex-col gap-1 min-w-0">
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest border border-white/10 bg-white/5 w-fit">
+                    {production.customEventType || production.eventType || 'Theatre'}
+                  </span>
+                  <h4 className="font-bold text-white text-sm truncate">{production.title}</h4>
+                  <div className="text-[10px] text-zinc-400 mt-1 flex flex-col gap-0.5">
+                    <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {production.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' }) : 'TBA'}</span>
+                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {production.showTime || 'TBA'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-zinc-950/50 rounded-xl p-4 border border-white/5 mb-6">
+                <h5 className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-3">Cart Items</h5>
+                
+                {totalTickets === 0 ? (
+                  <p className="text-xs text-zinc-500 italic text-center py-2">Your cart is empty.</p>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {Object.entries(cart).map(([tierName, qty]) => {
+                      const tier = tiersToUse.find(t => t.name === tierName);
+                      if (!tier || qty === 0) return null;
+                      return (
+                        <div key={tierName} className="flex justify-between items-start text-sm">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-zinc-300 font-medium">{qty} × {tierName}</span>
+                          </div>
+                          <span className="text-white font-mono font-bold">₦{(tier.price * qty).toLocaleString()}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-dashed border-white/10 pt-4 flex flex-col gap-2">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-zinc-400">Subtotal</span>
+                  <span className="text-zinc-300 font-mono">₦{totalAmount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-zinc-400 flex items-center gap-1">Fees <Info className="h-3 w-3" /></span>
+                  <span className="text-zinc-300 font-mono">Included</span>
+                </div>
+              </div>
+
+              <div className="border-t border-white/10 mt-4 pt-4 flex justify-between items-end">
+                <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold">Total</span>
+                <span className="text-2xl font-bold text-white font-mono tracking-tight">₦{totalAmount.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
         </div>
       )}
     </div>
