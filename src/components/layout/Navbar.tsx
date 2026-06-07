@@ -14,7 +14,7 @@ const NAV_LINKS = [
   { href: '/critics', label: 'Critics' },
   { href: '/editorial', label: 'Editorial' },
   { href: '/artists', label: 'Artists' },
-  { href: '#sell-tickets', label: 'Create Event' },
+  { href: '#sell-tickets', label: 'Sell a Ticket' },
   { href: '/submit', label: 'Submit' },
 ];
 
@@ -433,7 +433,7 @@ export function Navbar() {
                 <div className="w-8 h-8 rounded-xl bg-red-600/10 border border-red-500/20 flex items-center justify-center">
                   <Ticket className="h-4 w-4 text-red-500" />
                 </div>
-                <h3 className="font-serif font-bold text-lg text-white">Create Event</h3>
+                <h3 className="font-serif font-bold text-lg text-white">Sell a Ticket</h3>
               </div>
               <button
                 type="button"

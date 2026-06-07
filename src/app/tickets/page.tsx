@@ -82,7 +82,7 @@ export default function BoxOfficeTicketsPage() {
           href="/create"
           className="flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-bold px-5 py-3.5 rounded-2xl transition-all shadow-xl text-xs uppercase tracking-widest shrink-0 active:scale-98"
         >
-          <Ticket className="h-4.5 w-4.5 text-red-500 shrink-0" /> Create Event
+          <Ticket className="h-4.5 w-4.5 text-red-500 shrink-0" /> Sell a Ticket
         </Link>
       </div>
 
