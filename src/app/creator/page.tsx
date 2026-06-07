@@ -25,7 +25,8 @@ export default function CreatorDashboardPage() {
   const [cashTransactions, setCashTransactions] = useState<any[]>([]);
 
   const isPlayProducerManaged = (p: any) => {
-    return p.isProducerManaged === true || p.ticketTiers !== undefined || p.status === 'Draft';
+    // Any event with ticket tiers, explicit producer flag, or created via the create flow
+    return p.isProducerManaged === true || p.ticketTiers !== undefined || p.ticketTiers?.length > 0;
   };
 
   useEffect(() => {
@@ -388,7 +389,7 @@ export default function CreatorDashboardPage() {
               <span className="w-2 h-4 bg-red-600 rounded-full" />
               Active Productions
             </h3>
-            {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).length === 0 ? (
+            {allPlays.filter(p => p.submitterEmail?.toLowerCase() === user.email.toLowerCase() && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).length === 0 ? (
               <div className="bg-zinc-900/20 border border-white/5 rounded-[32px] p-16 text-center text-zinc-500 text-sm max-w-xl mx-auto backdrop-blur-md flex flex-col gap-4 items-center">
                 <Drama className="h-10 w-10 text-zinc-800 animate-pulse" />
                 <div>
@@ -401,7 +402,7 @@ export default function CreatorDashboardPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
-                {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).map(p => (
+                {allPlays.filter(p => p.submitterEmail?.toLowerCase() === user.email.toLowerCase() && (p.status === 'Currently Showing' || p.status === 'Coming Soon')).map(p => (
                   <div key={p.id} className="flex flex-col gap-3 bg-zinc-900/30 border border-white/5 p-3 rounded-[24px] relative hover:border-red-500/20 hover:shadow-2xl transition-all group/card">
                     <div className="flex-1">
                       <ProductionCard production={p} />
@@ -447,13 +448,13 @@ export default function CreatorDashboardPage() {
               <span className="w-2 h-4 bg-zinc-700 rounded-full" />
               Unpublished Drafts
             </h3>
-            {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && p.status === 'Draft').length === 0 ? (
+            {allPlays.filter(p => p.submitterEmail?.toLowerCase() === user.email.toLowerCase() && p.status === 'Draft').length === 0 ? (
               <div className="bg-zinc-900/10 border border-white/5 rounded-2xl p-8 text-center text-zinc-600 text-xs max-w-sm mx-auto font-mono">
                 No saved drafts in your archive.
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
-                {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && p.status === 'Draft').map(p => (
+                {allPlays.filter(p => p.submitterEmail?.toLowerCase() === user.email.toLowerCase() && p.status === 'Draft').map(p => (
                   <div key={p.id} className="flex flex-col gap-3 bg-zinc-900/30 border border-white/5 p-3 rounded-[24px] relative hover:border-white/20 transition-all group/card">
                     <div className="flex-1">
                       <ProductionCard production={p} />
@@ -484,13 +485,13 @@ export default function CreatorDashboardPage() {
               <span className="w-2 h-4 bg-zinc-800 rounded-full" />
               Concluded Shows & Archive
             </h3>
-            {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Past Production' || p.status === 'Recently Concluded')).length === 0 ? (
+            {allPlays.filter(p => p.submitterEmail?.toLowerCase() === user.email.toLowerCase() && (p.status === 'Past Production' || p.status === 'Recently Concluded')).length === 0 ? (
               <div className="bg-zinc-900/10 border border-white/5 rounded-2xl p-8 text-center text-zinc-650 text-xs max-w-sm mx-auto font-mono">
                 No past productions registered.
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-6">
-                {allPlays.filter(p => p.submitterEmail === user.email && isPlayProducerManaged(p) && (p.status === 'Past Production' || p.status === 'Recently Concluded')).map(p => (
+                {allPlays.filter(p => p.submitterEmail?.toLowerCase() === user.email.toLowerCase() && (p.status === 'Past Production' || p.status === 'Recently Concluded')).map(p => (
                   <div key={p.id} className="flex flex-col gap-3 bg-zinc-900/30 border border-white/5 p-3 rounded-[24px]">
                     <div className="flex-1">
                       <ProductionCard production={p} />
