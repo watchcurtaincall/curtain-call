@@ -46,6 +46,7 @@ interface FormData {
   accountName: string;
   accountNumber: string;
   bankName: string;
+  bankCode: string;
   posterUrl: string;
   castAndCrew: CastCrewMember[];
 }
@@ -106,7 +107,7 @@ function CreateProductionForm() {
     venue: '', city: '', address: '',
     dates: [{ date: '', time: '19:00' }],
     tiers: [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '' }],
-    accountName: '', accountNumber: '', bankName: '',
+    accountName: '', accountNumber: '', bankName: '', bankCode: '',
     posterUrl: '',
     castAndCrew: [],
   });
@@ -158,6 +159,7 @@ function CreateProductionForm() {
             accountName: prod.accountName || '',
             accountNumber: prod.accountNumber || '',
             bankName: prod.bankName || '',
+            bankCode: prod.bankCode || '',
             posterUrl: prod.posterUrl || '',
             castAndCrew: prod.castAndCrew || []
           });
@@ -298,6 +300,16 @@ function CreateProductionForm() {
       };
 
       ClientDB.saveProduction(newPlay);
+      
+      if (user?.email && form.accountNumber && form.bankCode) {
+        ClientDB.saveUserBankDetails(user.email, {
+          bankCode: form.bankCode,
+          bankName: form.bankName,
+          accountNumber: form.accountNumber,
+          accountName: form.accountName
+        });
+      }
+
       setCreatedProductionId(targetId);
       setPublished(true);
     } catch (err) {
@@ -348,6 +360,16 @@ function CreateProductionForm() {
       };
 
       ClientDB.saveProduction(newPlay);
+
+      if (user?.email && form.accountNumber && form.bankCode) {
+        ClientDB.saveUserBankDetails(user.email, {
+          bankCode: form.bankCode,
+          bankName: form.bankName,
+          accountNumber: form.accountNumber,
+          accountName: form.accountName
+        });
+      }
+
       setCreatedProductionId(targetId);
       setPublished(true);
     } catch (err) {
@@ -442,6 +464,7 @@ function CreateProductionForm() {
                 accountName: '',
                 accountNumber: '',
                 bankName: '',
+                bankCode: '',
                 posterUrl: '',
                 castAndCrew: [],
               });
@@ -914,6 +937,7 @@ function CreateProductionForm() {
                     const bank = banks.find(b => b.code === e.target.value) || null;
                     setSelectedBank(bank);
                     set('bankName', bank?.name || '');
+                    set('bankCode', bank?.code || '');
                     if (form.accountNumber.length === 10) resolveAccount_(form.accountNumber, bank);
                   }}
                   className={`${inputCls} appearance-none pr-10`}

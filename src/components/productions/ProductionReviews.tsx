@@ -18,11 +18,12 @@ interface Review {
   date?: string;
 }
 
-export function ProductionReviews({ reviews, productionTitle, productionId, status, activeTab: activeTabProp, onTabChange }: {
+export function ProductionReviews({ reviews, productionTitle, productionId, status, eventType = 'Theatre', activeTab: activeTabProp, onTabChange }: {
   reviews: Review[];
   productionTitle: string;
   productionId: string;
   status: ProductionStatus;
+  eventType?: string;
   activeTab?: 'critic' | 'audience';
   onTabChange?: (tab: 'critic' | 'audience') => void;
 }) {
@@ -179,25 +180,34 @@ export function ProductionReviews({ reviews, productionTitle, productionId, stat
       )}
 
       {/* Tab Headers */}
-      <div className="flex gap-0 border-b border-white/10 mb-8">
-        {(['critic', 'audience'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-1 pb-3 mr-8 text-base font-serif font-bold capitalize transition-all relative ${
-              activeTab === tab ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'
-            }`}
-          >
-            {tab === 'critic' ? 'Critic Reviews' : 'Audience Reviews'}
-            {activeTab === tab && (
-              <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-red-600 rounded-t-full" />
-            )}
-          </button>
-        ))}
-      </div>
+      {(!eventType || eventType === 'Theatre') ? (
+        <div className="flex gap-0 border-b border-white/10 mb-8">
+          {(['critic', 'audience'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-1 pb-3 mr-8 text-base font-serif font-bold capitalize transition-all relative ${
+                activeTab === tab ? 'text-white' : 'text-zinc-600 hover:text-zinc-400'
+              }`}
+            >
+              {tab === 'critic' ? 'Critic Reviews' : 'Audience Reviews'}
+              {activeTab === tab && (
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-red-600 rounded-t-full" />
+              )}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="flex gap-0 border-b border-white/10 mb-8">
+          <div className="px-1 pb-3 mr-8 text-base font-serif font-bold capitalize text-white relative">
+            Event Reviews
+            <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-red-600 rounded-t-full" />
+          </div>
+        </div>
+      )}
 
       {/* Critic Tab */}
-      {activeTab === 'critic' && (
+      {(!eventType || eventType === 'Theatre') && activeTab === 'critic' && (
         <div className="space-y-4">
           {status === 'Coming Soon' ? (
             <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5 text-center flex flex-col items-center justify-center gap-3 py-12">

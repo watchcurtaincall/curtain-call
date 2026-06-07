@@ -11,7 +11,7 @@ interface WithdrawModalProps {
   onClose: () => void;
 }
 
-type Step = 'amount' | 'account' | 'confirm' | 'processing' | 'success' | 'error';
+type Step = 'amount' | 'account' | 'confirm' | 'otp' | 'processing' | 'success' | 'error';
 
 export function WithdrawModal({ availableBalance, onClose }: WithdrawModalProps) {
   const { user } = useAuth();
@@ -25,10 +25,24 @@ export function WithdrawModal({ availableBalance, onClose }: WithdrawModalProps)
   const [resolveError, setResolveError] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Load banks once
+  const [otpCode, setOtpCode] = useState('');
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [otpError, setOtpError] = useState('');
+
+  // Load banks once and apply saved details
   useEffect(() => {
-    getBanks().then(setBanks);
-  }, []);
+    getBanks().then(banksData => {
+      setBanks(banksData);
+      if (user?.email) {
+        const saved = ClientDB.getUserBankDetails(user.email);
+        if (saved) {
+          setAccountNumber(saved.accountNumber);
+          const b = banksData.find(b => b.code === saved.bankCode) || null;
+          setSelectedBank(b);
+        }
+      }
+    });
+  }, [user?.email]);
 
   // Auto-resolve when account number hits 10 digits and bank is selected
   const resolve = useCallback(async () => {
@@ -65,7 +79,43 @@ export function WithdrawModal({ availableBalance, onClose }: WithdrawModalProps)
   const canProceedAmount = parsedAmount >= 1000 && parsedAmount <= availableBalance;
   const canProceedAccount = resolvedName && !resolveError && selectedBank;
 
-  const handleWithdraw = async () => {
+  const handleSendOtp = async () => {
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    setGeneratedOtp(otp);
+    setStep('processing'); // show loader while sending
+    try {
+      const recipient = user?.email || 'unknown@curtaincall.ng';
+      const subject = `Your Withdrawal OTP 🔐`;
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Financials</span>
+            <div style="height: 2px; width: 80px; background-color: #dc2626; margin: 15px auto 0;"></div>
+          </div>
+          <h2 style="font-family: Georgia, serif; color: #ffffff; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Authorize Withdrawal</h2>
+          <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+            You are trying to withdraw <strong>₦${parsedAmount.toLocaleString()}</strong> to ${resolvedName}. Please use the OTP below to confirm your request:
+          </p>
+          <h1 style="text-align: center; font-size: 40px; letter-spacing: 8px; color: #eab308; margin: 30px 0; font-family: monospace;">${otp}</h1>
+          <p style="color: #71717a; font-size: 11px; text-align: center; font-family: monospace; border-top: 1px solid #27272a; padding-top: 20px;">
+            If you did not request this, please contact support immediately.
+          </p>
+        </div>
+      `;
+      await ClientDB.sendEmail(recipient, subject, emailHtml);
+      setStep('otp');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to send OTP email.');
+      setStep('error');
+    }
+  };
+
+  const handleVerifyOtpAndWithdraw = async () => {
+    if (otpCode !== generatedOtp) {
+      setOtpError('Invalid OTP code. Please try again.');
+      return;
+    }
+
     setStep('processing');
     try {
       const withdrawalId = `w_req_${Date.now()}`;
@@ -336,11 +386,46 @@ export function WithdrawModal({ availableBalance, onClose }: WithdrawModalProps)
               <p className="text-xs text-zinc-600 text-center">Payouts are processed within 24 hours via Paystack Transfers.</p>
 
               <button
-                onClick={handleWithdraw}
+                onClick={handleSendOtp}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl transition-colors flex items-center justify-center gap-2"
               >
                 <Banknote className="h-5 w-5" />
                 Confirm Withdrawal
+              </button>
+            </div>
+          )}
+
+          {/* ── OTP ── */}
+          {step === 'otp' && (
+            <div className="flex flex-col gap-5">
+              <div>
+                <button onClick={() => setStep('confirm')} className="text-xs text-zinc-500 hover:text-white mb-3 flex items-center gap-1">← Back</button>
+                <h2 className="text-xl font-serif font-bold text-white">Security Check</h2>
+                <p className="text-sm text-zinc-400 mt-1">We sent a 4-digit code to <span className="text-white font-medium">{user?.email}</span></p>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={otpCode}
+                  onChange={e => {
+                    setOtpCode(e.target.value.replace(/\D/g, ''));
+                    setOtpError('');
+                  }}
+                  placeholder="Enter 4-digit OTP"
+                  className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-4 text-center text-2xl tracking-[1em] font-mono font-bold text-white placeholder:text-zinc-700 focus:outline-none focus:border-white/25 transition-colors"
+                />
+                {otpError && <p className="text-xs text-red-500 text-center mt-2">{otpError}</p>}
+              </div>
+
+              <button
+                onClick={handleVerifyOtpAndWithdraw}
+                disabled={otpCode.length !== 4}
+                className="w-full bg-white text-black font-bold py-4 rounded-2xl hover:bg-zinc-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed mt-2"
+              >
+                Verify & Withdraw
               </button>
             </div>
           )}

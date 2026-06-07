@@ -203,19 +203,23 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
 
             {/* Score Pills */}
             <div className="flex items-center gap-4 flex-wrap">
-              <div className="flex items-center gap-2">
-                <div className="bg-red-600 rounded-full h-10 w-10 flex items-center justify-center font-bold text-sm shadow-lg shadow-red-600/30 shrink-0">
-                  {production.criticScore !== null ? `${production.criticScore}%` : '--'}
-                </div>
-                <div className="leading-tight">
-                  <div className="text-xs font-semibold text-white">Critic Score</div>
-                  <div className="text-[10px] text-zinc-500">
-                    {criticReviewsCount} {criticReviewsCount === 1 ? 'rating' : 'ratings'}
+              {(!production.eventType || production.eventType === 'Theatre') && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="bg-red-600 rounded-full h-10 w-10 flex items-center justify-center font-bold text-sm shadow-lg shadow-red-600/30 shrink-0">
+                      {production.criticScore !== null ? `${production.criticScore}%` : '--'}
+                    </div>
+                    <div className="leading-tight">
+                      <div className="text-xs font-semibold text-white">Critic Score</div>
+                      <div className="text-[10px] text-zinc-500">
+                        {criticReviewsCount} {criticReviewsCount === 1 ? 'rating' : 'ratings'}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="w-px h-8 bg-white/10" />
+                  <div className="w-px h-8 bg-white/10" />
+                </>
+              )}
 
               <div className="flex items-center gap-2">
                 <div className="bg-zinc-800 border border-white/10 rounded-full h-10 w-10 flex items-center justify-center font-bold text-sm shrink-0">
@@ -323,7 +327,8 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
               productionTitle={production.title}
               productionId={production.id}
               status={production.status}
-              activeTab={activeTab}
+              eventType={production.eventType || 'Theatre'}
+              activeTab={(!production.eventType || production.eventType === 'Theatre') ? activeTab : 'audience'}
               onTabChange={setActiveTab}
             />
           </div>

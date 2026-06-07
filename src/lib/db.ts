@@ -14,6 +14,7 @@ const PENDING_ARTICLES_KEY = 'curtain_pending_articles';
 const DECLINED_SUBMISSIONS_KEY = 'curtain_declined_submissions';
 const PENDING_CRITICS_KEY = 'curtain_pending_critics';
 const REVIEWS_KEY = 'curtain_call_reviews';
+const USER_BANK_DETAILS_KEY = 'curtain_user_bank_details';
 
 // ── SUPABASE CLIENT CONFIGURATION & fallback ──
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -1411,6 +1412,23 @@ export const ClientDB = {
     if (typeof window === 'undefined') return [];
     const stored = localStorage.getItem('curtain_withdrawals');
     return stored ? JSON.parse(stored).map(mapWithdrawalFromDb) : [];
+  },
+
+  // ── USER BANK DETAILS ──
+  getUserBankDetails(email: string): { bankCode: string; bankName: string; accountNumber: string; accountName: string } | null {
+    if (typeof window === 'undefined') return null;
+    const stored = localStorage.getItem(USER_BANK_DETAILS_KEY);
+    if (!stored) return null;
+    const allProfiles = JSON.parse(stored);
+    return allProfiles[email.toLowerCase()] || null;
+  },
+
+  saveUserBankDetails(email: string, details: { bankCode: string; bankName: string; accountNumber: string; accountName: string }): void {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem(USER_BANK_DETAILS_KEY);
+    const allProfiles = stored ? JSON.parse(stored) : {};
+    allProfiles[email.toLowerCase()] = details;
+    localStorage.setItem(USER_BANK_DETAILS_KEY, JSON.stringify(allProfiles));
   },
 
   submitWithdrawal(req: any): void {
