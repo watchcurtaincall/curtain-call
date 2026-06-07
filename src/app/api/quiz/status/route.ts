@@ -52,19 +52,50 @@ export async function GET(request: Request) {
       }
 
       if (attempt) {
-        userAttempt = {
+        // Build base attempt info
+        const baseAttempt: any = {
           status: attempt.status,
-          ...(attempt.status === 'completed' && {
-            score: attempt.score,
-            pointsAwarded: attempt.points_awarded,
-            slotPosition: attempt.slot_position,
-            resultType: attempt.result_type,
-          }),
-          ...(attempt.status === 'voided' && {
-            resultType: 'voided' as const,
-          })
         };
+
+        if (attempt.status === 'completed') {
+          baseAttempt.score = attempt.score;
+          baseAttempt.pointsAwarded = attempt.points_awarded;
+          baseAttempt.slotPosition = attempt.slot_position;
+          baseAttempt.resultType = attempt.result_type;
+
+          // Attach review data: user's answers + questions with correct answers
+          try {
+            const { data: qDay } = await supabaseServer
+              .from('quiz_days')
+              .select('questions')
+              .eq('quiz_date', todayWATStr)
+              .maybeSingle();
+
+            if (qDay?.questions && Array.isArray(attempt.answers)) {
+              baseAttempt.reviewData = (qDay.questions as any[]).map((q: any) => {
+                const userAnswer = (attempt.answers as any[]).find((a: any) => a.questionId === q.id);
+                return {
+                  id: q.id,
+                  text: q.text,
+                  options: q.options,
+                  correctAnswerIndex: q.correctAnswerIndex,
+                  selectedIndex: userAnswer?.selectedIndex ?? -1,
+                  isCorrect: userAnswer?.selectedIndex === q.correctAnswerIndex,
+                };
+              });
+            }
+          } catch (reviewErr) {
+            console.error('[API Quiz Status] Error fetching review data:', reviewErr);
+          }
+        }
+
+        if (attempt.status === 'voided') {
+          baseAttempt.resultType = 'voided' as const;
+        }
+
+        userAttempt = baseAttempt;
       }
+
 
       // 3. Fetch user's profile for streak count
       const { data: authUser, error: authUserErr } = await supabaseServer.auth.admin.getUserById(userId);

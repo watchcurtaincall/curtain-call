@@ -140,6 +140,14 @@ export interface QuizStatus {
     pointsAwarded?: number;
     slotPosition?: number;
     resultType?: QuizResultType;
+    reviewData?: Array<{
+      id: string;
+      text: string;
+      options: string[];
+      correctAnswerIndex: number;
+      selectedIndex: number;
+      isCorrect: boolean;
+    }>;
   };
   streakCount: number;
   questionsReady: boolean;

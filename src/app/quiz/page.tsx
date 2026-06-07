@@ -9,7 +9,7 @@ import { StreakBadge } from '@/components/quiz/StreakBadge';
 import {
   Trophy, Users, Clock, Lock, Flame, Zap,
   RefreshCw, AlertTriangle, ChevronRight, Star,
-  BookOpen, CheckCircle, Share2, Copy, Check
+  BookOpen, CheckCircle, Share2, Copy, Check, XCircle, ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -399,6 +399,11 @@ export default function QuizPage() {
                 </div>
               )}
 
+              {/* Review answers accordion */}
+              {hasAttempted && attempt?.status === 'completed' && attempt.reviewData && attempt.reviewData.length > 0 && (
+                <ReviewAnswers reviewData={attempt.reviewData} score={attempt.score ?? 0} />
+              )}
+
               {/* Voided */}
               {isVoided && (
                 <div className="flex flex-col items-center gap-5 text-center py-4">
@@ -507,6 +512,127 @@ export default function QuizPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Review Answers Component ─────────────────────────────
+function ReviewAnswers({
+  reviewData,
+  score,
+}: {
+  reviewData: Array<{
+    id: string;
+    text: string;
+    options: string[];
+    correctAnswerIndex: number;
+    selectedIndex: number;
+    isCorrect: boolean;
+  }>;
+  score: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrong = reviewData.filter(q => !q.isCorrect);
+
+  return (
+    <div className="w-full mt-2 border-t border-white/5 pt-4">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between text-left group"
+      >
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-4 w-4 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
+          <span className="text-sm font-bold text-zinc-400 group-hover:text-white transition-colors">
+            Review Your Answers
+          </span>
+          {wrong.length > 0 && (
+            <span className="text-[11px] bg-red-500/15 text-red-400 border border-red-500/20 px-2 py-0.5 rounded-full font-bold">
+              {wrong.length} wrong
+            </span>
+          )}
+          {wrong.length === 0 && (
+            <span className="text-[11px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
+              Perfect!
+            </span>
+          )}
+        </div>
+        <ChevronDown
+          className={`h-4 w-4 text-zinc-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {open && (
+        <div className="flex flex-col gap-4 mt-4">
+          {reviewData.map((q, qi) => (
+            <div
+              key={q.id}
+              className={`rounded-2xl border p-4 ${
+                q.isCorrect
+                  ? 'bg-emerald-500/5 border-emerald-500/15'
+                  : 'bg-red-500/5 border-red-500/15'
+              }`}
+            >
+              {/* Question header */}
+              <div className="flex items-start gap-2.5 mb-3">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                  q.isCorrect ? 'bg-emerald-500/20' : 'bg-red-500/20'
+                }`}>
+                  {q.isCorrect
+                    ? <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
+                    : <XCircle className="h-3.5 w-3.5 text-red-400" />
+                  }
+                </div>
+                <p className="text-sm text-white font-medium leading-snug flex-1">
+                  <span className="text-zinc-500 text-xs font-bold uppercase tracking-widest mr-1.5">Q{qi + 1}.</span>
+                  {q.text}
+                </p>
+              </div>
+
+              {/* Options */}
+              <div className="flex flex-col gap-1.5 pl-8">
+                {q.options.map((opt, i) => {
+                  const isCorrect = i === q.correctAnswerIndex;
+                  const isSelected = i === q.selectedIndex;
+                  const isWrongPick = isSelected && !isCorrect;
+
+                  return (
+                    <div
+                      key={i}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+                        isCorrect
+                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                          : isWrongPick
+                          ? 'bg-red-500/10 border-red-500/30 text-red-300'
+                          : 'bg-zinc-900/40 border-white/5 text-zinc-500'
+                      }`}
+                    >
+                      <span className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 text-[9px] font-black ${
+                        isCorrect
+                          ? 'bg-emerald-500 border-emerald-400 text-white'
+                          : isWrongPick
+                          ? 'bg-red-500 border-red-400 text-white'
+                          : 'border-zinc-700 text-zinc-600'
+                      }`}>
+                        {String.fromCharCode(65 + i)}
+                      </span>
+                      <span className="flex-1">{opt}</span>
+                      {isCorrect && (
+                        <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest shrink-0">✓ Correct</span>
+                      )}
+                      {isWrongPick && (
+                        <span className="text-[10px] text-red-400 font-bold uppercase tracking-widest shrink-0">Your pick</span>
+                      )}
+                    </div>
+                  );
+                })}
+                {q.selectedIndex === -1 && (
+                  <p className="text-[11px] text-zinc-600 italic mt-1">⏱ Timed out — no answer selected</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
