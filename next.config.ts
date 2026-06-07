@@ -25,6 +25,25 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/productions/:slug*',
+        destination: '/shows/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/events/:slug*',
+        destination: '/event/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/discovery',
+        destination: '/tickets',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default withPWA(nextConfig);

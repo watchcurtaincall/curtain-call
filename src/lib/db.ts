@@ -1764,7 +1764,15 @@ export const syncFromSupabase = async () => {
         return remoteProd;
       });
 
-      localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([...mergedApproved, ...drafts]));
+      // Preserve locally-saved producer events that haven't been confirmed in cloud yet
+      const localProducerPublished = currentLocal.filter((lp: any) => {
+        // Keep any non-draft local production not yet in the remote approved list
+        if (lp.status === 'Draft') return false;
+        const inRemote = mergedApproved.some((rp: any) => rp.id === lp.id);
+        return !inRemote;
+      });
+
+      localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([...mergedApproved, ...localProducerPublished, ...drafts]));
       
       if (isAdmin) {
         const pendingRemote = mappedRemote.filter((p: any) => p.curationStatus === 'Pending');
