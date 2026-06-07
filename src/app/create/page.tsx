@@ -147,8 +147,9 @@ function CreateProductionForm() {
             id: t.id || crypto.randomUUID(),
             name: t.name || '',
             price: String(t.price) || '',
-            capacity: String(t.capacity) || ''
-          })) : [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '' }];
+            capacity: String(t.capacity) || '',
+            description: t.description || ''
+          })) : [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '', description: '' }];
 
           const dates = (prod.dates && prod.dates.length > 0) ? prod.dates : (prod.showDate ? [{ date: prod.showDate, time: prod.showTime || '19:00', endTime: prod.endTime || '' }] : [{ date: '', time: '19:00', endTime: '' }]);
 
@@ -346,7 +347,8 @@ function CreateProductionForm() {
           id: t.id,
           name: t.name,
           price: t.price,
-          capacity: t.capacity
+          capacity: t.capacity,
+          description: t.description || ''
         })),
         castAndCrew: form.castAndCrew || [],
         accountName: form.accountName || undefined,
