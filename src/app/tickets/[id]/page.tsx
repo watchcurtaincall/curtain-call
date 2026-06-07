@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { ClientDB } from '@/lib/db';
 import { Production } from '@/lib/types';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { ArrowLeft, Ticket as TicketIcon, Mail, CheckCircle2, QrCode, Calendar, MapPin, Clock, Info, Loader2, Plus, Minus, CreditCard, Users, UserCircle, ChevronRight, Check } from 'lucide-react';
 import { PaystackButton } from '@/components/payments/PaystackButton';
 import { useAuth } from '@/lib/AuthContext';
@@ -86,6 +86,8 @@ function generateBarcodeSVG(text: string) {
 
 export default function TicketPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth();
+  const router = useRouter();
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [production, setProduction] = useState<Production | null>(null);
   const [loading, setLoading] = useState(true);
   
@@ -478,12 +480,12 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
           
           {/* Left Column: Event Context & Multistep Form */}
           <div className="flex-1 w-full flex flex-col gap-6">
-            <Link
-              href={isTheatre ? `/productions/${production.slug || production.id}` : `/events/${production.slug || production.id}`}
+            <button
+              onClick={() => setShowCancelModal(true)}
               className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors uppercase tracking-wider font-bold w-fit bg-zinc-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/5"
             >
               <ArrowLeft className="h-3.5 w-3.5" /> Back to Event
-            </Link>
+            </button>
 
             {/* Title / Info Mobile Header */}
             <div className="flex items-center gap-4 lg:hidden">
@@ -823,6 +825,31 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             </div>
           )}
 
+        </div>
+      )}
+
+      {showCancelModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-200 text-center text-zinc-900">
+            <h3 className="text-xl font-bold mb-3">Release tickets</h3>
+            <p className="text-zinc-600 mb-8 text-sm">
+              Are you sure you want to cancel? This will cancel the order and release your tickets?
+            </p>
+            <div className="flex items-center gap-4 w-full">
+              <button 
+                onClick={() => setShowCancelModal(false)} 
+                className="flex-1 bg-red-50 text-red-500 font-bold py-3.5 rounded-xl hover:bg-red-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => router.push(isTheatre ? `/productions/${production.slug || production.id}` : `/events/${production.slug || production.id}`)}
+                className="flex-1 bg-red-500 text-white font-bold py-3.5 rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30"
+              >
+                Release ticket
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
