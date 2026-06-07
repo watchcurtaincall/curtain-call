@@ -102,6 +102,7 @@ export function DateTimePickerModal({
               );
             })}
           </div>
+          </div>
         )}
         
         <div className="flex items-center justify-between bg-zinc-950/50 border border-white/5 rounded-2xl p-4 mb-6">
