@@ -773,8 +773,11 @@ function CreateProductionForm() {
                     initialTime={form.dates[pickerIndex].time}
                     onClose={() => setPickerIndex(null)}
                     onConfirm={(date, time) => {
-                      updateDate(pickerIndex, 'date', date);
-                      updateDate(pickerIndex, 'time', time);
+                      setForm(f => {
+                        const next = [...f.dates];
+                        next[pickerIndex] = { ...next[pickerIndex], date, time };
+                        return { ...f, dates: next };
+                      });
                     }}
                   />
                 )}
