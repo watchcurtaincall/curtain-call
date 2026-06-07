@@ -819,7 +819,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       )}
 
       {/* Sticky Mobile Bottom Bar */}
-      {!success && checkoutStep < 3 && (
+      {!successData && checkoutStep < 3 && (
         <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-zinc-900 border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50 animate-in slide-in-from-bottom-full duration-300">
            <button
              disabled={checkoutStep === 1 ? totalTickets === 0 : !canProceedToPayment()}
