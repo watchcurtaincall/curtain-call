@@ -143,15 +143,17 @@ function CreateProductionForm() {
         if (prod.submitterEmail && user.email && prod.submitterEmail.toLowerCase() === user.email.toLowerCase()) {
           setIsEditMode(true);
           
-          const tiers = prod.ticketTiers ? prod.ticketTiers.map((t: any) => ({
-            id: t.id || `tier-${Date.now()}-${Math.floor(Math.random()*1000)}`,
-            name: t.name || '',
-            price: String(t.price) || '',
-            capacity: String(t.capacity) || '',
-            description: t.description || ''
+          const isTiersArray = Array.isArray(prod.ticketTiers);
+          const tiers = isTiersArray && prod.ticketTiers.length > 0 ? prod.ticketTiers.map((t: any) => ({
+            id: t?.id || `tier-${Date.now()}-${Math.floor(Math.random()*1000)}`,
+            name: t?.name || '',
+            price: t?.price ? String(t.price) : '',
+            capacity: t?.capacity ? String(t.capacity) : '',
+            description: t?.description || ''
           })) : [{ id: `tier-${Date.now()}-${Math.floor(Math.random()*1000)}`, name: 'General', price: '', capacity: '', description: '' }];
 
-          const dates = (prod.dates && prod.dates.length > 0) ? prod.dates : (prod.showDate ? [{ date: prod.showDate, time: prod.showTime || '19:00', endTime: prod.endTime || '' }] : [{ date: '', time: '19:00', endTime: '' }]);
+          const isDatesArray = Array.isArray(prod.dates);
+          const dates = (isDatesArray && prod.dates.length > 0) ? prod.dates : (prod.showDate ? [{ date: prod.showDate, time: prod.showTime || '19:00', endTime: prod.endTime || '' }] : [{ date: '', time: '19:00', endTime: '' }]);
 
           setForm({
             eventType: prod.eventType || '',
@@ -169,7 +171,7 @@ function CreateProductionForm() {
             bankName: prod.bankName || '',
             bankCode: prod.bankCode || '',
             posterUrl: prod.posterUrl || '',
-            castAndCrew: prod.castAndCrew || []
+            castAndCrew: Array.isArray(prod.castAndCrew) ? prod.castAndCrew.filter(Boolean) : []
           });
 
           if (prod.bankName && banks.length > 0) {
