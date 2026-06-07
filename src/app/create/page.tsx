@@ -1063,7 +1063,7 @@ function CreateProductionForm() {
               className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-2xl transition-colors mt-2 flex items-center justify-center gap-2"
             >
               <Ticket className="h-5 w-5" />
-              Publish Production
+              {form.eventType === 'Theatre' ? 'Publish Production' : 'Publish Event'}
             </button>
             <p className="text-xs text-center text-zinc-600">
               By publishing you agree to Curtain Call&apos;s Producer Terms.
