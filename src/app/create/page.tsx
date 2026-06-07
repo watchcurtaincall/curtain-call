@@ -62,7 +62,7 @@ const CITIES  = ['Lagos', 'Abuja', 'Port Harcourt', 'Ibadan', 'Kano', 'Enugu', '
 
 const STEPS = ['Event Info', 'Schedule', 'Ticketing', 'Payout Setup', 'Review & Publish'];
 
-const emptyTier = (): TicketTier => ({ id: crypto.randomUUID(), name: '', price: '', capacity: '', description: '' });
+const emptyTier = (): TicketTier => ({ id: `tier-${Date.now()}-${Math.floor(Math.random()*1000)}`, name: '', price: '', capacity: '', description: '' });
 
 // ─── Mini date-picker helpers ────────────────────────────
 function formatDate(d: string) {
@@ -113,7 +113,7 @@ function CreateProductionForm() {
     title: '', genre: '', synopsis: '',
     venue: '', city: '', address: '',
     dates: [{ date: '', time: '19:00', endTime: '' }],
-    tiers: [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '' }],
+    tiers: [{ id: 'default-tier', name: 'General', price: '', capacity: '' }],
     accountName: '', accountNumber: '', bankName: '', bankCode: '',
     posterUrl: '',
     castAndCrew: [],
@@ -144,12 +144,12 @@ function CreateProductionForm() {
           setIsEditMode(true);
           
           const tiers = prod.ticketTiers ? prod.ticketTiers.map((t: any) => ({
-            id: t.id || crypto.randomUUID(),
+            id: t.id || `tier-${Date.now()}-${Math.floor(Math.random()*1000)}`,
             name: t.name || '',
             price: String(t.price) || '',
             capacity: String(t.capacity) || '',
             description: t.description || ''
-          })) : [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '', description: '' }];
+          })) : [{ id: `tier-${Date.now()}-${Math.floor(Math.random()*1000)}`, name: 'General', price: '', capacity: '', description: '' }];
 
           const dates = (prod.dates && prod.dates.length > 0) ? prod.dates : (prod.showDate ? [{ date: prod.showDate, time: prod.showTime || '19:00', endTime: prod.endTime || '' }] : [{ date: '', time: '19:00', endTime: '' }]);
 
@@ -521,7 +521,7 @@ function CreateProductionForm() {
                 city: '',
                 address: '',
                 dates: [{ date: '', time: '19:00' }],
-                tiers: [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '' }],
+                tiers: [{ id: 'default-tier', name: 'General', price: '', capacity: '' }],
                 accountName: '',
                 accountNumber: '',
                 bankName: '',
