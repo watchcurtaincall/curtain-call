@@ -458,9 +458,19 @@ function CreateProductionForm() {
       {/* Header */}
       <div className="bg-zinc-900 border-b border-white/5 sticky top-16 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/profile" className="text-zinc-500 hover:text-white transition-colors">
+          <button 
+            onClick={() => {
+              if (step > 0) {
+                setStep(s => s - 1);
+                window.scrollTo(0, 0);
+              } else {
+                router.push('/profile');
+              }
+            }}
+            className="text-zinc-500 hover:text-white transition-colors"
+          >
             <ArrowLeft className="h-5 w-5" />
-          </Link>
+          </button>
           <div className="flex-1">
             <h1 className="text-base font-serif font-bold text-white">
               {isEditMode ? 'Edit Event' : 'Create Event'}
@@ -1015,14 +1025,14 @@ function CreateProductionForm() {
           <div className="flex gap-3 mt-8">
             {step > 0 && (
               <button
-                onClick={() => setStep(s => s - 1)}
+                onClick={() => { setStep(s => s - 1); window.scrollTo(0, 0); }}
                 className="flex items-center gap-2 px-5 py-3 bg-zinc-900 border border-white/10 text-white rounded-2xl hover:bg-zinc-800 transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" /> Back
               </button>
             )}
             <button
-              onClick={() => setStep(s => s + 1)}
+              onClick={() => { setStep(s => s + 1); window.scrollTo(0, 0); }}
               disabled={!canNext}
               className="flex-1 flex items-center justify-center gap-2 py-3 bg-white text-black font-bold rounded-2xl hover:bg-zinc-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >

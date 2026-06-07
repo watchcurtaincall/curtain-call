@@ -729,7 +729,7 @@ export default function ProfilePage() {
                     <Wallet className="h-7 w-7" />
                   </div>
                   <div>
-                    <h3 className="font-serif font-bold text-white text-lg">Producer&apos;s Hub Terminal</h3>
+                    <h3 className="font-serif font-bold text-white text-lg">Creator&apos;s Hub</h3>
                     <p className="text-xs text-zinc-400 mt-1 leading-relaxed max-w-xl">
                       Access the full-suite stage coordinator dashboard to audit and oversee ticket sales, view guest lists, scan gate admissions, and initiate bank payouts.
                     </p>
