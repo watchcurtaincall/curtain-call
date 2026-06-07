@@ -27,19 +27,10 @@ export async function GET(request: Request) {
   try {
     // Query all tables in parallel for maximum speed
     const [
-      prodsRes,
-      artistsRes,
-      articlesRes,
-      reviewsRes,
-      criticAppsRes,
-      approvedCriticsRes,
-      withdrawalsRes,
-      ticketsRes,
-      notificationsRes,
-      subscribersRes,
-      profilesRes,
-      userProfileRes,
-      quizCashCreditsRes
+      prodsRes, artistsRes, articlesRes, reviewsRes,
+      criticAppsRes, approvedCriticsRes, withdrawalsRes,
+      ticketsRes, notificationsRes, subscribersRes, profilesRes,
+      userProfileRes, quizCashCreditsRes
     ] = await Promise.all([
       // 1. productions - ordered by created_at DESC so newest always first
       supabaseServer.from('productions').select('*').order('created_at', { ascending: false }),

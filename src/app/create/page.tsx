@@ -411,7 +411,8 @@ function CreateProductionForm() {
           id: t.id,
           name: t.name || 'General',
           price: t.price || '0',
-          capacity: t.capacity || '0'
+          capacity: t.capacity || '0',
+          description: t.description || ''
         })),
         castAndCrew: form.castAndCrew || [],
       };
