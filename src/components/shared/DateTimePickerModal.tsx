@@ -7,7 +7,8 @@ export function DateTimePickerModal({
   initialDate,
   initialTime,
   onClose,
-  onConfirm
+  onConfirm,
+  hideDate
 }: {
   initialDate: string;
   initialTime: string;
