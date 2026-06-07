@@ -288,10 +288,20 @@ export default function AdminDashboardPage() {
     
     const dbTickets = ClientDB.getTickets();
     const dbWithdrawals = ClientDB.getWithdrawals();
+    const dbCashCredits = ClientDB.getQuizCashCredits();
+    const dbSignups = ClientDB.getSignups();
+    
+    const userProfile = dbSignups.find(u => u.email.toLowerCase() === emailLower);
+    const userId = userProfile ? userProfile.id : null;
     
     const userTickets = dbTickets.filter(t => userPlayIds.includes(t.productionId));
     const grossEarnings = userTickets.reduce((acc, t) => acc + t.price, 0);
-    const totalEarned = grossEarnings * 0.95;
+    const totalTicketEarned = grossEarnings * 0.95;
+    
+    const userCashCredits = userId ? dbCashCredits.filter((c: any) => c.user_id === userId) : [];
+    const totalCashCredits = userCashCredits.reduce((acc: number, c: any) => acc + c.amount_naira, 0);
+    
+    const totalEarned = totalTicketEarned + totalCashCredits;
     
     const userWithdrawals = dbWithdrawals.filter(w => w.email.toLowerCase() === emailLower);
     const approvedWithdrawals = userWithdrawals.filter(w => w.status === 'Approved');
