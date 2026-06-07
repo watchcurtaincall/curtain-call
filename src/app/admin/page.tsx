@@ -941,7 +941,7 @@ export default function AdminDashboardPage() {
     if (!file) return;
     try {
       setLoading(true);
-      const compressed = await ClientDB.compressImage(file, 800, 0.45);
+      const compressed = await ClientDB.uploadImage(file, 800, 0.45);
       setBlogImage(compressed);
       showToast('Cover image compressed successfully!');
     } catch (err) {
@@ -956,7 +956,7 @@ export default function AdminDashboardPage() {
     if (!file) return;
     try {
       setLoading(true);
-      const compressed = await ClientDB.compressImage(file, 600, 0.45);
+      const compressed = await ClientDB.uploadImage(file, 600, 0.45);
       setArtistImage(compressed);
       showToast('Headshot photo compressed successfully!');
     } catch (err) {
@@ -971,7 +971,7 @@ export default function AdminDashboardPage() {
     if (!file) return;
     try {
       setLoading(true);
-      const compressed = await ClientDB.compressImage(file, 800, 0.45);
+      const compressed = await ClientDB.uploadImage(file, 800, 0.45);
       setPlayPoster(compressed);
       showToast('Playbill poster compressed successfully!');
     } catch (err) {
@@ -986,7 +986,7 @@ export default function AdminDashboardPage() {
     if (!files || files.length === 0) return;
     try {
       setLoading(true);
-      const promises = Array.from(files).map(file => ClientDB.compressImage(file, 800, 0.4));
+      const promises = Array.from(files).map(file => ClientDB.uploadImage(file, 800, 0.4));
       const compressedImages = await Promise.all(promises);
       setPlayGallery(prev => [...prev, ...compressedImages]);
       showToast(`${files.length} stage snapshots compressed and added to gallery!`);
@@ -1242,7 +1242,7 @@ export default function AdminDashboardPage() {
     const file = e.target.files?.[0];
     if (!file || !editingArticle) return;
     try {
-      const compressed = await ClientDB.compressImage(file, 800, 0.6);
+      const compressed = await ClientDB.uploadImage(file, 800, 0.6);
       setEditingArticle({ ...editingArticle, imageUrl: compressed });
       showToast('New cover image loaded successfully!');
     } catch (err) {
@@ -1255,7 +1255,7 @@ export default function AdminDashboardPage() {
     const file = e.target.files?.[0];
     if (!file || !editingArtist) return;
     try {
-      const compressed = await ClientDB.compressImage(file);
+      const compressed = await ClientDB.uploadImage(file);
       setEditingArtist({ ...editingArtist, headshotUrl: compressed });
     } catch { showToast('Failed to process image.', 'error'); }
   };
@@ -1265,7 +1265,7 @@ export default function AdminDashboardPage() {
     const file = e.target.files?.[0];
     if (!file || !editingPlay) return;
     try {
-      const compressed = await ClientDB.compressImage(file);
+      const compressed = await ClientDB.uploadImage(file);
       setEditingPlay({ ...editingPlay, posterUrl: compressed });
     } catch { showToast('Failed to process image.', 'error'); }
   };
@@ -1275,7 +1275,7 @@ export default function AdminDashboardPage() {
     const files = Array.from(e.target.files || []);
     if (!files.length || !editingPlay) return;
     try {
-      const compressed = await Promise.all(files.map(f => ClientDB.compressImage(f, 800, 0.6)));
+      const compressed = await Promise.all(files.map(f => ClientDB.uploadImage(f, 800, 0.6)));
       setEditingPlay({ ...editingPlay, galleryImages: [...(editingPlay.galleryImages || []), ...compressed] });
     } catch { showToast('Failed to process gallery images.', 'error'); }
   };

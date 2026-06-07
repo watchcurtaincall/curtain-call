@@ -161,7 +161,7 @@ export default function SubmitPortalPage() {
     setPreview: (url: string | null) => void
   ) => {
     try {
-      const compressed = await ClientDB.compressImage(file, 800, 0.6);
+      const compressed = await ClientDB.uploadImage(file, 800, 0.6);
       setPreview(compressed);
     } catch (err) {
       console.error('Failed to compress image:', err);
@@ -192,7 +192,7 @@ export default function SubmitPortalPage() {
       const newPreviews: string[] = [];
       for (const file of files) {
         try {
-          const compressed = await ClientDB.compressImage(file, 800, 0.6);
+          const compressed = await ClientDB.uploadImage(file, 800, 0.6);
           newPreviews.push(compressed);
         } catch (err) {
           console.error(err);

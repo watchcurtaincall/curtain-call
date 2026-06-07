@@ -81,6 +81,7 @@ export async function GET(request: Request) {
         createdAt: s.created_at
       })) : [],
       profiles: isAdmin ? (profilesRes.data || []).map((p: any) => ({
+        id: p.id,
         name: p.name,
         email: p.email,
         handle: p.handle,

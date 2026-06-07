@@ -1727,6 +1727,22 @@ export const ClientDB = {
       reader.onerror = () => reject(new Error('Failed to read upload file'));
       reader.readAsDataURL(file);
     });
+  },
+
+  async uploadImage(file: File, maxDimension: number = 800, quality: number = 0.5): Promise<string> {
+    const compressed = await this.compressImage(file, maxDimension, quality);
+    const response = await fetch('/api/upload-image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        base64: compressed,
+        filename: file.name,
+        mimeType: file.type || 'image/jpeg'
+      })
+    });
+    if (!response.ok) throw new Error('Upload failed');
+    const data = await response.json();
+    return data.url;
   }
 };
 

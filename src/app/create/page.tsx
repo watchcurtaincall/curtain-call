@@ -244,10 +244,10 @@ function CreateProductionForm() {
     if (!file) return;
     setUploading(true);
     try {
-      const compressed = await ClientDB.compressImage(file, 800, 0.6);
+      const compressed = await ClientDB.uploadImage(file, 800, 0.6);
       setForm(prev => ({ ...prev, posterUrl: compressed }));
     } catch (err) {
-      console.error('Failed to compress image:', err);
+      console.error('Failed to compress and upload image:', err);
     } finally {
       setUploading(false);
     }
