@@ -1220,7 +1220,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-function ReviewRow({ label, value, truncate, multiline }: { label: string; value: string; truncate?: boolean; multiline?: boolean }) {
+function ReviewRow({ label, value, truncate, multiline }: { label: string; value: React.ReactNode; truncate?: boolean; multiline?: boolean }) {
   return (
     <div className="flex gap-4 py-3 border-b border-white/5 last:border-0">
       <span className="text-xs text-zinc-500 uppercase tracking-wider w-28 shrink-0 pt-0.5">{label}</span>
