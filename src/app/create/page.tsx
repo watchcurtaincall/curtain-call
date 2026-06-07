@@ -12,6 +12,10 @@ import Link from 'next/link';
 import { getBanks, resolveAccount, type Bank } from '@/lib/paystack';
 import { ClientDB } from '@/lib/db';
 import { DateTimePickerModal } from '@/components/shared/DateTimePickerModal';
+import dynamic from 'next/dynamic';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 // ─── Types ───────────────────────────────────────────────
 interface ShowDate {
@@ -75,6 +79,7 @@ function CreateProductionForm() {
   const editId = searchParams.get('edit');
   const [step, setStep] = useState(0);
   const [pickerIndex, setPickerIndex] = useState<number | null>(null);
+  const [endTimePickerIndex, setEndTimePickerIndex] = useState<number | null>(null);
   const [published, setPublished] = useState(false);
   const [createdProductionId, setCreatedProductionId] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -145,7 +150,7 @@ function CreateProductionForm() {
             capacity: String(t.capacity) || ''
           })) : [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '' }];
 
-          const dates = prod.showDate ? [{ date: prod.showDate, time: '19:00' }] : [{ date: '', time: '19:00' }];
+          const dates = (prod.dates && prod.dates.length > 0) ? prod.dates : (prod.showDate ? [{ date: prod.showDate, time: prod.showTime || '19:00', endTime: prod.endTime || '' }] : [{ date: '', time: '19:00', endTime: '' }]);
 
           setForm({
             eventType: prod.eventType || '',
@@ -178,7 +183,35 @@ function CreateProductionForm() {
         }
       }
     }
-  }, [editId, user, banks, router]);
+  }, [editId, user, router, banks]);
+
+  // Load User Bank Details
+  useEffect(() => {
+    if (user && banks.length > 0) {
+      const savedBank = ClientDB.getUserBankDetails(user.email);
+      if (savedBank) {
+        setForm(f => {
+          if (!f.accountNumber) {
+            return {
+              ...f,
+              accountName: savedBank.accountName,
+              accountNumber: savedBank.accountNumber,
+              bankName: savedBank.bankName,
+              bankCode: savedBank.bankCode
+            };
+          }
+          return f;
+        });
+        if (!selectedBank) {
+          const bank = banks.find((b: any) => b.code === savedBank.bankCode || b.name.toLowerCase() === savedBank.bankName.toLowerCase()) || null;
+          setSelectedBank(bank);
+        }
+        if (!resolvedName) {
+          setResolvedName(savedBank.accountName);
+        }
+      }
+    }
+  }, [user, banks]);
 
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberRole, setNewMemberRole] = useState('');
@@ -308,6 +341,7 @@ function CreateProductionForm() {
         showDate: firstDate,
         showTime: firstTime || undefined,
         endTime: firstEndTime || undefined,
+        dates: form.dates,
         ticketTiers: form.tiers.map(t => ({
           id: t.id,
           name: t.name,
@@ -372,6 +406,7 @@ function CreateProductionForm() {
         curationStatus: 'Approved' as const, // Drafts are pre-approved but private
         isProducerManaged: true,
         showDate: firstDate || undefined,
+        dates: form.dates,
         ticketTiers: form.tiers.map(t => ({
           id: t.id,
           name: t.name || 'General',
@@ -620,13 +655,21 @@ function CreateProductionForm() {
                 )}
 
                 <Field label={form.eventType === 'Theatre' ? "About this Production" : "About this Event"} hint="Minimum 30 characters">
-                  <textarea
-                    value={form.synopsis}
-                    onChange={e => set('synopsis', e.target.value)}
-                    placeholder={form.eventType === 'Theatre' ? "Tell audiences what this production is about — the story, themes, what makes it unique…" : "Tell audiences what this event is about — what to expect, who it's for, and why they should attend…"}
-                    rows={5}
-                    className={`${inputCls} resize-none`}
-                  />
+                  <div className="bg-white rounded-xl overflow-hidden [&_.ql-toolbar]:border-none [&_.ql-toolbar]:bg-zinc-100 [&_.ql-container]:border-none [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-black">
+                    <ReactQuill
+                      theme="snow"
+                      value={form.synopsis}
+                      onChange={val => set('synopsis', val === '<p><br></p>' ? '' : val)}
+                      placeholder={form.eventType === 'Theatre' ? "Tell audiences what this production is about — the story, themes, what makes it unique…" : "Tell audiences what this event is about — what to expect, who it's for, and why they should attend…"}
+                      modules={{
+                        toolbar: [
+                          ['bold', 'italic', 'underline', 'strike'],
+                          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                          ['link', 'clean']
+                        ]
+                      }}
+                    />
+                  </div>
                   <p className={`text-xs mt-1 ${form.synopsis.length < 30 ? 'text-red-500/70' : 'text-green-500'}`}>
                     {form.synopsis.length < 30 ? `${30 - form.synopsis.length} more characters needed` : 'Looks good ✓'}
                   </p>
@@ -810,12 +853,13 @@ function CreateProductionForm() {
                       <div className="flex items-center gap-2 pl-1">
                         <Clock className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
                         <label className="text-[11px] text-zinc-500 uppercase tracking-wider font-bold w-16 shrink-0">End Time</label>
-                        <input
-                          type="time"
-                          value={d.endTime || ''}
-                          onChange={e => updateDate(i, 'endTime', e.target.value)}
-                          className="bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/25 transition-colors flex-1"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => setEndTimePickerIndex(i)}
+                          className="flex-1 flex items-center justify-center bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-sm text-white hover:bg-zinc-800 focus:outline-none focus:border-white/25 transition-colors"
+                        >
+                          <span className="font-bold">{d.endTime || 'Select Time'}</span>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -829,6 +873,21 @@ function CreateProductionForm() {
                       setForm(f => {
                         const next = [...f.dates];
                         next[pickerIndex] = { ...next[pickerIndex], date, time };
+                        return { ...f, dates: next };
+                      });
+                    }}
+                  />
+                )}
+                {endTimePickerIndex !== null && (
+                  <DateTimePickerModal
+                    hideDate
+                    initialDate={form.dates[endTimePickerIndex].date || new Date().toISOString().split('T')[0]}
+                    initialTime={form.dates[endTimePickerIndex].endTime || '19:00'}
+                    onClose={() => setEndTimePickerIndex(null)}
+                    onConfirm={(_, time) => {
+                      setForm(f => {
+                        const next = [...f.dates];
+                        next[endTimePickerIndex] = { ...next[endTimePickerIndex], endTime: time };
                         return { ...f, dates: next };
                       });
                     }}
@@ -1066,7 +1125,10 @@ function CreateProductionForm() {
             )}
             <ReviewRow label="Title" value={form.title} />
             <ReviewRow label="Genre" value={form.genre} />
-            <ReviewRow label="Synopsis" value={form.synopsis} truncate />
+            <ReviewRow 
+              label="Synopsis" 
+              value={<div dangerouslySetInnerHTML={{ __html: form.synopsis }} className="prose prose-invert prose-sm line-clamp-3" />} 
+            />
             <ReviewRow label="Event Address" value={`${form.venue}${form.city ? ', ' + form.city : ''}`} />
             <ReviewRow
               label="Show Dates"

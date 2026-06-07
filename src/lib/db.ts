@@ -113,6 +113,9 @@ const mapProductionToDb = (p: any) => {
   if (p.customEventType) {
     gallery.push(JSON.stringify({ __customEventType: p.customEventType }));
   }
+  if (p.dates && p.dates.length > 0) {
+    gallery.push(JSON.stringify({ __dates: p.dates }));
+  }
   return {
     id: p.id,
     title: p.title,
@@ -147,6 +150,7 @@ const mapProductionFromDb = (row: any) => {
   let externalTicketUrl: string | undefined = undefined;
   let eventTypeFallback: string | undefined = undefined;
   let customEventTypeFallback: string | undefined = undefined;
+  let parsedDates: any[] | undefined = undefined;
   
   if (row.gallery_images && Array.isArray(row.gallery_images)) {
     row.gallery_images.forEach((item: any) => {
@@ -187,6 +191,8 @@ const mapProductionFromDb = (row: any) => {
         try { eventTypeFallback = JSON.parse(item).__eventType; } catch(e) {}
       } else if (typeof item === 'string' && item.startsWith('{"__customEventType":')) {
         try { customEventTypeFallback = JSON.parse(item).__customEventType; } catch(e) {}
+      } else if (typeof item === 'string' && item.startsWith('{"__dates":')) {
+        try { parsedDates = JSON.parse(item).__dates; } catch(e) {}
       } else {
         galleryImages.push(item);
       }
@@ -231,6 +237,7 @@ const mapProductionFromDb = (row: any) => {
     showDate: row.show_date,
     showTime,
     isProducerManaged,
+    dates: parsedDates,
     declineReason: row.decline_reason || null,
     ticketTiers: ticketTiers.length > 0 ? ticketTiers : undefined,
     productionType,

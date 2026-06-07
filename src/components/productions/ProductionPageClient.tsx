@@ -194,7 +194,24 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
                   </span>
                 </>
               )}
-              {production.showDate && (
+              {(production.dates && production.dates.length > 0) ? (
+                 production.dates.map((d: any, i: number) => (
+                   <div key={i} className="flex items-center gap-1">
+                     <span className="text-zinc-700 font-bold">·</span>
+                     <span className="flex items-center gap-1 text-red-400 font-semibold shrink-0">
+                       <Calendar className="h-3.5 w-3.5 shrink-0" />
+                       <span>
+                         {new Date(d.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                         {d.time && d.endTime
+                           ? ` · ${d.time} – ${d.endTime}`
+                           : d.time
+                           ? ` @ ${d.time}`
+                           : ''}
+                       </span>
+                     </span>
+                   </div>
+                 ))
+              ) : production.showDate && (
                 <>
                   <span className="text-zinc-700 font-bold">·</span>
                   <span className="flex items-center gap-1 text-red-400 font-semibold shrink-0">
@@ -323,9 +340,7 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
               <span className="w-1 h-6 bg-red-600 rounded-full inline-block" />
               {(!production.eventType || production.eventType === 'Theatre') ? 'Synopsis' : 'Description'}
             </h2>
-            <p className="text-zinc-300 leading-relaxed text-base">
-              {production.synopsis}
-            </p>
+            <div className="prose prose-invert max-w-none text-zinc-300 leading-relaxed" dangerouslySetInnerHTML={{ __html: production.synopsis }} />
           </div>
 
           {/* Stage Photography Gallery — theatre only */}

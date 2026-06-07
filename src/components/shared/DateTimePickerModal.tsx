@@ -13,6 +13,7 @@ export function DateTimePickerModal({
   initialTime: string;
   onClose: () => void;
   onConfirm: (date: string, time: string) => void;
+  hideDate?: boolean;
 }) {
   const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState(initialTime || '19:00');
@@ -58,10 +59,13 @@ export function DateTimePickerModal({
           <X className="h-4 w-4" />
         </button>
         
-        <h2 className="text-lg font-serif font-bold text-white mb-6">Select Date & Time</h2>
+        <h2 className="text-lg font-serif font-bold text-white mb-6">
+          {hideDate ? "Select Time" : "Select Date & Time"}
+        </h2>
         
         {/* Calendar */}
-        <div className="bg-zinc-950/50 border border-white/5 rounded-2xl p-4 mb-4">
+        {!hideDate && (
+          <div className="bg-zinc-950/50 border border-white/5 rounded-2xl p-4 mb-4">
           <div className="flex items-center justify-between mb-4">
             <button onClick={handlePrevMonth} className="p-1.5 hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition-colors">
               <ChevronLeft className="h-4 w-4" />
@@ -98,7 +102,7 @@ export function DateTimePickerModal({
               );
             })}
           </div>
-        </div>
+        )}
         
         <div className="flex items-center justify-between bg-zinc-950/50 border border-white/5 rounded-2xl p-4 mb-6">
           <div className="flex items-center gap-2 text-sm text-zinc-400 font-medium">

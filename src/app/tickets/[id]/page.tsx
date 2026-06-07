@@ -361,7 +361,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
         className="fixed inset-0 bg-cover bg-center z-0 opacity-15 pointer-events-none" 
         style={{ backgroundImage: `url(${production?.posterUrl || ''})` }}
       />
-      <div className="fixed inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/97 to-zinc-950/85 z-0 pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/98 to-zinc-950/95 z-0 pointer-events-none" />
 
       {successData ? (
         <div className="relative z-10 flex items-center justify-center min-h-screen p-4 py-20">
