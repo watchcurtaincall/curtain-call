@@ -392,7 +392,7 @@ export default function CreatorDashboardPage() {
               <div className="bg-zinc-900/20 border border-white/5 rounded-[32px] p-16 text-center text-zinc-500 text-sm max-w-xl mx-auto backdrop-blur-md flex flex-col gap-4 items-center">
                 <Drama className="h-10 w-10 text-zinc-800 animate-pulse" />
                 <div>
-                  <p className="font-bold text-zinc-300">No active plays listed</p>
+                  <p className="font-bold text-zinc-300">No active listings</p>
                   <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">Create a show listing and ticket tiers to start selling.</p>
                 </div>
                 <Link href="/create" className="inline-flex items-center gap-2 bg-white text-black font-bold px-6 py-3 rounded-2xl transition-all text-xs uppercase tracking-widest mt-2 hover:bg-zinc-200">
@@ -799,7 +799,7 @@ function ProfileScannerTab({ userEmail }: { userEmail: string }) {
           
           <div>
             <h4 className="font-serif font-bold text-white text-base">Admissions Verification Log</h4>
-            <p className="text-[9px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Live check-in history feed of admitted theatregoers</p>
+            <p className="text-[9px] text-zinc-500 uppercase tracking-widest mt-1 font-bold">Live check-in history feed of admitted guests</p>
           </div>
           
           <div className="flex-1 flex flex-col divide-y divide-white/5 max-h-[480px] overflow-y-auto pr-2 [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.05)_transparent]">

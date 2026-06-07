@@ -109,6 +109,8 @@ const mapProductionToDb = (p: any) => {
   return {
     id: p.id,
     title: p.title,
+    event_type: p.eventType || 'Theatre',
+    custom_event_type: p.customEventType || null,
     synopsis: p.synopsis,
     genre: p.genre,
     runtime: p.runtime || '120 mins',
@@ -198,6 +200,8 @@ const mapProductionFromDb = (row: any) => {
     id: row.id,
     slug: row.slug || null,
     title: row.title,
+    eventType: row.event_type || 'Theatre',
+    customEventType: row.custom_event_type || null,
     synopsis: row.synopsis,
     genre: row.genre,
     runtime: row.runtime,

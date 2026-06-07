@@ -154,6 +154,13 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
               }`}>
                 {production.status}
               </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                (!production.eventType || production.eventType === 'Theatre')
+                  ? 'bg-purple-600/25 text-purple-400 border border-purple-500/30'
+                  : 'bg-indigo-600/25 text-indigo-400 border border-indigo-500/30'
+              }`}>
+                {production.customEventType || production.eventType || 'Theatre'}
+              </span>
               {production.productionType && (
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
                   production.productionType === 'Student'
@@ -299,7 +306,7 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
           <div>
             <h2 className="text-xl font-serif font-bold text-white mb-4 flex items-center gap-2">
               <span className="w-1 h-6 bg-red-600 rounded-full inline-block" />
-              Synopsis
+              {(!production.eventType || production.eventType === 'Theatre') ? 'Synopsis' : 'Description'}
             </h2>
             <p className="text-zinc-300 leading-relaxed text-base">
               {production.synopsis}
@@ -324,9 +331,11 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
         </div>
 
         {/* Right: Creative Playbill (Isolatedcast details) */}
+        {(!production.eventType || production.eventType === 'Theatre') && (
         <div className="w-full lg:w-80 shrink-0">
           <CastCrewSection artists={ClientDB.getArtists()} productionTitle={production.title} production={production} />
         </div>
+        )}
 
       </div>
       <ShareModal 

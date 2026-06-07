@@ -38,6 +38,8 @@ export interface Production {
   slug?: string;        // Clean URL slug e.g. "saro-the-musical" — used as the URL path segment
   createdAt?: string;   // ISO timestamp for reliable newest-first sorting
   title: string;
+  eventType?: 'Theatre' | 'Party' | 'Community' | 'Comedy' | 'Music' | 'Concert' | 'Festival' | 'Workshop' | 'Conference' | 'Exhibition' | 'Sports' | 'Other';
+  customEventType?: string;
   productionType?: 'Student' | 'Professional';
   synopsis: string;
   genre: string;

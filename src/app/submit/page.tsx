@@ -67,6 +67,8 @@ export default function SubmitPortalPage() {
   // Form states - Playbill / Document a Play
   const [playForm, setPlayForm] = useState({
     title: '',
+    eventType: 'Theatre' as 'Theatre' | 'Party' | 'Community' | 'Comedy' | 'Music' | 'Concert' | 'Festival' | 'Workshop' | 'Conference' | 'Exhibition' | 'Sports' | 'Other',
+    customEventType: '',
     playwright: '',
     director: '',
     synopsis: '',
@@ -280,6 +282,8 @@ export default function SubmitPortalPage() {
       title: playForm.title,
       slug: playSlug,
       createdAt: new Date().toISOString(),
+      eventType: playForm.eventType,
+      customEventType: playForm.eventType === 'Other' ? playForm.customEventType : undefined,
       synopsis: playForm.synopsis,
       genre: 'Drama',
       runtime: playForm.runtime || '120 mins',
@@ -355,6 +359,8 @@ export default function SubmitPortalPage() {
                 setAwards([]);
                 setPlayForm({
                   title: '',
+                  eventType: 'Theatre',
+                  customEventType: '',
                   playwright: '',
                   director: '',
                   synopsis: '',
@@ -793,29 +799,62 @@ export default function SubmitPortalPage() {
             </form>
           )}
 
-          {/* DOCUMENT A PLAY */}
+          {/* DOCUMENT A PLAY OR EVENT */}
           {activeTab === 'play' && (
             <form onSubmit={handlePlaySubmit} className="flex flex-col gap-6 animate-fade-up">
               <div className="flex items-center gap-2 mb-2">
                 <Drama className="h-5 w-5 text-red-500" />
-                <h3 className="font-serif font-bold text-white text-lg">Document a Stage Production</h3>
+                <h3 className="font-serif font-bold text-white text-lg">Host an Event / Document a Play</h3>
               </div>
               <p className="text-xs text-zinc-500 leading-relaxed -mt-3 mb-2">
-                List a play for archiving, enabling users and critics to write verified critiques and buy tickets.
+                List an event or play for archiving, enabling users and critics to write verified critiques and buy tickets.
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Play Title</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Event Category</label>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {['Theatre', 'Party', 'Community', 'Comedy', 'Music', 'Concert', 'Festival', 'Workshop', 'Conference', 'Exhibition', 'Sports', 'Other'].map(type => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setPlayForm({ ...playForm, eventType: type as any, customEventType: '' })}
+                      className={`py-3 px-4 rounded-xl text-xs font-bold transition-all border ${
+                        playForm.eventType === type
+                          ? 'bg-red-600 border-red-500 text-white'
+                          : 'bg-zinc-950 border-white/5 text-zinc-400 hover:border-white/20'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+                {playForm.eventType === 'Other' && (
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Saro The Musical"
+                    placeholder="Please specify..."
+                    value={playForm.customEventType}
+                    onChange={e => setPlayForm({ ...playForm, customEventType: e.target.value })}
+                    className="mt-2 bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
+                  />
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
+                    {playForm.eventType === 'Theatre' ? 'Play Title' : 'Event Title'}
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder={playForm.eventType === 'Theatre' ? 'e.g. Saro The Musical' : 'e.g. Lagos Carnival'}
                     value={playForm.title}
                     onChange={e => setPlayForm({ ...playForm, title: e.target.value })}
                     className="bg-zinc-950 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-red-500 transition-colors"
                   />
                 </div>
+                {playForm.eventType === 'Theatre' && (
                 <div className="flex flex-col gap-1.5 relative">
                   <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Playwright</label>
                   <input
@@ -853,9 +892,11 @@ export default function SubmitPortalPage() {
                     );
                   })()}
                 </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {playForm.eventType === 'Theatre' && (
                 <div className="flex flex-col gap-1.5 relative">
                   <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Director</label>
                   <input
@@ -893,6 +934,7 @@ export default function SubmitPortalPage() {
                     );
                   })()}
                 </div>
+                )}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Venue Staged</label>
                   <input
@@ -907,7 +949,9 @@ export default function SubmitPortalPage() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Synopsis / About</label>
+                <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">
+                  {playForm.eventType === 'Theatre' ? 'Synopsis / About' : 'Description / About'}
+                </label>
                 <textarea
                   required
                   rows={4}
@@ -1094,6 +1138,7 @@ export default function SubmitPortalPage() {
               </div>
 
               {/* Dynamic Cast & Crew Credits Builder */}
+              {playForm.eventType === 'Theatre' && (
               <div className="flex flex-col gap-3 bg-zinc-950/40 border border-white/5 rounded-2xl p-5">
                 <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
                   <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Cast & Crew Credits</label>
@@ -1222,6 +1267,7 @@ export default function SubmitPortalPage() {
                   </div>
                 </div>
               </div>
+              )}
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Submitter Email</label>
@@ -1240,7 +1286,7 @@ export default function SubmitPortalPage() {
                 disabled={loading}
                 className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-red-900/20 text-sm mt-2 flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {loading ? 'Processing playbill specs...' : 'Submit Play details for Review'}
+                {loading ? 'Processing specs...' : `Submit ${playForm.eventType === 'Theatre' ? 'Play' : 'Event'} details for Review`}
               </button>
             </form>
           )}

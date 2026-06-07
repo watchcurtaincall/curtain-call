@@ -383,6 +383,8 @@ export default function AdminDashboardPage() {
   // Direct Play state
   const [playForm, setPlayForm] = useState({
     title: '',
+    eventType: 'Theatre' as 'Theatre' | 'Party' | 'Community' | 'Comedy' | 'Music' | 'Concert' | 'Festival' | 'Workshop' | 'Conference' | 'Exhibition' | 'Sports' | 'Other',
+    customEventType: '',
     playwright: '',
     director: '',
     synopsis: '',
@@ -1339,7 +1341,7 @@ export default function AdminDashboardPage() {
       ClientDB.saveProduction(newPlay);
       setLoading(false);
       showToast(`Stage production "${playForm.title}" directly published to database!`);
-      setPlayForm({ title: '', playwright: '', director: '', synopsis: '', venue: '', year: '2026', status: 'Coming Soon', showDate: '', showTime: '', runtime: '120 mins', productionType: 'Professional', externalTicketUrl: '' });
+      setPlayForm({ title: '', eventType: 'Theatre', customEventType: '', playwright: '', director: '', synopsis: '', venue: '', year: '2026', status: 'Coming Soon', showDate: '', showTime: '', runtime: '120 mins', productionType: 'Professional', externalTicketUrl: '' });
       setGenreSelect('Drama');
       setCustomGenre('');
       setCastMembers([]);
@@ -3374,7 +3376,16 @@ This file was retrieved from the Curtain Call Curation Vault.
                           </div>
                           <div className="flex-1 min-w-0">
                             <h3 className="font-serif font-bold text-white truncate text-base">{play.title}</h3>
-                            <p className="text-xs text-red-400 font-bold uppercase tracking-widest mt-0.5">{play.genre}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <p className="text-xs text-red-400 font-bold uppercase tracking-widest">{play.genre}</p>
+                              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest ${
+                                (!play.eventType || play.eventType === 'Theatre')
+                                  ? 'bg-purple-600/10 text-purple-400 border border-purple-500/20'
+                                  : 'bg-indigo-600/10 text-indigo-400 border border-indigo-500/20'
+                              }`}>
+                                {play.customEventType || play.eventType || 'Theatre'}
+                              </span>
+                            </div>
                             <p className="text-[10px] text-zinc-500 font-mono mt-1">Venue: {play.venue}</p>
                             <p className="text-[11px] text-zinc-400 line-clamp-2 mt-2 leading-relaxed">{play.synopsis}</p>
                                                         <div className="flex items-center gap-2 mt-4">

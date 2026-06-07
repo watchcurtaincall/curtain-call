@@ -294,6 +294,38 @@ export default function Home() {
         </div>
       </div>
 
+      {/* ── HOST AN EVENT CTA ── */}
+      <section className="container mx-auto px-4 md:px-6">
+        <div className="bg-gradient-to-r from-red-600 to-indigo-600 rounded-[32px] p-[1px] shadow-2xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-white/5 group-hover:bg-transparent transition-colors duration-500" />
+          <div className="bg-zinc-950 rounded-[31px] p-8 md:p-12 relative flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-red-500/10 blur-[100px] rounded-full pointer-events-none" />
+            
+            <div className="flex-1 min-w-0 z-10 text-center md:text-left">
+              <span className="text-[10px] font-bold text-white/70 uppercase tracking-widest border border-white/10 px-3 py-1 rounded-full mb-4 inline-block bg-white/5">
+                For Event Organizers
+              </span>
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-white tracking-tight mb-3">
+                Not just for Theatre. Host <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-indigo-400">Any Event</span>.
+              </h2>
+              <p className="text-zinc-400 text-sm md:text-base max-w-xl mx-auto md:mx-0 leading-relaxed">
+                Curtain Call's premium ticketing engine is available for parties, concerts, festivals, conferences, and community gatherings. List your event and sell tickets instantly.
+              </p>
+            </div>
+            
+            <div className="z-10 shrink-0">
+              <Link 
+                href="/submit" 
+                className="bg-white text-black font-bold px-8 py-4 rounded-2xl hover:bg-zinc-200 transition-all flex items-center gap-2 text-sm uppercase tracking-wider group-hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]"
+              >
+                Host an Event <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── EDITORIAL CHRONICLES & BLOGS ── */}
       <section className="container mx-auto px-4 md:px-6">
         <div className="flex items-end justify-between gap-4 mb-10 pb-5 border-b border-white/5 relative">

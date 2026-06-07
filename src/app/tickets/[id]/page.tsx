@@ -241,7 +241,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     });
 
     // Send Ticket Email via Resend
-    const subject = `Your Curtain Call Admission Pass: ${production?.title || 'Theatre Ticket'}`;
+    const subject = `Your Curtain Call Admission Pass: ${production?.title || 'Event Ticket'}`;
     const showDateFormatted = production?.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', {
       weekday: 'long',
       year: 'numeric',
@@ -298,7 +298,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
         </div>
 
         <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
-          Don't forget to mark your calendar! The play is scheduled to take place at <strong>${production?.venue}</strong> on <strong>${showDateFormatted}</strong>. We recommend arriving 30 minutes before the curtains rise.
+          Don't forget to mark your calendar! The ${!production?.eventType || production?.eventType === 'Theatre' ? 'play' : 'event'} is scheduled to take place at <strong>${production?.venue}</strong> on <strong>${showDateFormatted}</strong>. ${!production?.eventType || production?.eventType === 'Theatre' ? 'We recommend arriving 30 minutes before the curtains rise.' : ''}
         </p>
         
         <p style="font-size: 11px; color: #71717a; text-align: center; font-family: monospace; line-height: 1.5; margin: 0;">
@@ -429,6 +429,16 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                     <div className="mt-2 text-[10px] text-zinc-400 truncate flex items-center gap-1">
                       <span className="font-semibold text-zinc-500">Venue:</span> {production.venue}
                     </div>
+                    
+                    <div className="mt-1 flex gap-2">
+                       <span className={`text-[8px] font-bold px-2 py-0.5 rounded uppercase tracking-widest ${
+                         (!production.eventType || production.eventType === 'Theatre')
+                           ? 'bg-purple-600/10 text-purple-400 border border-purple-500/20'
+                           : 'bg-indigo-600/10 text-indigo-400 border border-indigo-500/20'
+                       }`}>
+                         {production.customEventType || production.eventType || 'Theatre'}
+                       </span>
+                    </div>
                   </div>
  
                   <div className="grid grid-cols-3 gap-x-4 gap-y-2 text-xs border-t border-dashed border-white/10 pt-2.5 print-dashed-line">
@@ -483,7 +493,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
               <QrCode className="h-4 w-4 text-red-500 animate-pulse" /> Print Tickets / Save PDF
             </button>
             <Link
-              href={`/productions/${production.slug || production.id}`}
+              href={(!production.eventType || production.eventType === 'Theatre') ? `/productions/${production.slug || production.id}` : `/events/${production.slug || production.id}`}
               className="block w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-zinc-100 transition-colors text-sm shadow-xl text-center"
             >
               Back to Show Details
@@ -507,9 +517,18 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
               <h1 className="text-xl font-serif font-bold text-white">
                 Secure Tickets
               </h1>
-              <p className="text-xs text-zinc-400 mt-1">
-                Direct platform ticket agent for <strong className="text-white font-medium">{production.title}</strong>
-              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <p className="text-xs text-zinc-400">
+                  Direct platform ticket agent for <strong className="text-white font-medium">{production.title}</strong>
+                </p>
+                <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest ${
+                  (!production.eventType || production.eventType === 'Theatre')
+                    ? 'bg-purple-600/10 text-purple-400 border border-purple-500/20'
+                    : 'bg-indigo-600/10 text-indigo-400 border border-indigo-500/20'
+                }`}>
+                  {production.customEventType || production.eventType || 'Theatre'}
+                </span>
+              </div>
             </div>
 
              {/* Email Address Input */}
@@ -606,7 +625,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
 
             {/* Cancel/Back link */}
             <Link
-              href={`/productions/${production.slug || production.id}`}
+              href={(!production.eventType || production.eventType === 'Theatre') ? `/productions/${production.slug || production.id}` : `/events/${production.slug || production.id}`}
               className="text-xs text-zinc-500 hover:text-white transition-colors flex items-center justify-center gap-1 mt-1 font-bold uppercase tracking-wider"
             >
               <ArrowLeft className="h-3 w-3" /> Go Back

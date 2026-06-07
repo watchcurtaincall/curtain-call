@@ -99,7 +99,7 @@ export default function SignupPage() {
         <div className="relative z-10">
           <div className="text-center mb-8">
             <h1 className="font-serif text-3xl font-bold text-white mb-2">Join the Audience</h1>
-            <p className="text-zinc-400 text-sm">Create an account to track your theatre history, save your watchlist, and review plays.</p>
+            <p className="text-zinc-400 text-sm">Create an account to track your theatre history, save your watchlist, and review plays and events.</p>
           </div>
 
           {errorMsg && (

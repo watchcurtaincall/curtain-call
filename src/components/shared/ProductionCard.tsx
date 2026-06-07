@@ -6,7 +6,7 @@ import { Production } from '@/lib/types';
 export function ProductionCard({ production, showTicketBadge }: { production: Production, showTicketBadge?: boolean }) {
   return (
     <Link
-      href={`/productions/${production.slug || production.id}`}
+      href={(!production.eventType || production.eventType === 'Theatre') ? `/productions/${production.slug || production.id}` : `/events/${production.slug || production.id}`}
       className="group flex flex-col gap-3.5 focus:outline-none"
     >
       {/* Poster Container with premium physical lift & custom border triggers */}
@@ -37,6 +37,15 @@ export function ProductionCard({ production, showTicketBadge }: { production: Pr
               {production.externalTicketUrl ? "External" : "Direct Buy"}
             </div>
           )}
+
+          {/* Event Type Badge */}
+          <div className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase backdrop-blur-md border whitespace-nowrap pointer-events-auto ${
+            (!production.eventType || production.eventType === 'Theatre')
+              ? 'bg-purple-600/80 border-purple-500/50 text-white'
+              : 'bg-indigo-600/80 border-indigo-500/50 text-white'
+          }`}>
+            {production.customEventType || production.eventType || 'Theatre'}
+          </div>
 
           {/* Status badge */}
           {production.status && (
