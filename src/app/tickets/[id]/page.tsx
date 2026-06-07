@@ -110,6 +110,13 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     tickets: { reference: string; gatePass: string; tier: string; email: string; name: string }[];
   } | null>(null);
 
+  // Scroll to top when changing steps
+  useEffect(() => {
+    if (checkoutStep > 1) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [checkoutStep]);
+
   useEffect(() => {
     if (user) {
       if (user.email && !buyerEmail) {
