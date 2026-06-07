@@ -11,6 +11,7 @@ import {
 import Link from 'next/link';
 import { getBanks, resolveAccount, type Bank } from '@/lib/paystack';
 import { ClientDB } from '@/lib/db';
+import { DateTimePickerModal } from '@/components/shared/DateTimePickerModal';
 
 // ─── Types ───────────────────────────────────────────────
 interface ShowDate {
@@ -70,6 +71,7 @@ function CreateProductionForm() {
   const searchParams = useSearchParams();
   const editId = searchParams.get('edit');
   const [step, setStep] = useState(0);
+  const [pickerIndex, setPickerIndex] = useState<number | null>(null);
   const [published, setPublished] = useState(false);
   const [createdProductionId, setCreatedProductionId] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -738,32 +740,44 @@ function CreateProductionForm() {
               <div className="flex flex-col gap-3">
                 {form.dates.map((d, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <div className="relative flex-1">
-                      <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-                      <input
-                        type="date"
-                        value={d.date}
-                        onChange={e => updateDate(i, 'date', e.target.value)}
-                        min={new Date().toISOString().split('T')[0]}
-                        className={`${inputCls} pl-10 [color-scheme:dark]`}
-                      />
-                    </div>
-                    <div className="relative w-28 shrink-0">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-                      <input
-                        type="time"
-                        value={d.time}
-                        onChange={e => updateDate(i, 'time', e.target.value)}
-                        className={`${inputCls} pl-9 [color-scheme:dark]`}
-                      />
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPickerIndex(i)}
+                      className="flex-1 flex items-center justify-between bg-zinc-950 border border-white/5 hover:border-white/20 hover:bg-zinc-900 rounded-xl px-4 py-3 text-left transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
+                          <Calendar className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-bold text-white">
+                            {d.date ? formatDate(d.date) : 'Select date'}
+                          </div>
+                          <div className="text-[11px] text-zinc-500 font-medium mt-0.5">
+                            {d.time ? `At ${d.time}` : 'Select time'}
+                          </div>
+                        </div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-zinc-600 group-hover:text-white transition-colors" />
+                    </button>
                     {form.dates.length > 1 && (
-                      <button onClick={() => removeDate(i)} className="text-zinc-600 hover:text-red-400 transition-colors shrink-0">
+                      <button onClick={() => removeDate(i)} className="p-3 bg-zinc-950 border border-white/5 rounded-xl text-zinc-600 hover:text-red-400 hover:bg-zinc-900 hover:border-red-500/20 transition-all shrink-0">
                         <X className="h-4 w-4" />
                       </button>
                     )}
                   </div>
                 ))}
+                {pickerIndex !== null && (
+                  <DateTimePickerModal
+                    initialDate={form.dates[pickerIndex].date}
+                    initialTime={form.dates[pickerIndex].time}
+                    onClose={() => setPickerIndex(null)}
+                    onConfirm={(date, time) => {
+                      updateDate(pickerIndex, 'date', date);
+                      updateDate(pickerIndex, 'time', time);
+                    }}
+                  />
+                )}
 
                 {/* Date chips preview */}
                 {form.dates.some(d => d.date) && (
