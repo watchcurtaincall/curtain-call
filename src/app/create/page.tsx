@@ -490,7 +490,7 @@ function CreateProductionForm() {
                 setStep(s => s - 1);
                 window.scrollTo(0, 0);
               } else {
-                router.push('/profile');
+                router.back();
               }
             }}
             className="text-zinc-500 hover:text-white transition-colors"
