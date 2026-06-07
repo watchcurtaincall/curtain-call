@@ -4,9 +4,11 @@ import { Star, MapPin, Calendar, Ticket } from 'lucide-react';
 import { Production } from '@/lib/types';
 
 export function ProductionCard({ production, showTicketBadge }: { production: Production, showTicketBadge?: boolean }) {
+  const isTheatre = !production.eventType || production.eventType === 'Theatre';
+
   return (
     <Link
-      href={(!production.eventType || production.eventType === 'Theatre') ? `/productions/${production.slug || production.id}` : `/events/${production.slug || production.id}`}
+      href={isTheatre ? `/productions/${production.slug || production.id}` : `/events/${production.slug || production.id}`}
       className="group flex flex-col gap-3.5 focus:outline-none"
     >
       {/* Poster Container with premium physical lift & custom border triggers */}
@@ -40,7 +42,7 @@ export function ProductionCard({ production, showTicketBadge }: { production: Pr
 
           {/* Event Type Badge */}
           <div className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase backdrop-blur-md border whitespace-nowrap pointer-events-auto ${
-            (!production.eventType || production.eventType === 'Theatre')
+            isTheatre
               ? 'bg-purple-600/80 border-purple-500/50 text-white'
               : 'bg-indigo-600/80 border-indigo-500/50 text-white'
           }`}>
@@ -60,9 +62,9 @@ export function ProductionCard({ production, showTicketBadge }: { production: Pr
             </div>
           )}
 
-          {/* Production type tag (Student vs Professional) */}
+          {/* Production type tag (Student vs Professional) - Hidden on mobile to reduce pill clutter */}
           {production.productionType && (
-            <div className={`px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase backdrop-blur-md border whitespace-nowrap pointer-events-auto ${
+            <div className={`hidden sm:inline-flex px-2.5 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase backdrop-blur-md border whitespace-nowrap pointer-events-auto ${
               production.productionType === 'Student'
                 ? 'bg-blue-600/85 border-blue-500/50 text-white'
                 : 'bg-emerald-600/85 border-emerald-500/50 text-white'
@@ -74,7 +76,7 @@ export function ProductionCard({ production, showTicketBadge }: { production: Pr
 
         {/* Score chips: bottom-left */}
         <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 z-10">
-          {production.criticScore !== null && production.criticScore !== undefined && Number(production.criticScore) > 0 ? (
+          {isTheatre && production.criticScore !== null && production.criticScore !== undefined && Number(production.criticScore) > 0 ? (
             <div className="flex items-center bg-red-600/95 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-bold text-white border border-red-500/30">
               {production.criticScore}%
             </div>

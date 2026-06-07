@@ -57,7 +57,7 @@ export interface Production {
   showDate?: string; // YYYY-MM-DD
   showTime?: string; // HH:MM (24h or string format)
   isProducerManaged?: boolean;
-  ticketTiers?: { id: string; name: string; price: string; capacity: string }[];
+  ticketTiers?: { id: string; name: string; price: string; capacity: string; description?: string }[];
   city?: string;
   address?: string;
   accountName?: string;

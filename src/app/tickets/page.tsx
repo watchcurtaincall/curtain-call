@@ -11,13 +11,13 @@ export default function BoxOfficeTicketsPage() {
   const [productions, setProductions] = useState<Production[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'All' | 'CurtainCall' | 'External'>('All');
-  const [selectedGenre, setSelectedGenre] = useState('All');
+  const [selectedType, setSelectedType] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedFilter, selectedGenre]);
+  }, [searchQuery, selectedFilter, selectedType]);
 
   useEffect(() => {
     const loadData = () => {
@@ -46,7 +46,8 @@ export default function BoxOfficeTicketsPage() {
       p.venue.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.genre.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesGenre = selectedGenre === 'All' || p.genre === selectedGenre;
+    const pType = p.eventType || 'Theatre';
+    const matchesType = selectedType === 'All' || pType === selectedType;
 
     let matchesFilter = true;
     if (selectedFilter === 'CurtainCall') {
@@ -55,10 +56,10 @@ export default function BoxOfficeTicketsPage() {
       matchesFilter = !!p.externalTicketUrl;
     }
 
-    return matchesSearch && matchesGenre && matchesFilter;
+    return matchesSearch && matchesType && matchesFilter;
   });
 
-  const genres = ['All', ...Array.from(new Set(productions.map(p => p.genre)))];
+  const eventTypes = ['All', ...Array.from(new Set(productions.map(p => p.eventType || 'Theatre')))];
 
   return (
     <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-12 min-h-screen relative">
@@ -78,10 +79,10 @@ export default function BoxOfficeTicketsPage() {
         </div>
 
         <Link
-          href="/creator"
+          href="/create"
           className="flex items-center justify-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white font-bold px-5 py-3.5 rounded-2xl transition-all shadow-xl text-xs uppercase tracking-widest shrink-0 active:scale-98"
         >
-          <Ticket className="h-4.5 w-4.5 text-red-500 shrink-0" /> Sell Production Tickets
+          <Ticket className="h-4.5 w-4.5 text-red-500 shrink-0" /> Create Event
         </Link>
       </div>
 
@@ -123,17 +124,17 @@ export default function BoxOfficeTicketsPage() {
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
-            {genres.map(genre => (
+            {eventTypes.map(type => (
               <button
-                key={genre}
-                onClick={() => setSelectedGenre(genre)}
+                key={type}
+                onClick={() => setSelectedType(type)}
                 className={`px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border whitespace-nowrap ${
-                  selectedGenre === genre
+                  selectedType === type
                     ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-950/20'
                     : 'bg-zinc-900 border-white/5 text-zinc-400 hover:text-zinc-200'
                 }`}
               >
-                {genre}
+                {type}
               </button>
             ))}
           </div>
@@ -150,7 +151,7 @@ export default function BoxOfficeTicketsPage() {
             We couldn't find any ticketed events matching your search query or filters. Check back soon for fresh stage premieres!
           </p>
           <button
-            onClick={() => { setSearchQuery(''); setSelectedFilter('All'); setSelectedGenre('All'); }}
+            onClick={() => { setSearchQuery(''); setSelectedFilter('All'); setSelectedType('All'); }}
             className="inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-white font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider"
           >
             Reset Filters

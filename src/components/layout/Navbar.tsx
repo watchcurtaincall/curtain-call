@@ -14,7 +14,7 @@ const NAV_LINKS = [
   { href: '/critics', label: 'Critics' },
   { href: '/editorial', label: 'Editorial' },
   { href: '/artists', label: 'Artists' },
-  { href: '#sell-tickets', label: 'Sell Tickets' },
+  { href: '#sell-tickets', label: 'Create Event' },
   { href: '/submit', label: 'Submit' },
 ];
 
@@ -149,7 +149,7 @@ export function Navbar() {
                         if (href === '#sell-tickets') {
                           e.preventDefault();
                           if (user) {
-                            router.push('/creator');
+                            router.push('/create');
                           } else {
                             setIsSellTicketsOpen(true);
                           }
@@ -354,7 +354,7 @@ export function Navbar() {
                     if (href === '#sell-tickets') {
                       e.preventDefault();
                        if (user) {
-                         router.push('/creator');
+                         router.push('/create');
                        } else {
                         setIsSellTicketsOpen(true);
                       }
@@ -433,7 +433,7 @@ export function Navbar() {
                 <div className="w-8 h-8 rounded-xl bg-red-600/10 border border-red-500/20 flex items-center justify-center">
                   <Ticket className="h-4 w-4 text-red-500" />
                 </div>
-                <h3 className="font-serif font-bold text-lg text-white">Sell Production Tickets</h3>
+                <h3 className="font-serif font-bold text-lg text-white">Create Event</h3>
               </div>
               <button
                 type="button"
@@ -447,7 +447,7 @@ export function Navbar() {
             <div className="flex flex-col gap-6">
               <div className="text-center sm:text-left">
                 <h4 className="font-serif text-2xl font-bold text-white leading-tight">
-                  Maximize Playbill Earnings with Curtain Call 🎭
+                  Maximize Event Earnings with Curtain Call 🎭
                 </h4>
                 <p className="text-xs sm:text-sm text-zinc-400 mt-2 leading-relaxed">
                   List your theatrical stage plays, curate multiple custom ticket tiers, process secure local payments via Paystack, and track gate admissions in real-time.
@@ -502,7 +502,7 @@ export function Navbar() {
                   Close & Explore
                 </button>
                 <Link
-                  href="/login?redirect=/creator"
+                  href="/login?redirect=/create"
                   onClick={() => setIsSellTicketsOpen(false)}
                   className="flex-1 bg-white hover:bg-zinc-100 text-black font-bold py-3.5 rounded-xl transition-all text-xs uppercase tracking-wider text-center flex items-center justify-center gap-1.5 shadow-xl shadow-white/5"
                 >

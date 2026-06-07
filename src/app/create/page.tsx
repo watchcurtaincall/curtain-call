@@ -24,6 +24,7 @@ interface TicketTier {
   name: string;
   price: string;
   capacity: string;
+  description?: string;
 }
 
 interface CastCrewMember {
@@ -56,7 +57,7 @@ const CITIES  = ['Lagos', 'Abuja', 'Port Harcourt', 'Ibadan', 'Kano', 'Enugu', '
 
 const STEPS = ['Event Info', 'Schedule', 'Ticketing', 'Payout Setup', 'Review & Publish'];
 
-const emptyTier = (): TicketTier => ({ id: crypto.randomUUID(), name: '', price: '', capacity: '' });
+const emptyTier = (): TicketTier => ({ id: crypto.randomUUID(), name: '', price: '', capacity: '', description: '' });
 
 // ─── Mini date-picker helpers ────────────────────────────
 function formatDate(d: string) {
@@ -882,6 +883,15 @@ function CreateProductionForm() {
                         className={inputCls}
                       />
                     </Field>
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5 block">Description / Perks (Optional)</label>
+                    <textarea
+                      value={tier.description || ''}
+                      onChange={e => updateTier(tier.id, 'description', e.target.value)}
+                      placeholder="e.g. Front row seating, complimentary drinks..."
+                      className={`${inputCls} resize-none h-16`}
+                    />
                   </div>
                 </div>
               ))}
