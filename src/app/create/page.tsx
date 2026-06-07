@@ -264,7 +264,7 @@ function CreateProductionForm() {
       const firstEndTime = form.dates[0]?.endTime || '';
       
       // Generate SEO-friendly slug
-      const slug = form.title
+      const slug = (form.title || 'untitled')
         .toLowerCase()
         .replace(/[^a-z0-9_ ]/g, '')
         .trim()
@@ -333,6 +333,7 @@ function CreateProductionForm() {
 
       setCreatedProductionId(targetId);
       setPublished(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error('Failed to publish production:', err);
     }
@@ -393,6 +394,7 @@ function CreateProductionForm() {
 
       setCreatedProductionId(targetId);
       setPublished(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error('Failed to save draft:', err);
     }
@@ -740,14 +742,15 @@ function CreateProductionForm() {
         {/* ── STEP 1: Schedule ── */}
         {step === 1 && (
           <div className="flex flex-col gap-5 animate-fade-up">
-            <Field label="Venue Name">
+            <Field label="Event Address">
               <div className="relative">
                 <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
                 <input
                   value={form.venue}
                   onChange={e => set('venue', e.target.value)}
-                  placeholder="e.g. Terra Kulture Arena, MUSON Centre"
+                  placeholder="e.g. Terra Kulture Arena, Tiamiyu Savage St, Victoria Island"
                   className={`${inputCls} pl-10`}
+                  autoComplete="street-address"
                 />
               </div>
             </Field>
@@ -769,15 +772,6 @@ function CreateProductionForm() {
                   </button>
                 ))}
               </div>
-            </Field>
-
-            <Field label="Full Address (optional)">
-              <input
-                value={form.address}
-                onChange={e => set('address', e.target.value)}
-                placeholder="Street address"
-                className={inputCls}
-              />
             </Field>
 
             <Field label="Show Date & Time" hint={form.eventType === 'Theatre' ? 'Select each individual day the show runs' : 'Date, start time, and end time'}>
@@ -1073,7 +1067,7 @@ function CreateProductionForm() {
             <ReviewRow label="Title" value={form.title} />
             <ReviewRow label="Genre" value={form.genre} />
             <ReviewRow label="Synopsis" value={form.synopsis} truncate />
-            <ReviewRow label="Venue" value={`${form.venue}${form.city ? ', ' + form.city : ''}`} />
+            <ReviewRow label="Event Address" value={`${form.venue}${form.city ? ', ' + form.city : ''}`} />
             <ReviewRow
               label="Show Dates"
               value={form.dates.filter(d => d.date).map(d => `${formatDate(d.date)} at ${d.time}`).join(' · ')}

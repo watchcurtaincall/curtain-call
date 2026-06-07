@@ -107,6 +107,12 @@ const mapProductionToDb = (p: any) => {
   if (p.externalTicketUrl) {
     gallery.push(JSON.stringify({ __externalTicketUrl: p.externalTicketUrl }));
   }
+  if (p.eventType) {
+    gallery.push(JSON.stringify({ __eventType: p.eventType }));
+  }
+  if (p.customEventType) {
+    gallery.push(JSON.stringify({ __customEventType: p.customEventType }));
+  }
   return {
     id: p.id,
     title: p.title,
@@ -139,6 +145,8 @@ const mapProductionFromDb = (row: any) => {
   let showTime: string | undefined = undefined;
   let isProducerManaged: boolean | undefined = undefined;
   let externalTicketUrl: string | undefined = undefined;
+  let eventTypeFallback: string | undefined = undefined;
+  let customEventTypeFallback: string | undefined = undefined;
   
   if (row.gallery_images && Array.isArray(row.gallery_images)) {
     row.gallery_images.forEach((item: any) => {
@@ -175,6 +183,10 @@ const mapProductionFromDb = (row: any) => {
           const parsed = JSON.parse(item);
           externalTicketUrl = parsed.__externalTicketUrl;
         } catch (e) {}
+      } else if (typeof item === 'string' && item.startsWith('{"__eventType":')) {
+        try { eventTypeFallback = JSON.parse(item).__eventType; } catch(e) {}
+      } else if (typeof item === 'string' && item.startsWith('{"__customEventType":')) {
+        try { customEventTypeFallback = JSON.parse(item).__customEventType; } catch(e) {}
       } else {
         galleryImages.push(item);
       }
@@ -201,8 +213,8 @@ const mapProductionFromDb = (row: any) => {
     id: row.id,
     slug: row.slug || null,
     title: row.title,
-    eventType: row.event_type || 'Theatre',
-    customEventType: row.custom_event_type || null,
+    eventType: eventTypeFallback || row.event_type || 'Theatre',
+    customEventType: customEventTypeFallback || row.custom_event_type || null,
     synopsis: row.synopsis,
     genre: row.genre,
     runtime: row.runtime,
