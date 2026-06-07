@@ -11,14 +11,13 @@ import { PaystackButton } from '@/components/payments/PaystackButton';
 import { useAuth } from '@/lib/AuthContext';
 
 function generateQRCodeSVG(text: string) {
+  // ... (Keep existing implementation)
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
     hash = text.charCodeAt(i) + ((hash << 5) - hash);
   }
-  
   const size = 15;
   const cells = Array(size).fill(null).map(() => Array(size).fill(false));
-  
   const drawFinder = (x: number, y: number) => {
     for (let dy = 0; dy < 5; dy++) {
       for (let dx = 0; dx < 5; dx++) {
@@ -28,11 +27,9 @@ function generateQRCodeSVG(text: string) {
       }
     }
   };
-  
   drawFinder(0, 0);
   drawFinder(10, 0);
   drawFinder(0, 10);
-  
   let hashIndex = 0;
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -40,32 +37,22 @@ function generateQRCodeSVG(text: string) {
       const inTopRight = x > 8 && y < 6;
       const inBottomLeft = x < 6 && y > 8;
       if (inTopLeft || inTopRight || inBottomLeft) continue;
-      
       const bit = (Math.abs(hash) >> (hashIndex % 24)) & 1;
       cells[y][x] = bit === 1;
       hashIndex++;
     }
   }
-
   const rects = [];
   const cellSize = 10;
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       if (cells[y][x]) {
         rects.push(
-          <rect
-            key={`${x}-${y}`}
-            x={x * cellSize}
-            y={y * cellSize}
-            width={cellSize}
-            height={cellSize}
-            fill="black"
-          />
+          <rect key={`${x}-${y}`} x={x * cellSize} y={y * cellSize} width={cellSize} height={cellSize} fill="black" />
         );
       }
     }
   }
-
   return (
     <svg viewBox={`0 0 ${size * cellSize} ${size * cellSize}`} className="w-16 h-16 bg-white p-1 rounded-lg shadow-md shrink-0">
       {rects}
@@ -78,31 +65,18 @@ function generateBarcodeSVG(text: string) {
   for (let i = 0; i < text.length; i++) {
     hash = text.charCodeAt(i) + ((hash << 5) - hash);
   }
-  
   const barsCount = 38;
   const bars = [];
   let currentX = 0;
-  
   for (let i = 0; i < barsCount; i++) {
     const bit = (Math.abs(hash) >> (i % 24)) & 3;
     const barWidth = bit === 0 ? 1 : bit === 1 ? 2 : bit === 2 ? 3 : 1.5;
     const isGap = i % 2 === 1;
-    
     if (!isGap) {
-      bars.push(
-        <rect
-          key={i}
-          x={currentX}
-          y={0}
-          width={barWidth}
-          height={30}
-          fill="currentColor"
-        />
-      );
+      bars.push(<rect key={i} x={currentX} y={0} width={barWidth} height={30} fill="currentColor" />);
     }
     currentX += barWidth + (isGap ? 1.5 : 1);
   }
-  
   return (
     <svg viewBox={`0 0 ${currentX} 30`} className="w-full h-7 text-zinc-700/60 print:text-black">
       {bars}
@@ -118,7 +92,14 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   // Checkout State
   const [checkoutStep, setCheckoutStep] = useState<1 | 2 | 3>(1);
   const [cart, setCart] = useState<Record<string, number>>({});
+  
+  // Contact State
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [buyerPhone, setBuyerPhone] = useState('');
+  const [sendToOthers, setSendToOthers] = useState(false);
   const [attendees, setAttendees] = useState<Record<string, {name: string; email: string}>>({});
   
   const [successData, setSuccessData] = useState<{
@@ -128,10 +109,18 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   } | null>(null);
 
   useEffect(() => {
-    if (user?.email && !buyerEmail) {
-      setBuyerEmail(user.email);
+    if (user) {
+      if (user.email && !buyerEmail) {
+        setBuyerEmail(user.email);
+        setConfirmEmail(user.email);
+      }
+      if (user.displayName && !firstName) {
+        const parts = user.displayName.split(' ');
+        setFirstName(parts[0] || '');
+        if (parts.length > 1) setLastName(parts.slice(1).join(' '));
+      }
     }
-  }, [user, buyerEmail]);
+  }, [user, buyerEmail, firstName]);
 
   useEffect(() => {
     params.then(resolved => {
@@ -177,8 +166,8 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500 font-mono text-xs">
-        <span className="animate-pulse flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading secure checkout gateway...</span>
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500 text-xs">
+        <span className="animate-pulse flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Loading checkout gateway...</span>
       </div>
     );
   }
@@ -213,6 +202,15 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     return sum + ((tier?.price || 0) * qty);
   }, 0);
 
+  const canProceedToPayment = () => {
+    return firstName.trim() !== '' && 
+           lastName.trim() !== '' && 
+           buyerEmail.trim() !== '' && 
+           buyerEmail === confirmEmail && 
+           buyerPhone.trim() !== '' &&
+           /^[^s@]+@[^s@]+.[^s@]+$/.test(buyerEmail);
+  };
+
   const handlePaymentSuccess = async (reference: string) => {
     const purchasedTickets: { reference: string; gatePass: string; tier: string; email: string; name: string }[] = [];
 
@@ -220,7 +218,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       if (buyerEmail) {
         ClientDB.saveProfile({
           email: buyerEmail.toLowerCase(),
-          name: buyerEmail.split('@')[0],
+          name: `${firstName} ${lastName}`.trim() || buyerEmail.split('@')[0],
           joinDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
           isVerified: true
         });
@@ -234,11 +232,15 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       if (!tierDef) return;
 
       for (let i = 0; i < qty; i++) {
-        const attendeeKey = `${tierName}-${i}`;
-        const attendeeInfo = attendees[attendeeKey] || {};
-        
-        const recipientEmail = (attendeeInfo.email && attendeeInfo.email.trim() !== '') ? attendeeInfo.email : buyerEmail;
-        const recipientName = (attendeeInfo.name && attendeeInfo.name.trim() !== '') ? attendeeInfo.name : 'Guest';
+        let recipientEmail = buyerEmail;
+        let recipientName = `${firstName} ${lastName}`.trim();
+
+        if (sendToOthers) {
+          const attendeeKey = `${tierName}-${i}`;
+          const attendeeInfo = attendees[attendeeKey] || {};
+          if (attendeeInfo.email && attendeeInfo.email.trim() !== '') recipientEmail = attendeeInfo.email;
+          if (attendeeInfo.name && attendeeInfo.name.trim() !== '') recipientName = attendeeInfo.name;
+        }
 
         const ticketRef = totalTickets > 1 ? `${reference}-${globalTicketIndex}` : reference;
         const randDigits = Math.floor(100 + Math.random() * 900);
@@ -289,7 +291,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       const ticketRows = tix.map((t, idx) => `
         <tr style="border-top: 1px dashed rgba(255,255,255,0.08);">
           <td style="padding: 12px 0; font-size: 13px; color: #a1a1aa;">Pass #${idx + 1} (${t.tier})</td>
-          <td style="padding: 12px 0; font-size: 13px; color: #22c55e; text-align: right; font-weight: bold; font-family: monospace;">${t.gatePass}</td>
+          <td style="padding: 12px 0; font-size: 13px; color: #22c55e; text-align: right; font-weight: bold;">${t.gatePass}</td>
         </tr>
       `).join('');
 
@@ -345,135 +347,137 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   const isTheatre = !production?.eventType || production?.eventType === 'Theatre';
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 py-20 bg-zinc-950 overflow-hidden">
+    <div className="min-h-screen relative bg-zinc-950 overflow-x-hidden pb-32 lg:pb-0">
       <div 
-        className="absolute inset-0 bg-cover bg-center z-0 opacity-40 mix-blend-luminosity transform scale-105" 
+        className="fixed inset-0 bg-cover bg-center z-0 opacity-20 mix-blend-luminosity transform scale-105 pointer-events-none" 
         style={{ backgroundImage: `url(${production?.posterUrl || ''})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-zinc-950/60 z-0" />
-      <div className="absolute inset-0 backdrop-blur-3xl z-0" />
+      <div className="fixed inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/95 to-zinc-950/80 z-0 pointer-events-none" />
+      <div className="fixed inset-0 backdrop-blur-3xl z-0 pointer-events-none" />
 
       {successData ? (
-        <div className="relative z-10 max-w-xl w-full bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 text-center shadow-[0_0_80px_rgba(34,197,94,0.15)] overflow-hidden animate-fade-up print-wrapper">
-          <style>{`
-            @media print {
-              body { background: white !important; color: black !important; }
-              body > div:not(.print-wrapper), body > header, body > footer, .no-print { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
-              .print-wrapper { background: white !important; color: black !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 auto !important; max-width: 100% !important; width: 100% !important; }
-              .print-ticket-container { max-height: none !important; overflow: visible !important; display: block !important; padding: 0 !important; }
-              .print-ticket-card { background: white !important; color: black !important; border: 2px solid black !important; box-shadow: none !important; margin-bottom: 30px !important; page-break-inside: avoid !important; border-radius: 16px !important; display: flex !important; flex-direction: row !important; align-items: stretch !important; justify-content: space-between !important; padding: 20px !important; width: 100% !important; min-height: 180px !important; }
-              .print-ticket-card * { color: black !important; }
-              .print-dashed-line { border-color: black !important; border-style: dashed !important; }
-              .print-stub-section { background: white !important; border: none !important; border-left: 2px dashed black !important; border-radius: 0 !important; padding: 0 0 0 20px !important; margin: 0 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; width: 140px !important; }
-            }
-          `}</style>
-          
-          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-green-600 via-emerald-500 to-teal-400 no-print" />
-          
-          <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-5 no-print shadow-[0_0_30px_rgba(34,197,94,0.2)]">
-            <CheckCircle2 className="h-8 w-8 text-green-500" />
-          </div>
- 
-          <h1 className="text-2xl font-serif font-bold text-white mb-1 no-print">Tickets Secured!</h1>
-          <p className="text-xs text-zinc-400 mb-8 no-print">
-            Your ${successData.tickets.length} admission pass${successData.tickets.length > 1 ? 'es have' : ' has'} been secured and sent via email.
-          </p>
- 
-          <div className="flex flex-col gap-5 overflow-y-auto max-h-[500px] pr-1.5 [scrollbar-width:none] mb-8 print-ticket-container">
-            {successData.tickets.map((t, index) => (
-              <div key={index} className="bg-zinc-950/80 border border-white/5 rounded-2xl p-5 text-left relative overflow-hidden shrink-0 print-ticket-card flex flex-col md:flex-row gap-4 items-stretch justify-between shadow-2xl">
-                <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-green-500/10 rounded-full blur-2xl no-print" />
-                
-                <div className="flex-1 min-w-0 flex flex-col justify-between gap-4">
-                  <div>
-                    <div className="flex justify-between items-start gap-2">
+        <div className="relative z-10 flex items-center justify-center min-h-screen p-4 py-20">
+          <div className="max-w-xl w-full bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 text-center shadow-[0_0_80px_rgba(34,197,94,0.15)] overflow-hidden animate-fade-up print-wrapper">
+            <style>{`
+              @media print {
+                body { background: white !important; color: black !important; }
+                body > div:not(.print-wrapper), body > header, body > footer, .no-print { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
+                .print-wrapper { background: white !important; color: black !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 auto !important; max-width: 100% !important; width: 100% !important; }
+                .print-ticket-container { max-height: none !important; overflow: visible !important; display: block !important; padding: 0 !important; }
+                .print-ticket-card { background: white !important; color: black !important; border: 2px solid black !important; box-shadow: none !important; margin-bottom: 30px !important; page-break-inside: avoid !important; border-radius: 16px !important; display: flex !important; flex-direction: row !important; align-items: stretch !important; justify-content: space-between !important; padding: 20px !important; width: 100% !important; min-height: 180px !important; }
+                .print-ticket-card * { color: black !important; }
+                .print-dashed-line { border-color: black !important; border-style: dashed !important; }
+                .print-stub-section { background: white !important; border: none !important; border-left: 2px dashed black !important; border-radius: 0 !important; padding: 0 0 0 20px !important; margin: 0 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; width: 140px !important; }
+              }
+            `}</style>
+            
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-green-600 via-emerald-500 to-teal-400 no-print" />
+            
+            <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mx-auto mb-5 no-print shadow-[0_0_30px_rgba(34,197,94,0.2)]">
+              <CheckCircle2 className="h-8 w-8 text-green-500" />
+            </div>
+  
+            <h1 className="text-2xl font-serif font-bold text-white mb-1 no-print">Tickets Secured!</h1>
+            <p className="text-xs text-zinc-400 mb-8 no-print">
+              Your ${successData.tickets.length} admission pass${successData.tickets.length > 1 ? 'es have' : ' has'} been secured and sent via email.
+            </p>
+  
+            <div className="flex flex-col gap-5 overflow-y-auto max-h-[500px] pr-1.5 [scrollbar-width:none] mb-8 print-ticket-container">
+              {successData.tickets.map((t, index) => (
+                <div key={index} className="bg-zinc-950/80 border border-white/5 rounded-2xl p-5 text-left relative overflow-hidden shrink-0 print-ticket-card flex flex-col md:flex-row gap-4 items-stretch justify-between shadow-2xl">
+                  <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-green-500/10 rounded-full blur-2xl no-print" />
+                  
+                  <div className="flex-1 min-w-0 flex flex-col justify-between gap-4">
+                    <div>
+                      <div className="flex justify-between items-start gap-2">
+                        <div>
+                          <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold block mb-1">Pass #${index + 1} of ${successData.tickets.length}</span>
+                          <h3 className="text-lg font-serif font-bold text-white truncate">
+                            {production.title}
+                          </h3>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 text-xs text-zinc-300 truncate flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-zinc-500" /> {production.venue}
+                      </div>
+                      
+                      <div className="mt-2 flex gap-2">
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border shadow-inner ${
+                          isTheatre
+                            ? 'bg-purple-500/10 text-purple-300 border-purple-500/20'
+                            : 'bg-red-500/10 text-red-300 border-red-500/20'
+                        }`}>
+                          {production.customEventType || production.eventType || 'Theatre'}
+                        </span>
+                      </div>
+                    </div>
+  
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-xs border-t border-dashed border-white/10 pt-3 print-dashed-line">
                       <div>
-                        <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono font-bold block mb-1">Pass #${index + 1} of ${successData.tickets.length}</span>
-                        <h3 className="text-lg font-serif font-bold text-white truncate">
-                          {production.title}
-                        </h3>
+                        <span className="text-[8px] text-zinc-500 uppercase tracking-widest block mb-0.5">Tier</span>
+                        <span className="text-white font-bold">{t.tier}</span>
+                      </div>
+                      <div>
+                        <span className="text-[8px] text-zinc-500 uppercase tracking-widest block mb-0.5">Attendee</span>
+                        <span className="text-white font-bold truncate max-w-[100px] block">{t.name}</span>
+                      </div>
+                      <div className="col-span-2 sm:col-span-1">
+                        <span className="text-[8px] text-zinc-500 uppercase tracking-widest block mb-0.5">Date</span>
+                        <span className="text-white font-bold">
+                          {production.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' }) : 'Scheduled'}
+                        </span>
                       </div>
                     </div>
                     
-                    <div className="mt-3 text-xs text-zinc-300 truncate flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 text-zinc-500" /> {production.venue}
+                    <div className="mt-1 no-print">
+                      {generateBarcodeSVG(t.gatePass)}
+                    </div>
+                  </div>
+  
+                  <div className="md:w-40 flex md:flex-col items-center justify-between md:justify-center gap-4 bg-zinc-900/60 p-4 rounded-xl border border-white/5 md:border-l md:border-t-0 border-t print-stub-section shrink-0 text-center relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent no-print pointer-events-none" />
+                    <div className="relative z-10 flex items-center justify-center shrink-0 bg-white p-1 rounded-xl shadow-lg">
+                      {generateQRCodeSVG(t.gatePass)}
                     </div>
                     
-                    <div className="mt-2 flex gap-2">
-                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border shadow-inner ${
-                         isTheatre
-                           ? 'bg-purple-500/10 text-purple-300 border-purple-500/20'
-                           : 'bg-red-500/10 text-red-300 border-red-500/20'
-                       }`}>
-                         {production.customEventType || production.eventType || 'Theatre'}
-                       </span>
-                    </div>
-                  </div>
- 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-xs border-t border-dashed border-white/10 pt-3 print-dashed-line">
-                    <div>
-                      <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-mono block mb-0.5">Tier</span>
-                      <span className="text-white font-bold">{t.tier}</span>
-                    </div>
-                    <div>
-                      <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-mono block mb-0.5">Attendee</span>
-                      <span className="text-white font-bold truncate max-w-[100px] block">{t.name}</span>
-                    </div>
-                    <div className="col-span-2 sm:col-span-1">
-                      <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-mono block mb-0.5">Date</span>
-                      <span className="text-white font-bold">
-                        {production.showDate ? new Date(production.showDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' }) : 'Scheduled'}
+                    <div className="relative z-10 text-right md:text-center flex-1 md:flex-none">
+                      <span className="text-[9px] text-zinc-500 uppercase tracking-widest block">Gate Code</span>
+                      <span className="text-sm text-green-400 font-bold tracking-widest uppercase block mt-1">
+                        {t.gatePass}
                       </span>
+                      <span className="text-[8px] text-zinc-600 block truncate max-w-[120px] mx-auto mt-1">Ref: {t.reference}</span>
                     </div>
                   </div>
-                  
-                  <div className="mt-1 no-print">
-                    {generateBarcodeSVG(t.gatePass)}
-                  </div>
                 </div>
- 
-                <div className="md:w-40 flex md:flex-col items-center justify-between md:justify-center gap-4 bg-zinc-900/60 p-4 rounded-xl border border-white/5 md:border-l md:border-t-0 border-t print-stub-section shrink-0 text-center relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent no-print pointer-events-none" />
-                  <div className="relative z-10 flex items-center justify-center shrink-0 bg-white p-1 rounded-xl shadow-lg">
-                    {generateQRCodeSVG(t.gatePass)}
-                  </div>
-                  
-                  <div className="relative z-10 text-right md:text-center flex-1 md:flex-none">
-                    <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-mono block">Gate Code</span>
-                    <span className="text-sm text-green-400 font-mono font-bold tracking-widest uppercase block mt-1">
-                      {t.gatePass}
-                    </span>
-                    <span className="text-[8px] text-zinc-600 font-mono block truncate max-w-[120px] mx-auto mt-1">Ref: {t.reference}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
- 
-          <p className="text-[10px] text-zinc-500 leading-relaxed mb-6 font-mono no-print">
-            PRESENT THESE DIGITAL PASSES OR PRINTED TICKETS AT THE GATE FOR SCANNED ADMISSION.
-          </p>
- 
-          <div className="flex flex-col sm:flex-row gap-3 w-full justify-center no-print mt-4">
-            <button
-              onClick={() => typeof window !== 'undefined' && window.print()}
-              className="flex-1 bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-white font-bold py-4 px-6 rounded-2xl transition-all text-sm flex items-center justify-center gap-2"
-            >
-              <QrCode className="h-4 w-4" /> Print / Save PDF
-            </button>
-            <Link
-              href={isTheatre ? `/productions/${production.slug || production.id}` : `/events/${production.slug || production.id}`}
-              className="flex-1 bg-white text-black font-bold py-4 px-6 rounded-2xl hover:bg-zinc-100 transition-all text-sm shadow-xl text-center flex items-center justify-center"
-            >
-              Back to Details
-            </Link>
+              ))}
+            </div>
+  
+            <p className="text-[10px] text-zinc-500 leading-relaxed mb-6 no-print">
+              PRESENT THESE DIGITAL PASSES OR PRINTED TICKETS AT THE GATE FOR SCANNED ADMISSION.
+            </p>
+  
+            <div className="flex flex-col sm:flex-row gap-3 w-full justify-center no-print mt-4">
+              <button
+                onClick={() => typeof window !== 'undefined' && window.print()}
+                className="flex-1 bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-white font-bold py-4 px-6 rounded-2xl transition-all text-sm flex items-center justify-center gap-2"
+              >
+                <QrCode className="h-4 w-4" /> Print / Save PDF
+              </button>
+              <Link
+                href={isTheatre ? `/productions/${production.slug || production.id}` : `/events/${production.slug || production.id}`}
+                className="flex-1 bg-white text-black font-bold py-4 px-6 rounded-2xl hover:bg-zinc-100 transition-all text-sm shadow-xl text-center flex items-center justify-center"
+              >
+                Back to Details
+              </Link>
+            </div>
           </div>
         </div>
       ) : (
-        <div className="relative z-10 w-full max-w-6xl flex flex-col lg:flex-row gap-6 lg:gap-8 items-start animate-fade-up">
+        <div className="relative z-10 max-w-5xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 items-start animate-fade-up pt-12 lg:pt-20 px-4">
           
           {/* Left Column: Event Context & Multistep Form */}
-          <div className="flex-[1.5] w-full flex flex-col gap-6">
+          <div className="flex-1 w-full flex flex-col gap-6">
             <Link
               href={isTheatre ? `/productions/${production.slug || production.id}` : `/events/${production.slug || production.id}`}
               className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors uppercase tracking-wider font-bold w-fit bg-zinc-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/5"
@@ -481,38 +485,46 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
               <ArrowLeft className="h-3.5 w-3.5" /> Back to Event
             </Link>
 
-            {/* Stepper Header */}
-            <div className="bg-zinc-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-full h-1 flex">
-                <div className={`flex-1 h-full ${checkoutStep >= 1 ? 'bg-red-500' : 'bg-zinc-800'} transition-colors duration-500`} />
-                <div className={`flex-1 h-full ${checkoutStep >= 2 ? 'bg-red-500' : 'bg-zinc-800'} transition-colors duration-500`} />
-                <div className={`flex-1 h-full ${checkoutStep >= 3 ? 'bg-red-500' : 'bg-zinc-800'} transition-colors duration-500`} />
+            {/* Title / Info Mobile Header */}
+            <div className="flex items-center gap-4 lg:hidden">
+              <div className="w-16 h-20 rounded-lg overflow-hidden shrink-0 bg-zinc-800">
+                <img src={production.posterUrl || ''} className="w-full h-full object-cover" alt="" />
               </div>
+              <div>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-widest border border-white/10 bg-white/5 w-fit block mb-1">
+                  {production.customEventType || production.eventType || 'Theatre'}
+                </span>
+                <h1 className="text-xl font-serif font-bold text-white leading-tight">{production.title}</h1>
+              </div>
+            </div>
 
-              <div className="flex items-center justify-between mb-8">
+            {/* Stepper Content Box */}
+            <div className="bg-zinc-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-5 sm:p-8 shadow-2xl overflow-hidden relative">
+              
+              <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/5">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 bg-white text-black rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.15)]">
-                    {checkoutStep === 1 && <TicketIcon className="h-6 w-6" />}
-                    {checkoutStep === 2 && <Users className="h-6 w-6" />}
-                    {checkoutStep === 3 && <CreditCard className="h-6 w-6" />}
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 bg-white text-black rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.15)] shrink-0">
+                    {checkoutStep === 1 && <TicketIcon className="h-5 w-5 sm:h-6 sm:w-6" />}
+                    {checkoutStep === 2 && <Users className="h-5 w-5 sm:h-6 sm:w-6" />}
+                    {checkoutStep === 3 && <CreditCard className="h-5 w-5 sm:h-6 sm:w-6" />}
                   </div>
                   <div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">
+                    <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                       {checkoutStep === 1 && 'Choose Tickets'}
-                      {checkoutStep === 2 && 'Assign Attendees'}
-                      {checkoutStep === 3 && 'Secure Payment'}
+                      {checkoutStep === 2 && 'Contact Info'}
+                      {checkoutStep === 3 && 'Payment'}
                     </h1>
-                    <p className="text-sm text-zinc-400 mt-0.5">
-                      {checkoutStep === 1 && 'Select from available tiers below.'}
-                      {checkoutStep === 2 && 'Who is attending?'}
-                      {checkoutStep === 3 && 'Final step to secure your entry.'}
+                    <p className="text-xs sm:text-sm text-zinc-400 mt-0.5 hidden sm:block">
+                      {checkoutStep === 1 && 'Select your preferred entry pass.'}
+                      {checkoutStep === 2 && 'Enter buyer details.'}
+                      {checkoutStep === 3 && 'Securely pay for your order.'}
                     </p>
                   </div>
                 </div>
                 {checkoutStep > 1 && (
                   <button 
                     onClick={() => setCheckoutStep(s => (s - 1) as 1 | 2 | 3)}
-                    className="text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors"
+                    className="text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg"
                   >
                     Go Back
                   </button>
@@ -538,10 +550,10 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                             {tier.name}
                           </h3>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-lg font-bold font-mono tracking-tight text-white">
+                            <span className="text-lg font-bold tracking-tight text-white">
                               ₦{tier.price.toLocaleString()}
                             </span>
-                            <span className="text-[10px] text-zinc-500 uppercase tracking-widest">includes fees</span>
+                            <span className="text-[10px] text-zinc-500 uppercase tracking-widest bg-zinc-900 px-2 py-0.5 rounded-full">includes fees</span>
                           </div>
                           {tier.description && (
                             <p className="text-xs text-zinc-400 mt-2 max-w-sm leading-relaxed">
@@ -560,7 +572,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                              >
                                <Minus className="h-4 w-4 text-white" />
                              </button>
-                             <div className="w-10 text-center font-bold text-white tabular-nums">
+                             <div className="w-10 text-center font-bold text-white tabular-nums text-lg">
                                {qty}
                              </div>
                              <button 
@@ -575,13 +587,14 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                     )
                   })}
                   
-                  <div className="mt-6 border-t border-white/5 pt-6 flex justify-end">
+                  {/* Desktop 'Continue' Button - Hidden on mobile because of fixed bottom bar */}
+                  <div className="mt-6 border-t border-white/5 pt-6 hidden lg:flex justify-end">
                     <button
                       disabled={totalTickets === 0}
                       onClick={() => setCheckoutStep(2)}
-                      className="bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-[0_0_30px_rgba(220,38,38,0.2)] disabled:opacity-40 disabled:hover:bg-red-600 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-2"
+                      className="bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-10 rounded-xl transition-all shadow-[0_0_30px_rgba(220,38,38,0.2)] disabled:opacity-40 disabled:hover:bg-red-600 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-2"
                     >
-                      Continue to Contact <ChevronRight className="h-4 w-4" />
+                      Continue
                     </button>
                   </div>
                 </div>
@@ -592,74 +605,97 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                 <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-right-4 duration-300">
                   
                   {/* Primary Buyer Details */}
-                  <div className="bg-zinc-950/50 border border-white/5 rounded-2xl p-5 sm:p-6">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4 flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-zinc-400" /> Primary Contact
-                    </h3>
-                    <p className="text-xs text-zinc-400 mb-4">We will send your payment receipt and all tickets to this email by default.</p>
-                    
-                    <input
-                      type="email"
-                      required
-                      value={buyerEmail}
-                      onChange={e => setBuyerEmail(e.target.value)}
-                      placeholder="Email Address"
-                      className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition-all shadow-inner"
-                    />
-                  </div>
-
-                  {/* Individual Attendees */}
                   <div className="flex flex-col gap-4">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-widest flex items-center gap-2 px-1">
-                      <Users className="h-4 w-4 text-zinc-400" /> Ticket Assignment
-                    </h3>
-                    <p className="text-xs text-zinc-400 mb-2 px-1">You are buying <strong>{totalTickets}</strong> ticket(s). You can optionally assign a name and a different email for each ticket. If left blank, they will be sent to the primary contact.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">First Name</label>
+                        <input type="text" required value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="Jane" className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition-all" />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Last Name</label>
+                        <input type="text" required value={lastName} onChange={e => setLastName(e.target.value)} placeholder="Doe" className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition-all" />
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Email Address</label>
+                      <input type="email" required value={buyerEmail} onChange={e => setBuyerEmail(e.target.value)} placeholder="jane@example.com" className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition-all" />
+                    </div>
 
-                    <div className="flex flex-col gap-4">
-                      {Object.entries(cart).flatMap(([tierName, qty]) => 
-                        Array.from({ length: qty }).map((_, idx) => {
-                          const key = `${tierName}-${idx}`;
-                          const att = attendees[key] || { name: '', email: '' };
-                          
-                          return (
-                            <div key={key} className="bg-zinc-950/30 border border-white/5 rounded-2xl p-5 relative overflow-hidden group hover:border-white/10 transition-colors">
-                              <div className="absolute top-0 left-0 w-1 h-full bg-red-600/50" />
-                              <div className="flex items-center gap-2 mb-4">
-                                <UserCircle className="h-5 w-5 text-zinc-500" />
-                                <h4 className="font-bold text-sm text-white">{tierName}</h4>
-                                <span className="text-[10px] text-zinc-500 font-mono tracking-widest ml-auto">TICKET {idx + 1}</span>
-                              </div>
-                              
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <input
-                                  type="text"
-                                  placeholder="Attendee Name (Optional)"
-                                  value={att.name}
-                                  onChange={e => setAttendees(prev => ({...prev, [key]: {...prev[key], name: e.target.value}}))}
-                                  className="w-full bg-zinc-900/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
-                                />
-                                <input
-                                  type="email"
-                                  placeholder="Attendee Email (Optional)"
-                                  value={att.email}
-                                  onChange={e => setAttendees(prev => ({...prev, [key]: {...prev[key], email: e.target.value}}))}
-                                  className="w-full bg-zinc-900/50 border border-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
-                                />
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Confirm Email</label>
+                      <input type="email" required value={confirmEmail} onChange={e => setConfirmEmail(e.target.value)} placeholder="jane@example.com" className={`w-full bg-zinc-950 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-all ${confirmEmail && confirmEmail !== buyerEmail ? 'border-red-500/50' : 'border-white/10 focus:border-white/30'}`} />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Phone Number</label>
+                      <input type="tel" required value={buyerPhone} onChange={e => setBuyerPhone(e.target.value)} placeholder="08012345678" className="w-full bg-zinc-950 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/30 transition-all" />
                     </div>
                   </div>
 
-                  <div className="mt-2 border-t border-white/5 pt-6 flex justify-end">
+                  {/* Ask to Assign Attendees */}
+                  {totalTickets > 1 && (
+                    <div className="bg-zinc-950/50 border border-white/5 rounded-2xl p-5 flex items-start gap-4 cursor-pointer hover:bg-zinc-950/80 transition-colors" onClick={() => setSendToOthers(!sendToOthers)}>
+                      <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 transition-colors border ${sendToOthers ? 'bg-red-500 border-red-500' : 'bg-transparent border-zinc-600'}`}>
+                        {sendToOthers && <Check className="w-3.5 h-3.5 text-white" />}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-white mb-1">Send tickets to different emails?</h4>
+                        <p className="text-xs text-zinc-400 leading-relaxed">If you are buying for a group, check this box to assign unique names and emails to each ticket. Otherwise, all tickets will be sent to your email.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Individual Attendees Breakdown */}
+                  {sendToOthers && totalTickets > 1 && (
+                    <div className="flex flex-col gap-4 animate-in slide-in-from-top-2 duration-300">
+                      <div className="flex flex-col gap-4">
+                        {Object.entries(cart).flatMap(([tierName, qty]) => 
+                          Array.from({ length: qty }).map((_, idx) => {
+                            const key = `${tierName}-${idx}`;
+                            const att = attendees[key] || { name: '', email: '' };
+                            
+                            return (
+                              <div key={key} className="bg-zinc-950/30 border border-white/5 rounded-2xl p-5 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-red-600/50" />
+                                <div className="flex items-center gap-2 mb-4">
+                                  <UserCircle className="h-5 w-5 text-zinc-500" />
+                                  <h4 className="font-bold text-sm text-white">{tierName}</h4>
+                                  <span className="text-[10px] text-zinc-500 font-mono tracking-widest ml-auto">TICKET {idx + 1}</span>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <input
+                                    type="text"
+                                    placeholder="Attendee Name (Optional)"
+                                    value={att.name}
+                                    onChange={e => setAttendees(prev => ({...prev, [key]: {...prev[key], name: e.target.value}}))}
+                                    className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
+                                  />
+                                  <input
+                                    type="email"
+                                    placeholder="Attendee Email (Optional)"
+                                    value={att.email}
+                                    onChange={e => setAttendees(prev => ({...prev, [key]: {...prev[key], email: e.target.value}}))}
+                                    className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Desktop 'Continue' Button */}
+                  <div className="mt-2 border-t border-white/5 pt-6 hidden lg:flex justify-end">
                     <button
-                      disabled={!buyerEmail || !/^[^s@]+@[^s@]+.[^s@]+$/.test(buyerEmail)}
+                      disabled={!canProceedToPayment()}
                       onClick={() => setCheckoutStep(3)}
-                      className="bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-8 rounded-xl transition-all shadow-[0_0_30px_rgba(220,38,38,0.2)] disabled:opacity-40 disabled:hover:bg-red-600 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-2"
+                      className="bg-red-600 hover:bg-red-500 text-white font-bold py-4 px-10 rounded-xl transition-all shadow-[0_0_30px_rgba(220,38,38,0.2)] disabled:opacity-40 disabled:hover:bg-red-600 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-2"
                     >
-                      Proceed to Payment <ChevronRight className="h-4 w-4" />
+                      Continue
                     </button>
                   </div>
                 </div>
@@ -711,10 +747,10 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             </div>
           </div>
 
-          {/* Right Column: Order Summary (Sticky) */}
-          <div className="w-full lg:w-[350px] shrink-0 lg:sticky lg:top-24 mt-6 lg:mt-0 lg:pt-11 order-first lg:order-last">
+          {/* Right Column: Order Summary (Desktop Only) */}
+          <div className="hidden lg:block w-[350px] xl:w-[400px] shrink-0 sticky top-24 pt-11">
             <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-xl">
-              <h3 className="text-lg font-serif font-bold text-white mb-6 border-b border-white/5 pb-4">Order Summary</h3>
+              <h3 className="text-lg font-serif font-bold text-white mb-6 border-b border-white/5 pb-4">Summary</h3>
               
               <div className="flex items-start gap-4 mb-6">
                 <div className="w-16 h-20 rounded-lg overflow-hidden shrink-0 bg-zinc-800">
@@ -732,11 +768,9 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                 </div>
               </div>
 
-              <div className="bg-zinc-950/50 rounded-xl p-4 border border-white/5 mb-6">
-                <h5 className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold mb-3">Cart Items</h5>
-                
+              <div className="bg-zinc-950/50 rounded-xl p-4 border border-white/5 mb-6">                
                 {totalTickets === 0 ? (
-                  <p className="text-xs text-zinc-500 italic text-center py-2">Your cart is empty.</p>
+                  <p className="text-xs text-zinc-500 italic text-center py-2">Select tickets to see summary.</p>
                 ) : (
                   <div className="flex flex-col gap-3">
                     {Object.entries(cart).map(([tierName, qty]) => {
@@ -747,7 +781,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                           <div className="flex flex-col gap-0.5">
                             <span className="text-zinc-300 font-medium">{qty} × {tierName}</span>
                           </div>
-                          <span className="text-white font-mono font-bold">₦{(tier.price * qty).toLocaleString()}</span>
+                          <span className="text-white font-bold">₦{(tier.price * qty).toLocaleString()}</span>
                         </div>
                       )
                     })}
@@ -758,20 +792,36 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
               <div className="border-t border-dashed border-white/10 pt-4 flex flex-col gap-2">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-zinc-400">Subtotal</span>
-                  <span className="text-zinc-300 font-mono">₦{totalAmount.toLocaleString()}</span>
+                  <span className="text-zinc-300 font-bold">₦{totalAmount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-zinc-400 flex items-center gap-1">Fees <Info className="h-3 w-3" /></span>
-                  <span className="text-zinc-300 font-mono">Included</span>
+                  <span className="text-zinc-300">Included</span>
                 </div>
               </div>
 
               <div className="border-t border-white/10 mt-4 pt-4 flex justify-between items-end">
                 <span className="text-xs text-zinc-500 uppercase tracking-widest font-bold">Total</span>
-                <span className="text-2xl font-bold text-white font-mono tracking-tight">₦{totalAmount.toLocaleString()}</span>
+                <span className="text-2xl font-bold text-red-500 tracking-tight">₦{totalAmount.toLocaleString()}</span>
               </div>
             </div>
           </div>
+
+          {/* Sticky Mobile Bottom Bar */}
+          {checkoutStep < 3 && (
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-zinc-900 border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50 animate-in slide-in-from-bottom-full duration-300">
+               <button
+                 disabled={checkoutStep === 1 ? totalTickets === 0 : !canProceedToPayment()}
+                 onClick={() => setCheckoutStep(s => (s + 1) as 2 | 3)}
+                 className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:bg-red-600 text-white rounded-2xl py-3.5 px-6 flex justify-between items-center transition-all disabled:cursor-not-allowed shadow-xl"
+               >
+                  <span className="text-xl font-bold tracking-tight">₦{totalAmount.toLocaleString()}</span>
+                  <span className="bg-white text-red-600 px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-1">
+                    Continue
+                  </span>
+               </button>
+            </div>
+          )}
 
         </div>
       )}
