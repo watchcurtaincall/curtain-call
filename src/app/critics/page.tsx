@@ -76,7 +76,7 @@ export default function CriticsHubPage() {
                     <span className="text-white font-bold">{review.rating}</span>
                     <span className="text-zinc-500 text-xs">/ 100</span>
                   </div>
-                  <Link href={`/productions/${production?.slug || review.productionId}`} className="text-red-500 text-sm font-medium hover:text-red-400">
+                  <Link href={`/shows/${production?.slug || review.productionId}`} className="text-red-500 text-sm font-medium hover:text-red-400">
                     Read Full Review
                   </Link>
                 </div>

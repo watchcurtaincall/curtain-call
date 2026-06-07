@@ -145,15 +145,17 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
           <div className="flex-1 pb-2">
             {/* Status & Type Badges (Clean, Compact, No Clutter) */}
             <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                production.status === 'Currently Showing'
-                  ? 'bg-red-600/25 text-red-400 border border-red-500/30'
-                  : production.status === 'Recently Concluded'
-                  ? 'bg-amber-600/25 text-amber-400 border border-amber-500/30'
-                  : 'bg-zinc-800 text-zinc-400 border border-white/10'
-              }`}>
-                {production.status}
-              </span>
+              {production.status !== 'Draft' && (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                  production.status === 'Currently Showing'
+                    ? 'bg-red-600/25 text-red-400 border border-red-500/30'
+                    : production.status === 'Recently Concluded'
+                    ? 'bg-amber-600/25 text-amber-400 border border-amber-500/30'
+                    : 'bg-zinc-800 text-zinc-400 border border-white/10'
+                }`}>
+                  {production.status}
+                </span>
+              )}
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wider ${
                 (!production.eventType || production.eventType === 'Theatre')
                   ? 'bg-purple-600/25 text-purple-400 border border-purple-500/30'
@@ -182,11 +184,16 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
                 <MapPin className="h-3.5 w-3.5 text-zinc-550 shrink-0" />
                 <span>{production.venue}</span>
               </span>
-              <span className="text-zinc-700 font-bold">·</span>
-              <span className="flex items-center gap-1 shrink-0">
-                <Clock className="h-3.5 w-3.5 text-zinc-550 shrink-0" />
-                <span>{production.runtime || '120 mins'}</span>
-              </span>
+              {/* For theatre: show runtime. For events with start+end time: show "HH:MM – HH:MM" */}
+              {(!production.eventType || production.eventType === 'Theatre') && production.runtime && (
+                <>
+                  <span className="text-zinc-700 font-bold">·</span>
+                  <span className="flex items-center gap-1 shrink-0">
+                    <Clock className="h-3.5 w-3.5 text-zinc-550 shrink-0" />
+                    <span>{production.runtime}</span>
+                  </span>
+                </>
+              )}
               {production.showDate && (
                 <>
                   <span className="text-zinc-700 font-bold">·</span>
@@ -194,7 +201,11 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
                     <Calendar className="h-3.5 w-3.5 shrink-0" />
                     <span>
                       {new Date(production.showDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      {production.showTime && ` @ ${production.showTime}`}
+                      {production.showTime && production.endTime
+                        ? ` · ${production.showTime} – ${production.endTime}`
+                        : production.showTime
+                        ? ` @ ${production.showTime}`
+                        : ''}
                     </span>
                   </span>
                 </>
@@ -281,7 +292,7 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
 
           {/* Row 2: Secondary Action Grid (Watchlist, Review, and Share in a single clean row) */}
           <div className="grid grid-cols-3 gap-2">
-            <WatchlistButton productionId={production.id} compact={true} />
+            <WatchlistButton productionId={production.id} compact={true} eventType={production.eventType} />
             <button
               onClick={scrollToReviews}
               className="w-full bg-zinc-900 hover:bg-zinc-800 border border-white/5 text-zinc-300 hover:text-white py-3.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 text-[11px] uppercase tracking-wider"
@@ -317,8 +328,10 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
             </p>
           </div>
 
-          {/* Stage Photography Gallery */}
-          <PhotoGallery productionTitle={production.title} galleryImages={production.galleryImages} />
+          {/* Stage Photography Gallery — theatre only */}
+          {(!production.eventType || production.eventType === 'Theatre') && (
+            <PhotoGallery productionTitle={production.title} galleryImages={production.galleryImages} />
+          )}
 
           {/* Reviews section */}
           <div id="reviews-section" className="scroll-mt-24">

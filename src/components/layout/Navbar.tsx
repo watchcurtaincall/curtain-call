@@ -8,9 +8,9 @@ import { useAuth } from '@/lib/AuthContext';
 import { ClientDB } from '@/lib/db';
 
 const NAV_LINKS = [
-  { href: '/discovery', label: 'Discovery' },
+
   { href: '/tickets', label: 'Box Office' },
-  { href: '/plays', label: 'Archive' },
+  { href: '/plays', label: 'Play Archive' },
   { href: '/critics', label: 'Critics' },
   { href: '/editorial', label: 'Editorial' },
   { href: '/artists', label: 'Artists' },
@@ -73,7 +73,7 @@ export function Navbar() {
             id: p.id,
             title: p.title,
             type: 'play',
-            link: `/productions/${p.slug || p.id}`,
+            link: `/shows/${p.slug || p.id}`,
             subtitle: p.genre
           });
         }

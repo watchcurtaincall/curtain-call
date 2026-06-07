@@ -12,7 +12,7 @@ let isFirstMount = true;
 export default function DocumentedPlaysPage() {
   const [initialData] = useState(() => {
     if (typeof window !== 'undefined' && !isFirstMount) {
-      return sortItemsByDateAdded(ClientDB.getProductions().filter(p => p.status !== 'Draft'));
+      return sortItemsByDateAdded(ClientDB.getProductions().filter(p => p.status !== 'Draft' && (!p.eventType || p.eventType === 'Theatre')));
     }
     return null;
   });
@@ -33,7 +33,7 @@ export default function DocumentedPlaysPage() {
     isFirstMount = false;
     const loadData = () => {
       // Sort plays by date added so newly added plays appear at the top!
-      setProductions(sortItemsByDateAdded(ClientDB.getProductions().filter(p => p.status !== 'Draft')));
+      setProductions(sortItemsByDateAdded(ClientDB.getProductions().filter(p => p.status !== 'Draft' && (!p.eventType || p.eventType === 'Theatre'))));
     };
     loadData();
     

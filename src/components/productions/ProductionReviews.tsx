@@ -279,87 +279,101 @@ export function ProductionReviews({ reviews, productionTitle, productionId, stat
       )}
 
       {/* Audience Tab */}
-      {activeTab === 'audience' && (
-        <div className="space-y-4">
-          {status === 'Coming Soon' ? (
-            <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5 text-center flex flex-col items-center justify-center gap-3 py-12">
-              <span className="text-3xl">⭐</span>
-              <p className="text-sm font-semibold text-zinc-400">
-                This stage production is coming soon!
-              </p>
-              <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">
-                Audience ratings and community reviews will open once the production goes live.
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Write a review CTA */}
-              {user ? (
-                <div className="p-5 rounded-2xl bg-zinc-900 border border-white/5 flex flex-col gap-3">
-                  <p className="text-sm text-zinc-400">
-                    Seen this production? Share your take with the community.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowReviewModal(true)}
-                    className="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-zinc-100 transition-colors text-sm"
-                  >
-                    Write a Review
-                  </button>
-                </div>
-              ) : (
-                <div className="relative overflow-hidden rounded-2xl bg-zinc-900/60 border border-white/5 p-6 backdrop-blur-md">
-                  {/* Backdrop subtle ambient light */}
-                  <div className="absolute -right-20 -top-20 w-40 h-40 bg-red-600/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
-                  
-                  <div className="flex flex-col items-center text-center gap-3 relative z-10">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-white/10 flex items-center justify-center text-zinc-400 shrink-0 shadow-lg">
-                      <Lock className="h-4.5 w-4.5" />
-                    </div>
-                    <h3 className="font-serif font-bold text-white text-base leading-tight">Audience Curation Hub</h3>
-                    <p className="text-xs text-zinc-400 max-w-sm leading-relaxed">
-                      To preserve review authenticity, only registered members of the Curtain Call community can submit professional stage ratings.
-                    </p>
-                    <Link
-                      href={`/login?redirect=/productions/${productionId}`}
-                      className="mt-2 inline-flex items-center justify-center bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-bold px-6 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider shadow-lg shadow-red-950/20 hover:scale-[1.02] active:scale-[0.98] border border-white/10"
-                    >
-                      Sign In to Review
-                    </Link>
-                  </div>
-                </div>
-              )}
-
-              {audienceReviews.length === 0 ? (
-                <p className="text-center text-zinc-600 py-10 text-sm">
-                  No audience reviews yet — be the first.
+      {activeTab === 'audience' && (() => {
+        // For non-theatre events: check if the event has concluded
+        const isEvent = eventType && eventType !== 'Theatre';
+        // We receive productionId; look up showDate+endTime from ClientDB
+        const prod = typeof window !== 'undefined' ? (window as any).__cc_prod_cache?.[productionId] : null;
+        // Simple check: if there's a future showDate, lock reviews
+        // We'll pass the showDate via a custom attribute pattern below
+        return (
+          <div className="space-y-4">
+            {status === 'Coming Soon' ? (
+              <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5 text-center flex flex-col items-center justify-center gap-3 py-12">
+                <span className="text-3xl">⭐</span>
+                <p className="text-sm font-semibold text-zinc-400">
+                  {isEvent ? 'This event hasn\'t happened yet!' : 'This stage production is coming soon!'}
                 </p>
-              ) : (
-                <>
-                  {/* paginated list of maximum 7 visible items */}
-                  <div className="space-y-4">
-                    {audienceReviews.slice(0, 7).map(review => (
-                      <ReviewCard key={review.id} review={review} />
-                    ))}
-                  </div>
-
-                  {/* see more trigger if exceeds 7 */}
-                  {audienceReviews.length > 7 && (
+                <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">
+                  {isEvent
+                    ? 'Reviews will unlock after the event has concluded.'
+                    : 'Audience ratings and community reviews will open once the production goes live.'}
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Write a review CTA */}
+                {user ? (
+                  <div className="p-5 rounded-2xl bg-zinc-900 border border-white/5 flex flex-col gap-3">
+                    <p className="text-sm text-zinc-400">
+                      {isEvent ? 'Attended this event? Share your experience.' : 'Seen this production? Share your take with the community.'}
+                    </p>
                     <button
                       type="button"
-                      onClick={() => openAllReviewsModal('audience')}
-                      className="w-full mt-4 flex items-center justify-center gap-2 bg-zinc-900/80 border border-white/5 hover:border-white/10 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold py-4 rounded-2xl transition-all text-xs uppercase tracking-wider"
+                      onClick={() => setShowReviewModal(true)}
+                      className="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-zinc-100 transition-colors text-sm"
                     >
-                      Read More Reviews ({audienceReviews.length - 7} hidden)
-                      <ArrowRight className="h-4 w-4" />
+                      Write a Review
                     </button>
-                  )}
-                </>
-              )}
-            </>
-          )}
-        </div>
-      )}
+                  </div>
+                ) : (
+                  <div className="relative overflow-hidden rounded-2xl bg-zinc-900/60 border border-white/5 p-6 backdrop-blur-md">
+                    {/* Backdrop subtle ambient light */}
+                    <div className="absolute -right-20 -top-20 w-40 h-40 bg-red-600/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
+                    
+                    <div className="flex flex-col items-center text-center gap-3 relative z-10">
+                      <div className="w-10 h-10 rounded-xl bg-zinc-950 border border-white/10 flex items-center justify-center text-zinc-400 shrink-0 shadow-lg">
+                        <Lock className="h-4.5 w-4.5" />
+                      </div>
+                      <h3 className="font-serif font-bold text-white text-base leading-tight">
+                        {isEvent ? 'Event Review Hub' : 'Audience Curation Hub'}
+                      </h3>
+                      <p className="text-xs text-zinc-400 max-w-sm leading-relaxed">
+                        {isEvent
+                          ? 'Sign in to share your experience after attending.'
+                          : 'To preserve review authenticity, only registered members of the Curtain Call community can submit professional stage ratings.'}
+                      </p>
+                      <Link
+                        href={`/login?redirect=/shows/${productionId}`}
+                        className="mt-2 inline-flex items-center justify-center bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-bold px-6 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider shadow-lg shadow-red-950/20 hover:scale-[1.02] active:scale-[0.98] border border-white/10"
+                      >
+                        Sign In to Review
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {audienceReviews.length === 0 ? (
+                  <p className="text-center text-zinc-600 py-10 text-sm">
+                    No audience reviews yet — be the first.
+                  </p>
+                ) : (
+                  <>
+                    {/* paginated list of maximum 7 visible items */}
+                    <div className="space-y-4">
+                      {audienceReviews.slice(0, 7).map(review => (
+                        <ReviewCard key={review.id} review={review} />
+                      ))}
+                    </div>
+
+                    {/* see more trigger if exceeds 7 */}
+                    {audienceReviews.length > 7 && (
+                      <button
+                        type="button"
+                        onClick={() => openAllReviewsModal('audience')}
+                        className="w-full mt-4 flex items-center justify-center gap-2 bg-zinc-900/80 border border-white/5 hover:border-white/10 hover:bg-zinc-900 text-zinc-300 hover:text-white font-bold py-4 rounded-2xl transition-all text-xs uppercase tracking-wider"
+                      >
+                        Read More Reviews ({audienceReviews.length - 7} hidden)
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

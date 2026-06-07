@@ -8,7 +8,7 @@ export function ProductionCard({ production, showTicketBadge }: { production: Pr
 
   return (
     <Link
-      href={isTheatre ? `/productions/${production.slug || production.id}` : `/events/${production.slug || production.id}`}
+      href={isTheatre ? `/shows/${production.slug || production.id}` : `/event/${production.slug || production.id}`}
       className="group flex flex-col gap-3.5 focus:outline-none"
     >
       {/* Poster Container with premium physical lift & custom border triggers */}

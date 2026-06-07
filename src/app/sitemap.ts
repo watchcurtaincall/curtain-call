@@ -56,7 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     productions.forEach((prod) => {
       routes.push({
-        url: `${BASE_URL}/productions/${prod.slug || prod.id}`,
+        url: `${BASE_URL}/shows/${prod.slug || prod.id}`,
         lastModified: prod.updated_at ? new Date(prod.updated_at) : new Date(),
         changeFrequency: 'weekly',
         priority: 0.7,

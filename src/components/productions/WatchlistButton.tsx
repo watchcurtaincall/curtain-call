@@ -3,9 +3,10 @@
 import { Bookmark, BookmarkCheck } from 'lucide-react';
 import { useWatchlist } from '@/lib/WatchlistContext';
 
-export function WatchlistButton({ productionId, compact = false }: { productionId: string; compact?: boolean }) {
+export function WatchlistButton({ productionId, compact = false, eventType }: { productionId: string; compact?: boolean; eventType?: string }) {
   const { toggle, isInWatchlist } = useWatchlist();
   const saved = isInWatchlist(productionId);
+  const isEvent = eventType && eventType !== 'Theatre';
 
   const classes = compact
     ? `w-full flex items-center justify-center gap-1.5 py-3.5 rounded-xl font-bold text-[11px] uppercase tracking-wider transition-all border ${
@@ -25,9 +26,9 @@ export function WatchlistButton({ productionId, compact = false }: { productionI
       className={classes}
     >
       {saved ? (
-        <><BookmarkCheck className="h-4 w-4 text-red-400" /> {compact ? 'Saved' : 'Saved to List'}</>
+        <><BookmarkCheck className="h-4 w-4 text-red-400" /> {compact ? (isEvent ? 'Attending' : 'Saved') : (isEvent ? 'Attending' : 'Saved to List')}</>
       ) : (
-        <><Bookmark className="h-4 w-4" /> {compact ? 'Watchlist' : 'Add to Watchlist'}</>
+        <><Bookmark className="h-4 w-4" /> {compact ? (isEvent ? 'Attend' : 'Watchlist') : (isEvent ? 'Attend List' : 'Add to Watchlist')}</>
       )}
     </button>
   );

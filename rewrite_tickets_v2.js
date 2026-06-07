@@ -1,11 +1,13 @@
+const fs = require('fs');
 
+const code = `
 'use client';
 
 import React, { useState, useEffect } from 'react';
 import { ClientDB } from '@/lib/db';
 import { Production } from '@/lib/types';
 import Link from 'next/link';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { ArrowLeft, Ticket as TicketIcon, Mail, CheckCircle2, QrCode, Calendar, MapPin, Clock, Info, Loader2, Plus, Minus, CreditCard, Users, UserCircle, ChevronRight, Check } from 'lucide-react';
 import { PaystackButton } from '@/components/payments/PaystackButton';
 import { useAuth } from '@/lib/AuthContext';
@@ -48,13 +50,13 @@ function generateQRCodeSVG(text: string) {
     for (let x = 0; x < size; x++) {
       if (cells[y][x]) {
         rects.push(
-          <rect key={`${x}-${y}`} x={x * cellSize} y={y * cellSize} width={cellSize} height={cellSize} fill="black" />
+          <rect key={\`\${x}-\${y}\`} x={x * cellSize} y={y * cellSize} width={cellSize} height={cellSize} fill="black" />
         );
       }
     }
   }
   return (
-    <svg viewBox={`0 0 ${size * cellSize} ${size * cellSize}`} className="w-16 h-16 bg-white p-1 rounded-lg shadow-md shrink-0">
+    <svg viewBox={\`0 0 \${size * cellSize} \${size * cellSize}\`} className="w-16 h-16 bg-white p-1 rounded-lg shadow-md shrink-0">
       {rects}
     </svg>
   );
@@ -78,7 +80,7 @@ function generateBarcodeSVG(text: string) {
     currentX += barWidth + (isGap ? 1.5 : 1);
   }
   return (
-    <svg viewBox={`0 0 ${currentX} 30`} className="w-full h-7 text-zinc-700/60 print:text-black">
+    <svg viewBox={\`0 0 \${currentX} 30\`} className="w-full h-7 text-zinc-700/60 print:text-black">
       {bars}
     </svg>
   );
@@ -86,8 +88,6 @@ function generateBarcodeSVG(text: string) {
 
 export default function TicketPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth();
-  const router = useRouter();
-  const [showCancelModal, setShowCancelModal] = useState(false);
   const [production, setProduction] = useState<Production | null>(null);
   const [loading, setLoading] = useState(true);
   
@@ -110,21 +110,14 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     tickets: { reference: string; gatePass: string; tier: string; email: string; name: string }[];
   } | null>(null);
 
-  // Scroll to top when changing steps
-  useEffect(() => {
-    if (checkoutStep > 1) {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [checkoutStep]);
-
   useEffect(() => {
     if (user) {
       if (user.email && !buyerEmail) {
         setBuyerEmail(user.email);
         setConfirmEmail(user.email);
       }
-      if (user.name && !firstName) {
-        const parts = user.name.split(' ');
+      if (user.displayName && !firstName) {
+        const parts = user.displayName.split(' ');
         setFirstName(parts[0] || '');
         if (parts.length > 1) setLastName(parts.slice(1).join(' '));
       }
@@ -217,7 +210,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
            buyerEmail.trim() !== '' && 
            buyerEmail === confirmEmail && 
            buyerPhone.trim() !== '' &&
-           /^[^s@]+@[^s@]+.[^s@]+$/.test(buyerEmail);
+           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail);
   };
 
   const handlePaymentSuccess = async (reference: string) => {
@@ -227,7 +220,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       if (buyerEmail) {
         ClientDB.saveProfile({
           email: buyerEmail.toLowerCase(),
-          name: `${firstName} ${lastName}`.trim() || buyerEmail.split('@')[0],
+          name: \`\${firstName} \${lastName}\`.trim() || buyerEmail.split('@')[0],
           joinDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
           isVerified: true
         });
@@ -242,18 +235,18 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
 
       for (let i = 0; i < qty; i++) {
         let recipientEmail = buyerEmail;
-        let recipientName = `${firstName} ${lastName}`.trim();
+        let recipientName = \`\${firstName} \${lastName}\`.trim();
 
         if (sendToOthers) {
-          const attendeeKey = `${tierName}-${i}`;
+          const attendeeKey = \`\${tierName}-\${i}\`;
           const attendeeInfo = attendees[attendeeKey] || {};
           if (attendeeInfo.email && attendeeInfo.email.trim() !== '') recipientEmail = attendeeInfo.email;
           if (attendeeInfo.name && attendeeInfo.name.trim() !== '') recipientName = attendeeInfo.name;
         }
 
-        const ticketRef = totalTickets > 1 ? `${reference}-${globalTicketIndex}` : reference;
+        const ticketRef = totalTickets > 1 ? \`\${reference}-\${globalTicketIndex}\` : reference;
         const randDigits = Math.floor(100 + Math.random() * 900);
-        const gatePass = `CC-${randDigits}`;
+        const gatePass = \`CC-\${randDigits}\`;
         
         purchasedTickets.push({ 
            reference: ticketRef, 
@@ -295,16 +288,16 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     }) : 'Scheduled Date';
 
     for (const [recipientEmail, tix] of Object.entries(ticketsByEmail)) {
-      const subject = `Your Curtain Call Admission Pass: ${production?.title || 'Event Ticket'}`;
+      const subject = \`Your Curtain Call Admission Pass: \${production?.title || 'Event Ticket'}\`;
       
-      const ticketRows = tix.map((t, idx) => `
+      const ticketRows = tix.map((t, idx) => \`
         <tr style="border-top: 1px dashed rgba(255,255,255,0.08);">
-          <td style="padding: 12px 0; font-size: 13px; color: #a1a1aa;">Pass #${idx + 1} (${t.tier})</td>
-          <td style="padding: 12px 0; font-size: 13px; color: #22c55e; text-align: right; font-weight: bold;">${t.gatePass}</td>
+          <td style="padding: 12px 0; font-size: 13px; color: #a1a1aa;">Pass #\${idx + 1} (\${t.tier})</td>
+          <td style="padding: 12px 0; font-size: 13px; color: #22c55e; text-align: right; font-weight: bold;">\${t.gatePass}</td>
         </tr>
-      `).join('');
+      \`).join('');
 
-      const htmlContent = `
+      const htmlContent = \`
         <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
           <div style="text-align: center; margin-bottom: 25px;">
             <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Admission Pass</span>
@@ -317,8 +310,8 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
           
           <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
             <div style="margin-bottom: 20px;">
-              <span style="font-size: 9px; color: #dc2626; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Admit ${tix.length} Person${tix.length > 1 ? 's' : ''}</span>
-              <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; margin: 4px 0 0; font-family: Georgia, serif;">${production?.title}</h2>
+              <span style="font-size: 9px; color: #dc2626; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Admit \${tix.length} Person\${tix.length > 1 ? 's' : ''}</span>
+              <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; margin: 4px 0 0; font-family: Georgia, serif;">\${production?.title}</h2>
             </div>
             
             <div style="border-top: 1px dashed #27272a; margin: 20px 0;"></div>
@@ -326,26 +319,26 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Event Date</td>
-                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${showDateFormatted}</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">\${showDateFormatted}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Venue</td>
-                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${production?.venue}</td>
+                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">\${production?.venue}</td>
               </tr>
             </table>
 
             <div style="border-top: 1px dashed #27272a; margin: 20px 0;"></div>
             <h3 style="font-size: 12px; color: #ffffff; text-transform: uppercase; font-weight: bold; margin-bottom: 10px; font-family: Georgia, serif;">Admissions Gate Passes:</h3>
             <table style="width: 100%; border-collapse: collapse;">
-              ${ticketRows}
+              \${ticketRows}
             </table>
           </div>
 
           <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
-            Don't forget to mark your calendar! The event is scheduled to take place at <strong>${production?.venue}</strong> on <strong>${showDateFormatted}</strong>. We recommend arriving early.
+            Don't forget to mark your calendar! The event is scheduled to take place at <strong>\${production?.venue}</strong> on <strong>\${showDateFormatted}</strong>. We recommend arriving early.
           </p>
         </div>
-      `;
+      \`;
 
       try {
         await ClientDB.sendEmail(recipientEmail, subject, htmlContent);
@@ -356,10 +349,10 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   const isTheatre = !production?.eventType || production?.eventType === 'Theatre';
 
   return (
-    <div className="min-h-screen relative bg-zinc-950 overflow-x-hidden pb-24 lg:pb-0">
+    <div className="min-h-screen relative bg-zinc-950 overflow-x-hidden pb-32 lg:pb-0">
       <div 
         className="fixed inset-0 bg-cover bg-center z-0 opacity-20 mix-blend-luminosity transform scale-105 pointer-events-none" 
-        style={{ backgroundImage: `url(${production?.posterUrl || ''})` }}
+        style={{ backgroundImage: \`url(\${production?.posterUrl || ''})\` }}
       />
       <div className="fixed inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/95 to-zinc-950/80 z-0 pointer-events-none" />
       <div className="fixed inset-0 backdrop-blur-3xl z-0 pointer-events-none" />
@@ -367,7 +360,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       {successData ? (
         <div className="relative z-10 flex items-center justify-center min-h-screen p-4 py-20">
           <div className="max-w-xl w-full bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 text-center shadow-[0_0_80px_rgba(34,197,94,0.15)] overflow-hidden animate-fade-up print-wrapper">
-            <style>{`
+            <style>{\`
               @media print {
                 body { background: white !important; color: black !important; }
                 body > div:not(.print-wrapper), body > header, body > footer, .no-print { display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; }
@@ -378,7 +371,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                 .print-dashed-line { border-color: black !important; border-style: dashed !important; }
                 .print-stub-section { background: white !important; border: none !important; border-left: 2px dashed black !important; border-radius: 0 !important; padding: 0 0 0 20px !important; margin: 0 !important; display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; width: 140px !important; }
               }
-            `}</style>
+            \`}</style>
             
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-green-600 via-emerald-500 to-teal-400 no-print" />
             
@@ -388,7 +381,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   
             <h1 className="text-2xl font-serif font-bold text-white mb-1 no-print">Tickets Secured!</h1>
             <p className="text-xs text-zinc-400 mb-8 no-print">
-              Your ${successData.tickets.length} admission pass${successData.tickets.length > 1 ? 'es have' : ' has'} been secured and sent via email.
+              Your \${successData.tickets.length} admission pass\${successData.tickets.length > 1 ? 'es have' : ' has'} been secured and sent via email.
             </p>
   
             <div className="flex flex-col gap-5 overflow-y-auto max-h-[500px] pr-1.5 [scrollbar-width:none] mb-8 print-ticket-container">
@@ -400,7 +393,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                     <div>
                       <div className="flex justify-between items-start gap-2">
                         <div>
-                          <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold block mb-1">Pass #${index + 1} of ${successData.tickets.length}</span>
+                          <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold block mb-1">Pass #\${index + 1} of \${successData.tickets.length}</span>
                           <h3 className="text-lg font-serif font-bold text-white truncate">
                             {production.title}
                           </h3>
@@ -412,11 +405,11 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                       </div>
                       
                       <div className="mt-2 flex gap-2">
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border shadow-inner ${
+                        <span className={\`text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest border shadow-inner \${
                           isTheatre
                             ? 'bg-purple-500/10 text-purple-300 border-purple-500/20'
                             : 'bg-red-500/10 text-red-300 border-red-500/20'
-                        }`}>
+                        }\`}>
                           {production.customEventType || production.eventType || 'Theatre'}
                         </span>
                       </div>
@@ -474,7 +467,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                 <QrCode className="h-4 w-4" /> Print / Save PDF
               </button>
               <Link
-                href={isTheatre ? `/shows/${production.slug || production.id}` : `/event/${production.slug || production.id}`}
+                href={isTheatre ? \`/productions/\${production.slug || production.id}\` : \`/events/\${production.slug || production.id}\`}
                 className="flex-1 bg-white text-black font-bold py-4 px-6 rounded-2xl hover:bg-zinc-100 transition-all text-sm shadow-xl text-center flex items-center justify-center"
               >
                 Back to Details
@@ -487,12 +480,12 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
           
           {/* Left Column: Event Context & Multistep Form */}
           <div className="flex-1 w-full flex flex-col gap-6">
-            <button
-              onClick={() => setShowCancelModal(true)}
+            <Link
+              href={isTheatre ? \`/productions/\${production.slug || production.id}\` : \`/events/\${production.slug || production.id}\`}
               className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors uppercase tracking-wider font-bold w-fit bg-zinc-900/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/5"
             >
               <ArrowLeft className="h-3.5 w-3.5" /> Back to Event
-            </button>
+            </Link>
 
             {/* Title / Info Mobile Header */}
             <div className="flex items-center gap-4 lg:hidden">
@@ -548,11 +541,11 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                     return (
                       <div
                         key={tier.name}
-                        className={`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                        className={\`relative overflow-hidden p-5 rounded-2xl border transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-4 \${
                           qty > 0
                             ? 'bg-red-500/5 border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.05)]'
                             : 'bg-zinc-950/40 border-white/5 hover:border-white/10'
-                        }`}
+                        }\`}
                       >
                         <div className="relative z-10 flex-1">
                           <h3 className="font-bold text-base text-white">
@@ -562,6 +555,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                             <span className="text-lg font-bold tracking-tight text-white">
                               ₦{tier.price.toLocaleString()}
                             </span>
+                            <span className="text-[10px] text-zinc-500 uppercase tracking-widest bg-zinc-900 px-2 py-0.5 rounded-full">includes fees</span>
                           </div>
                           {tier.description && (
                             <p className="text-xs text-zinc-400 mt-2 max-w-sm leading-relaxed">
@@ -632,7 +626,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
 
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Confirm Email</label>
-                      <input type="email" required value={confirmEmail} onChange={e => setConfirmEmail(e.target.value)} placeholder="jane@example.com" className={`w-full bg-zinc-950 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-all ${confirmEmail && confirmEmail !== buyerEmail ? 'border-red-500/50' : 'border-white/10 focus:border-white/30'}`} />
+                      <input type="email" required value={confirmEmail} onChange={e => setConfirmEmail(e.target.value)} placeholder="jane@example.com" className={\`w-full bg-zinc-950 border rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none transition-all \${confirmEmail && confirmEmail !== buyerEmail ? 'border-red-500/50' : 'border-white/10 focus:border-white/30'}\`} />
                     </div>
 
                     <div className="flex flex-col gap-1.5">
@@ -644,7 +638,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                   {/* Ask to Assign Attendees */}
                   {totalTickets > 1 && (
                     <div className="bg-zinc-950/50 border border-white/5 rounded-2xl p-5 flex items-start gap-4 cursor-pointer hover:bg-zinc-950/80 transition-colors" onClick={() => setSendToOthers(!sendToOthers)}>
-                      <div className={`w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 transition-colors border ${sendToOthers ? 'bg-red-500 border-red-500' : 'bg-transparent border-zinc-600'}`}>
+                      <div className={\`w-5 h-5 rounded flex items-center justify-center shrink-0 mt-0.5 transition-colors border \${sendToOthers ? 'bg-red-500 border-red-500' : 'bg-transparent border-zinc-600'}\`}>
                         {sendToOthers && <Check className="w-3.5 h-3.5 text-white" />}
                       </div>
                       <div>
@@ -660,7 +654,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                       <div className="flex flex-col gap-4">
                         {Object.entries(cart).flatMap(([tierName, qty]) => 
                           Array.from({ length: qty }).map((_, idx) => {
-                            const key = `${tierName}-${idx}`;
+                            const key = \`\${tierName}-\${idx}\`;
                             const att = attendees[key] || { name: '', email: '' };
                             
                             return (
@@ -755,8 +749,8 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             </div>
           </div>
 
-          {/* Right Column: Order Summary */}
-          <div className="w-full lg:w-[350px] xl:w-[400px] shrink-0 lg:sticky top-24 lg:pt-11">
+          {/* Right Column: Order Summary (Desktop Only) */}
+          <div className="hidden lg:block w-[350px] xl:w-[400px] shrink-0 sticky top-24 pt-11">
             <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-xl">
               <h3 className="text-lg font-serif font-bold text-white mb-6 border-b border-white/5 pb-4">Summary</h3>
               
@@ -815,49 +809,26 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             </div>
           </div>
 
-        </div>
-      )}
-
-      {/* Sticky Mobile Bottom Bar */}
-      {!successData && checkoutStep < 3 && (
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-zinc-900 border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50 animate-in slide-in-from-bottom-full duration-300">
-           <button
-             disabled={checkoutStep === 1 ? totalTickets === 0 : !canProceedToPayment()}
-             onClick={() => setCheckoutStep(s => (s + 1) as 2 | 3)}
-             className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:bg-red-600 text-white rounded-2xl py-3.5 px-6 flex justify-between items-center transition-all disabled:cursor-not-allowed shadow-xl"
-           >
-              <span className="text-xl font-bold tracking-tight">₦{totalAmount.toLocaleString()}</span>
-              <span className="bg-white text-red-600 px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-1">
-                Continue
-              </span>
-           </button>
-        </div>
-      )}
-
-      {showCancelModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/80 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl animate-in fade-in zoom-in duration-200 text-center text-zinc-900">
-            <h3 className="text-xl font-bold mb-3">Release tickets</h3>
-            <p className="text-zinc-600 mb-8 text-sm">
-              Are you sure you want to cancel? This will cancel the order and release your tickets?
-            </p>
-            <div className="flex items-center gap-4 w-full">
-              <button 
-                onClick={() => setShowCancelModal(false)} 
-                className="flex-1 bg-red-50 text-red-500 font-bold py-3.5 rounded-xl hover:bg-red-100 transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={() => router.push(isTheatre ? `/shows/${production.slug || production.id}` : `/event/${production.slug || production.id}`)}
-                className="flex-1 bg-red-500 text-white font-bold py-3.5 rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30"
-              >
-                Release ticket
-              </button>
+          {/* Sticky Mobile Bottom Bar */}
+          {checkoutStep < 3 && (
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-zinc-900 border-t border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-50 animate-in slide-in-from-bottom-full duration-300">
+               <button
+                 disabled={checkoutStep === 1 ? totalTickets === 0 : !canProceedToPayment()}
+                 onClick={() => setCheckoutStep(s => (s + 1) as 2 | 3)}
+                 className="w-full bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:bg-red-600 text-white rounded-2xl py-3.5 px-6 flex justify-between items-center transition-all disabled:cursor-not-allowed shadow-xl"
+               >
+                  <span className="text-xl font-bold tracking-tight">₦{totalAmount.toLocaleString()}</span>
+                  <span className="bg-white text-red-600 px-5 py-2 rounded-xl text-sm font-bold flex items-center gap-1">
+                    Continue
+                  </span>
+               </button>
             </div>
-          </div>
+          )}
+
         </div>
       )}
     </div>
   );
 }
+`
+fs.writeFileSync('/Users/mac/.gemini/antigravity/scratch/curtain-call/src/app/tickets/[id]/page.tsx', code);

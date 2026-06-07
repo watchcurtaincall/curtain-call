@@ -16,7 +16,8 @@ import { DateTimePickerModal } from '@/components/shared/DateTimePickerModal';
 // ─── Types ───────────────────────────────────────────────
 interface ShowDate {
   date: string;   // YYYY-MM-DD
-  time: string;   // HH:MM
+  time: string;   // HH:MM start time
+  endTime?: string; // HH:MM end time (for non-theatre events)
 }
 
 interface TicketTier {
@@ -91,7 +92,7 @@ function CreateProductionForm() {
   const handleCopyLink = () => {
     if (typeof window === 'undefined') return;
     const prod = ClientDB.getProductionById(createdProductionId);
-    const link = `${window.location.origin}/productions/${prod?.slug || createdProductionId}`;
+    const link = `${window.location.origin}/shows/${prod?.slug || createdProductionId}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -106,7 +107,7 @@ function CreateProductionForm() {
     customEventType: '',
     title: '', genre: '', synopsis: '',
     venue: '', city: '', address: '',
-    dates: [{ date: '', time: '19:00' }],
+    dates: [{ date: '', time: '19:00', endTime: '' }],
     tiers: [{ id: crypto.randomUUID(), name: 'General', price: '', capacity: '' }],
     accountName: '', accountNumber: '', bankName: '', bankCode: '',
     posterUrl: '',
@@ -228,7 +229,7 @@ function CreateProductionForm() {
 
 
   // Dates
-  const addDate = () => set('dates', [...form.dates, { date: '', time: '19:00' }]);
+  const addDate = () => set('dates', [...form.dates, { date: '', time: '19:00', endTime: '' }]);
   const removeDate = (i: number) => set('dates', form.dates.filter((_, idx) => idx !== i));
   const updateDate = (i: number, field: keyof ShowDate, val: string) => {
     const next = [...form.dates];
@@ -259,8 +260,10 @@ function CreateProductionForm() {
     try {
       setIsDraftMode(false);
       const firstDate = form.dates[0]?.date || '';
+      const firstTime = form.dates[0]?.time || '';
+      const firstEndTime = form.dates[0]?.endTime || '';
       
-      // Generate highly professional, human-readable SEO link slug
+      // Generate SEO-friendly slug
       const slug = form.title
         .toLowerCase()
         .replace(/[^a-z0-9_ ]/g, '')
@@ -270,6 +273,16 @@ function CreateProductionForm() {
       const targetId = isEditMode && editId ? editId : newPlayId;
 
       const existingProd = isEditMode && editId ? ClientDB.getProductionById(editId) : null;
+
+      // Calculate runtime from start/end times for non-theatre events
+      let computedRuntime = existingProd?.runtime || '120 mins';
+
+      if (form.eventType && form.eventType !== 'Theatre' && firstTime && firstEndTime) {
+        const [sh, sm] = firstTime.split(':').map(Number);
+        const [eh, em] = firstEndTime.split(':').map(Number);
+        const durationMins = (eh * 60 + em) - (sh * 60 + sm);
+        if (durationMins > 0) computedRuntime = `${durationMins} mins`;
+      }
       
       const newPlay = {
         id: targetId,
@@ -279,8 +292,10 @@ function CreateProductionForm() {
         createdAt: existingProd?.createdAt || new Date().toISOString(),
         synopsis: form.synopsis,
         genre: form.genre,
-        runtime: existingProd?.runtime || '120 mins',
+        runtime: computedRuntime,
         venue: form.venue,
+        city: form.city || undefined,
+        address: form.address || undefined,
         status: existingProd ? existingProd.status : ('Coming Soon' as const),
         posterUrl: form.posterUrl || '/images/default_poster.png',
         criticScore: existingProd ? existingProd.criticScore : null,
@@ -291,6 +306,8 @@ function CreateProductionForm() {
         curationStatus: 'Approved' as const,
         isProducerManaged: true,
         showDate: firstDate,
+        showTime: firstTime || undefined,
+        endTime: firstEndTime || undefined,
         ticketTiers: form.tiers.map(t => ({
           id: t.id,
           name: t.name,
@@ -298,6 +315,9 @@ function CreateProductionForm() {
           capacity: t.capacity
         })),
         castAndCrew: form.castAndCrew || [],
+        accountName: form.accountName || undefined,
+        accountNumber: form.accountNumber || undefined,
+        bankName: form.bankName || undefined,
       };
 
       ClientDB.saveProduction(newPlay);
@@ -380,7 +400,7 @@ function CreateProductionForm() {
 
   if (published) {
     const prod = ClientDB.getProductionById(createdProductionId);
-    const playUrl = `/productions/${prod?.slug || createdProductionId}`;
+    const playUrl = `/shows/${prod?.slug || createdProductionId}`;
     const ticketsUrl = `/tickets/${createdProductionId}`;
     
     return (
@@ -416,7 +436,7 @@ function CreateProductionForm() {
               <div className="min-w-0">
                 <span className="text-[10px] text-zinc-500 uppercase tracking-wider block font-bold">Public Playbill URL</span>
                 <Link href={playUrl} target="_blank" className="text-sm text-red-500 hover:text-red-400 font-medium break-all flex items-center gap-1 mt-0.5">
-                  /productions/{prod?.slug || createdProductionId}
+                  /shows/{prod?.slug || createdProductionId}
                 </Link>
               </div>
               <button
@@ -446,7 +466,7 @@ function CreateProductionForm() {
         ) : null}
 
         <div className="flex gap-3 w-full max-w-md">
-          <Link href="/profile" className="flex-1 bg-white text-black font-bold py-4 rounded-2xl hover:bg-zinc-100 transition-colors shadow-lg text-sm flex items-center justify-center">
+          <Link href="/creator" className="flex-1 bg-white text-black font-bold py-4 rounded-2xl hover:bg-zinc-100 transition-colors shadow-lg text-sm flex items-center justify-center">
             Go to Dashboard
           </Link>
           <button
@@ -760,34 +780,49 @@ function CreateProductionForm() {
               />
             </Field>
 
-            <Field label="Show Dates & Times" hint="Select each individual day the show runs">
+            <Field label="Show Date & Time" hint={form.eventType === 'Theatre' ? 'Select each individual day the show runs' : 'Date, start time, and end time'}>
               <div className="flex flex-col gap-3">
                 {form.dates.map((d, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPickerIndex(i)}
-                      className="flex-1 flex items-center justify-between bg-zinc-950 border border-white/5 hover:border-white/20 hover:bg-zinc-900 rounded-xl px-4 py-3 text-left transition-all group"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
-                          <Calendar className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold text-white">
-                            {d.date ? formatDate(d.date) : 'Select date'}
+                  <div key={i} className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPickerIndex(i)}
+                        className="flex-1 flex items-center justify-between bg-zinc-950 border border-white/5 hover:border-white/20 hover:bg-zinc-900 rounded-xl px-4 py-3 text-left transition-all group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-white transition-colors">
+                            <Calendar className="h-4 w-4" />
                           </div>
-                          <div className="text-[11px] text-zinc-500 font-medium mt-0.5">
-                            {d.time ? `At ${d.time}` : 'Select time'}
+                          <div>
+                            <div className="text-sm font-bold text-white">
+                              {d.date ? formatDate(d.date) : 'Select date'}
+                            </div>
+                            <div className="text-[11px] text-zinc-500 font-medium mt-0.5">
+                              {d.time ? `Starts at ${d.time}` : 'Select time'}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-zinc-600 group-hover:text-white transition-colors" />
-                    </button>
-                    {form.dates.length > 1 && (
-                      <button onClick={() => removeDate(i)} className="p-3 bg-zinc-950 border border-white/5 rounded-xl text-zinc-600 hover:text-red-400 hover:bg-zinc-900 hover:border-red-500/20 transition-all shrink-0">
-                        <X className="h-4 w-4" />
+                        <ChevronRight className="h-4 w-4 text-zinc-600 group-hover:text-white transition-colors" />
                       </button>
+                      {form.dates.length > 1 && (
+                        <button onClick={() => removeDate(i)} className="p-3 bg-zinc-950 border border-white/5 rounded-xl text-zinc-600 hover:text-red-400 hover:bg-zinc-900 hover:border-red-500/20 transition-all shrink-0">
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    {/* End Time — only for non-theatre events */}
+                    {form.eventType && form.eventType !== 'Theatre' && (
+                      <div className="flex items-center gap-2 pl-1">
+                        <Clock className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
+                        <label className="text-[11px] text-zinc-500 uppercase tracking-wider font-bold w-16 shrink-0">End Time</label>
+                        <input
+                          type="time"
+                          value={d.endTime || ''}
+                          onChange={e => updateDate(i, 'endTime', e.target.value)}
+                          className="bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/25 transition-colors flex-1"
+                        />
+                      </div>
                     )}
                   </div>
                 ))}
@@ -811,7 +846,7 @@ function CreateProductionForm() {
                   <div className="flex flex-wrap gap-2 mt-1">
                     {form.dates.filter(d => d.date).map((d, i) => (
                       <span key={i} className="text-[11px] bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-full border border-white/10">
-                        {formatDate(d.date)} · {d.time}
+                        {formatDate(d.date)} · {d.time}{d.endTime ? ` – ${d.endTime}` : ''}
                       </span>
                     ))}
                   </div>

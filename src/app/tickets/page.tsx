@@ -10,14 +10,13 @@ import Link from 'next/link';
 export default function BoxOfficeTicketsPage() {
   const [productions, setProductions] = useState<Production[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<'All' | 'CurtainCall' | 'External'>('All');
-  const [selectedType, setSelectedType] = useState('All');
+  const [selectedType, setSelectedType] = useState<'All' | 'Theatre' | 'NonTheatre'>('All');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedFilter, selectedType]);
+  }, [searchQuery, selectedType]);
 
   useEffect(() => {
     const loadData = () => {
@@ -25,8 +24,7 @@ export default function BoxOfficeTicketsPage() {
       const all = ClientDB.getProductions();
       const ticketed = all.filter(p => {
         const hasTickets = p.externalTicketUrl || (p.ticketTiers && p.ticketTiers.length > 0);
-        const isActive = p.status === 'Currently Showing' || p.status === 'Coming Soon';
-        return hasTickets && isActive && p.curationStatus !== 'Pending' && p.curationStatus !== 'Declined';
+        return hasTickets && p.status !== 'Draft' && p.curationStatus !== 'Pending' && p.curationStatus !== 'Declined';
       });
       setProductions(sortItemsByDateAdded(ticketed));
     };
@@ -46,20 +44,13 @@ export default function BoxOfficeTicketsPage() {
       p.venue.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.genre.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const pType = p.eventType || 'Theatre';
-    const matchesType = selectedType === 'All' || pType === selectedType;
+    const isTheatre = p.eventType === 'Theatre' || !p.eventType;
+    let matchesType = true;
+    if (selectedType === 'Theatre') matchesType = isTheatre;
+    if (selectedType === 'NonTheatre') matchesType = !isTheatre;
 
-    let matchesFilter = true;
-    if (selectedFilter === 'CurtainCall') {
-      matchesFilter = !!(p.ticketTiers && p.ticketTiers.length > 0);
-    } else if (selectedFilter === 'External') {
-      matchesFilter = !!p.externalTicketUrl;
-    }
-
-    return matchesSearch && matchesType && matchesFilter;
+    return matchesSearch && matchesType;
   });
-
-  const eventTypes = ['All', ...Array.from(new Set(productions.map(p => p.eventType || 'Theatre')))];
 
   return (
     <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-7xl py-12 min-h-screen relative">
@@ -106,35 +97,19 @@ export default function BoxOfficeTicketsPage() {
           <div className="flex bg-zinc-900 border border-white/5 p-1 rounded-xl shrink-0">
             {[
               { id: 'All', label: 'All Tickets' },
-              { id: 'CurtainCall', label: 'Curtain Call Direct' },
-              { id: 'External', label: 'External Links' }
+              { id: 'Theatre', label: 'Theatre Shows' },
+              { id: 'NonTheatre', label: 'Non-Theatre Events' }
             ].map(f => (
               <button
                 key={f.id}
-                onClick={() => setSelectedFilter(f.id as any)}
+                onClick={() => setSelectedType(f.id as any)}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
-                  selectedFilter === f.id
+                  selectedType === f.id
                     ? 'bg-zinc-800 text-white border border-white/5 shadow-md'
                     : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
                 {f.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none]">
-            {eventTypes.map(type => (
-              <button
-                key={type}
-                onClick={() => setSelectedType(type)}
-                className={`px-3.5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border whitespace-nowrap ${
-                  selectedType === type
-                    ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-950/20'
-                    : 'bg-zinc-900 border-white/5 text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                {type}
               </button>
             ))}
           </div>
@@ -151,7 +126,7 @@ export default function BoxOfficeTicketsPage() {
             We couldn't find any ticketed events matching your search query or filters. Check back soon for fresh stage premieres!
           </p>
           <button
-            onClick={() => { setSearchQuery(''); setSelectedFilter('All'); setSelectedType('All'); }}
+            onClick={() => { setSearchQuery(''); setSelectedType('All'); }}
             className="inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-white font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider"
           >
             Reset Filters

@@ -117,7 +117,7 @@ export function HeroCarousel({ productions }: { productions: Production[] }) {
           {/* Action CTAs */}
           <div className="flex items-center gap-4 flex-wrap pt-2">
             <Link
-              href={`/productions/${featured.slug || featured.id}`}
+              href={`/shows/${featured.slug || featured.id}`}
               className="bg-white text-black px-7 py-3.5 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-zinc-200 active:scale-95 transition-all shadow-lg hover:shadow-white/5"
             >
               Explore Show
