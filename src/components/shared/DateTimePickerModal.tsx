@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X, Clock } from 'lucide-react';
 
 export function DateTimePickerModal({
@@ -16,6 +16,20 @@ export function DateTimePickerModal({
 }) {
   const [date, setDate] = useState(initialDate || new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState(initialTime || '19:00');
+
+  const initialHour = parseInt((initialTime || '19:00').split(':')[0], 10) || 19;
+  const initialMin = (initialTime || '19:00').split(':')[1] || '00';
+  
+  const [h12, setH12] = useState(String(initialHour % 12 || 12));
+  const [m, setM] = useState(initialMin);
+  const [period, setPeriod] = useState(initialHour >= 12 ? 'PM' : 'AM');
+
+  useEffect(() => {
+    let h = parseInt(h12, 10);
+    if (period === 'PM' && h !== 12) h += 12;
+    if (period === 'AM' && h === 12) h = 0;
+    setTime(`${String(h).padStart(2, '0')}:${m}`);
+  }, [h12, m, period]);
 
   const [viewDate, setViewDate] = useState(new Date(date || new Date()));
   
@@ -86,17 +100,39 @@ export function DateTimePickerModal({
           </div>
         </div>
         
-        {/* Time */}
         <div className="flex items-center justify-between bg-zinc-950/50 border border-white/5 rounded-2xl p-4 mb-6">
           <div className="flex items-center gap-2 text-sm text-zinc-400 font-medium">
             <Clock className="h-4 w-4" /> Time
           </div>
-          <input 
-            type="time" 
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-white font-mono text-sm focus:border-red-500/50 focus:outline-none [color-scheme:dark]"
-          />
+          <div className="flex items-center gap-1.5">
+            <select
+              value={h12}
+              onChange={e => setH12(e.target.value)}
+              className="bg-zinc-900 border border-white/10 rounded-lg px-2 py-1.5 text-white font-mono text-sm focus:border-red-500/50 focus:outline-none appearance-none text-center min-w-[3rem] cursor-pointer"
+            >
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(h => (
+                <option key={h} value={h}>{h}</option>
+              ))}
+            </select>
+            <span className="text-zinc-500 font-bold">:</span>
+            <select
+              value={m}
+              onChange={e => setM(e.target.value)}
+              className="bg-zinc-900 border border-white/10 rounded-lg px-2 py-1.5 text-white font-mono text-sm focus:border-red-500/50 focus:outline-none appearance-none text-center min-w-[3rem] cursor-pointer"
+            >
+              {['00', '15', '30', '45'].map(min => (
+                <option key={min} value={min}>{min}</option>
+              ))}
+            </select>
+            <select
+              value={period}
+              onChange={e => setPeriod(e.target.value)}
+              className="bg-zinc-900 border border-white/10 rounded-lg px-2 py-1.5 text-white font-mono text-sm font-bold focus:border-red-500/50 focus:outline-none appearance-none text-center ml-1 cursor-pointer"
+            >
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
+            </select>
+          </div>
         </div>
         
         <button 
