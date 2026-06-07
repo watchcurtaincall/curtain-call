@@ -812,8 +812,8 @@ export default function SubmitPortalPage() {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider">Event Category</label>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                  {['Theatre', 'Party', 'Community', 'Comedy', 'Music', 'Concert', 'Festival', 'Workshop', 'Conference', 'Exhibition', 'Sports', 'Other'].map(type => (
+                <div className="flex flex-wrap gap-2">
+                  {['Theatre', 'Art', 'Music', 'Party', 'Festival', 'Workshop', 'Community', 'Health', 'Wellness', 'Tech', 'Seminar', 'Religion', 'Comedy', 'Conference', 'Other'].map(type => (
                     <button
                       key={type}
                       type="button"

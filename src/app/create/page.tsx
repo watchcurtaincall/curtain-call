@@ -33,6 +33,7 @@ interface CastCrewMember {
 
 interface FormData {
   eventType?: string;
+  customEventType?: string;
   title: string;
   genre: string;
   synopsis: string;
@@ -97,7 +98,8 @@ function CreateProductionForm() {
 
 
   const [form, setForm] = useState<FormData>({
-    eventType: 'Theatre',
+    eventType: '',
+    customEventType: '',
     title: '', genre: '', synopsis: '',
     venue: '', city: '', address: '',
     dates: [{ date: '', time: '19:00' }],
@@ -141,7 +143,8 @@ function CreateProductionForm() {
           const dates = prod.showDate ? [{ date: prod.showDate, time: '19:00' }] : [{ date: '', time: '19:00' }];
 
           setForm({
-            eventType: prod.eventType || 'Theatre',
+            eventType: prod.eventType || '',
+            customEventType: '',
             title: prod.title || '',
             genre: prod.genre || '',
             synopsis: prod.synopsis || '',
@@ -240,7 +243,7 @@ function CreateProductionForm() {
     s + (parseFloat(t.price) || 0) * (parseInt(t.capacity) || 0), 0);
 
   const canNext = [
-    form.title.length > 2 && form.genre && form.synopsis.length >= 30,
+    form.title.length > 2 && form.eventType && (form.eventType !== 'Other' || form.customEventType) && (form.eventType !== 'Theatre' || form.genre) && form.synopsis.length >= 30,
     form.dates.every(d => d.date && d.time) && form.venue && form.city,
     form.tiers.every(t => t.name && t.price && t.capacity),
     form.accountName && form.accountNumber.length >= 10 && form.bankName,
@@ -265,7 +268,7 @@ function CreateProductionForm() {
       
       const newPlay = {
         id: targetId,
-        eventType: (form.eventType || 'Theatre') as any,
+        eventType: (form.eventType === 'Other' ? form.customEventType : form.eventType) as any,
         title: form.title,
         slug: slug || undefined,
         createdAt: existingProd?.createdAt || new Date().toISOString(),
@@ -315,7 +318,7 @@ function CreateProductionForm() {
       
       const newPlay = {
         id: targetId,
-        eventType: (form.eventType || 'Theatre') as any,
+        eventType: (form.eventType === 'Other' ? form.customEventType : form.eventType) as any,
         title: form.title || 'Untitled Draft',
         slug: slug || undefined,
         createdAt: existingProd?.createdAt || new Date().toISOString(),
@@ -484,13 +487,13 @@ function CreateProductionForm() {
           <div className="flex flex-col gap-5 animate-fade-up">
             <Field label="Event Type">
               <div className="flex flex-wrap gap-2">
-                {['Theatre', 'Concert', 'Party', 'Festival', 'Comedy', 'Workshop', 'Conference', 'Other'].map(type => (
+                {['Theatre', 'Art', 'Music', 'Party', 'Festival', 'Workshop', 'Community', 'Health', 'Wellness', 'Tech', 'Seminar', 'Religion', 'Comedy', 'Conference', 'Other'].map(type => (
                   <button
                     key={type}
-                    onClick={() => { set('eventType', type); if(type !== 'Theatre') set('genre', type); }}
+                    onClick={() => { set('eventType', type); if(type !== 'Theatre') set('genre', type); set('customEventType', ''); }}
                     type="button"
                     className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                      (form.eventType || 'Theatre') === type
+                      form.eventType === type
                         ? 'bg-white text-black border-white'
                         : 'bg-zinc-900 text-zinc-400 border-white/10 hover:border-white/25 hover:text-white'
                     }`}
@@ -499,13 +502,23 @@ function CreateProductionForm() {
                   </button>
                 ))}
               </div>
+              {form.eventType === 'Other' && (
+                <div className="mt-3">
+                  <input
+                    value={form.customEventType || ''}
+                    onChange={e => set('customEventType', e.target.value)}
+                    placeholder="Enter your event type"
+                    className={inputCls}
+                  />
+                </div>
+              )}
             </Field>
 
             <Field label={(!form.eventType || form.eventType === 'Theatre') ? "Play Title" : "Event Title"}>
               <input
                 value={form.title}
                 onChange={e => set('title', e.target.value)}
-                placeholder="e.g. WATERSIDE, Moremi The Musical"
+                placeholder={(!form.eventType || form.eventType === 'Theatre') ? "e.g. WATERSIDE, Moremi The Musical" : "e.g. Lagos Carnival, Tech Connect 2026"}
                 className={inputCls}
               />
             </Field>
@@ -535,7 +548,7 @@ function CreateProductionForm() {
               <textarea
                 value={form.synopsis}
                 onChange={e => set('synopsis', e.target.value)}
-                placeholder="Tell audiences what this production is about — the story, themes, what makes it unique…"
+                placeholder={(!form.eventType || form.eventType === 'Theatre') ? "Tell audiences what this production is about — the story, themes, what makes it unique…" : "Tell audiences what this event is about — what to expect, who it's for, and why they should attend…"}
                 rows={5}
                 className={`${inputCls} resize-none`}
               />
