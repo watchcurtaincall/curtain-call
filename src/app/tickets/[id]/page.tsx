@@ -356,7 +356,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   const isTheatre = !production?.eventType || production?.eventType === 'Theatre';
 
   return (
-    <div className={`relative bg-zinc-950 overflow-x-hidden ${!successData && checkoutStep < 3 ? 'pb-28 lg:pb-0' : ''}`}>
+    <div className={`relative bg-zinc-950 min-h-screen overflow-x-hidden ${!successData && checkoutStep < 3 ? 'pb-28 lg:pb-0' : ''}`}>
       <div 
         className="fixed inset-0 bg-cover bg-center z-0 opacity-15 pointer-events-none" 
         style={{ backgroundImage: `url(${production?.posterUrl || ''})` }}
@@ -482,7 +482,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
           </div>
         </div>
       ) : (
-        <div className="relative z-10 max-w-5xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 items-start animate-fade-up pt-12 lg:pt-20 px-4">
+        <div className="relative z-10 max-w-5xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 items-start animate-fade-up pt-12 lg:pt-20 pb-12 lg:pb-24 px-4">
           
           {/* Left Column: Event Context & Multistep Form */}
           <div className="flex-1 w-full flex flex-col gap-6">
