@@ -316,7 +316,7 @@ export default function Home() {
             
             <div className="z-10 shrink-0">
               <Link 
-                href="/submit" 
+                href="/create" 
                 className="bg-white text-black font-bold px-8 py-4 rounded-2xl hover:bg-zinc-200 transition-all flex items-center gap-2 text-sm uppercase tracking-wider group-hover:shadow-[0_0_30px_rgba(255,255,255,0.2)]"
               >
                 Host an Event <ArrowRight className="h-4 w-4" />

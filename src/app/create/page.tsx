@@ -32,6 +32,7 @@ interface CastCrewMember {
 }
 
 interface FormData {
+  eventType?: string;
   title: string;
   genre: string;
   synopsis: string;
@@ -96,6 +97,7 @@ function CreateProductionForm() {
 
 
   const [form, setForm] = useState<FormData>({
+    eventType: 'Theatre',
     title: '', genre: '', synopsis: '',
     venue: '', city: '', address: '',
     dates: [{ date: '', time: '19:00' }],
@@ -139,6 +141,7 @@ function CreateProductionForm() {
           const dates = prod.showDate ? [{ date: prod.showDate, time: '19:00' }] : [{ date: '', time: '19:00' }];
 
           setForm({
+            eventType: prod.eventType || 'Theatre',
             title: prod.title || '',
             genre: prod.genre || '',
             synopsis: prod.synopsis || '',
@@ -262,6 +265,7 @@ function CreateProductionForm() {
       
       const newPlay = {
         id: targetId,
+        eventType: (form.eventType || 'Theatre') as any,
         title: form.title,
         slug: slug || undefined,
         createdAt: existingProd?.createdAt || new Date().toISOString(),
@@ -311,6 +315,7 @@ function CreateProductionForm() {
       
       const newPlay = {
         id: targetId,
+        eventType: (form.eventType || 'Theatre') as any,
         title: form.title || 'Untitled Draft',
         slug: slug || undefined,
         createdAt: existingProd?.createdAt || new Date().toISOString(),
@@ -477,7 +482,26 @@ function CreateProductionForm() {
         {/* ── STEP 0: Production Info ── */}
         {step === 0 && (
           <div className="flex flex-col gap-5 animate-fade-up">
-            <Field label="Play Title">
+            <Field label="Event Type">
+              <div className="flex flex-wrap gap-2">
+                {['Theatre', 'Concert', 'Party', 'Festival', 'Comedy', 'Workshop', 'Conference', 'Other'].map(type => (
+                  <button
+                    key={type}
+                    onClick={() => { set('eventType', type); if(type !== 'Theatre') set('genre', type); }}
+                    type="button"
+                    className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                      (form.eventType || 'Theatre') === type
+                        ? 'bg-white text-black border-white'
+                        : 'bg-zinc-900 text-zinc-400 border-white/10 hover:border-white/25 hover:text-white'
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </Field>
+
+            <Field label={(!form.eventType || form.eventType === 'Theatre') ? "Play Title" : "Event Title"}>
               <input
                 value={form.title}
                 onChange={e => set('title', e.target.value)}
@@ -486,26 +510,28 @@ function CreateProductionForm() {
               />
             </Field>
 
-            <Field label="Genre">
-              <div className="flex flex-wrap gap-2">
-                {GENRES.map(g => (
-                  <button
-                    key={g}
-                    onClick={() => set('genre', g)}
-                    type="button"
-                    className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                      form.genre === g
-                        ? 'bg-white text-black border-white'
-                        : 'bg-zinc-900 text-zinc-400 border-white/10 hover:border-white/25 hover:text-white'
-                    }`}
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-            </Field>
+            {(!form.eventType || form.eventType === 'Theatre') && (
+              <Field label="Genre">
+                <div className="flex flex-wrap gap-2">
+                  {GENRES.map(g => (
+                    <button
+                      key={g}
+                      onClick={() => set('genre', g)}
+                      type="button"
+                      className={`px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                        form.genre === g
+                          ? 'bg-white text-black border-white'
+                          : 'bg-zinc-900 text-zinc-400 border-white/10 hover:border-white/25 hover:text-white'
+                      }`}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            )}
 
-            <Field label="About this Production" hint="Minimum 30 characters">
+            <Field label={(!form.eventType || form.eventType === 'Theatre') ? "About this Production" : "About this Event"} hint="Minimum 30 characters">
               <textarea
                 value={form.synopsis}
                 onChange={e => set('synopsis', e.target.value)}
@@ -563,61 +589,63 @@ function CreateProductionForm() {
               )}
             </Field>
 
-            <Field label="Cast & Crew (Playbill)">
-              <div className="flex flex-col gap-3 bg-zinc-900/40 border border-white/5 rounded-2xl p-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <input
-                    value={newMemberName}
-                    onChange={e => setNewMemberName(e.target.value)}
-                    placeholder="Name (e.g. John Doe)"
-                    className={inputCls}
-                  />
-                  <input
-                    value={newMemberRole}
-                    onChange={e => setNewMemberRole(e.target.value)}
-                    placeholder="Role (e.g. Kurunmi, Director)"
-                    className={inputCls}
-                  />
-                  <select
-                    value={newMemberCategory}
-                    onChange={e => setNewMemberCategory(e.target.value as any)}
-                    className={`${inputCls} bg-zinc-950 text-white`}
-                  >
-                    <option value="Cast">Cast (Actor)</option>
-                    <option value="Creative">Creative (Director, Writer)</option>
-                    <option value="Technical">Technical (Lights, Sound)</option>
-                  </select>
-                </div>
-                <button
-                  type="button"
-                  onClick={addCastMember}
-                  className="bg-white/10 hover:bg-white/15 text-white text-xs font-bold py-2.5 rounded-xl border border-white/5 transition-all"
-                >
-                  Add Cast/Crew Member
-                </button>
-
-                {form.castAndCrew && form.castAndCrew.length > 0 && (
-                  <div className="flex flex-col gap-1.5 mt-2 max-h-40 overflow-y-auto pr-1">
-                    {form.castAndCrew.map((member, idx) => (
-                      <div key={idx} className="flex justify-between items-center bg-zinc-950/60 border border-white/5 px-3 py-1.5 rounded-lg text-xs">
-                        <div>
-                          <strong className="text-white">{member.name}</strong>
-                          <span className="text-zinc-400 font-medium"> as {member.role}</span>
-                          <span className="text-[9px] text-red-400 uppercase tracking-widest font-mono ml-2">({member.category})</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeCastMember(idx)}
-                          className="text-zinc-500 hover:text-red-400 transition-colors p-1"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
+            {(!form.eventType || form.eventType === 'Theatre') && (
+              <Field label="Cast & Crew (Playbill)">
+                <div className="flex flex-col gap-3 bg-zinc-900/40 border border-white/5 rounded-2xl p-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input
+                      value={newMemberName}
+                      onChange={e => setNewMemberName(e.target.value)}
+                      placeholder="Name (e.g. John Doe)"
+                      className={inputCls}
+                    />
+                    <input
+                      value={newMemberRole}
+                      onChange={e => setNewMemberRole(e.target.value)}
+                      placeholder="Role (e.g. Kurunmi, Director)"
+                      className={inputCls}
+                    />
+                    <select
+                      value={newMemberCategory}
+                      onChange={e => setNewMemberCategory(e.target.value as any)}
+                      className={`${inputCls} bg-zinc-950 text-white`}
+                    >
+                      <option value="Cast">Cast (Actor)</option>
+                      <option value="Creative">Creative (Director, Writer)</option>
+                      <option value="Technical">Technical (Lights, Sound)</option>
+                    </select>
                   </div>
-                )}
-              </div>
-            </Field>
+                  <button
+                    type="button"
+                    onClick={addCastMember}
+                    className="bg-white/10 hover:bg-white/15 text-white text-xs font-bold py-2.5 rounded-xl border border-white/5 transition-all"
+                  >
+                    Add Cast/Crew Member
+                  </button>
+
+                  {form.castAndCrew && form.castAndCrew.length > 0 && (
+                    <div className="flex flex-col gap-1.5 mt-2 max-h-40 overflow-y-auto pr-1">
+                      {form.castAndCrew.map((member, idx) => (
+                        <div key={idx} className="flex justify-between items-center bg-zinc-950/60 border border-white/5 px-3 py-1.5 rounded-lg text-xs">
+                          <div>
+                            <strong className="text-white">{member.name}</strong>
+                            <span className="text-zinc-400 font-medium"> as {member.role}</span>
+                            <span className="text-[9px] text-red-400 uppercase tracking-widest font-mono ml-2">({member.category})</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeCastMember(idx)}
+                            className="text-zinc-500 hover:text-red-400 transition-colors p-1"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </Field>
+            )}
           </div>
         )}
 
