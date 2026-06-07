@@ -356,7 +356,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
   const isTheatre = !production?.eventType || production?.eventType === 'Theatre';
 
   return (
-    <div className="min-h-screen relative bg-zinc-950 overflow-x-hidden pb-32 lg:pb-0">
+    <div className="min-h-screen relative bg-zinc-950 overflow-x-hidden pb-24 lg:pb-0">
       <div 
         className="fixed inset-0 bg-cover bg-center z-0 opacity-20 mix-blend-luminosity transform scale-105 pointer-events-none" 
         style={{ backgroundImage: `url(${production?.posterUrl || ''})` }}
@@ -755,8 +755,8 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
             </div>
           </div>
 
-          {/* Right Column: Order Summary (Desktop & Mobile) */}
-          <div className="w-full lg:w-[350px] xl:w-[400px] shrink-0 lg:sticky top-24 lg:pt-11 pb-24 lg:pb-0">
+          {/* Right Column: Order Summary */}
+          <div className="w-full lg:w-[350px] xl:w-[400px] shrink-0 lg:sticky top-24 lg:pt-11">
             <div className="bg-zinc-900/40 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-xl">
               <h3 className="text-lg font-serif font-bold text-white mb-6 border-b border-white/5 pb-4">Summary</h3>
               
