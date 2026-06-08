@@ -197,6 +197,7 @@ export default function QuizPage() {
 
   // ── Session complete ──────────────────────────────────────
   const handleComplete = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setPageState('done');
     fetchStatus();
     fetchSlots();
