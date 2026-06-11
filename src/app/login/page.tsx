@@ -16,13 +16,16 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
+    
+    // Extract form data synchronously before any await
+    const formElement = e.currentTarget as HTMLFormElement;
+    const formData = new FormData(formElement);
+    const enteredEmail = (formData.get('email') as string || '').trim();
+    const enteredPassword = formData.get('password') as string || '';
+
     setLoading(true);
     setErrorMsg('');
     await new Promise(r => setTimeout(r, 1000));
-
-    const formData = new FormData(e.target as HTMLFormElement);
-    const enteredEmail = (formData.get('email') as string || '').trim();
-    const enteredPassword = formData.get('password') as string || '';
 
     if (!enteredEmail) {
       setErrorMsg('Please enter your email address.');
