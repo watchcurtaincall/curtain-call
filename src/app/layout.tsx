@@ -4,6 +4,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Newsletter } from "@/components/layout/Newsletter";
 import { Footer } from "@/components/layout/Footer";
 import { Providers } from '@/lib/Providers';
+import { AutoUpdater } from "@/components/shared/AutoUpdater";
 import { Analytics } from "@vercel/analytics/react";
 import Script from 'next/script';
 import "./globals.css";
@@ -46,6 +47,7 @@ export default function RootLayout({
       className={`${outfit.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
+        <AutoUpdater />
         <Providers>
           <Navbar />
           <main className="flex-1">
