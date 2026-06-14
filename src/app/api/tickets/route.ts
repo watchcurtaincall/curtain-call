@@ -16,17 +16,27 @@ const supabaseServer = (supabaseUrl && supabaseServiceKey)
     })
   : null;
 
-// GET: Fetch all tickets
-export async function GET() {
+// GET: Fetch tickets — requires email param so each user only retrieves their own tickets
+export async function GET(request: Request) {
   if (!supabaseServer) {
     return NextResponse.json({ error: 'Supabase service client not configured' }, { status: 500 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const email = searchParams.get('email');
+  const adminSecret = request.headers.get('x-admin-secret');
+  const isAdmin = adminSecret && adminSecret === process.env.ADMIN_SECRET;
+
+  if (!email && !isAdmin) {
+    return NextResponse.json({ error: 'Missing email parameter' }, { status: 400 });
+  }
+
   try {
-    const { data: tickets, error } = await supabaseServer
-      .from('tickets')
-      .select('*')
-      .order('timestamp', { ascending: false });
+    let query = supabaseServer.from('tickets').select('*').order('timestamp', { ascending: false });
+    if (!isAdmin && email) {
+      query = query.eq('buyer_email', email.toLowerCase());
+    }
+    const { data: tickets, error } = await query;
 
     if (error) {
       console.error('[API Tickets] Fetch error:', error);

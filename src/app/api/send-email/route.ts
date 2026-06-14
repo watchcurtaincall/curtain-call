@@ -3,6 +3,12 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
   try {
     const { to, subject, html, type = 'transactional' } = await request.json();
+
+    // Validate required fields before any further processing
+    if (!to || !subject || !html) {
+      return NextResponse.json({ error: 'Missing required fields: to, subject, html' }, { status: 400 });
+    }
+
     const resendApiKey = process.env.RESEND_API_KEY;
     const mailerSendApiKey = process.env.MAILERSEND_API_KEY;
 

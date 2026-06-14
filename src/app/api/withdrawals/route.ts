@@ -16,17 +16,27 @@ const supabaseServer = (supabaseUrl && supabaseServiceKey)
     })
   : null;
 
-// GET: Fetch all withdrawals
-export async function GET() {
+// GET: Fetch withdrawals — requires email param so each producer only retrieves their own
+export async function GET(request: Request) {
   if (!supabaseServer) {
     return NextResponse.json({ error: 'Supabase service client not configured' }, { status: 500 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const email = searchParams.get('email');
+  const adminSecret = request.headers.get('x-admin-secret');
+  const isAdmin = adminSecret && adminSecret === process.env.ADMIN_SECRET;
+
+  if (!email && !isAdmin) {
+    return NextResponse.json({ error: 'Missing email parameter' }, { status: 400 });
+  }
+
   try {
-    const { data: withdrawals, error } = await supabaseServer
-      .from('withdrawals')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let query = supabaseServer.from('withdrawals').select('*').order('created_at', { ascending: false });
+    if (!isAdmin && email) {
+      query = query.eq('email', email.toLowerCase());
+    }
+    const { data: withdrawals, error } = await query;
 
     if (error) {
       console.error('[API Withdrawals] Fetch error:', error);

@@ -17,9 +17,15 @@ const supabaseServer = (supabaseUrl && supabaseServiceKey)
   : null;
 
 // GET: Returns all newsletter subscribers, user profiles, and all pending queues (bypassing client-side RLS)
-export async function GET() {
+export async function GET(request: Request) {
   if (!supabaseServer) {
     return NextResponse.json({ error: 'Supabase service client not configured' }, { status: 500 });
+  }
+
+  // Require admin secret header to protect sensitive user data
+  const adminSecret = request.headers.get('x-admin-secret');
+  if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
