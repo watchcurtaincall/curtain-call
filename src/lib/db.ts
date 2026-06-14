@@ -835,7 +835,12 @@ export const ClientDB = {
   getProductionById(id: string): Production | undefined {
     const productions = this.getProductions();
     // Match by id first, then by slug (enables clean URL routing)
-    return productions.find(p => p.id === id) || productions.find(p => p.slug === id);
+    let found = productions.find(p => p.id === id) || productions.find(p => p.slug === id);
+    if (!found) {
+      // Fallback: If URL doesn't contain the timestamp but the ID does
+      found = productions.find(p => p.id.startsWith(id + '-'));
+    }
+    return found;
   },
 
   saveProduction(production: Production): void {
