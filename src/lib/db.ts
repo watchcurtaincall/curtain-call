@@ -1563,11 +1563,48 @@ export const ClientDB = {
       // Trigger a notification to the producer!
       const commission = ticket.price * 0.05;
       const netEarnings = ticket.price - commission;
+      const notifBody = `1 ${ticket.tier} ticket sold for "${prod.title}". Net: ₦${netEarnings.toLocaleString()} (Commission: ₦${commission.toLocaleString()}).`;
+      
       this.addNotification(prod.submitterEmail, {
         type: 'ticket_sale',
         title: 'New ticket sale 🎟️',
-        body: `1 ${ticket.tier} ticket sold for "${prod.title}". Net: ₦${netEarnings.toLocaleString()} (Commission: ₦${commission.toLocaleString()}).`
+        body: notifBody
       });
+
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
+          <h2 style="font-size: 24px; font-weight: bold; color: #ffffff; text-align: center;">New Ticket Sale 🎟️</h2>
+          <div style="height: 2px; width: 80px; background-color: #dc2626; margin: 15px auto 25px;"></div>
+          <p style="font-size: 15px; color: #d4d4d8; line-height: 1.6; text-align: center;">
+            Great news! You just sold a ticket for <strong>${prod.title}</strong>.
+          </p>
+          <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 8px 0; font-size: 12px; color: #71717a;">Tier</td>
+                <td style="padding: 8px 0; font-size: 14px; color: #ffffff; text-align: right; font-weight: bold;">${ticket.tier}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 12px; color: #71717a;">Gross Amount</td>
+                <td style="padding: 8px 0; font-size: 14px; color: #ffffff; text-align: right; font-weight: bold;">₦${Number(ticket.price).toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; font-size: 12px; color: #71717a;">Commission (5%)</td>
+                <td style="padding: 8px 0; font-size: 14px; color: #ef4444; text-align: right; font-weight: bold;">- ₦${commission.toLocaleString()}</td>
+              </tr>
+              <tr style="border-top: 1px dashed #27272a;">
+                <td style="padding: 16px 0 8px; font-size: 13px; color: #a1a1aa; font-weight: bold;">Net Earnings</td>
+                <td style="padding: 16px 0 8px; font-size: 16px; color: #22c55e; text-align: right; font-weight: bold;">₦${netEarnings.toLocaleString()}</td>
+              </tr>
+            </table>
+          </div>
+          <div style="text-align: center;">
+            <a href="https://curtaincall.com.ng/creator" style="display: inline-block; background-color: #ffffff; color: #000000; text-decoration: none; font-weight: bold; padding: 12px 24px; border-radius: 12px; font-size: 14px;">View Dashboard</a>
+          </div>
+        </div>
+      `;
+
+      this.sendEmail(prod.submitterEmail, `New Ticket Sale: ${prod.title} 🎟️`, emailHtml).catch(console.error);
     }
 
     // Sync to cloud tickets table
