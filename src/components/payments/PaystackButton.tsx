@@ -13,6 +13,7 @@ interface PaystackButtonProps {
   onSuccess?: (ref: string) => void;
   className?: string;
   disabled?: boolean;
+  metadata?: Record<string, any>;
 }
 
 export function PaystackButton({
@@ -24,6 +25,7 @@ export function PaystackButton({
   onSuccess,
   className,
   disabled,
+  metadata,
 }: PaystackButtonProps) {
   const [loaded, setLoaded] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -48,6 +50,7 @@ export function PaystackButton({
         production_id: productionId,
         production_title: productionTitle,
         tier: tierName,
+        ...metadata,
       },
       onSuccess: (ref) => {
         setPaying(false);

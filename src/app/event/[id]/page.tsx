@@ -26,8 +26,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         const { data } = await supabase
           .from('productions')
           .select('title, synopsis, poster_url, venue, status')
-          .eq('id', id)
-        .maybeSingle();
+          .ilike('id', id)
+          .maybeSingle();
       
       prodData = data;
       
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         const { data: slugData } = await supabase
           .from('productions')
           .select('title, synopsis, poster_url, venue, status')
-          .eq('slug', id)
+          .ilike('slug', id)
           .maybeSingle();
         prodData = slugData;
       }
@@ -61,7 +61,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     } else {
       // Fallback to static mock data if supabase config isn't loaded
       const { MOCK_PRODUCTIONS } = require('@/lib/mock');
-      const play = MOCK_PRODUCTIONS.find((p: any) => p.id === id || p.slug === id);
+      const play = MOCK_PRODUCTIONS.find((p: any) => p.id.toLowerCase() === id.toLowerCase() || p.slug?.toLowerCase() === id.toLowerCase());
       if (play) {
         title = `${play.title} | Curtain Call`;
         if (play.synopsis) description = play.synopsis.slice(0, 160) + (play.synopsis.length > 160 ? '...' : '');
@@ -110,15 +110,15 @@ export default async function ProductionPage({ params }: Props) {
   let prodData = null;
   
   if (supabase) {
-    const { data } = await supabase.from('productions').select('*').eq('id', id).maybeSingle();
+    const { data } = await supabase.from('productions').select('*').ilike('id', id).maybeSingle();
     prodData = data;
     if (!prodData) {
-      const { data: slugData } = await supabase.from('productions').select('*').eq('slug', id).maybeSingle();
+      const { data: slugData } = await supabase.from('productions').select('*').ilike('slug', id).maybeSingle();
       prodData = slugData;
     }
   } else {
     const { MOCK_PRODUCTIONS } = require('@/lib/mock');
-    prodData = MOCK_PRODUCTIONS.find((p: any) => p.id === id || p.slug === id);
+    prodData = MOCK_PRODUCTIONS.find((p: any) => p.id.toLowerCase() === id.toLowerCase() || p.slug?.toLowerCase() === id.toLowerCase());
   }
 
   const jsonLd = prodData ? {

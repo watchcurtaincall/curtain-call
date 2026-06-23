@@ -283,9 +283,12 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
                   linkExpired = today > showDate;
                 }
                 if (linkExpired) return null;
+                const rawUrl = production.externalTicketUrl || '';
+                const cleanUrl = rawUrl.trim();
+                const absoluteUrl = /^https?:\/\//i.test(cleanUrl) ? cleanUrl : `https://${cleanUrl}`;
                 return (
                   <a
-                    href={production.externalTicketUrl}
+                    href={absoluteUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full bg-white text-black text-center py-3.5 rounded-xl font-bold hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 text-sm uppercase tracking-wider shadow-lg"

@@ -80,9 +80,13 @@ ${recentQuestionsContext}` : ''}`;
   }
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 seconds timeout
+
     const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({
         contents: [{ parts: [{ text: finalPrompt }] }],
         generationConfig: {
@@ -105,6 +109,8 @@ ${recentQuestionsContext}` : ''}`;
         },
       }),
     });
+
+    clearTimeout(timeoutId);
 
     if (!res.ok) {
       console.error('[QuestionGen] Gemini API error:', res.status, await res.text());

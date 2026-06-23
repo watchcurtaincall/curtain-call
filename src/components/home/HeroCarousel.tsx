@@ -124,17 +124,21 @@ export function HeroCarousel({ productions }: { productions: Production[] }) {
               <ArrowRight className="h-4 w-4" />
             </Link>
             {featured.status !== 'Past Production' && featured.status !== 'Recently Concluded' && (
-              featured.externalTicketUrl ? (
-                <a
-                  href={featured.externalTicketUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-zinc-900/60 backdrop-blur-md border border-white/15 text-white px-7 py-3.5 rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-zinc-800/80 active:scale-95 transition-all shadow-md"
-                >
-                  <Ticket className="h-4 w-4 text-red-400" />
-                  Get Tickets
-                </a>
-              ) : (
+              featured.externalTicketUrl ? (() => {
+                const url = featured.externalTicketUrl.trim();
+                const absoluteUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+                return (
+                  <a
+                    href={absoluteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-zinc-900/60 backdrop-blur-md border border-white/15 text-white px-7 py-3.5 rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-zinc-800/80 active:scale-95 transition-all shadow-md"
+                  >
+                    <Ticket className="h-4 w-4 text-red-400" />
+                    Get Tickets
+                  </a>
+                );
+              })() : (
                 <Link
                   href={`/tickets/${featured.id}`}
                   className="bg-zinc-900/60 backdrop-blur-md border border-white/15 text-white px-7 py-3.5 rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-zinc-800/80 active:scale-95 transition-all shadow-md"

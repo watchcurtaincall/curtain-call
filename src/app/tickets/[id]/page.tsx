@@ -164,7 +164,9 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       const fetched = ClientDB.getProductionById(resolved.id);
       if (fetched) {
         if (fetched.externalTicketUrl) {
-          window.location.replace(fetched.externalTicketUrl);
+          const url = fetched.externalTicketUrl.trim();
+          const target = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+          window.location.replace(target);
           return;
         }
         setProduction(fetched);
@@ -217,7 +219,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
            buyerEmail.trim() !== '' && 
            buyerEmail === confirmEmail && 
            buyerPhone.trim() !== '' &&
-           /^[^s@]+@[^s@]+.[^s@]+$/.test(buyerEmail);
+           /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail);
   };
 
   const handlePaymentSuccess = async (reference: string) => {
@@ -254,6 +256,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
         const ticketRef = totalTickets > 1 ? `${reference}-${globalTicketIndex}` : reference;
         const randDigits = Math.floor(100 + Math.random() * 900);
         const gatePass = `CC-${randDigits}`;
+        const ticketId = `tkt_${reference}_${globalTicketIndex}`;
         
         purchasedTickets.push({ 
            reference: ticketRef, 
@@ -265,6 +268,7 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
 
         if (production) {
           ClientDB.purchaseTicket({
+            id: ticketId,
             productionId: production.id,
             productionTitle: production.title,
             buyerEmail: recipientEmail,
@@ -742,6 +746,18 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
                       userEmail={buyerEmail}
                       disabled={false}
                       onSuccess={handlePaymentSuccess}
+                      metadata={{
+                        buyer_first_name: firstName,
+                        buyer_last_name: lastName,
+                        buyer_phone: buyerPhone,
+                        cart: cart,
+                        send_to_others: sendToOthers,
+                        attendees: attendees,
+                        ticket_prices: tiersToUse.reduce((acc, t) => {
+                          acc[t.name] = t.price;
+                          return acc;
+                        }, {} as Record<string, number>)
+                      }}
                       className="w-full bg-white text-black font-bold py-5 px-8 rounded-xl hover:bg-zinc-100 hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 text-base shadow-[0_0_40px_rgba(255,255,255,0.15)]"
                     />
                     <div className="flex items-center justify-center gap-1.5 mt-4 opacity-60">

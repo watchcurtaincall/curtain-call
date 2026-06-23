@@ -797,6 +797,9 @@ export const ClientDB = {
         p.slug = generateSlug(p.title);
       }
 
+      // Dynamic Sanitizer: Recalculate status dynamically based on showDate
+      p.status = calculateDynamicStatus(p.showDate, p.status);
+
       // Dynamic Sanitizer: If this is a custom play (ID is not p1..p10 mock format),
       // dynamically recalculate or preserve critic and audience scores from the reviews list
       const isMock = p.id && /^p\d+$/.test(p.id);
@@ -833,12 +836,14 @@ export const ClientDB = {
   },
 
   getProductionById(id: string): Production | undefined {
+    if (!id) return undefined;
     const productions = this.getProductions();
-    // Match by id first, then by slug (enables clean URL routing)
-    let found = productions.find(p => p.id === id) || productions.find(p => p.slug === id);
+    // Match by id first, then by slug (enables clean URL routing) case-insensitively
+    let found = productions.find(p => p.id.toLowerCase() === id.toLowerCase()) || 
+                productions.find(p => p.slug?.toLowerCase() === id.toLowerCase());
     if (!found) {
       // Fallback: If URL doesn't contain the timestamp but the ID does
-      found = productions.find(p => p.id.startsWith(id + '-'));
+      found = productions.find(p => p.id.toLowerCase().startsWith(id.toLowerCase() + '-'));
     }
     return found;
   },
@@ -1808,8 +1813,23 @@ export const ClientDB = {
 };
 
 // ── CLOUD PULL AND CACHE SYNC MECHANISM ──
-export const syncFromSupabase = async () => {
+export const syncFromSupabase = async (force = false) => {
   if (typeof window === 'undefined') return;
+
+  // Caching/Throttling Policy: Prevent aggressive Supabase query costs/egress by checking if we synced recently
+  if (!force) {
+    const lastSyncStr = localStorage.getItem('cc_last_sync_time');
+    if (lastSyncStr) {
+      const lastSync = parseInt(lastSyncStr, 10);
+      const now = Date.now();
+      if (!isNaN(lastSync) && now - lastSync < 300000) { // 5 minutes cache TTL
+        console.log('[Supabase Sync] Cache hit (last sync < 5m ago). Skipping cloud network request.');
+        // Still fire event so components know they can read from localStorage
+        window.dispatchEvent(new Event('cc-db-synced'));
+        return;
+      }
+    }
+  }
 
   let email = '';
   let isAdmin = false;
@@ -1823,15 +1843,59 @@ export const syncFromSupabase = async () => {
 
   try {
     console.log('[Curtain Call Database] Starting high-speed parallel sync with Supabase cloud...');
-    const url = `/api/sync-data?email=${encodeURIComponent(email)}&t=${Date.now()}`;
-    const res = await fetch(url, { cache: 'no-store' });
+    // Only use cache-busting timestamp on forced syncs, allowing CDN caching on normal syncs
+    const publicUrl = force 
+      ? `/api/sync-data?type=public&t=${Date.now()}` 
+      : `/api/sync-data?type=public`;
+    
+    const privateUrl = email
+      ? (force 
+          ? `/api/sync-data?type=private&email=${encodeURIComponent(email)}&t=${Date.now()}`
+          : `/api/sync-data?type=private&email=${encodeURIComponent(email)}`)
+      : null;
 
-    if (!res.ok) {
-      console.error('[Supabase Sync] Unified sync API failed:', res.statusText);
+    const fetchPromises: Promise<any>[] = [
+      fetch(publicUrl, force ? { cache: 'no-store' } : undefined).then(r => r.ok ? r.json() : null)
+    ];
+    if (privateUrl) {
+      fetchPromises.push(
+        fetch(privateUrl, force ? { cache: 'no-store' } : undefined).then(r => r.ok ? r.json() : null)
+      );
+    }
+
+    const [publicRes, privateRes] = await Promise.all(fetchPromises);
+
+    if (!publicRes) {
+      console.error('[Supabase Sync] Public sync fetch failed');
       return;
     }
 
-    const data = await res.json();
+    const combinedData = {
+      productions: [
+        ...(publicRes.productions || []),
+        ...(privateRes?.productions || [])
+      ],
+      artists: [
+        ...(publicRes.artists || []),
+        ...(privateRes?.artists || [])
+      ],
+      articles: [
+        ...(publicRes.articles || []),
+        ...(privateRes?.articles || [])
+      ],
+      reviews: publicRes.reviews || [],
+      approvedCritics: publicRes.approvedCritics || [],
+      criticApplications: privateRes?.criticApplications || [],
+      withdrawals: privateRes?.withdrawals || [],
+      tickets: privateRes?.tickets || [],
+      notifications: privateRes?.notifications || [],
+      subscribers: privateRes?.subscribers || [],
+      profiles: privateRes?.profiles || [],
+      userProfile: privateRes?.userProfile || null,
+      quizCashCredits: privateRes?.quizCashCredits || []
+    };
+
+    const data = combinedData;
 
     // 1. Process Productions
     if (data.productions) {
