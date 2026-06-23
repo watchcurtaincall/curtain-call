@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import {
@@ -38,6 +38,7 @@ interface CastCrewMember {
 interface FormData {
   eventType?: string;
   customEventType?: string;
+  productionType?: 'Student' | 'Professional';
   title: string;
   genre: string;
   synopsis: string;
@@ -93,6 +94,14 @@ function CreateProductionForm() {
   const [resolvedName, setResolvedName] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
 
+  // New state variables for enhancements
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [showProductionTypeModal, setShowProductionTypeModal] = useState(false);
+  const [allArtists, setAllArtists] = useState<any[]>([]);
+  const [showArtistSuggestions, setShowArtistSuggestions] = useState(false);
+  
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const roleInputRef = useRef<HTMLInputElement>(null);
 
   const [resolving, setResolving] = useState(false);
   const [resolveError, setResolveError] = useState('');
@@ -108,19 +117,89 @@ function CreateProductionForm() {
 
   useEffect(() => { getBanks().then(setBanks); }, []);
 
+  // Fetch approved artists for autocomplete
+  useEffect(() => {
+    try {
+      const list = ClientDB.getArtists() || [];
+      setAllArtists(list);
+    } catch (e) {
+      console.error('Failed to load artists for suggestions:', e);
+    }
+  }, []);
 
+  // Close suggestions dropdown when clicking outside
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      if (nameInputRef.current && !nameInputRef.current.contains(e.target as Node)) {
+        setShowArtistSuggestions(false);
+      }
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
 
   const [form, setForm] = useState<FormData>({
     eventType: '',
     customEventType: '',
+    productionType: 'Professional',
     title: '', genre: '', synopsis: '',
-    venue: '', city: '', address: '',
+    venue: '', city: 'Lagos', address: '',
     dates: [{ date: '', time: '19:00', endTime: '' }],
     tiers: [{ id: 'default-tier', name: 'General', price: '', capacity: '' }],
     accountName: '', accountNumber: '', bankName: '', bankCode: '',
     posterUrl: '',
     castAndCrew: [],
   });
+
+  // Load draft on mount (if not in edit mode)
+  useEffect(() => {
+    if (!editId) {
+      const saved = localStorage.getItem('curtain_call_create_draft');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === 'object') {
+            setForm(parsed);
+            setDraftRestored(true);
+          }
+        } catch (e) {
+          console.error('Failed to restore draft:', e);
+        }
+      }
+    }
+  }, [editId]);
+
+  // Save draft whenever form changes
+  useEffect(() => {
+    if (!isEditMode && !published && form.title) {
+      localStorage.setItem('curtain_call_create_draft', JSON.stringify(form));
+    }
+  }, [form, isEditMode, published]);
+
+  const handleResetWizard = () => {
+    localStorage.removeItem('curtain_call_create_draft');
+    setForm({
+      eventType: '',
+      customEventType: '',
+      productionType: 'Professional',
+      title: '',
+      genre: '',
+      synopsis: '',
+      venue: '',
+      city: 'Lagos',
+      address: '',
+      dates: [{ date: '', time: '19:00', endTime: '' }],
+      tiers: [{ id: 'default-tier', name: 'General', price: '', capacity: '' }],
+      accountName: '',
+      accountNumber: '',
+      bankName: '',
+      bankCode: '',
+      posterUrl: '',
+      castAndCrew: [],
+    });
+    setDraftRestored(false);
+    setStep(0);
+  };
 
   const set = useCallback((key: keyof FormData, val: unknown) => {
     setForm(p => ({ ...p, [key]: val }));
@@ -175,6 +254,7 @@ function CreateProductionForm() {
           setForm({
             eventType: prod.eventType || '',
             customEventType: '',
+            productionType: prod.productionType || 'Professional',
             title: prod.title || '',
             genre: prod.genre || '',
             synopsis: prod.synopsis || '',
@@ -236,6 +316,10 @@ function CreateProductionForm() {
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberRole, setNewMemberRole] = useState('');
   const [newMemberCategory, setNewMemberCategory] = useState<'Creative' | 'Cast' | 'Technical'>('Cast');
+
+  const filteredSuggestions = newMemberName.trim().length >= 2
+    ? allArtists.filter(a => a.name.toLowerCase().includes(newMemberName.toLowerCase().trim()))
+    : [];
 
   const addCastMember = () => {
     if (!newMemberName.trim() || !newMemberRole.trim()) return;
@@ -362,6 +446,7 @@ function CreateProductionForm() {
         showTime: firstTime || undefined,
         endTime: firstEndTime || undefined,
         dates: form.dates,
+        productionType: form.productionType,
         ticketTiers: form.tiers.map(t => ({
           id: t.id,
           name: t.name,
@@ -376,6 +461,8 @@ function CreateProductionForm() {
       };
 
       ClientDB.saveProduction(newPlay);
+      localStorage.removeItem('curtain_call_create_draft');
+      setDraftRestored(false);
       
       if (user?.email && form.accountNumber && form.bankCode) {
         ClientDB.saveUserBankDetails(user.email, {
@@ -428,6 +515,7 @@ function CreateProductionForm() {
         isProducerManaged: true,
         showDate: firstDate || undefined,
         dates: form.dates,
+        productionType: form.productionType,
         ticketTiers: form.tiers.map(t => ({
           id: t.id,
           name: t.name || 'General',
@@ -439,6 +527,8 @@ function CreateProductionForm() {
       };
 
       ClientDB.saveProduction(newPlay);
+      localStorage.removeItem('curtain_call_create_draft');
+      setDraftRestored(false);
 
       if (user?.email && form.accountNumber && form.bankCode) {
         ClientDB.saveUserBankDetails(user.email, {
@@ -597,6 +687,26 @@ function CreateProductionForm() {
 
       <div className="container mx-auto px-4 max-w-xl py-8">
 
+        {/* Draft Auto-Restored Banner */}
+        {draftRestored && (
+          <div className="mb-6 p-4 bg-zinc-900 border border-white/10 rounded-2xl flex items-center justify-between gap-4 animate-fade-in backdrop-blur-sm">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-white">Unsaved draft auto-restored</p>
+                <p className="text-[10px] text-zinc-500 mt-0.5">We found progress from your last session.</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleResetWizard}
+              className="text-xs font-bold text-red-500 hover:text-red-400 hover:bg-red-500/5 border border-red-500/10 px-3 py-1.5 rounded-xl transition-all"
+            >
+              Reset Wizard
+            </button>
+          </div>
+        )}
+
         {/* ── STEP 0: Event Info ── */}
         {step === 0 && (
           <div className="flex flex-col gap-5 animate-fade-up">
@@ -622,7 +732,15 @@ function CreateProductionForm() {
                   {['Theatre', 'Art', 'Music', 'Party', 'Festival', 'Workshop', 'Community', 'Health', 'Wellness', 'Tech', 'Seminar', 'Religion', 'Comedy', 'Conference', 'Other'].map(type => (
                     <button
                       key={type}
-                      onClick={() => { set('eventType', type); if(type !== 'Theatre') set('genre', type); set('customEventType', ''); }}
+                      onClick={() => {
+                        set('eventType', type);
+                        if (type !== 'Theatre') {
+                          set('genre', type);
+                          set('customEventType', '');
+                        } else {
+                          setShowProductionTypeModal(true);
+                        }
+                      }}
                       type="button"
                       className="px-3.5 py-1.5 rounded-full text-sm font-medium border transition-all bg-zinc-900 text-zinc-400 border-white/10 hover:border-white/25 hover:text-white"
                     >
@@ -635,6 +753,27 @@ function CreateProductionForm() {
 
             {form.eventType && (
               <>
+                {form.eventType === 'Theatre' && (
+                  <Field label="Production Type">
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
+                        form.productionType === 'Student'
+                          ? 'bg-blue-500/10 border border-blue-500/20 text-blue-300'
+                          : 'bg-red-500/10 border border-red-500/20 text-red-300'
+                      }`}>
+                        {form.productionType || 'Professional'} Production
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowProductionTypeModal(true)}
+                        className="text-xs text-zinc-400 hover:text-white underline underline-offset-4"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  </Field>
+                )}
+
                 {form.eventType === 'Other' && (
                   <Field label="Custom Event Type">
                     <input
@@ -736,13 +875,62 @@ function CreateProductionForm() {
                   <Field label="Cast & Crew (Playbill)">
                     <div className="flex flex-col gap-3 bg-zinc-900/40 border border-white/5 rounded-2xl p-4">
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="relative">
+                          <input
+                            ref={nameInputRef}
+                            value={newMemberName}
+                            onChange={e => {
+                              setNewMemberName(e.target.value);
+                              setShowArtistSuggestions(true);
+                            }}
+                            onFocus={() => setShowArtistSuggestions(true)}
+                            placeholder="Name (e.g. John Doe)"
+                            className={inputCls}
+                          />
+                          {showArtistSuggestions && filteredSuggestions.length > 0 && (
+                            <div className="absolute left-0 right-0 top-full mt-1.5 bg-zinc-900/95 border border-white/10 rounded-xl overflow-hidden shadow-2xl backdrop-blur-md z-30 max-h-48 overflow-y-auto">
+                              {filteredSuggestions.map(artist => (
+                                <button
+                                  key={artist.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setNewMemberName(artist.name);
+                                    setShowArtistSuggestions(false);
+                                    if (artist.roleType) {
+                                      const rt = artist.roleType.toLowerCase();
+                                      if (rt.includes('actor') || rt.includes('actress')) {
+                                        setNewMemberCategory('Cast');
+                                      } else if (rt.includes('director') || rt.includes('writer') || rt.includes('playwright') || rt.includes('producer')) {
+                                        setNewMemberCategory('Creative');
+                                      } else {
+                                        setNewMemberCategory('Technical');
+                                      }
+                                    }
+                                    roleInputRef.current?.focus();
+                                  }}
+                                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 border-b border-white/5 last:border-0 text-left transition-colors"
+                                >
+                                  <div className="h-8 w-8 rounded-full overflow-hidden bg-zinc-800 shrink-0 border border-white/10">
+                                    {artist.headshotUrl ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img src={artist.headshotUrl} alt={artist.name} className="h-full w-full object-cover" />
+                                    ) : (
+                                      <div className="h-full w-full flex items-center justify-center text-[10px] text-zinc-500 font-bold">
+                                        {artist.name.charAt(0)}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-bold text-white truncate">{artist.name}</p>
+                                    <p className="text-[10px] text-zinc-500 truncate">{artist.roleType || 'Artist'}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         <input
-                          value={newMemberName}
-                          onChange={e => setNewMemberName(e.target.value)}
-                          placeholder="Name (e.g. John Doe)"
-                          className={inputCls}
-                        />
-                        <input
+                          ref={roleInputRef}
                           value={newMemberRole}
                           onChange={e => setNewMemberRole(e.target.value)}
                           placeholder="Role (e.g. Kurunmi, Director)"
@@ -1202,6 +1390,95 @@ function CreateProductionForm() {
           </div>
         )}
       </div>
+
+      {/* Production Type Category Selector Modal */}
+      {showProductionTypeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/85 backdrop-blur-md" onClick={() => setShowProductionTypeModal(false)} />
+          
+          {/* Modal Container */}
+          <div className="relative w-full max-w-lg bg-zinc-950 border border-white/10 rounded-3xl p-6 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            {/* Ambient background glow */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full bg-red-600/10 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 rounded-full bg-blue-600/10 blur-3xl pointer-events-none" />
+            
+            <div className="flex items-center justify-between mb-6 relative z-10">
+              <div>
+                <h3 className="text-lg font-serif font-bold text-white tracking-tight">Select Production Type</h3>
+                <p className="text-xs text-zinc-500 mt-1">Classify your theatre play for lists and indexing</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowProductionTypeModal(false);
+                  if (!form.productionType) set('productionType', 'Professional');
+                }}
+                className="p-1.5 bg-zinc-900 border border-white/5 rounded-xl text-zinc-400 hover:text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            
+            <div className="flex flex-col gap-4 relative z-10">
+              <button
+                type="button"
+                onClick={() => {
+                  set('productionType', 'Professional');
+                  setShowProductionTypeModal(false);
+                }}
+                className={`p-5 rounded-2xl border text-left transition-all flex flex-col gap-1.5 ${
+                  form.productionType === 'Professional'
+                    ? 'bg-white/5 border-red-500/40 shadow-lg shadow-red-950/10'
+                    : 'bg-zinc-900/50 border-white/5 hover:border-white/10 hover:bg-zinc-900'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-white">Professional Production</span>
+                  <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest bg-red-500/10 px-2 py-0.5 rounded-full">Standard</span>
+                </div>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  Commercial, community, or independent stage play production. Standard ticketing rules, payout configuration, and verification apply.
+                </p>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  set('productionType', 'Student');
+                  setShowProductionTypeModal(false);
+                }}
+                className={`p-5 rounded-2xl border text-left transition-all flex flex-col gap-1.5 ${
+                  form.productionType === 'Student'
+                    ? 'bg-white/5 border-red-500/40 shadow-lg shadow-red-950/10'
+                    : 'bg-zinc-900/50 border-white/5 hover:border-white/10 hover:bg-zinc-900'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-white">Student Production</span>
+                  <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-500/10 px-2 py-0.5 rounded-full">Academic</span>
+                </div>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  School, academy, or university theatre project. Free, discount, or standard admissions. Highlights the production as an educational project.
+                </p>
+              </button>
+            </div>
+            
+            <div className="mt-6 flex justify-end relative z-10">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!form.productionType) set('productionType', 'Professional');
+                  setShowProductionTypeModal(false);
+                }}
+                className="bg-white text-black font-bold text-xs px-6 py-2.5 rounded-xl hover:bg-zinc-200 transition-colors"
+              >
+                Confirm Setup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
