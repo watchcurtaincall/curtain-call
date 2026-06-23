@@ -12,10 +12,7 @@ import Link from 'next/link';
 import { getBanks, resolveAccount, type Bank } from '@/lib/paystack';
 import { ClientDB } from '@/lib/db';
 import { DateTimePickerModal } from '@/components/shared/DateTimePickerModal';
-import dynamic from 'next/dynamic';
-
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
-import 'react-quill/dist/quill.snow.css';
+import RichTextEditor from '@/components/RichTextEditor';
 
 // ─── Types ───────────────────────────────────────────────
 interface ShowDate {
@@ -679,22 +676,12 @@ function CreateProductionForm() {
                   </Field>
                 )}
 
-                <Field label={form.eventType === 'Theatre' ? "About this Production" : "About this Event"} hint="Minimum 30 characters">
-                  <div className="bg-white rounded-xl overflow-hidden [&_.ql-toolbar]:border-none [&_.ql-toolbar]:bg-zinc-100 [&_.ql-container]:border-none [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-black">
-                    <ReactQuill
-                      theme="snow"
-                      value={form.synopsis}
-                      onChange={val => set('synopsis', val === '<p><br></p>' ? '' : val)}
-                      placeholder={form.eventType === 'Theatre' ? "Tell audiences what this production is about — the story, themes, what makes it unique…" : "Tell audiences what this event is about — what to expect, who it's for, and why they should attend…"}
-                      modules={{
-                        toolbar: [
-                          ['bold', 'italic', 'underline', 'strike'],
-                          [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                          ['link', 'clean']
-                        ]
-                      }}
-                    />
-                  </div>
+                 <Field label={form.eventType === 'Theatre' ? "About this Production" : "About this Event"} hint="Minimum 30 characters">
+                  <RichTextEditor
+                    value={form.synopsis}
+                    onChange={val => set('synopsis', val === '<p><br></p>' ? '' : val)}
+                    placeholder={form.eventType === 'Theatre' ? "Tell audiences what this production is about — the story, themes, what makes it unique…" : "Tell audiences what this event is about — what to expect, who it's for, and why they should attend…"}
+                  />
                   <p className={`text-xs mt-1 ${form.synopsis.length < 30 ? 'text-red-500/70' : 'text-green-500'}`}>
                     {form.synopsis.length < 30 ? `${30 - form.synopsis.length} more characters needed` : 'Looks good ✓'}
                   </p>
