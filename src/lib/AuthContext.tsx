@@ -212,23 +212,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const customHandle = existingProfile?.handle || existingProfile?.username || deriveHandle(customName, email);
           const customUsername = existingProfile?.username || (existingProfile?.handle && !existingProfile.handle.startsWith('@') ? existingProfile.handle : undefined);
 
-          const loggedUser = {
-            id: email,
-            name: customName,
-            email,
-            avatar: customName.slice(0, 2).toUpperCase(),
-            joinDate: 'May 2026',
-            ratings: 0,
-            reviews: 0,
-            points: 0,
-            badgesUnlocked: 0,
-            totalBadges: 14,
-            handle: customHandle,
-            username: customUsername,
-            bio: existingProfile?.bio || '',
-            location: existingProfile?.location || '',
-            isVerified: isAlreadyVerified
-          };
+          let loggedUser;
+          if (email.toLowerCase() === 'watchcurtaincall@gmail.com') {
+            loggedUser = {
+              id: 'watchcurtaincall@gmail.com',
+              name: 'CC Admin',
+              email: 'watchcurtaincall@gmail.com',
+              avatar: 'WCC',
+              joinDate: 'May 2026',
+              ratings: 120,
+              reviews: 88,
+              points: 2500,
+              badgesUnlocked: 10,
+              totalBadges: 14,
+              handle: '@watchcurtaincall',
+              bio: 'Curtain Call Administrative Curation Board.',
+              location: 'Lagos, Nigeria',
+              isVerified: true
+            };
+          } else {
+            loggedUser = {
+              id: email,
+              name: customName,
+              email,
+              avatar: customName.slice(0, 2).toUpperCase(),
+              joinDate: 'May 2026',
+              ratings: 0,
+              reviews: 0,
+              points: 0,
+              badgesUnlocked: 0,
+              totalBadges: 14,
+              handle: customHandle,
+              username: customUsername,
+              bio: existingProfile?.bio || '',
+              location: existingProfile?.location || '',
+              isVerified: isAlreadyVerified
+            };
+          }
           setUser(loggedUser);
           localStorage.setItem('cc_authed', 'true');
           localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
@@ -278,23 +298,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const customHandle = existingProfile?.handle || existingProfile?.username || deriveHandle(customName, email);
           const customUsername = existingProfile?.username || (existingProfile?.handle && !existingProfile.handle.startsWith('@') ? existingProfile.handle : undefined);
 
-          const loggedUser = {
-            id: email,
-            name: customName,
-            email,
-            avatar: customName.slice(0, 2).toUpperCase(),
-            joinDate: 'May 2026',
-            ratings: 0,
-            reviews: 0,
-            points: 0,
-            badgesUnlocked: 0,
-            totalBadges: 14,
-            handle: customHandle,
-            username: customUsername,
-            bio: existingProfile?.bio || '',
-            location: existingProfile?.location || '',
-            isVerified: isAlreadyVerified
-          };
+          let loggedUser;
+          if (email.toLowerCase() === 'watchcurtaincall@gmail.com') {
+            loggedUser = {
+              id: 'watchcurtaincall@gmail.com',
+              name: 'CC Admin',
+              email: 'watchcurtaincall@gmail.com',
+              avatar: 'WCC',
+              joinDate: 'May 2026',
+              ratings: 120,
+              reviews: 88,
+              points: 2500,
+              badgesUnlocked: 10,
+              totalBadges: 14,
+              handle: '@watchcurtaincall',
+              bio: 'Curtain Call Administrative Curation Board.',
+              location: 'Lagos, Nigeria',
+              isVerified: true
+            };
+          } else {
+            loggedUser = {
+              id: email,
+              name: customName,
+              email,
+              avatar: customName.slice(0, 2).toUpperCase(),
+              joinDate: 'May 2026',
+              ratings: 0,
+              reviews: 0,
+              points: 0,
+              badgesUnlocked: 0,
+              totalBadges: 14,
+              handle: customHandle,
+              username: customUsername,
+              bio: existingProfile?.bio || '',
+              location: existingProfile?.location || '',
+              isVerified: isAlreadyVerified
+            };
+          }
           setUser(loggedUser);
           localStorage.setItem('cc_authed', 'true');
           localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
@@ -315,30 +355,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let loggedUser = MOCK_USER;
     const cleanEmail = email.trim().toLowerCase();
 
-    if (cleanEmail === 'watchcurtaincall@gmail.com') {
-      loggedUser = {
-        id: 'watchcurtaincall@gmail.com',
-        name: 'CC Admin',
-        email: 'watchcurtaincall@gmail.com',
-        avatar: 'WCC',
-        joinDate: 'May 2026',
-        ratings: 120,
-        reviews: 88,
-        points: 2500,
-        badgesUnlocked: 10,
-        totalBadges: 14,
-        handle: '@watchcurtaincall',
-        bio: 'Curtain Call Administrative Curation Board.',
-        location: 'Lagos, Nigeria',
-        isVerified: true
-      };
-      ClientDB.addApprovedCriticEmail('watchcurtaincall@gmail.com');
-      setUser(loggedUser);
-      localStorage.setItem('cc_authed', 'true');
-      localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
-      return;
-    }
-
     if (supabase && password) {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
@@ -347,25 +363,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       
       if (data?.user) {
-        const name = data.user.user_metadata?.full_name || cleanEmail.split('@')[0];
         const isEmailConfirmed = !!data.user.email_confirmed_at;
         
-        loggedUser = {
-          id: cleanEmail,
-          name,
-          email: cleanEmail,
-          avatar: name.slice(0, 2).toUpperCase(),
-          joinDate: 'May 2026',
-          ratings: 0,
-          reviews: 0,
-          points: 0,
-          badgesUnlocked: 0,
-          totalBadges: 14,
-          handle: deriveHandle(name, cleanEmail),
-          bio: '',
-          location: '',
-          isVerified: isEmailConfirmed // Capture official Supabase confirmation status!
-        };
+        if (cleanEmail === 'watchcurtaincall@gmail.com') {
+          loggedUser = {
+            id: 'watchcurtaincall@gmail.com',
+            name: 'CC Admin',
+            email: 'watchcurtaincall@gmail.com',
+            avatar: 'WCC',
+            joinDate: 'May 2026',
+            ratings: 120,
+            reviews: 88,
+            points: 2500,
+            badgesUnlocked: 10,
+            totalBadges: 14,
+            handle: '@watchcurtaincall',
+            bio: 'Curtain Call Administrative Curation Board.',
+            location: 'Lagos, Nigeria',
+            isVerified: true
+          };
+          ClientDB.addApprovedCriticEmail('watchcurtaincall@gmail.com');
+        } else {
+          const name = data.user.user_metadata?.full_name || cleanEmail.split('@')[0];
+          loggedUser = {
+            id: cleanEmail,
+            name,
+            email: cleanEmail,
+            avatar: name.slice(0, 2).toUpperCase(),
+            joinDate: 'May 2026',
+            ratings: 0,
+            reviews: 0,
+            points: 0,
+            badgesUnlocked: 0,
+            totalBadges: 14,
+            handle: deriveHandle(name, cleanEmail),
+            bio: '',
+            location: '',
+            isVerified: isEmailConfirmed // Capture official Supabase confirmation status!
+          };
+        }
       }
     } else {
       // Local Simulation Fallback

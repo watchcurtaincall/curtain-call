@@ -1934,6 +1934,11 @@ export const syncFromSupabase = async (force = false) => {
       return;
     }
 
+    const privateSyncSuccess = !privateUrl || privateRes !== null;
+    if (privateUrl && !privateSyncSuccess) {
+      console.warn('[Supabase Sync] Private sync failed (unauthorized or server error). Stale/local private data will be preserved.');
+    }
+
     const combinedData = {
       productions: [
         ...(publicRes.productions || []),
@@ -1998,25 +2003,27 @@ export const syncFromSupabase = async (force = false) => {
 
       localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify([...mergedApproved, ...localProducerPublished, ...drafts]));
       
-      if (isAdmin) {
-        const pendingRemote = mappedRemote.filter((p: any) => p.curationStatus === 'Pending');
-        localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(pendingRemote));
-      } else {
-        const cleanEmail = email ? email.toLowerCase() : '';
-        const pendingRemote = mappedRemote.filter((p: any) => 
-          p.curationStatus === 'Pending' && 
-          p.submitterEmail && 
-          p.submitterEmail.toLowerCase() === cleanEmail
-        );
-        
-        const localPending = JSON.parse(localStorage.getItem(PENDING_PLAYS_KEY) || '[]');
-        const unsynced = localPending.filter((lp: any) => !mappedRemote.some((rp: any) => rp.id === lp.id));
-        for (const req of unsynced) {
-          console.log('[Two-Way Sync] Uploading unsynced local pending play:', req.id);
-          await syncToCloud('productions', mapProductionToDb(req));
+      if (privateSyncSuccess) {
+        if (isAdmin) {
+          const pendingRemote = mappedRemote.filter((p: any) => p.curationStatus === 'Pending');
+          localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(pendingRemote));
+        } else {
+          const cleanEmail = email ? email.toLowerCase() : '';
+          const pendingRemote = mappedRemote.filter((p: any) => 
+            p.curationStatus === 'Pending' && 
+            p.submitterEmail && 
+            p.submitterEmail.toLowerCase() === cleanEmail
+          );
+          
+          const localPending = JSON.parse(localStorage.getItem(PENDING_PLAYS_KEY) || '[]');
+          const unsynced = localPending.filter((lp: any) => !mappedRemote.some((rp: any) => rp.id === lp.id));
+          for (const req of unsynced) {
+            console.log('[Two-Way Sync] Uploading unsynced local pending play:', req.id);
+            await syncToCloud('productions', mapProductionToDb(req));
+          }
+          const finalPending = [...unsynced, ...pendingRemote];
+          localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(finalPending));
         }
-        const finalPending = [...unsynced, ...pendingRemote];
-        localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(finalPending));
       }
     }
 
@@ -2039,25 +2046,27 @@ export const syncFromSupabase = async (force = false) => {
       });
       localStorage.setItem(ARTISTS_KEY, JSON.stringify(mergedApproved));
       
-      if (isAdmin) {
-        const pendingRemote = mappedRemote.filter((a: any) => a.curationStatus === 'Pending');
-        localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(pendingRemote));
-      } else {
-        const cleanEmail = email ? email.toLowerCase() : '';
-        const pendingRemote = mappedRemote.filter((a: any) => 
-          a.curationStatus === 'Pending' && 
-          a.submitterEmail && 
-          a.submitterEmail.toLowerCase() === cleanEmail
-        );
-        
-        const localPending = JSON.parse(localStorage.getItem(PENDING_ARTISTS_KEY) || '[]');
-        const unsynced = localPending.filter((la: any) => !mappedRemote.some((ra: any) => ra.id === la.id));
-        for (const req of unsynced) {
-          console.log('[Two-Way Sync] Uploading unsynced local pending artist:', req.id);
-          await syncToCloud('artists', mapArtistToDb(req));
+      if (privateSyncSuccess) {
+        if (isAdmin) {
+          const pendingRemote = mappedRemote.filter((a: any) => a.curationStatus === 'Pending');
+          localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(pendingRemote));
+        } else {
+          const cleanEmail = email ? email.toLowerCase() : '';
+          const pendingRemote = mappedRemote.filter((a: any) => 
+            a.curationStatus === 'Pending' && 
+            a.submitterEmail && 
+            a.submitterEmail.toLowerCase() === cleanEmail
+          );
+          
+          const localPending = JSON.parse(localStorage.getItem(PENDING_ARTISTS_KEY) || '[]');
+          const unsynced = localPending.filter((la: any) => !mappedRemote.some((ra: any) => ra.id === la.id));
+          for (const req of unsynced) {
+            console.log('[Two-Way Sync] Uploading unsynced local pending artist:', req.id);
+            await syncToCloud('artists', mapArtistToDb(req));
+          }
+          const finalPending = [...unsynced, ...pendingRemote];
+          localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(finalPending));
         }
-        const finalPending = [...unsynced, ...pendingRemote];
-        localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(finalPending));
       }
     }
 
@@ -2076,25 +2085,27 @@ export const syncFromSupabase = async (force = false) => {
 
       localStorage.setItem(ARTICLES_KEY, JSON.stringify(approved));
       
-      if (isAdmin) {
-        const pendingRemote = mappedRemote.filter((a: any) => a.curationStatus === 'Pending');
-        localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(pendingRemote));
-      } else {
-        const cleanEmail = email ? email.toLowerCase() : '';
-        const pendingRemote = mappedRemote.filter((a: any) => 
-          a.curationStatus === 'Pending' && 
-          a.submitterEmail && 
-          a.submitterEmail.toLowerCase() === cleanEmail
-        );
-        
-        const localPending = JSON.parse(localStorage.getItem(PENDING_ARTICLES_KEY) || '[]');
-        const unsynced = localPending.filter((la: any) => !mappedRemote.some((ra: any) => ra.id === la.id));
-        for (const req of unsynced) {
-          console.log('[Two-Way Sync] Uploading unsynced local pending article:', req.id);
-          await syncToCloud('articles', mapArticleToDb(req));
+      if (privateSyncSuccess) {
+        if (isAdmin) {
+          const pendingRemote = mappedRemote.filter((a: any) => a.curationStatus === 'Pending');
+          localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(pendingRemote));
+        } else {
+          const cleanEmail = email ? email.toLowerCase() : '';
+          const pendingRemote = mappedRemote.filter((a: any) => 
+            a.curationStatus === 'Pending' && 
+            a.submitterEmail && 
+            a.submitterEmail.toLowerCase() === cleanEmail
+          );
+          
+          const localPending = JSON.parse(localStorage.getItem(PENDING_ARTICLES_KEY) || '[]');
+          const unsynced = localPending.filter((la: any) => !mappedRemote.some((ra: any) => ra.id === la.id));
+          for (const req of unsynced) {
+            console.log('[Two-Way Sync] Uploading unsynced local pending article:', req.id);
+            await syncToCloud('articles', mapArticleToDb(req));
+          }
+          const finalPending = [...unsynced, ...pendingRemote];
+          localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(finalPending));
         }
-        const finalPending = [...unsynced, ...pendingRemote];
-        localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(finalPending));
       }
     }
 
@@ -2105,7 +2116,7 @@ export const syncFromSupabase = async (force = false) => {
     }
 
     // 5. Process Critic Applications
-    if (data.criticApplications) {
+    if (data.criticApplications && privateSyncSuccess) {
       const mapped = data.criticApplications.map(mapCriticAppFromDb);
       
       if (isAdmin) {
@@ -2131,7 +2142,7 @@ export const syncFromSupabase = async (force = false) => {
     }
 
     // 7. Pull & Sync Withdrawals (Two-Way Self-Healing Sync)
-    if (data.withdrawals) {
+    if (data.withdrawals && privateSyncSuccess) {
       const localWithdrawals = JSON.parse(localStorage.getItem('curtain_withdrawals') || '[]').map(mapWithdrawalFromDb);
       const mappedRemote = data.withdrawals.map(mapWithdrawalFromDb);
       
@@ -2153,7 +2164,7 @@ export const syncFromSupabase = async (force = false) => {
     }
 
     // 8. Pull & Sync Tickets (Two-Way Self-Healing Sync)
-    if (data.tickets) {
+    if (data.tickets && privateSyncSuccess) {
       const mappedRemote = data.tickets.map(mapTicketFromDb);
       const localTickets = JSON.parse(localStorage.getItem('curtain_tickets') || '[]').map(mapTicketFromDb);
       
@@ -2183,12 +2194,12 @@ export const syncFromSupabase = async (force = false) => {
     }
 
     // Process Quiz Cash Credits
-    if (data.quizCashCredits) {
+    if (data.quizCashCredits && privateSyncSuccess) {
       localStorage.setItem('curtain_quiz_cash_credits', JSON.stringify(data.quizCashCredits));
     }
 
     // 9. Process Notifications
-    if (data.notifications) {
+    if (data.notifications && privateSyncSuccess) {
       localStorage.setItem('curtain_notifications', JSON.stringify(data.notifications));
     } else if (!email) {
       localStorage.removeItem('curtain_notifications');
@@ -2196,27 +2207,29 @@ export const syncFromSupabase = async (force = false) => {
 
     // 10. Process Admin-only data
     if (isAdmin) {
-      if (data.subscribers) {
-        localStorage.setItem('curtain_newsletter_subscribers', JSON.stringify(data.subscribers));
-      }
-      if (data.profiles) {
-        localStorage.setItem('curtain_user_profiles', JSON.stringify(data.profiles));
-      }
-      if (data.productions) {
-        const pendingPlays = data.productions.map(mapProductionFromDb).filter((p: any) => p.curationStatus === 'Pending');
-        localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(pendingPlays));
-      }
-      if (data.artists) {
-        const pendingArtists = data.artists.map(mapArtistFromDb).filter((a: any) => a.curationStatus === 'Pending');
-        localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(pendingArtists));
-      }
-      if (data.articles) {
-        const pendingArticles = data.articles.map(mapArticleFromDb).filter((a: any) => a.curationStatus === 'Pending');
-        localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(pendingArticles));
-      }
-      if (data.criticApplications) {
-        const pendingCritics = data.criticApplications.map(mapCriticAppFromDb).filter((c: any) => c.curationStatus === 'Pending');
-        localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pendingCritics));
+      if (privateSyncSuccess) {
+        if (data.subscribers) {
+          localStorage.setItem('curtain_newsletter_subscribers', JSON.stringify(data.subscribers));
+        }
+        if (data.profiles) {
+          localStorage.setItem('curtain_user_profiles', JSON.stringify(data.profiles));
+        }
+        if (data.productions) {
+          const pendingPlays = data.productions.map(mapProductionFromDb).filter((p: any) => p.curationStatus === 'Pending');
+          localStorage.setItem(PENDING_PLAYS_KEY, JSON.stringify(pendingPlays));
+        }
+        if (data.artists) {
+          const pendingArtists = data.artists.map(mapArtistFromDb).filter((a: any) => a.curationStatus === 'Pending');
+          localStorage.setItem(PENDING_ARTISTS_KEY, JSON.stringify(pendingArtists));
+        }
+        if (data.articles) {
+          const pendingArticles = data.articles.map(mapArticleFromDb).filter((a: any) => a.curationStatus === 'Pending');
+          localStorage.setItem(PENDING_ARTICLES_KEY, JSON.stringify(pendingArticles));
+        }
+        if (data.criticApplications) {
+          const pendingCritics = data.criticApplications.map(mapCriticAppFromDb).filter((c: any) => c.curationStatus === 'Pending');
+          localStorage.setItem(PENDING_CRITICS_KEY, JSON.stringify(pendingCritics));
+        }
       }
     } else {
       // Security/Privacy: completely clear signups/subscribers lists for non-admin users!
