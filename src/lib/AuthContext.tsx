@@ -496,6 +496,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('cc_authed', 'true');
     localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
     ClientDB.saveProfile(loggedUser);
+    
+    // Force immediate cloud sync to retrieve user's private data
+    await syncFromSupabase(true);
   };
 
   const signUp = async (email: string, password?: string, name?: string, username?: string) => {
@@ -620,6 +623,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     localStorage.removeItem('cc_authed');
     localStorage.removeItem('cc_authed_user');
+    
+    // Clear sync caches and private data keys to prevent leaks/stale states
+    localStorage.removeItem('cc_last_sync_time');
+    localStorage.removeItem('curtain_pending_artists');
+    localStorage.removeItem('curtain_pending_plays');
+    localStorage.removeItem('curtain_pending_articles');
+    localStorage.removeItem('curtain_pending_critics');
+    localStorage.removeItem('curtain_newsletter_subscribers');
+    localStorage.removeItem('curtain_user_profiles');
+    localStorage.removeItem('curtain_withdrawals');
+    localStorage.removeItem('curtain_tickets');
+    localStorage.removeItem('curtain_notifications');
+    localStorage.removeItem('curtain_quiz_cash_credits');
   };
 
   const updateProfile = (updates: { name?: string; handle?: string; bio?: string; location?: string }) => {
@@ -653,6 +669,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(updatedUser);
       localStorage.setItem('cc_authed_user', JSON.stringify(updatedUser));
       ClientDB.saveProfile(updatedUser);
+      await syncFromSupabase(true);
       return true;
     }
     return false;
