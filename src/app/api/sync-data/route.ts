@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { resolveRealUserId } from '@/lib/quiz/auth';
+import { resolveRealUserId, verifyUserSession } from '@/lib/quiz/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +24,21 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type'); // 'public' | 'private'
   const email = searchParams.get('email')?.toLowerCase() || '';
-  const isAdmin = email === 'watchcurtaincall@gmail.com';
+  let isAdmin = email === 'watchcurtaincall@gmail.com';
+
+  if (type === 'private' || (!type && email)) {
+    const verifiedUser = await verifyUserSession(request);
+    if (!verifiedUser) {
+      return NextResponse.json({ error: 'Unauthorized: Session missing or invalid' }, { status: 401 });
+    }
+    const verifiedEmail = verifiedUser.email;
+    const verifiedIsAdmin = verifiedEmail === 'watchcurtaincall@gmail.com';
+
+    if (email !== verifiedEmail && !verifiedIsAdmin) {
+      return NextResponse.json({ error: 'Unauthorized: Access denied' }, { status: 403 });
+    }
+    isAdmin = verifiedIsAdmin;
+  }
 
   try {
     if (type === 'public') {
@@ -225,11 +239,84 @@ export async function POST(request: Request) {
   }
 
   try {
+    const verifiedUser = await verifyUserSession(request);
+    if (!verifiedUser) {
+      return NextResponse.json({ error: 'Unauthorized: Session missing or invalid' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { table, dbItem } = body;
 
     if (!table || !dbItem) {
       return NextResponse.json({ error: 'Missing table or dbItem parameter' }, { status: 400 });
+    }
+
+    const verifiedEmail = verifiedUser.email;
+    const verifiedIsAdmin = verifiedEmail === 'watchcurtaincall@gmail.com';
+
+    if (!verifiedIsAdmin) {
+      const allowedTables = ['productions', 'artists', 'articles', 'critic_applications', 'withdrawals', 'tickets', 'reviews'];
+      if (!allowedTables.includes(table)) {
+        return NextResponse.json({ error: 'Unauthorized: Access to this table is restricted to admin' }, { status: 403 });
+      }
+
+      // Check ownership on the incoming item
+      if (['productions', 'artists', 'articles'].includes(table)) {
+        if (dbItem.submitter_email?.toLowerCase() !== verifiedEmail) {
+          return NextResponse.json({ error: 'Unauthorized: submitter_email must match your logged in email' }, { status: 403 });
+        }
+        // Verify existing record ownership if updating
+        if (dbItem.id) {
+          const { data: existing } = await supabaseServer
+            .from(table)
+            .select('submitter_email')
+            .eq('id', dbItem.id)
+            .maybeSingle();
+          if (existing && existing.submitter_email?.toLowerCase() !== verifiedEmail) {
+            return NextResponse.json({ error: 'Unauthorized: You do not own the record you are trying to update' }, { status: 403 });
+          }
+        }
+      } else if (['critic_applications', 'withdrawals'].includes(table)) {
+        if (dbItem.email?.toLowerCase() !== verifiedEmail) {
+          return NextResponse.json({ error: 'Unauthorized: email must match your logged in email' }, { status: 403 });
+        }
+        if (dbItem.id) {
+          const { data: existing } = await supabaseServer
+            .from(table)
+            .select('email')
+            .eq('id', dbItem.id)
+            .maybeSingle();
+          if (existing && existing.email?.toLowerCase() !== verifiedEmail) {
+            return NextResponse.json({ error: 'Unauthorized: You do not own the record you are trying to update' }, { status: 403 });
+          }
+        }
+      } else if (table === 'tickets') {
+        if (dbItem.buyer_email?.toLowerCase() !== verifiedEmail) {
+          return NextResponse.json({ error: 'Unauthorized: buyer_email must match your logged in email' }, { status: 403 });
+        }
+        if (dbItem.id) {
+          const { data: existing } = await supabaseServer
+            .from(table)
+            .select('buyer_email')
+            .eq('id', dbItem.id)
+            .maybeSingle();
+          if (existing && existing.buyer_email?.toLowerCase() !== verifiedEmail) {
+            return NextResponse.json({ error: 'Unauthorized: You do not own the record you are trying to update' }, { status: 403 });
+          }
+        }
+      } else if (table === 'reviews') {
+        // Reviews don't have an email column but we want to prevent overwriting existing reviews
+        if (dbItem.id) {
+          const { data: existing } = await supabaseServer
+            .from('reviews')
+            .select('id')
+            .eq('id', dbItem.id)
+            .maybeSingle();
+          if (existing) {
+            return NextResponse.json({ error: 'Unauthorized: Reviews cannot be modified after creation' }, { status: 403 });
+          }
+        }
+      }
     }
 
     let currentDbItem = { ...dbItem };
@@ -288,11 +375,43 @@ export async function DELETE(request: Request) {
   }
 
   try {
+    const verifiedUser = await verifyUserSession(request);
+    if (!verifiedUser) {
+      return NextResponse.json({ error: 'Unauthorized: Session missing or invalid' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { table, id } = body;
 
     if (!table || !id) {
       return NextResponse.json({ error: 'Missing table or id parameter' }, { status: 400 });
+    }
+
+    const verifiedEmail = verifiedUser.email;
+    const verifiedIsAdmin = verifiedEmail === 'watchcurtaincall@gmail.com';
+
+    if (!verifiedIsAdmin) {
+      const allowedTables = ['productions', 'artists', 'articles'];
+      if (!allowedTables.includes(table)) {
+        return NextResponse.json({ error: 'Unauthorized: Access to this table is restricted to admin' }, { status: 403 });
+      }
+
+      // Query database for ownership check
+      const { data: existing, error: fetchErr } = await supabaseServer
+        .from(table)
+        .select('submitter_email')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (fetchErr) {
+        return NextResponse.json({ error: 'Error checking record ownership' }, { status: 500 });
+      }
+      if (!existing) {
+        return NextResponse.json({ error: 'Record not found' }, { status: 404 });
+      }
+      if (existing.submitter_email?.toLowerCase() !== verifiedEmail) {
+        return NextResponse.json({ error: 'Unauthorized: You do not own this record' }, { status: 403 });
+      }
     }
 
     const { error } = await supabaseServer

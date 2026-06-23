@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server';
+import { verifyUserSession } from '@/lib/quiz/auth';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const verifiedUser = await verifyUserSession(request);
+    if (!verifiedUser || verifiedUser.email !== 'watchcurtaincall@gmail.com') {
+      return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {
       return NextResponse.json({ error: 'RESEND_API_KEY not configured' }, { status: 500 });

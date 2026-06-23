@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { ClientDB, syncFromSupabase } from '@/lib/db';
+import { ClientDB, syncFromSupabase, supabase } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
 import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download, QrCode, Camera, RefreshCw, Star, BarChart, BellRing } from 'lucide-react';
 import Link from 'next/link';
@@ -166,6 +166,21 @@ export default function AdminDashboardPage() {
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
+  };
+
+  const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
+    try {
+      const sessionRes = supabase ? await supabase.auth.getSession() : null;
+      const token = sessionRes?.data?.session?.access_token;
+      const headers = new Headers(options.headers || {});
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+      return fetch(url, { ...options, headers });
+    } catch (e) {
+      console.error('[fetchWithAuth] Error:', e);
+      return fetch(url, options);
+    }
   };
 
   // Gate Scanner state variables
@@ -489,7 +504,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if ((activeTab === 'quiz-analytics' || activeTab === 'email-logs') && !quizStats && !loadingQuizStats) {
       setLoadingQuizStats(true);
-      fetch('/api/admin/quiz-stats')
+      fetchWithAuth('/api/admin/quiz-stats')
         .then(r => r.json())
         .then(data => {
           if (data.success) {
@@ -509,7 +524,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (activeTab === 'email-logs' && emailLogs.length === 0 && !loadingEmailLogs) {
       setLoadingEmailLogs(true);
-      fetch('/api/admin/email-logs')
+      fetchWithAuth('/api/admin/email-logs')
         .then(r => r.json())
         .then(data => {
           if (Array.isArray(data)) {
@@ -530,7 +545,7 @@ export default function AdminDashboardPage() {
     if (!confirm(`Mark ${profile.name} (${profile.email}) as verified?`)) return;
     
     try {
-      const res = await fetch('/api/admin-data', {
+      const res = await fetchWithAuth('/api/admin-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -810,7 +825,7 @@ export default function AdminDashboardPage() {
       if (email) {
         // 1. Credit ₦2,000 to user's wallet securely via server API
         try {
-          await fetch('/api/admin/approve-article', {
+          await fetchWithAuth('/api/admin/approve-article', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ articleId: id, email, title })

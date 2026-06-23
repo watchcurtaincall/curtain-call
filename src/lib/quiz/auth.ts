@@ -80,3 +80,21 @@ export async function getUserIdFromRequest(request: Request): Promise<string | n
   if (!userId) return null;
   return resolveRealUserId(userId);
 }
+
+export async function verifyUserSession(request: Request): Promise<{ id: string; email: string } | null> {
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return null;
+  }
+  const token = authHeader.split(' ')[1];
+  if (!supabaseServer) return null;
+  
+  const { data: { user }, error } = await supabaseServer.auth.getUser(token);
+  if (error || !user || !user.email) {
+    return null;
+  }
+  return {
+    id: user.id,
+    email: user.email.toLowerCase()
+  };
+}

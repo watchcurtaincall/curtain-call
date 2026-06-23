@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { verifyUserSession } from '@/lib/quiz/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +10,10 @@ export async function GET(request: Request) {
   }
 
   try {
+    const verifiedUser = await verifyUserSession(request);
+    if (!verifiedUser || verifiedUser.email !== 'watchcurtaincall@gmail.com') {
+      return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
     // Fetch all attempts
     const { data: attempts, error: attemptsErr } = await supabaseServer
       .from('quiz_attempts')

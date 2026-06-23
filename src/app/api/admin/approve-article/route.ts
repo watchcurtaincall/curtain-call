@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { resolveRealUserId } from '@/lib/quiz/auth';
+import { resolveRealUserId, verifyUserSession } from '@/lib/quiz/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +22,11 @@ export async function POST(request: Request) {
   }
 
   try {
+    const verifiedUser = await verifyUserSession(request);
+    if (!verifiedUser || verifiedUser.email !== 'watchcurtaincall@gmail.com') {
+      return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
+    }
+
     const { articleId, email, title } = await request.json();
 
     if (!articleId || !email) {

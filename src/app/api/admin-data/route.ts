@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { verifyUserSession } from '@/lib/quiz/auth';
 
 export const dynamic = 'force-dynamic';
-
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -22,10 +22,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Supabase service client not configured' }, { status: 500 });
   }
 
-  // Require admin secret header to protect sensitive user data
-  const adminSecret = request.headers.get('x-admin-secret');
-  if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Require admin session or admin secret header to protect sensitive user data
+  const verifiedUser = await verifyUserSession(request);
+  const verifiedEmail = verifiedUser?.email || '';
+  const verifiedIsAdmin = verifiedEmail === 'watchcurtaincall@gmail.com';
+
+  if (!verifiedIsAdmin) {
+    const adminSecret = request.headers.get('x-admin-secret');
+    if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
   }
 
   try {
@@ -132,6 +138,10 @@ export async function DELETE(request: Request) {
   }
 
   try {
+    const verifiedUser = await verifyUserSession(request);
+    const verifiedEmail = verifiedUser?.email || '';
+    const verifiedIsAdmin = verifiedEmail === 'watchcurtaincall@gmail.com';
+
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type'); // 'subscriber' | 'signup'
     const email = searchParams.get('email');
@@ -143,6 +153,11 @@ export async function DELETE(request: Request) {
     const emailLower = email.toLowerCase();
 
     if (type === 'subscriber') {
+      // Only admin or the subscriber themselves can unsubscribe
+      if (emailLower !== verifiedEmail && !verifiedIsAdmin) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+      }
+
       const { error } = await supabaseServer
         .from('newsletter_subscribers')
         .delete()
@@ -155,6 +170,11 @@ export async function DELETE(request: Request) {
 
       return NextResponse.json({ success: true, message: `Subscriber ${emailLower} removed.` });
     } else if (type === 'signup') {
+      // Strictly admin
+      if (!verifiedIsAdmin) {
+        return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 403 });
+      }
+
       // 1. De-register user account from Supabase Auth to enable fresh re-testing of signups
       const { data: usersData, error: listError } = await supabaseServer.auth.admin.listUsers();
       if (!listError && usersData?.users) {
@@ -196,6 +216,10 @@ export async function POST(request: Request) {
   }
 
   try {
+    const verifiedUser = await verifyUserSession(request);
+    const verifiedEmail = verifiedUser?.email || '';
+    const verifiedIsAdmin = verifiedEmail === 'watchcurtaincall@gmail.com';
+
     const body = await request.json();
     const { type, data } = body;
 
@@ -240,6 +264,16 @@ export async function POST(request: Request) {
       const { email, name, handle, location, joinDate, isVerified, verificationCode } = data;
       if (!email || !name) {
         return NextResponse.json({ error: 'Missing email or name' }, { status: 400 });
+      }
+
+      // Check ownership
+      if (email.toLowerCase() !== verifiedEmail && !verifiedIsAdmin) {
+        return NextResponse.json({ error: 'Unauthorized: Cannot modify other user profiles' }, { status: 403 });
+      }
+
+      // Regular users cannot verify profiles
+      if (isVerified === true && !verifiedIsAdmin) {
+        return NextResponse.json({ error: 'Unauthorized: Only admin can verify profiles' }, { status: 403 });
       }
 
       const { error } = await supabaseServer

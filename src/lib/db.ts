@@ -444,9 +444,15 @@ const mapWithdrawalFromDb = (row: any) => ({
 
 const syncToCloud = async (table: string, dbItem: any): Promise<void> => {
   try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (supabase) {
+      const sessionRes = await supabase.auth.getSession();
+      const token = sessionRes?.data?.session?.access_token;
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+    }
     const res = await fetch('/api/sync-data', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ table, dbItem })
     });
     if (!res.ok) {
@@ -460,9 +466,15 @@ const syncToCloud = async (table: string, dbItem: any): Promise<void> => {
 
 const deleteFromCloud = async (table: string, id: string) => {
   try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (supabase) {
+      const sessionRes = await supabase.auth.getSession();
+      const token = sessionRes?.data?.session?.access_token;
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+    }
     const res = await fetch('/api/sync-data', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ table, id })
     });
     if (!res.ok) {
@@ -567,9 +579,15 @@ export const ClientDB = {
     
     try {
       // Sync to Supabase securely via admin-data bypass API and check database whitelists
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (supabase) {
+        const sessionRes = await supabase.auth.getSession();
+        const token = sessionRes?.data?.session?.access_token;
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+      }
       const res = await fetch('/api/admin-data', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           type: 'subscriber',
           data: { email: emailLower }
@@ -619,11 +637,23 @@ export const ClientDB = {
     });
     localStorage.setItem(key, JSON.stringify(updated));
 
-    fetch(`/api/admin-data?type=subscriber&email=${encodeURIComponent(email)}`, {
-      method: 'DELETE'
-    }).catch(err => {
-      console.error('[ClientDB] Failed to delete subscriber:', err);
-    });
+    const performDelete = async () => {
+      try {
+        const headers: Record<string, string> = {};
+        if (supabase) {
+          const sessionRes = await supabase.auth.getSession();
+          const token = sessionRes?.data?.session?.access_token;
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+        }
+        await fetch(`/api/admin-data?type=subscriber&email=${encodeURIComponent(email)}`, {
+          method: 'DELETE',
+          headers
+        });
+      } catch (err) {
+        console.error('[ClientDB] Failed to delete subscriber:', err);
+      }
+    };
+    performDelete();
   },
 
   getNewsletterSubscribers(): string[] {
@@ -650,29 +680,39 @@ export const ClientDB = {
     localStorage.setItem(key, JSON.stringify(updated));
 
     // Sync to Supabase securely via admin-data bypass API
-    fetch('/api/admin-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'signup',
-        data: {
-          email: profile.email.toLowerCase(),
-          name: profile.name,
-          handle: profileToSave.username || profileToSave.handle || null,
-          location: profile.location || null,
-          joinDate: profile.joinDate || 'May 2026',
-          isVerified: profile.isVerified ?? true,
-          verificationCode: profile.verificationCode || null
+    const performSave = async () => {
+      try {
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (supabase) {
+          const sessionRes = await supabase.auth.getSession();
+          const token = sessionRes?.data?.session?.access_token;
+          if (token) headers['Authorization'] = `Bearer ${token}`;
         }
-      })
-    }).then(async res => {
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error('[Admin Bypass Sync] Profile save failed:', errData);
+        const res = await fetch('/api/admin-data', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            type: 'signup',
+            data: {
+              email: profile.email.toLowerCase(),
+              name: profile.name,
+              handle: profileToSave.username || profileToSave.handle || null,
+              location: profile.location || null,
+              joinDate: profile.joinDate || 'May 2026',
+              isVerified: profile.isVerified ?? true,
+              verificationCode: profile.verificationCode || null
+            }
+          })
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          console.error('[Admin Bypass Sync] Profile save failed:', errData);
+        }
+      } catch (err) {
+        console.error('[Admin Bypass Sync] Fetch error:', err);
       }
-    }).catch(err => {
-      console.error('[Admin Bypass Sync] Fetch error:', err);
-    });
+    };
+    performSave();
   },
 
   getSignups(): any[] {
@@ -687,11 +727,23 @@ export const ClientDB = {
     const updated = current.filter((p: any) => p.email.toLowerCase() !== email.toLowerCase());
     localStorage.setItem(key, JSON.stringify(updated));
 
-    fetch(`/api/admin-data?type=signup&email=${encodeURIComponent(email)}`, {
-      method: 'DELETE'
-    }).catch(err => {
-      console.error('[ClientDB] Failed to delete profile signup:', err);
-    });
+    const performDelete = async () => {
+      try {
+        const headers: Record<string, string> = {};
+        if (supabase) {
+          const sessionRes = await supabase.auth.getSession();
+          const token = sessionRes?.data?.session?.access_token;
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+        }
+        await fetch(`/api/admin-data?type=signup&email=${encodeURIComponent(email)}`, {
+          method: 'DELETE',
+          headers
+        });
+      } catch (err) {
+        console.error('[ClientDB] Failed to delete profile signup:', err);
+      }
+    };
+    performDelete();
   },
 
   // ── ARTISTS DATABASE ──
@@ -1854,12 +1906,24 @@ export const syncFromSupabase = async (force = false) => {
           : `/api/sync-data?type=private&email=${encodeURIComponent(email)}`)
       : null;
 
+    let authHeaders: Record<string, string> | undefined = undefined;
+    if (supabase && privateUrl) {
+      const sessionRes = await supabase.auth.getSession();
+      const token = sessionRes?.data?.session?.access_token;
+      if (token) {
+        authHeaders = { 'Authorization': `Bearer ${token}` };
+      }
+    }
+
     const fetchPromises: Promise<any>[] = [
       fetch(publicUrl, force ? { cache: 'no-store' } : undefined).then(r => r.ok ? r.json() : null)
     ];
     if (privateUrl) {
       fetchPromises.push(
-        fetch(privateUrl, force ? { cache: 'no-store' } : undefined).then(r => r.ok ? r.json() : null)
+        fetch(privateUrl, {
+          cache: force ? 'no-store' : undefined,
+          headers: authHeaders
+        }).then(r => r.ok ? r.json() : null)
       );
     }
 
