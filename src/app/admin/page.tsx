@@ -154,10 +154,11 @@ function AdminStageographyAdder({ onAdd }: { onAdd: (credit: { productionId: str
 }
 
 export default function AdminDashboardPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [isSessionValid, setIsSessionValid] = useState(true);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [quizStats, setQuizStats] = useState<any>(null);
@@ -490,6 +491,12 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (!isAuthorized) return;
     
+    if (supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setIsSessionValid(!!session);
+      });
+    }
+
     loadQueues();
     
     // Background pull database sync on admin page mount to retrieve public submissions
@@ -1578,6 +1585,26 @@ This file was retrieved from the Curtain Call Curation Vault.
 
       {/* Main Content Area */}
       <main className="flex-1 p-6 md:p-10 lg:pl-10 overflow-y-auto max-w-7xl mx-auto pt-24 lg:pt-10">
+        {!isSessionValid && (
+          <div className="mb-6 bg-red-950/40 border border-red-500/20 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-up">
+            <div className="flex items-start gap-3">
+              <ShieldAlert className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-bold text-red-400 uppercase tracking-wider">Unauthenticated Supabase Session</h4>
+                <p className="text-[11px] text-zinc-500 mt-0.5">Your admin session lacks a valid cloud authentication token. Pending submissions and statistics will not sync from the server.</p>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                await logout();
+                router.push('/login');
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded-xl text-[10px] uppercase tracking-wider transition-colors shrink-0"
+            >
+              Log Out & Sign In
+            </button>
+          </div>
+        )}
         
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (() => {
