@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ClientDB, supabase } from './db';
+import { ClientDB, supabase, syncFromSupabase } from './db';
 
 export interface MockUser {
   id: string;
