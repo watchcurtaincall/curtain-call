@@ -497,8 +497,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('cc_authed_user', JSON.stringify(loggedUser));
     ClientDB.saveProfile(loggedUser);
     
-    // Force immediate cloud sync to retrieve user's private data
-    await syncFromSupabase(true);
+    // Force immediate cloud sync in background to retrieve user's private data without blocking login
+    syncFromSupabase(true).catch(err => console.error('[AuthContext] login background sync failed:', err));
   };
 
   const signUp = async (email: string, password?: string, name?: string, username?: string) => {
@@ -669,7 +669,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(updatedUser);
       localStorage.setItem('cc_authed_user', JSON.stringify(updatedUser));
       ClientDB.saveProfile(updatedUser);
-      await syncFromSupabase(true);
+      // Force immediate cloud sync in background to retrieve user's private data without blocking verification
+      syncFromSupabase(true).catch(err => console.error('[AuthContext] verifyCode background sync failed:', err));
       return true;
     }
     return false;

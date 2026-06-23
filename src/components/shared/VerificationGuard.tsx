@@ -40,8 +40,8 @@ export function VerificationGuard({ children }: { children: React.ReactNode }) {
       const ok = await verifyCode(otpCode.trim());
       if (ok) {
         setSuccess(true);
-        // Force database pull to synchronize freshly unlocked critic features
-        await syncFromSupabase();
+        // Force database pull to synchronize freshly unlocked critic features in background
+        syncFromSupabase().catch(err => console.error('[VerificationGuard] syncFromSupabase background failed:', err));
       } else {
         setErrorMsg('Invalid 4-digit verification code. Please check your email inbox or spam folder.');
       }
