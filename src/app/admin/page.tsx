@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { ClientDB, syncFromSupabase, supabase } from '@/lib/db';
+import { ClientDB, syncFromSupabase, supabase, stripHtml } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
 import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download, QrCode, Camera, RefreshCw, Star, BarChart, BellRing } from 'lucide-react';
 import Link from 'next/link';
@@ -2007,7 +2007,7 @@ This file was retrieved from the Curtain Call Curation Vault.
                       <div className="flex-1 min-w-0">
                         <h3 className="font-serif font-bold text-white truncate text-base">{play.title}</h3>
                         <p className="text-xs text-zinc-500 mt-0.5">{play.venue}</p>
-                        <p className="text-[11px] text-zinc-400 line-clamp-2 mt-2 leading-relaxed">{play.synopsis}</p>
+                        <p className="text-[11px] text-zinc-400 line-clamp-2 mt-2 leading-relaxed">{stripHtml(play.synopsis)}</p>
                         
                         {/* Previews of uploaded gallery images */}
                         {play.galleryImages && play.galleryImages.length > 0 && (
@@ -3494,7 +3494,7 @@ This file was retrieved from the Curtain Call Curation Vault.
                               </span>
                             </div>
                             <p className="text-[10px] text-zinc-500 font-mono mt-1">Venue: {play.venue}</p>
-                            <p className="text-[11px] text-zinc-400 line-clamp-2 mt-2 leading-relaxed">{play.synopsis}</p>
+                            <p className="text-[11px] text-zinc-400 line-clamp-2 mt-2 leading-relaxed">{stripHtml(play.synopsis)}</p>
                                                         <div className="flex items-center gap-2 mt-4">
                               <button
                                 type="button"
@@ -4974,7 +4974,7 @@ This file was retrieved from the Curtain Call Curation Vault.
             {previewPlay.synopsis && (
               <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4">
                 <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Synopsis</p>
-                <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{previewPlay.synopsis}</p>
+                <div className="text-sm text-zinc-300 leading-relaxed prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: previewPlay.synopsis }} />
               </div>
             )}
 

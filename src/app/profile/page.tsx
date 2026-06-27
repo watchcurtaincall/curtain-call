@@ -6,7 +6,7 @@ import { useWatchlist } from '@/lib/WatchlistContext';
 import { MOCK_PRODUCTIONS, MOCK_REVIEWS } from '@/lib/mock';
 import { ProductionCard } from '@/components/shared/ProductionCard';
 import { useRouter } from 'next/navigation';
-import { ClientDB, syncFromSupabase } from '@/lib/db';
+import { ClientDB, syncFromSupabase, stripHtml } from '@/lib/db';
 import { Production } from '@/lib/types';
 import {
   Star, Bookmark, PenLine, Award, CheckCircle, Circle, Check,
@@ -1007,7 +1007,7 @@ export default function ProfilePage() {
                             {sub.name || sub.title}
                           </h3>
                           <p className="text-zinc-500 text-xs mt-1 line-clamp-1">
-                            {sub.bio || sub.synopsis || sub.excerpt}
+                            {stripHtml(sub.bio || sub.synopsis || sub.excerpt)}
                           </p>
                           {sub.status === 'Declined' && sub.declineReason && (
                             <div className="mt-3 bg-red-950/20 border border-red-500/10 rounded-xl p-3 text-xs text-red-300/90 max-w-xl">

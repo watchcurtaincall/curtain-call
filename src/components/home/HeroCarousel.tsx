@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Ticket, ChevronLeft, ChevronRight, Star, Calendar, ArrowRight } from 'lucide-react';
 import { Production } from '@/lib/types';
+import { stripHtml } from '@/lib/db';
 
 export function HeroCarousel({ productions }: { productions: Production[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -111,7 +112,7 @@ export function HeroCarousel({ productions }: { productions: Production[] }) {
 
           {/* Description / Synopsis */}
           <p className="text-zinc-300 text-sm md:text-base leading-relaxed line-clamp-3 max-w-xl font-normal drop-shadow-sm">
-            {featured.synopsis}
+            {stripHtml(featured.synopsis)}
           </p>
 
           {/* Action CTAs */}

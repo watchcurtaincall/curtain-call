@@ -2287,3 +2287,9 @@ export function sortItemsByDateAdded<T extends { id: string; createdAt?: string 
 
   return [...items].sort((a, b) => getScore(b) - getScore(a));
 }
+
+// Strip HTML tags helper to prevent raw tags from showing in previews
+export function stripHtml(html?: string): string {
+  if (!html) return '';
+  return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+}
