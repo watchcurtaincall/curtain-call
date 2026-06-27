@@ -1874,8 +1874,8 @@ export const syncFromSupabase = async (force = false) => {
     if (lastSyncStr) {
       const lastSync = parseInt(lastSyncStr, 10);
       const now = Date.now();
-      if (!isNaN(lastSync) && now - lastSync < 300000) { // 5 minutes cache TTL
-        console.log('[Supabase Sync] Cache hit (last sync < 5m ago). Skipping cloud network request.');
+      if (!isNaN(lastSync) && now - lastSync < 15000) { // 15 seconds cache TTL
+        console.log('[Supabase Sync] Cache hit (last sync < 15s ago). Skipping cloud network request.');
         // Still fire event so components know they can read from localStorage
         window.dispatchEvent(new Event('cc-db-synced'));
         return;
@@ -2249,6 +2249,23 @@ export const syncFromSupabase = async (force = false) => {
 // Auto-trigger background cloud sync pull in client context
 if (typeof window !== 'undefined') {
   syncFromSupabase();
+
+  // Revalidate database sync on tab focus or visibility changes
+  let focusThrottleTimer = 0;
+  const handleFocus = () => {
+    if (document.visibilityState === 'visible') {
+      const now = Date.now();
+      // Add a client-side throttle to avoid double-firing focus events in under 5 seconds
+      if (now - focusThrottleTimer > 5000) {
+        focusThrottleTimer = now;
+        console.log('[Database] Tab focus/visibility detected. Triggering background revalidation sync...');
+        syncFromSupabase().catch(err => console.error('[Database] Focus revalidation failed:', err));
+      }
+    }
+  };
+
+  window.addEventListener('focus', handleFocus);
+  document.addEventListener('visibilitychange', handleFocus);
 }
 
 // Robust, high-precision sorting utility to order plays, artists, and articles by date added descending (newest first)

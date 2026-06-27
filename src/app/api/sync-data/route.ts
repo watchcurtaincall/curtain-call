@@ -65,7 +65,7 @@ export async function GET(request: Request) {
         approvedCritics: (approvedCriticsRes.data || []).map((w: any) => w.email.toLowerCase())
       }, {
         headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=1200' // Cache on CDN for 5-20 minutes
+          'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=15' // Cache on CDN for 5-15 seconds
         }
       });
     }
@@ -222,7 +222,7 @@ export async function GET(request: Request) {
       quizCashCredits: quizCashCreditsRes?.data || []
     }, {
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+        'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=15'
       }
     });
 
