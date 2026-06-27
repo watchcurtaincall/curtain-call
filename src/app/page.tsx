@@ -22,12 +22,19 @@ function getInitialLocalData() {
     })
     .slice(0, 6);
 
+  let hasSynced = false;
+  try {
+    hasSynced = !!localStorage.getItem('cc_last_sync_time');
+  } catch (e) {
+    // fallback
+  }
+
   return {
     productions: sortItemsByDateAdded(ClientDB.getProductions()),
     trendingPeople: sortedArtists,
     recentArticles: allArticles.slice(0, 3),
     featuredHighlights: allArticles.length > 3 ? allArticles.slice(3, 6) : allArticles.slice(0, 3),
-    loading: !localStorage.getItem('cc_last_sync_time')
+    loading: !hasSynced
   };
 }
 
@@ -50,7 +57,13 @@ export default function Home() {
   useEffect(() => {
     isFirstMount = false;
     setMounted(true);
-    const hasSyncedBefore = localStorage.getItem('cc_last_sync_time');
+    
+    let hasSyncedBefore = false;
+    try {
+      hasSyncedBefore = !!localStorage.getItem('cc_last_sync_time');
+    } catch (e) {
+      console.warn('[Home] Failed to read cc_last_sync_time from localStorage:', e);
+    }
 
     const loadData = () => {
       const data = getInitialLocalData();
@@ -75,9 +88,20 @@ export default function Home() {
       setLoading(false);
     };
 
+    // Safety timeout: Ensure we never leave first-time or private-browsing visitors stuck in shimmer loading state
+    // if the network is slow, offline, or blocking Supabase requests.
+    const safetyTimeout = setTimeout(() => {
+      console.log('[Home] Safety timeout reached. Fading out loading shimmers and showing local/mock fallback data.');
+      loadData();
+      setLoading(false);
+    }, 2000);
+
     if (typeof window !== 'undefined') {
       window.addEventListener('cc-db-synced', handleSync);
-      return () => window.removeEventListener('cc-db-synced', handleSync);
+      return () => {
+        window.removeEventListener('cc-db-synced', handleSync);
+        clearTimeout(safetyTimeout);
+      };
     }
   }, []);
 
