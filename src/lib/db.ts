@@ -16,6 +16,38 @@ const PENDING_CRITICS_KEY = 'curtain_pending_critics';
 const REVIEWS_KEY = 'curtain_call_reviews';
 const USER_BANK_DETAILS_KEY = 'curtain_user_bank_details';
 
+// Memory storage fallback for private browsing modes or restricted environments
+const memoryDb: Record<string, string> = {};
+const localStorage = {
+  getItem(key: string): string | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      return window.localStorage.getItem(key);
+    } catch (e) {
+      console.warn(`[Storage Fallback] Failed to getItem for key "${key}":`, e);
+      return memoryDb[key] || null;
+    }
+  },
+  setItem(key: string, value: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(key, value);
+    } catch (e) {
+      console.warn(`[Storage Fallback] Failed to setItem for key "${key}":`, e);
+      memoryDb[key] = value;
+    }
+  },
+  removeItem(key: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.removeItem(key);
+    } catch (e) {
+      console.warn(`[Storage Fallback] Failed to removeItem for key "${key}":`, e);
+      delete memoryDb[key];
+    }
+  }
+};
+
 // ── SUPABASE CLIENT CONFIGURATION & fallback ──
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -531,9 +563,15 @@ export const ClientDB = {
   async sendEmail(to: string, subject: string, html: string): Promise<any> {
     if (typeof window === 'undefined') return { success: true };
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (supabase) {
+        const sessionRes = await supabase.auth.getSession();
+        const token = sessionRes?.data?.session?.access_token;
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+      }
       const response = await fetch('/api/send-email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ to, subject, html }),
       });
       const data = await response.json();

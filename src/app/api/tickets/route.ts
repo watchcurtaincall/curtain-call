@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { verifyUserSession } from '@/lib/quiz/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +30,16 @@ export async function GET(request: Request) {
 
   if (!email && !isAdmin) {
     return NextResponse.json({ error: 'Missing email parameter' }, { status: 400 });
+  }
+
+  // Session verification to prevent PII leak
+  const verifiedUser = await verifyUserSession(request);
+  if (!verifiedUser && !isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  if (!isAdmin && email && email.toLowerCase() !== verifiedUser?.email) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
@@ -62,10 +73,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Supabase service client not configured' }, { status: 500 });
   }
 
+  // Session verification to prevent unauthorized ticket injection
+  const verifiedUser = await verifyUserSession(request);
+  const adminSecret = request.headers.get('x-admin-secret');
+  const isAdmin = adminSecret && adminSecret === process.env.ADMIN_SECRET;
+
+  if (!verifiedUser && !isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const ticket = await request.json();
     if (!ticket || !ticket.id) {
       return NextResponse.json({ error: 'Missing ticket object or ID' }, { status: 400 });
+    }
+
+    if (!isAdmin && verifiedUser && ticket.buyer_email?.toLowerCase() !== verifiedUser.email) {
+      return NextResponse.json({ error: 'Forbidden: Cannot create tickets for other accounts' }, { status: 403 });
     }
 
     const { data, error } = await supabaseServer

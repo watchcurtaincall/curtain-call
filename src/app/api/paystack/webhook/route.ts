@@ -237,7 +237,10 @@ export async function POST(req: Request) {
           const origin = req.url.split('/api/')[0];
           await fetch(`${origin}/api/send-email`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-admin-secret': process.env.ADMIN_SECRET || ''
+            },
             body: JSON.stringify({ to: recipientEmail, subject, html: htmlContent })
           });
           console.log(`[Paystack Webhook] Admission email sent to ${recipientEmail}`);

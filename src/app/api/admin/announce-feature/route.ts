@@ -41,7 +41,10 @@ export async function POST(req: NextRequest) {
       
       const res = await fetch(`${APP_URL}/api/send-email`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-admin-secret': process.env.ADMIN_SECRET || ''
+        },
         body: JSON.stringify({
           to: user.email,
           subject: 'Write for Curtain Call — and get paid for it',

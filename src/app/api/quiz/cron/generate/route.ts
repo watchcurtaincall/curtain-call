@@ -17,9 +17,14 @@ async function handler(req: NextRequest) {
   // Validate cron secret to prevent public triggering
   const authHeader = req.headers.get('authorization');
   const expectedBearer = CRON_SECRET ? `Bearer ${CRON_SECRET}` : null;
-  const localBypass = `Bearer curtaincall-cron-2026`;
   
-  if (authHeader !== localBypass && (!expectedBearer || authHeader !== expectedBearer)) {
+  // Allow local bypass ONLY in development mode
+  const isDev = process.env.NODE_ENV === 'development';
+  const localBypass = isDev ? `Bearer curtaincall-cron-2026` : null;
+  
+  const isAuthorized = (expectedBearer && authHeader === expectedBearer) || (localBypass && authHeader === localBypass);
+  
+  if (!isAuthorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

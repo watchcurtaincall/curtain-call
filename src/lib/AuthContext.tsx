@@ -3,6 +3,38 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ClientDB, supabase, syncFromSupabase } from './db';
 
+// Memory storage fallback for private browsing modes or restricted environments
+const memoryDb: Record<string, string> = {};
+const localStorage = {
+  getItem(key: string): string | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      return window.localStorage.getItem(key);
+    } catch (e) {
+      console.warn(`[Storage Fallback] Failed to getItem for key "${key}":`, e);
+      return memoryDb[key] || null;
+    }
+  },
+  setItem(key: string, value: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(key, value);
+    } catch (e) {
+      console.warn(`[Storage Fallback] Failed to setItem for key "${key}":`, e);
+      memoryDb[key] = value;
+    }
+  },
+  removeItem(key: string): void {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.removeItem(key);
+    } catch (e) {
+      console.warn(`[Storage Fallback] Failed to removeItem for key "${key}":`, e);
+      delete memoryDb[key];
+    }
+  }
+};
+
 export interface MockUser {
   id: string;
   name: string;

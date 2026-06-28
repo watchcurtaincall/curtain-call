@@ -1,12 +1,24 @@
 import { NextResponse } from 'next/server';
+import { verifyUserSession } from '@/lib/quiz/auth';
 
 export async function POST(request: Request) {
   try {
-    const { to, subject, html, type = 'transactional' } = await request.json();
+    const verifiedUser = await verifyUserSession(request);
+    const adminSecret = request.headers.get('x-admin-secret');
+    const isAdmin = adminSecret && adminSecret === process.env.ADMIN_SECRET;
+
+    const body = await request.json();
+    const { to, subject, html, type = 'transactional' } = body;
 
     // Validate required fields before any further processing
     if (!to || !subject || !html) {
       return NextResponse.json({ error: 'Missing required fields: to, subject, html' }, { status: 400 });
+    }
+
+    const isVerificationEmail = subject === 'Confirm Your Curtain Call Account 🎭';
+
+    if (!verifiedUser && !isAdmin && !isVerificationEmail) {
+      return NextResponse.json({ error: 'Unauthorized: Session missing or invalid' }, { status: 401 });
     }
 
     const resendApiKey = process.env.RESEND_API_KEY;

@@ -276,6 +276,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Unauthorized: Only admin can verify profiles' }, { status: 403 });
       }
 
+      const finalIsVerified = verifiedIsAdmin ? (isVerified ?? true) : false;
+
       const { error } = await supabaseServer
         .from('profiles')
         .upsert({
@@ -284,7 +286,7 @@ export async function POST(request: Request) {
           handle: handle || null,
           location: location || null,
           join_date: joinDate || 'May 2026',
-          is_verified: isVerified ?? true,
+          is_verified: finalIsVerified,
           verification_code: verificationCode || null
         });
 

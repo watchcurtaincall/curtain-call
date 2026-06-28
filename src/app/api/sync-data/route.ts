@@ -319,7 +319,41 @@ export async function POST(request: Request) {
       }
     }
 
+    // Enforce curation status controls for non-admin writers to prevent privilege escalation
     let currentDbItem = { ...dbItem };
+    if (!verifiedIsAdmin) {
+      if (['productions', 'artists', 'articles', 'critic_applications'].includes(table)) {
+        let existingStatus = 'Pending';
+        if (dbItem.id) {
+          const { data: existing } = await supabaseServer
+            .from(table)
+            .select('curation_status')
+            .eq('id', dbItem.id)
+            .maybeSingle();
+          if (existing && existing.curation_status) {
+            existingStatus = existing.curation_status;
+          }
+        }
+        currentDbItem.curation_status = existingStatus;
+        if ('curationStatus' in currentDbItem) {
+          currentDbItem.curationStatus = existingStatus;
+        }
+      } else if (table === 'withdrawals') {
+        let existingStatus = 'Pending';
+        if (dbItem.id) {
+          const { data: existing } = await supabaseServer
+            .from('withdrawals')
+            .select('status')
+            .eq('id', dbItem.id)
+            .maybeSingle();
+          if (existing && existing.status) {
+            existingStatus = existing.status;
+          }
+        }
+        currentDbItem.status = existingStatus;
+      }
+    }
+
     let attempts = 0;
     let success = false;
     let finalData = null;
