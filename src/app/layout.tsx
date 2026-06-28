@@ -7,6 +7,7 @@ import { Providers } from '@/lib/Providers';
 import { AutoUpdater } from "@/components/shared/AutoUpdater";
 import { Analytics } from "@vercel/analytics/react";
 import Script from 'next/script';
+import NextTopLoader from 'nextjs-toploader';
 import "./globals.css";
 
 const outfit = Outfit({
@@ -47,6 +48,17 @@ export default function RootLayout({
       className={`${outfit.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
+        <NextTopLoader
+          color="#ef4444"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #ef4444,0 0 5px #ef4444"
+        />
         <AutoUpdater />
         <Providers>
           <Navbar />
