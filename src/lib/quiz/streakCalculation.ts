@@ -7,9 +7,7 @@ export function toWATDateString(date: Date): string {
 }
 
 export function addDays(date: Date, days: number): Date {
-  const result = new Date(date.getTime());
-  result.setDate(result.getDate() + days);
-  return result;
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
 /**

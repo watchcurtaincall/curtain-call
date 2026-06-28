@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabaseServer';
-import { toWATDateString } from '@/lib/quiz/streakCalculation';
+import { toWATDateString, shouldResetStreak } from '@/lib/quiz/streakCalculation';
 import { getUserIdFromRequest } from '@/lib/quiz/auth';
 
 export const dynamic = 'force-dynamic';
@@ -106,14 +106,25 @@ export async function GET(request: Request) {
         if (email) {
           const { data: profile, error: profileErr } = await supabaseServer
             .from('profiles')
-            .select('quiz_streak')
+            .select('quiz_streak, quiz_last_completion_date')
             .eq('email', email.toLowerCase())
             .maybeSingle();
 
           if (profileErr) {
             console.error('[API Quiz Status] Fetch profile error:', profileErr);
           } else if (profile) {
-            streakCount = profile.quiz_streak || 0;
+            let activeStreak = profile.quiz_streak || 0;
+            if (activeStreak > 0 && profile.quiz_last_completion_date) {
+              const lastCompletionDate = new Date(profile.quiz_last_completion_date);
+              if (shouldResetStreak(lastCompletionDate, new Date())) {
+                await supabaseServer
+                  .from('profiles')
+                  .update({ quiz_streak: 0 })
+                  .eq('email', email.toLowerCase());
+                activeStreak = 0;
+              }
+            }
+            streakCount = activeStreak;
           }
         }
       }

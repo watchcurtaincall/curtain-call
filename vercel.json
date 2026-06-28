@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/quiz/cron/generate",
-      "schedule": "0 22 * * *"
+      "schedule": "0 23 * * *"
     },
     {
       "path": "/api/quiz/cron/email",
