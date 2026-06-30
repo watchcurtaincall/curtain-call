@@ -383,8 +383,17 @@ export async function POST(req: Request) {
 
       // Send emails
       for (const [recipientEmail, tix] of Object.entries(ticketsByEmail) as [string, any[]][]) {
-        const subject = `Your Curtain Call Admission Pass: ${productionTitle}`;
-        const ticketRows = tix.map((t, idx) => `
+        const isPrimaryBuyer = recipientEmail.toLowerCase() === email.toLowerCase();
+        
+        // If they shared tickets with others, the primary buyer gets ALL tickets in their master pass,
+        // while other shared attendees get only their assigned tickets.
+        const tixToMail = (isPrimaryBuyer && sendToOthers) ? ticketsToInsert : tix;
+        
+        const subject = isPrimaryBuyer 
+          ? `Your Curtain Call Admission Pass: ${productionTitle}`
+          : `Your Shared Curtain Call Admission Pass: ${productionTitle}`;
+
+        const ticketRows = tixToMail.map((t, idx) => `
           <tr style="border-top: 1px dashed #D4C4C7;">
             <td style="padding: 10px 0; color: #555555; font-size: 14px;">Pass #${idx + 1} (${t.tier})</td>
             <td style="padding: 10px 0; text-align: right; font-family: monospace; font-size: 16px; font-weight: bold; color: #1C7C54;">${t.gate_pass}</td>
@@ -412,10 +421,15 @@ export async function POST(req: Request) {
                       <td style="padding:40px 0;">
                         <h1 style="margin:0 0 20px 0; font-family:Georgia, serif; font-size:24px; color:#1A1A1A; line-height:1.3; font-weight:bold; text-align:center;">${productionTitle} Admission Pass</h1>
                         <div style="width:40px; height:2px; background-color:#8B1C31; margin:0 auto 20px auto;"></div>
-                        <p style="margin:0 0 30px 0; font-family:Arial, sans-serif; font-size:16px; color:#555555; line-height:1.6; text-align:center;">Your seats have been reserved. Present the digital passes at the gates.</p>
+                        <p style="margin:0 0 30px 0; font-family:Arial, sans-serif; font-size:16px; color:#555555; line-height:1.6; text-align:center;">
+                          ${isPrimaryBuyer 
+                            ? 'Your seats have been reserved. Present the digital passes at the gates.' 
+                            : `A ticket pass for <strong>${productionTitle}</strong> has been shared with you by <strong>${buyerFirstName} ${buyerLastName}</strong> (${email}).`
+                          }
+                        </p>
 
                         <div style="background-color:#FDF5F6; border:1px solid #E5D5D8; border-radius:12px; padding:30px; margin:0 0 30px 0;">
-                          <p style="margin:0 0 8px 0; font-family:Arial, sans-serif; font-size:12px; font-weight:bold; color:#8B1C31; letter-spacing:1px; text-transform:uppercase;">Admit ${tix.length} Person(s)</p>
+                          <p style="margin:0 0 8px 0; font-family:Arial, sans-serif; font-size:12px; font-weight:bold; color:#8B1C31; letter-spacing:1px; text-transform:uppercase;">Admit ${tixToMail.length} Person(s)</p>
                           <h2 style="margin:0 0 20px 0; font-family:Georgia, serif; font-size:28px; color:#1A1A1A;">${productionTitle}</h2>
                           
                           <div style="border-top:1px dashed #D4C4C7; margin:20px 0;"></div>
@@ -473,11 +487,11 @@ export async function POST(req: Request) {
           });
           console.log(`[Paystack Webhook] Admission email sent to ${recipientEmail}`);
 
-          // Also notify the producer/creator of the ticket sale
-          if (producerEmail) {
-            const prodTiersStr = tix.map(t => t.tier).join(', ');
+          // Also notify the producer/creator of the ticket sale (only for primary buyer to prevent duplicate notifications)
+          if (producerEmail && isPrimaryBuyer) {
+            const prodTiersStr = ticketsToInsert.map(t => t.tier).join(', ');
             const prodSubject = `Ticket Purchased: ${productionTitle} 🎭`;
-            const prodHtml = getProducerNotificationHtml(productionTitle, recipientEmail, tix.length, prodTiersStr, amount);
+            const prodHtml = getProducerNotificationHtml(productionTitle, email, ticketsToInsert.length, prodTiersStr, amount);
             
             await fetch(`${origin}/api/send-email`, {
               method: 'POST',
