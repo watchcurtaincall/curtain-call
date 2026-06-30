@@ -222,7 +222,7 @@ export async function GET(request: Request) {
       quizCashCredits: quizCashCreditsRes?.data || []
     }, {
       headers: {
-        'Cache-Control': 'public, s-maxage=5, stale-while-revalidate=15'
+        'Cache-Control': 'no-store, no-cache, must-revalidate'
       }
     });
 

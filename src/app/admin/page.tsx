@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { ClientDB, syncFromSupabase, supabase, stripHtml } from '@/lib/db';
 import { Artist, Production, Article } from '@/lib/types';
-import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download, QrCode, Camera, RefreshCw, Star, BarChart, BellRing } from 'lucide-react';
+import { Upload, CheckCircle2, User, Drama, Sparkles, BookOpen, Plus, X, Search, Calendar, Award, Globe, ShieldAlert, ShieldCheck, ArrowRight, Check, Trash2, LayoutGrid, FileText, FolderEdit, Skull, Edit, Eye, ImagePlus, Link2, Mail, Banknote, Users, Download, QrCode, Camera, RefreshCw, Star, BarChart, BellRing, Ticket } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import RichTextEditor from '@/components/RichTextEditor';
 import { AdminPushNotificationsPanel } from '@/components/admin/PushPanel';
 import { ProductionCard } from '@/components/shared/ProductionCard';
 
-type AdminTab = 'overview' | 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'email-logs' | 'quiz-analytics' | 'push-notifications';
+type AdminTab = 'overview' | 'queue' | 'blog' | 'direct-artist' | 'direct-play' | 'manage' | 'withdrawals' | 'subscribers' | 'email-logs' | 'quiz-analytics' | 'push-notifications' | 'tickets';
 
 // ── Stageography Adder Sub-component (used inside Edit Artist modal) ──
 
@@ -339,6 +339,7 @@ export default function AdminDashboardPage() {
   const [historySearch, setHistorySearch] = useState('');
   const [subscriberSearch, setSubscriberSearch] = useState('');
   const [signupSearch, setSignupSearch] = useState('');
+  const [ticketSearch, setTicketSearch] = useState('');
 
   // Manage tab local states
   const [manageSearch, setManageSearch] = useState('');
@@ -1514,6 +1515,7 @@ This file was retrieved from the Curtain Call Curation Vault.
               { id: 'quiz-analytics', name: 'Quiz Analytics', icon: BarChart },
               { id: 'queue', name: 'Queue & History', icon: ShieldAlert, badge: pendingTotal },
               { id: 'withdrawals', name: 'Withdrawals', icon: Banknote, badge: withdrawals.filter(w => w.status === 'Pending').length },
+              { id: 'tickets', name: 'Tickets Sold', icon: Ticket },
               { id: 'blog', name: 'Publish Blog', icon: FileText },
               { id: 'direct-artist', name: 'Add Artiste', icon: User },
               { id: 'direct-play', name: 'Add Play', icon: Drama },
@@ -1573,6 +1575,7 @@ This file was retrieved from the Curtain Call Curation Vault.
           <option value="overview">Overview</option>
           <option value="queue">Queue ({pendingTotal})</option>
           <option value="withdrawals">Withdrawals</option>
+          <option value="tickets">Tickets Sold</option>
           <option value="blog">Publish Blog</option>
           <option value="direct-artist">Add Artiste</option>
           <option value="direct-play">Add Play</option>
@@ -4572,6 +4575,144 @@ This file was retrieved from the Curtain Call Curation Vault.
             </form>
           </div>
         )}
+
+        {/* ── TICKETS SOLD PANEL ────────────────────────────── */}
+        {activeTab === 'tickets' && (() => {
+          const allDbTickets = ClientDB.getTickets ? ClientDB.getTickets() : [];
+          
+          // Tickets search filter
+          const filteredTickets = allDbTickets.filter(ticket => {
+            const query = (ticketSearch || '').toLowerCase().trim();
+            if (!query) return true;
+            
+            const buyer = (ticket.buyerEmail || '').toLowerCase();
+            const title = (ticket.productionTitle || '').toLowerCase();
+            const ref = (ticket.reference || '').toLowerCase();
+            const pass = (ticket.gatePass || '').toLowerCase();
+            const tier = (ticket.tier || '').toLowerCase();
+            
+            return buyer.includes(query) || title.includes(query) || ref.includes(query) || pass.includes(query) || tier.includes(query);
+          });
+
+          const totalSalesValue = allDbTickets.reduce((sum: number, t: any) => sum + (t.price || 0), 0);
+          const platformEarnings = totalSalesValue * 0.05;
+
+          return (
+            <div className="flex flex-col gap-8 animate-fade-up">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-3xl font-serif font-bold text-white flex items-center gap-3">
+                    <Ticket className="h-8 w-8 text-red-500" /> Tickets Sold & Admissions
+                  </h1>
+                  <p className="text-zinc-500 text-sm mt-1">Detailed list of purchased tickets, gate passes, references, and platform gross revenue.</p>
+                </div>
+                
+                {/* Export tickets to CSV */}
+                {allDbTickets.length > 0 && (
+                  <button
+                    onClick={() => {
+                      const csvRows = [
+                        ['Ticket ID', 'Event Title', 'Buyer Email', 'Tier', 'Price (NGN)', 'Reference', 'Gate Pass', 'Date'],
+                        ...allDbTickets.map(t => [
+                          t.id, t.productionTitle, t.buyerEmail, t.tier, t.price, t.reference, t.gatePass, t.date
+                        ])
+                      ];
+                      const csvContent = "data:text/csv;charset=utf-8," 
+                        + csvRows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(",")).join("\n");
+                      const encodedUri = encodeURI(csvContent);
+                      const link = document.createElement("a");
+                      link.setAttribute("href", encodedUri);
+                      link.setAttribute("download", `curtain_call_tickets_${new Date().toISOString().split('T')[0]}.csv`);
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="bg-zinc-900 border border-white/5 hover:bg-white/5 text-white font-bold px-4 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all flex items-center gap-2 self-start md:self-auto"
+                  >
+                    Export CSV
+                  </button>
+                )}
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5">
+                  <span className="text-[10px] uppercase font-mono tracking-widest text-zinc-500 font-bold block">Total Passes Issued</span>
+                  <span className="text-3xl font-serif font-bold text-white block mt-1">{allDbTickets.length}</span>
+                </div>
+                <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5">
+                  <span className="text-[10px] uppercase font-mono tracking-widest text-zinc-500 font-bold block">Gross Ticket Sales</span>
+                  <span className="text-3xl font-serif font-bold text-white block mt-1">₦{totalSalesValue.toLocaleString()}</span>
+                </div>
+                <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5">
+                  <span className="text-[10px] uppercase font-mono tracking-widest text-zinc-500 font-bold block">Platform Earnings (5% Commission)</span>
+                  <span className="text-3xl font-serif font-bold text-emerald-400 block mt-1">₦{platformEarnings.toLocaleString()}</span>
+                </div>
+              </div>
+
+              {/* Table Card */}
+              <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col min-h-[400px]">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
+                
+                {/* Search Header */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-5 mb-6 shrink-0">
+                  <h2 className="text-lg font-serif font-bold text-white">All Tickets ({filteredTickets.length})</h2>
+                  <input
+                    type="text"
+                    value={ticketSearch}
+                    onChange={e => setTicketSearch(e.target.value)}
+                    placeholder="Search by email, event, pass, reference..."
+                    className="w-full sm:w-80 bg-zinc-950 border border-white/5 rounded-xl px-4 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/50 transition-colors"
+                  />
+                </div>
+
+                {/* Table Container */}
+                <div className="overflow-x-auto flex-1">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-white/5 text-zinc-500 font-mono text-[10px] uppercase tracking-wider">
+                        <th className="pb-3 font-bold">Event Title</th>
+                        <th className="pb-3 font-bold">Buyer Email</th>
+                        <th className="pb-3 font-bold">Tier</th>
+                        <th className="pb-3 font-bold text-right">Price</th>
+                        <th className="pb-3 font-bold text-center">Gate Pass</th>
+                        <th className="pb-3 font-bold">Reference</th>
+                        <th className="pb-3 font-bold text-right">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 text-xs text-zinc-300">
+                      {filteredTickets.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="py-12 text-center text-zinc-500 font-medium">
+                            No matching ticket records found.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredTickets.map(ticket => (
+                          <tr key={ticket.id} className="hover:bg-white/2 bg-transparent transition-colors">
+                            <td className="py-4 font-bold text-white max-w-[200px] truncate" title={ticket.productionTitle}>
+                              {ticket.productionTitle}
+                            </td>
+                            <td className="py-4 font-mono font-medium">{ticket.buyerEmail}</td>
+                            <td className="py-4 font-medium text-zinc-400">{ticket.tier}</td>
+                            <td className="py-4 text-right font-bold text-white">₦{(ticket.price || 0).toLocaleString()}</td>
+                            <td className="py-4 text-center font-mono font-bold text-emerald-400">
+                              <span className="bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                                {ticket.gatePass}
+                              </span>
+                            </td>
+                            <td className="py-4 font-mono text-zinc-500 text-[10px]">{ticket.reference}</td>
+                            <td className="py-4 text-right text-zinc-500 font-medium">{ticket.date}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* ── SUBSCRIBERS & SIGNUPS PANEL ────────────────────────────── */}
         {activeTab === 'subscribers' && (() => {
