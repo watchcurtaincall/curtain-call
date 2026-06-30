@@ -67,6 +67,78 @@ function parsePaystackMetadata(metadata: any): any {
   return parsed;
 }
 
+function getProducerNotificationHtml(
+  productionTitle: string,
+  buyerEmail: string,
+  ticketsCount: number,
+  tiersStr: string,
+  amount: number
+): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin:0; padding:0; background-color:#FFFFFF; font-family:Arial, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF;">
+        <tr>
+          <td align="center" style="padding:40px 20px;">
+            <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
+              <tr>
+                <td align="center" style="padding-bottom:20px; border-bottom:1px solid #8B1C31;">
+                  <div style="font-family:Georgia, serif; font-size:32px; font-weight:bold; color:#8B1C31; letter-spacing:1px;">Curtain Call</div>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:40px 0;">
+                  <h1 style="margin:0 0 20px 0; font-family:Georgia, serif; font-size:24px; color:#1A1A1A; line-height:1.3; font-weight:bold; text-align:center;">New Ticket Sale Recorded</h1>
+                  <div style="width:40px; height:2px; background-color:#8B1C31; margin:0 auto 20px auto;"></div>
+                  <p style="margin:0 0 30px 0; font-family:Arial, sans-serif; font-size:16px; color:#555555; line-height:1.6; text-align:center;">Great news! Someone just purchased admission to your production.</p>
+
+                  <div style="background-color:#FDF5F6; border:1px solid #E5D5D8; border-radius:12px; padding:30px; margin:0 0 30px 0;">
+                    <p style="margin:0 0 8px 0; font-family:Arial, sans-serif; font-size:12px; font-weight:bold; color:#8B1C31; letter-spacing:1px; text-transform:uppercase;">Sales Confirmation</p>
+                    <h2 style="margin:0 0 20px 0; font-family:Georgia, serif; font-size:28px; color:#1A1A1A;">${productionTitle}</h2>
+                    
+                    <div style="border-top:1px dashed #D4C4C7; margin:20px 0;"></div>
+                    
+                    <table width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial, sans-serif; font-size:14px; color:#1A1A1A; line-height:1.6;">
+                      <tr><td width="120" style="padding-bottom:12px; color:#555555; text-transform:uppercase; font-size:12px; letter-spacing:0.5px;">Buyer Email</td><td style="padding-bottom:12px; text-align:right; font-weight:bold;">${buyerEmail}</td></tr>
+                      <tr><td style="padding-bottom:12px; color:#555555; text-transform:uppercase; font-size:12px; letter-spacing:0.5px;">Tickets Sold</td><td style="padding-bottom:12px; text-align:right; font-weight:bold;">${ticketsCount} Ticket(s)</td></tr>
+                      <tr><td style="padding-bottom:12px; color:#555555; text-transform:uppercase; font-size:12px; letter-spacing:0.5px;">Tiers Purchased</td><td style="padding-bottom:12px; text-align:right; font-weight:bold;">${tiersStr}</td></tr>
+                      <tr><td style="color:#555555; text-transform:uppercase; font-size:12px; letter-spacing:0.5px;">Total Revenue</td><td style="text-align:right; font-weight:bold; color:#1C7C54;">₦${amount.toLocaleString()}</td></tr>
+                    </table>
+                  </div>
+
+                  <p style="margin:0 0 20px 0; font-family:Arial, sans-serif; font-size:15px; color:#555555; line-height:1.6; text-align:center;">This sale has been credited to your creator wallet. You can request a withdrawal or check your complete sales list from the portal.</p>
+
+                  <table cellpadding="0" cellspacing="0" width="100%" style="margin-top:40px;">
+                    <tr>
+                      <td align="center">
+                        <a href="https://curtaincall.com.ng/creator" style="display:inline-block; background-color:#8B1C31; color:#FFFFFF; font-family:Arial, sans-serif; font-size:16px; font-weight:bold; text-decoration:none; padding:16px 40px; border-radius:4px;">Manage Production</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="padding-top:30px; border-top:1px solid #8B1C31;">
+                  <p style="margin:0 0 12px 0; font-family:Georgia, serif; font-size:14px; color:#555555; font-style:italic;">Documenting Nigerian Theatre and its Creators.</p>
+                  <p style="margin:0; font-family:Arial, sans-serif; font-size:12px; color:#888888;">
+                    <a href="https://curtaincall.com.ng" style="color:#888888; text-decoration:underline;">curtaincall.com.ng</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+}
+
 export async function POST(req: Request) {
   try {
     const bodyText = await req.text();
@@ -110,16 +182,18 @@ export async function POST(req: Request) {
 
       let venue = 'Broad Street Stage Venue';
       let showDateFormatted = 'Scheduled Date';
+      let producerEmail = '';
 
       if (supabaseServer && productionId) {
         const { data: prodData } = await supabaseServer
           .from('productions')
-          .select('venue, show_date')
+          .select('venue, show_date, submitter_email')
           .eq('id', productionId)
           .maybeSingle();
 
         if (prodData) {
           venue = prodData.venue || venue;
+          producerEmail = prodData.submitter_email || '';
           if (prodData.show_date) {
             try {
               showDateFormatted = new Date(prodData.show_date).toLocaleDateString('en-NG', {
@@ -236,53 +310,80 @@ export async function POST(req: Request) {
       for (const [recipientEmail, tix] of Object.entries(ticketsByEmail) as [string, any[]][]) {
         const subject = `Your Curtain Call Admission Pass: ${productionTitle}`;
         const ticketRows = tix.map((t, idx) => `
-          <tr style="border-top: 1px dashed rgba(255,255,255,0.08);">
-            <td style="padding: 12px 0; font-size: 13px; color: #a1a1aa;">Pass #${idx + 1} (${t.tier})</td>
-            <td style="padding: 12px 0; font-size: 13px; color: #22c55e; text-align: right; font-weight: bold;">${t.gate_pass}</td>
+          <tr style="border-top: 1px dashed #D4C4C7;">
+            <td style="padding: 10px 0; color: #555555; font-size: 14px;">Pass #${idx + 1} (${t.tier})</td>
+            <td style="padding: 10px 0; text-align: right; font-family: monospace; font-size: 16px; font-weight: bold; color: #1C7C54;">${t.gate_pass}</td>
           </tr>
         `).join('');
 
         const htmlContent = `
-          <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-            <div style="text-align: center; margin-bottom: 25px;">
-              <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Admission Pass</span>
-              <div style="height: 2px; width: 80px; background-color: #dc2626; margin: 15px auto 0;"></div>
-            </div>
-            
-            <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 20px;">
-              Your seats have been reserved. Present the digital passes at the gates.
-            </p>
-            
-            <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
-              <div style="margin-bottom: 20px;">
-                <span style="font-size: 9px; color: #dc2626; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">Admit ${tix.length} Person${tix.length > 1 ? 's' : ''}</span>
-                <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; margin: 4px 0 0; font-family: Georgia, serif;">${productionTitle}</h2>
-              </div>
-              
-              <div style="border-top: 1px dashed #27272a; margin: 20px 0;"></div>
-              
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Event Date</td>
-                  <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${showDateFormatted}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Venue</td>
-                  <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${venue}</td>
-                </tr>
-              </table>
+          <!DOCTYPE html>
+          <html>
+          <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin:0; padding:0; background-color:#FFFFFF; font-family:Arial, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF;">
+              <tr>
+                <td align="center" style="padding-clip:40px 20px;">
+                  <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
+                    <tr>
+                      <td align="center" style="padding-bottom:20px; border-bottom:1px solid #8B1C31;">
+                        <div style="font-family:Georgia, serif; font-size:32px; font-weight:bold; color:#8B1C31; letter-spacing:1px;">Curtain Call</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:40px 0;">
+                        <h1 style="margin:0 0 20px 0; font-family:Georgia, serif; font-size:24px; color:#1A1A1A; line-height:1.3; font-weight:bold; text-align:center;">${productionTitle} Admission Pass</h1>
+                        <div style="width:40px; height:2px; background-color:#8B1C31; margin:0 auto 20px auto;"></div>
+                        <p style="margin:0 0 30px 0; font-family:Arial, sans-serif; font-size:16px; color:#555555; line-height:1.6; text-align:center;">Your seats have been reserved. Present the digital passes at the gates.</p>
 
-              <div style="border-top: 1px dashed #27272a; margin: 20px 0;"></div>
-              <h3 style="font-size: 12px; color: #ffffff; text-transform: uppercase; font-weight: bold; margin-bottom: 10px; font-family: Georgia, serif;">Admissions Gate Passes:</h3>
-              <table style="width: 100%; border-collapse: collapse;">
-                ${ticketRows}
-              </table>
-            </div>
+                        <div style="background-color:#FDF5F6; border:1px solid #E5D5D8; border-radius:12px; padding:30px; margin:0 0 30px 0;">
+                          <p style="margin:0 0 8px 0; font-family:Arial, sans-serif; font-size:12px; font-weight:bold; color:#8B1C31; letter-spacing:1px; text-transform:uppercase;">Admit ${tix.length} Person(s)</p>
+                          <h2 style="margin:0 0 20px 0; font-family:Georgia, serif; font-size:28px; color:#1A1A1A;">${productionTitle}</h2>
+                          
+                          <div style="border-top:1px dashed #D4C4C7; margin:20px 0;"></div>
+                          
+                          <table width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial, sans-serif; font-size:14px; color:#1A1A1A; line-height:1.6;">
+                            <tr><td width="100" style="padding-bottom:12px; color:#555555; text-transform:uppercase; font-size:12px; letter-spacing:0.5px;">Event Date</td><td style="padding-bottom:12px; text-align:right; font-weight:bold;">${showDateFormatted}</td></tr>
+                            <tr><td style="padding-bottom:12px; color:#555555; text-transform:uppercase; font-size:12px; letter-spacing:0.5px;">Venue</td><td style="padding-bottom:12px; text-align:right; font-weight:bold;">${venue}</td></tr>
+                            <tr><td style="color:#555555; text-transform:uppercase; font-size:12px; letter-spacing:0.5px;">Total Paid</td><td style="text-align:right; font-weight:bold;">₦${amount.toLocaleString()}</td></tr>
+                          </table>
+                          
+                          <div style="border-top:1px dashed #D4C4C7; margin:20px 0;"></div>
+                          
+                          <p style="margin:0 0 15px 0; font-family:Arial, sans-serif; font-size:13px; font-weight:bold; color:#1A1A1A; letter-spacing:0.5px;">ADMISSIONS GATE PASSES:</p>
+                          <table width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial, sans-serif; font-size:15px; color:#1A1A1A;">
+                            ${ticketRows}
+                          </table>
+                        </div>
 
-            <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
-              Don't forget to mark your calendar! The event is scheduled to take place at <strong>${venue}</strong> on <strong>${showDateFormatted}</strong>. We recommend arriving early.
-            </p>
-          </div>
+                        <p style="margin:0 0 20px 0; font-family:Arial, sans-serif; font-size:15px; color:#555555; line-height:1.6; text-align:center;">Don't forget to mark your calendar! The play is scheduled to take place at <strong>${venue}</strong> on <strong>${showDateFormatted}</strong>. We recommend arriving 30 minutes before the curtains rise.</p>
+
+                        <table cellpadding="0" cellspacing="0" width="100%" style="margin-top:40px;">
+                          <tr>
+                            <td align="center">
+                              <a href="https://curtaincall.com.ng/profile" style="display:inline-block; background-color:#8B1C31; color:#FFFFFF; font-family:Arial, sans-serif; font-size:16px; font-weight:bold; text-decoration:none; padding:16px 40px; border-radius:4px;">View Your Tickets</a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" style="padding-top:30px; border-top:1px solid #8B1C31;">
+                        <p style="margin:0 0 12px 0; font-family:Georgia, serif; font-size:14px; color:#555555; font-style:italic;">Documenting Nigerian Theatre and its Creators.</p>
+                        <p style="margin:0; font-family:Arial, sans-serif; font-size:12px; color:#888888;">
+                          <a href="https://curtaincall.com.ng" style="color:#888888; text-decoration:underline;">curtaincall.com.ng</a>
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+          </html>
         `;
 
         try {
@@ -296,8 +397,25 @@ export async function POST(req: Request) {
             body: JSON.stringify({ to: recipientEmail, subject, html: htmlContent })
           });
           console.log(`[Paystack Webhook] Admission email sent to ${recipientEmail}`);
+
+          // Also notify the producer/creator of the ticket sale
+          if (producerEmail) {
+            const prodTiersStr = tix.map(t => t.tier).join(', ');
+            const prodSubject = `Ticket Purchased: ${productionTitle} 🎭`;
+            const prodHtml = getProducerNotificationHtml(productionTitle, recipientEmail, tix.length, prodTiersStr, amount);
+            
+            await fetch(`${origin}/api/send-email`, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'x-admin-secret': process.env.ADMIN_SECRET || process.env.CRON_SECRET || ''
+              },
+              body: JSON.stringify({ to: producerEmail, subject: prodSubject, html: prodHtml })
+            });
+            console.log(`[Paystack Webhook] Producer sale notification email sent to ${producerEmail}`);
+          }
         } catch (mailErr) {
-          console.error('[Paystack Webhook] Failed to send confirmation email:', mailErr);
+          console.error('[Paystack Webhook] Failed to send confirmation emails:', mailErr);
         }
       }
     }

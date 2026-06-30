@@ -340,6 +340,7 @@ export default function AdminDashboardPage() {
   const [subscriberSearch, setSubscriberSearch] = useState('');
   const [signupSearch, setSignupSearch] = useState('');
   const [ticketSearch, setTicketSearch] = useState('');
+  const [ticketsSubTab, setTicketsSubTab] = useState<'passes' | 'breakdown'>('breakdown');
 
   // Manage tab local states
   const [manageSearch, setManageSearch] = useState('');
@@ -4594,6 +4595,49 @@ This file was retrieved from the Curtain Call Curation Vault.
             return buyer.includes(query) || title.includes(query) || ref.includes(query) || pass.includes(query) || tier.includes(query);
           });
 
+          // Group by Reference for Sales & Revenue Breakdown
+          const transactionsMap = new Map<string, any>();
+          allDbTickets.forEach((t: any) => {
+            const ref = t.reference || 'N/A';
+            const baseRef = ref.split('-')[0];
+            
+            if (!transactionsMap.has(baseRef)) {
+              transactionsMap.set(baseRef, {
+                reference: baseRef,
+                productionTitle: t.productionTitle,
+                buyerEmail: t.buyerEmail,
+                quantity: 0,
+                tiers: {} as Record<string, number>,
+                gross: 0,
+                date: t.date,
+                timestamp: t.timestamp || 0
+              });
+            }
+            
+            const tx = transactionsMap.get(baseRef);
+            tx.quantity += 1;
+            tx.tiers[t.tier] = (tx.tiers[t.tier] || 0) + 1;
+            tx.gross += t.price || 0;
+            if (t.timestamp && (!tx.timestamp || t.timestamp < tx.timestamp)) {
+              tx.timestamp = t.timestamp;
+              tx.date = t.date;
+            }
+          });
+
+          const transactions = Array.from(transactionsMap.values()).sort((a, b) => b.timestamp - a.timestamp);
+
+          const filteredTransactions = transactions.filter(tx => {
+            const query = (ticketSearch || '').toLowerCase().trim();
+            if (!query) return true;
+            
+            const buyer = (tx.buyerEmail || '').toLowerCase();
+            const title = (tx.productionTitle || '').toLowerCase();
+            const ref = (tx.reference || '').toLowerCase();
+            const tiersStr = Object.keys(tx.tiers).join(' ').toLowerCase();
+            
+            return buyer.includes(query) || title.includes(query) || ref.includes(query) || tiersStr.includes(query);
+          });
+
           const totalSalesValue = allDbTickets.reduce((sum: number, t: any) => sum + (t.price || 0), 0);
           const platformEarnings = totalSalesValue * 0.05;
 
@@ -4650,65 +4694,153 @@ This file was retrieved from the Curtain Call Curation Vault.
                 </div>
               </div>
 
+              {/* Sub-tab Selection Header */}
+              <div className="flex border-b border-white/5 pb-3 gap-6">
+                <button
+                  onClick={() => setTicketsSubTab('breakdown')}
+                  className={`text-xs font-bold uppercase tracking-wider pb-2 border-b-2 transition-all ${
+                    ticketsSubTab === 'breakdown' ? 'border-red-500 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  Sales & Revenue Breakdown
+                </button>
+                <button
+                  onClick={() => setTicketsSubTab('passes')}
+                  className={`text-xs font-bold uppercase tracking-wider pb-2 border-b-2 transition-all ${
+                    ticketsSubTab === 'passes' ? 'border-red-500 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                  }`}
+                >
+                  Individual Passes Issued
+                </button>
+              </div>
+
               {/* Table Card */}
               <div className="bg-zinc-900 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col min-h-[400px]">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-red-600/5 rounded-full blur-[80px] pointer-events-none" />
                 
-                {/* Search Header */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-5 mb-6 shrink-0">
-                  <h2 className="text-lg font-serif font-bold text-white">All Tickets ({filteredTickets.length})</h2>
-                  <input
-                    type="text"
-                    value={ticketSearch}
-                    onChange={e => setTicketSearch(e.target.value)}
-                    placeholder="Search by email, event, pass, reference..."
-                    className="w-full sm:w-80 bg-zinc-950 border border-white/5 rounded-xl px-4 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/50 transition-colors"
-                  />
-                </div>
+                {ticketsSubTab === 'passes' ? (
+                  <>
+                    {/* Search Header */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-5 mb-6 shrink-0">
+                      <h2 className="text-lg font-serif font-bold text-white">All Tickets ({filteredTickets.length})</h2>
+                      <input
+                        type="text"
+                        value={ticketSearch}
+                        onChange={e => setTicketSearch(e.target.value)}
+                        placeholder="Search by email, event, pass, reference..."
+                        className="w-full sm:w-80 bg-zinc-950 border border-white/5 rounded-xl px-4 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/50 transition-colors"
+                      />
+                    </div>
 
-                {/* Table Container */}
-                <div className="overflow-x-auto flex-1">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-white/5 text-zinc-500 font-mono text-[10px] uppercase tracking-wider">
-                        <th className="pb-3 font-bold">Event Title</th>
-                        <th className="pb-3 font-bold">Buyer Email</th>
-                        <th className="pb-3 font-bold">Tier</th>
-                        <th className="pb-3 font-bold text-right">Price</th>
-                        <th className="pb-3 font-bold text-center">Gate Pass</th>
-                        <th className="pb-3 font-bold">Reference</th>
-                        <th className="pb-3 font-bold text-right">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5 text-xs text-zinc-300">
-                      {filteredTickets.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="py-12 text-center text-zinc-500 font-medium">
-                            No matching ticket records found.
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredTickets.map(ticket => (
-                          <tr key={ticket.id} className="hover:bg-white/2 bg-transparent transition-colors">
-                            <td className="py-4 font-bold text-white max-w-[200px] truncate" title={ticket.productionTitle}>
-                              {ticket.productionTitle}
-                            </td>
-                            <td className="py-4 font-mono font-medium">{ticket.buyerEmail}</td>
-                            <td className="py-4 font-medium text-zinc-400">{ticket.tier}</td>
-                            <td className="py-4 text-right font-bold text-white">₦{(ticket.price || 0).toLocaleString()}</td>
-                            <td className="py-4 text-center font-mono font-bold text-emerald-400">
-                              <span className="bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
-                                {ticket.gatePass}
-                              </span>
-                            </td>
-                            <td className="py-4 font-mono text-zinc-500 text-[10px]">{ticket.reference}</td>
-                            <td className="py-4 text-right text-zinc-500 font-medium">{ticket.date}</td>
+                    {/* Table Container */}
+                    <div className="overflow-x-auto flex-1">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-white/5 text-zinc-500 font-mono text-[10px] uppercase tracking-wider">
+                            <th className="pb-3 font-bold">Event Title</th>
+                            <th className="pb-3 font-bold">Buyer Email</th>
+                            <th className="pb-3 font-bold">Tier</th>
+                            <th className="pb-3 font-bold text-right">Price</th>
+                            <th className="pb-3 font-bold text-center">Gate Pass</th>
+                            <th className="pb-3 font-bold">Reference</th>
+                            <th className="pb-3 font-bold text-right">Date</th>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-xs text-zinc-300">
+                          {filteredTickets.length === 0 ? (
+                            <tr>
+                              <td colSpan={7} className="py-12 text-center text-zinc-500 font-medium">
+                                No matching ticket records found.
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredTickets.map(ticket => (
+                              <tr key={ticket.id} className="hover:bg-white/2 bg-transparent transition-colors">
+                                <td className="py-4 font-bold text-white max-w-[200px] truncate" title={ticket.productionTitle}>
+                                  {ticket.productionTitle}
+                                </td>
+                                <td className="py-4 font-mono font-medium">{ticket.buyerEmail}</td>
+                                <td className="py-4 font-medium text-zinc-400">{ticket.tier}</td>
+                                <td className="py-4 text-right font-bold text-white">₦{(ticket.price || 0).toLocaleString()}</td>
+                                <td className="py-4 text-center font-mono font-bold text-emerald-400">
+                                  <span className="bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                                    {ticket.gatePass}
+                                  </span>
+                                </td>
+                                <td className="py-4 font-mono text-zinc-500 text-[10px]">{ticket.reference}</td>
+                                <td className="py-4 text-right text-zinc-500 font-medium">{ticket.date}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Search Header */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/5 pb-5 mb-6 shrink-0">
+                      <h2 className="text-lg font-serif font-bold text-white">Transactions ({filteredTransactions.length})</h2>
+                      <input
+                        type="text"
+                        value={ticketSearch}
+                        onChange={e => setTicketSearch(e.target.value)}
+                        placeholder="Search transactions..."
+                        className="w-full sm:w-80 bg-zinc-950 border border-white/5 rounded-xl px-4 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-red-500/50 transition-colors"
+                      />
+                    </div>
+
+                    {/* Table Container */}
+                    <div className="overflow-x-auto flex-1">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-white/5 text-zinc-500 font-mono text-[10px] uppercase tracking-wider">
+                            <th className="pb-3 font-bold">Event Title</th>
+                            <th className="pb-3 font-bold">Purchaser Email</th>
+                            <th className="pb-3 font-bold text-center">Qty</th>
+                            <th className="pb-3 font-bold">Tiers Purchased</th>
+                            <th className="pb-3 font-bold text-right">Gross Sales</th>
+                            <th className="pb-3 font-bold text-right">Comm (5%)</th>
+                            <th className="pb-3 font-bold">Reference</th>
+                            <th className="pb-3 font-bold text-right">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5 text-xs text-zinc-300">
+                          {filteredTransactions.length === 0 ? (
+                            <tr>
+                              <td colSpan={8} className="py-12 text-center text-zinc-500 font-medium">
+                                No matching transaction records found.
+                              </td>
+                            </tr>
+                          ) : (
+                            filteredTransactions.map(tx => {
+                              const tiersStr = Object.entries(tx.tiers)
+                                .map(([name, qty]) => `${name} (${qty})`)
+                                .join(', ');
+                              const comm = tx.gross * 0.05;
+                              return (
+                                <tr key={tx.reference} className="hover:bg-white/2 bg-transparent transition-colors">
+                                  <td className="py-4 font-bold text-white max-w-[150px] truncate" title={tx.productionTitle}>
+                                    {tx.productionTitle}
+                                  </td>
+                                  <td className="py-4 font-mono">{tx.buyerEmail}</td>
+                                  <td className="py-4 text-center font-bold text-white">{tx.quantity}</td>
+                                  <td className="py-4 text-zinc-400 max-w-[200px] truncate" title={tiersStr}>
+                                    {tiersStr || 'N/A'}
+                                  </td>
+                                  <td className="py-4 text-right font-bold text-white">₦{tx.gross.toLocaleString()}</td>
+                                  <td className="py-4 text-right font-medium text-emerald-400">₦{comm.toLocaleString()}</td>
+                                  <td className="py-4 font-mono text-zinc-500 text-[10px]">{tx.reference}</td>
+                                  <td className="py-4 text-right text-zinc-500 font-medium">{tx.date}</td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           );
