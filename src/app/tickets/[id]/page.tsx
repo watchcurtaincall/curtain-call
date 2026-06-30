@@ -141,6 +141,12 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       );
 
       if (matchedTicket) {
+        // Find all tickets belonging to this same purchase transaction
+        const baseRef = (matchedTicket.reference || '').split('-')[0];
+        const allPurchaseTickets = tickets.filter(t => 
+          (t.reference || '').split('-')[0].toLowerCase() === baseRef.toLowerCase()
+        );
+
         const prod = ClientDB.getProductionById(matchedTicket.productionId) || {
           id: matchedTicket.productionId,
           title: matchedTicket.productionTitle || 'Curtain Call Event',
@@ -152,10 +158,19 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
         } as Production;
 
         setProduction(prod);
+
+        const totalPaid = allPurchaseTickets.reduce((sum, t) => sum + (t.price || 0), 0);
+
         setSuccessData({
-          reference: matchedTicket.reference,
-          totalPaid: matchedTicket.price || 0,
-          tickets: [{ reference: matchedTicket.reference, gatePass: matchedTicket.gatePass, tier: matchedTicket.tier, email: matchedTicket.buyerEmail || '', name: 'Guest' }]
+          reference: baseRef,
+          totalPaid: totalPaid,
+          tickets: allPurchaseTickets.map(t => ({
+            reference: t.reference || '',
+            gatePass: t.gatePass || '',
+            tier: t.tier || 'General Admission',
+            email: t.buyerEmail || '',
+            name: t.buyerName || 'Guest'
+          }))
         });
         setLoading(false);
         return;
