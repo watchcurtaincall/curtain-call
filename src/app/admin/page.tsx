@@ -4686,11 +4686,11 @@ This file was retrieved from the Curtain Call Curation Vault.
                 </div>
                 <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5">
                   <span className="text-[10px] uppercase font-mono tracking-widest text-zinc-500 font-bold block">Gross Ticket Sales</span>
-                  <span className="text-3xl font-serif font-bold text-white block mt-1">₦{totalSalesValue.toLocaleString()}</span>
+                  <span className="text-3xl font-serif font-bold text-white block mt-1">₦{totalSalesValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="bg-zinc-900/60 border border-white/5 rounded-2xl p-5">
                   <span className="text-[10px] uppercase font-mono tracking-widest text-zinc-500 font-bold block">Platform Earnings (5% Commission)</span>
-                  <span className="text-3xl font-serif font-bold text-emerald-400 block mt-1">₦{platformEarnings.toLocaleString()}</span>
+                  <span className="text-3xl font-serif font-bold text-emerald-400 block mt-1">₦{platformEarnings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
 
@@ -4828,8 +4828,8 @@ This file was retrieved from the Curtain Call Curation Vault.
                                   <td className="py-4 text-zinc-400 max-w-[200px] truncate" title={tiersStr}>
                                     {tiersStr || 'N/A'}
                                   </td>
-                                  <td className="py-4 text-right font-bold text-white">₦{tx.gross.toLocaleString()}</td>
-                                  <td className="py-4 text-right font-medium text-emerald-400">₦{comm.toLocaleString()}</td>
+                                  <td className="py-4 text-right font-bold text-white">₦{tx.gross.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                  <td className="py-4 text-right font-medium text-emerald-400">₦{comm.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                   <td className="py-4 font-mono text-zinc-500 text-[10px]">{tx.reference}</td>
                                   <td className="py-4 text-right text-zinc-500 font-medium">{tx.date}</td>
                                 </tr>
