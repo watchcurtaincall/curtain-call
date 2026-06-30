@@ -139,6 +139,61 @@ function getProducerNotificationHtml(
   `;
 }
 
+function extractTicketTiers(galleryImages: any[]): { name: string; price: number }[] {
+  if (!Array.isArray(galleryImages)) return [];
+  for (const img of galleryImages) {
+    if (typeof img === 'string' && img.includes('__ticketTiers')) {
+      try {
+        const parsed = JSON.parse(img);
+        if (parsed && Array.isArray(parsed.__ticketTiers)) {
+          return parsed.__ticketTiers.map((t: any) => ({
+            name: t.name || '',
+            price: Number(t.price) || 0
+          }));
+        }
+      } catch (e) {}
+    }
+  }
+  return [];
+}
+
+function resolveTruncatedCart(amount: number, tiers: { name: string; price: number }[]): Record<string, number> | null {
+  const result: Record<string, number> = {};
+  const sortedTiers = [...tiers].sort((a, b) => b.price - a.price); // Try larger prices first
+  
+  function backtrack(remaining: number, tierIdx: number, currentCart: Record<string, number>): boolean {
+    if (remaining === 0) {
+      Object.assign(result, currentCart);
+      return true;
+    }
+    if (remaining < 0 || tierIdx >= sortedTiers.length) {
+      return false;
+    }
+    
+    const tier = sortedTiers[tierIdx];
+    if (tier.price <= 0) {
+      return backtrack(remaining, tierIdx + 1, currentCart);
+    }
+    
+    const maxQty = Math.floor(remaining / tier.price);
+    for (let q = maxQty; q >= 0; q--) {
+      const nextCart = { ...currentCart };
+      if (q > 0) {
+        nextCart[tier.name] = q;
+      }
+      if (backtrack(remaining - (q * tier.price), tierIdx + 1, nextCart)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  if (backtrack(amount, 0, {})) {
+    return result;
+  }
+  return null;
+}
+
 export async function POST(req: Request) {
   try {
     const bodyText = await req.text();
@@ -183,17 +238,19 @@ export async function POST(req: Request) {
       let venue = 'Broad Street Stage Venue';
       let showDateFormatted = 'Scheduled Date';
       let producerEmail = '';
+      let prodGalleryImages: any[] = [];
 
       if (supabaseServer && productionId) {
         const { data: prodData } = await supabaseServer
           .from('productions')
-          .select('venue, show_date, submitter_email')
+          .select('venue, show_date, submitter_email, gallery_images')
           .eq('id', productionId)
           .maybeSingle();
 
         if (prodData) {
           venue = prodData.venue || venue;
           producerEmail = prodData.submitter_email || '';
+          prodGalleryImages = prodData.gallery_images || [];
           if (prodData.show_date) {
             try {
               showDateFormatted = new Date(prodData.show_date).toLocaleDateString('en-NG', {
@@ -206,15 +263,33 @@ export async function POST(req: Request) {
         }
       }
 
+      let finalCart = cart;
+      let finalPrices = ticketPrices;
+
+      if (productionId && (!finalCart || Object.keys(finalCart).length === 0)) {
+        const tiers = extractTicketTiers(prodGalleryImages);
+        if (tiers.length > 0) {
+          const resolved = resolveTruncatedCart(amount, tiers);
+          if (resolved) {
+            console.log(`[Paystack Webhook] Reconstructed truncated cart for ₦${amount}:`, resolved);
+            finalCart = resolved;
+            finalPrices = tiers.reduce((acc, t) => {
+              acc[t.name] = t.price;
+              return acc;
+            }, {} as Record<string, number>);
+          }
+        }
+      }
+
       const ticketsToInsert: any[] = [];
       let globalTicketIndex = 1;
 
-      if (productionId && cart && typeof cart === 'object') {
-        const totalTickets = Object.values(cart).reduce((sum: number, qty: any) => sum + (Number(qty) || 0), 0) as number;
+      if (productionId && finalCart && typeof finalCart === 'object') {
+        const totalTickets = Object.values(finalCart).reduce((sum: number, qty: any) => sum + (Number(qty) || 0), 0) as number;
         
-        for (const [tierName, qtyObj] of Object.entries(cart)) {
+        for (const [tierName, qtyObj] of Object.entries(finalCart)) {
           const qty = Number(qtyObj) || 0;
-          const tierPrice = Number(ticketPrices[tierName]) || 0;
+          const tierPrice = Number(finalPrices[tierName]) || 0;
 
           for (let i = 0; i < qty; i++) {
             let recipientEmail = email;
