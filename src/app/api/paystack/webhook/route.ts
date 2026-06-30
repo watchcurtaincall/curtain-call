@@ -15,6 +15,58 @@ const supabaseServer = (supabaseUrl && supabaseServiceKey)
     })
   : null;
 
+function parsePaystackMetadata(metadata: any): any {
+  if (!metadata) return {};
+  if (typeof metadata === 'object') return metadata;
+  
+  const parsed: any = {};
+  const str = String(metadata);
+  
+  const idMatch = str.match(/"production_id"\s*:\s*"([^"]+)"/);
+  const titleMatch = str.match(/"production_title"\s*:\s*"([^"]+)"/);
+  const tierMatch = str.match(/"tier"\s*:\s*"([^"]+)"/);
+  const firstNameMatch = str.match(/"buyer_first_name"\s*:\s*"([^"]+)"/);
+  const lastNameMatch = str.match(/"buyer_last_name"\s*:\s*"([^"]+)"/);
+  const phoneMatch = str.match(/"buyer_phone"\s*:\s*"([^"]+)"/);
+  const sendToOthersMatch = str.match(/"send_to_others"\s*:\s*(true|false)/);
+  
+  if (idMatch) parsed.production_id = idMatch[1];
+  if (titleMatch) parsed.production_title = titleMatch[1];
+  if (tierMatch) parsed.tier = tierMatch[1];
+  if (firstNameMatch) parsed.buyer_first_name = firstNameMatch[1];
+  if (lastNameMatch) parsed.buyer_last_name = lastNameMatch[1];
+  if (phoneMatch) parsed.buyer_phone = phoneMatch[1];
+  if (sendToOthersMatch) parsed.send_to_others = sendToOthersMatch[1] === 'true';
+  
+  // Attempt to parse cart object
+  const cartMatch = str.match(/"cart"\s*:\s*({[^}]+})/);
+  if (cartMatch) {
+    try {
+      parsed.cart = JSON.parse(cartMatch[1]);
+    } catch (e) {
+      console.warn('[Paystack Webhook] Failed to parse extracted cart JSON:', cartMatch[1]);
+    }
+  }
+  
+  // Attempt to parse ticket_prices object if not truncated
+  const pricesMatch = str.match(/"ticket_prices"\s*:\s*({[^}]+})/);
+  if (pricesMatch) {
+    try {
+      parsed.ticket_prices = JSON.parse(pricesMatch[1]);
+    } catch (e) {}
+  }
+  
+  // Attempt to parse attendees object if not truncated
+  const attendeesMatch = str.match(/"attendees"\s*:\s*({[^}]+})/);
+  if (attendeesMatch) {
+    try {
+      parsed.attendees = JSON.parse(attendeesMatch[1]);
+    } catch (e) {}
+  }
+  
+  return parsed;
+}
+
 export async function POST(req: Request) {
   try {
     const bodyText = await req.text();
@@ -43,7 +95,7 @@ export async function POST(req: Request) {
       const email = data.customer.email;
       const amount = data.amount / 100; // Convert to NGN
       const reference = data.reference;
-      const metadata = data.metadata || {};
+      const metadata = parsePaystackMetadata(data.metadata);
 
       console.log(`💰 Payment of ₦${amount} succeeded for customer ${email}. Ref: ${reference}`, metadata);
 
@@ -239,7 +291,7 @@ export async function POST(req: Request) {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
-              'x-admin-secret': process.env.ADMIN_SECRET || ''
+              'x-admin-secret': process.env.ADMIN_SECRET || process.env.CRON_SECRET || ''
             },
             body: JSON.stringify({ to: recipientEmail, subject, html: htmlContent })
           });

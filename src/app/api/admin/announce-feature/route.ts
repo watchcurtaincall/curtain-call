@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-admin-secret': process.env.ADMIN_SECRET || ''
+          'x-admin-secret': process.env.ADMIN_SECRET || process.env.CRON_SECRET || ''
         },
         body: JSON.stringify({
           to: user.email,

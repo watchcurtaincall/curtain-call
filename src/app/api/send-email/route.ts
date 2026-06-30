@@ -5,7 +5,8 @@ export async function POST(request: Request) {
   try {
     const verifiedUser = await verifyUserSession(request);
     const adminSecret = request.headers.get('x-admin-secret');
-    const isAdmin = adminSecret && adminSecret === process.env.ADMIN_SECRET;
+    const systemSecret = process.env.ADMIN_SECRET || process.env.CRON_SECRET;
+    const isAdmin = adminSecret && systemSecret && adminSecret === systemSecret;
 
     const body = await request.json();
     const { to, subject, html, type = 'transactional' } = body;

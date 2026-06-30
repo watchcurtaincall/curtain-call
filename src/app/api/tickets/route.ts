@@ -26,7 +26,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const email = searchParams.get('email');
   const adminSecret = request.headers.get('x-admin-secret');
-  const isAdmin = adminSecret && adminSecret === process.env.ADMIN_SECRET;
+  const systemSecret = process.env.ADMIN_SECRET || process.env.CRON_SECRET;
+  const isAdmin = adminSecret && systemSecret && adminSecret === systemSecret;
 
   if (!email && !isAdmin) {
     return NextResponse.json({ error: 'Missing email parameter' }, { status: 400 });
@@ -76,7 +77,8 @@ export async function POST(request: Request) {
   // Session verification to prevent unauthorized ticket injection
   const verifiedUser = await verifyUserSession(request);
   const adminSecret = request.headers.get('x-admin-secret');
-  const isAdmin = adminSecret && adminSecret === process.env.ADMIN_SECRET;
+  const systemSecret = process.env.ADMIN_SECRET || process.env.CRON_SECRET;
+  const isAdmin = adminSecret && systemSecret && adminSecret === systemSecret;
 
   if (!verifiedUser && !isAdmin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

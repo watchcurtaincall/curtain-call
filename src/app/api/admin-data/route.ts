@@ -29,7 +29,8 @@ export async function GET(request: Request) {
 
   if (!verifiedIsAdmin) {
     const adminSecret = request.headers.get('x-admin-secret');
-    if (!adminSecret || adminSecret !== process.env.ADMIN_SECRET) {
+    const systemSecret = process.env.ADMIN_SECRET || process.env.CRON_SECRET;
+    if (!adminSecret || !systemSecret || adminSecret !== systemSecret) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   }
