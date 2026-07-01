@@ -1567,25 +1567,6 @@ export const ClientDB = {
         body: `Your withdrawal request of ₦${req.amount.toLocaleString()} to ${req.bankName} is pending admin approval.`
       });
     }
-
-    // Trigger email notification to Admin
-    const adminHtml = `
-      <div style="font-family: sans-serif; padding: 20px; color: #333;">
-        <h2 style="color: #3b82f6;">New Withdrawal Request 💸</h2>
-        <p>A new withdrawal request has been submitted and requires your approval.</p>
-        <table style="width: 100%; max-width: 500px; border-collapse: collapse; margin-top: 15px;">
-          <tr><td style="padding: 10px; border: 1px solid #eee; font-weight: bold; background: #f9f9f9;">Creator Email</td><td style="padding: 10px; border: 1px solid #eee;">${req.email}</td></tr>
-          <tr><td style="padding: 10px; border: 1px solid #eee; font-weight: bold; background: #f9f9f9;">Amount</td><td style="padding: 10px; border: 1px solid #eee; color: #10b981; font-weight: bold; font-size: 16px;">₦${req.amount.toLocaleString()}</td></tr>
-          <tr><td style="padding: 10px; border: 1px solid #eee; font-weight: bold; background: #f9f9f9;">Account Name</td><td style="padding: 10px; border: 1px solid #eee;">${req.accountName}</td></tr>
-          <tr><td style="padding: 10px; border: 1px solid #eee; font-weight: bold; background: #f9f9f9;">Account No.</td><td style="padding: 10px; border: 1px solid #eee;">${req.accountNumber}</td></tr>
-          <tr><td style="padding: 10px; border: 1px solid #eee; font-weight: bold; background: #f9f9f9;">Bank</td><td style="padding: 10px; border: 1px solid #eee;">${req.bankName}</td></tr>
-        </table>
-        <p style="margin-top: 25px;">
-          <a href="https://curtaincall.com.ng/admin?tab=withdrawals" style="background: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Review in Admin Panel</a>
-        </p>
-      </div>
-    `;
-    this.sendEmail('watchcurtaincall@gmail.com', `Action Required: New Withdrawal Request of ₦${req.amount.toLocaleString()}`, adminHtml).catch(console.error);
   },
 
   approveWithdrawal(id: string): void {

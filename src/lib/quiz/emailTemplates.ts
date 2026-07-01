@@ -81,51 +81,10 @@ export function getProductionSubmissionRejectedHtml(): string {
 
 // 11. Welcome Newsletter
 export function getWelcomeNewsletterHtml(emailLower: string): string {
-  return `
-    <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-      <div style="text-align: center; margin-bottom: 30px;">
-        <span style="font-size: 24px; font-weight: bold; color: #ffffff; font-family: Georgia, serif;">Curtain Call Editorial</span>
-        <div style="height: 2px; width: 60px; background-color: #dc2626; margin: 15px auto 0;"></div>
-      </div>
-      <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; font-family: Georgia, serif; margin-bottom: 15px;">Welcome to The Front Row Seat!</h2>
-      <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
-        You have successfully subscribed to the premium Curtain Call weekly theatre newsletter.
-      </p>
-      <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 25px;">
-        <p style="font-size: 13px; color: #f4f4f5; font-weight: bold; margin: 0 0 5px;">Your Subscribed Email:</p>
-        <code style="font-size: 13px; color: #22c55e; font-family: monospace;">${emailLower}</code>
-      </div>
-      <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center;">
-        Get ready for weekly ticket exclusives, interview features, curated reviews, and show listings straight from our cultural editors.
-      </p>
-      <div style="border-top: 1px solid #27272a; margin-top: 30px; padding-top: 20px; text-align: center;">
-        <p style="font-size: 10px; color: #71717a; margin: 0;">
-          Curtain Call Ltd · 10 Glover Road, Ikoyi, Lagos
-        </p>
-      </div>
-    </div>
-  `;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color:#FFFFFF; font-family:Arial, sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF;"><tr><td align="center" style="padding:40px 20px;"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;"><tr><td align="center" style="padding-bottom:20px; border-bottom:1px solid #8B1C31;"><div style="font-family:Georgia, serif; font-size:32px; font-weight:bold; color:#8B1C31; letter-spacing:1px;">Curtain Call</div></td></tr><tr><td style="padding:40px 0;"><h1 style="margin:0 0 20px 0; font-family:Georgia, serif; font-size:24px; color:#1A1A1A; line-height:1.3; font-weight:bold; text-align:center;">Welcome to the Front Row Seat</h1><div style="width:40px; height:2px; background-color:#8B1C31; margin:0 auto 20px auto;"></div><p style="margin:0 0 25px 0; font-family:Arial, sans-serif; font-size:16px; color:#555555; line-height:1.6; text-align:center;">You have successfully subscribed to the premium Curtain Call weekly theatre newsletter.</p><div style="background-color:#FDF5F6; border:1px solid #E5D5D8; border-radius:12px; padding:20px; text-align:center; margin-bottom:25px;"><p style="font-size:13px; color:#555555; font-weight:bold; margin:0 0 5px; text-transform:uppercase; letter-spacing:0.5px;">Your Subscribed Email</p><code style="font-size:15px; color:#8B1C31; font-family:monospace; font-weight:bold;">${emailLower}</code></div><p style="margin:0 0 20px 0; font-family:Arial, sans-serif; font-size:15px; color:#555555; line-height:1.6; text-align:center;">Get ready for weekly ticket exclusives, interview features, curated reviews, and show listings straight from our cultural editors.</p><p style="margin:30px 0 0 0; font-family:Georgia, serif; font-size:16px; color:#1A1A1A; line-height:1.6; text-align:center;">Sincerely,<br><strong>The CC Editors</strong></p></td></tr><tr><td align="center" style="padding-top:30px; border-top:1px solid #8B1C31;"><p style="margin:0 0 12px 0; font-family:Georgia, serif; font-size:14px; color:#555555; font-style:italic;">Documenting Nigerian Theatre and its Creators.</p><p style="margin:0; font-family:Arial, sans-serif; font-size:12px; color:#888888;"><a href="https://curtaincall.com.ng" style="color:#888888; text-decoration:underline;">curtaincall.com.ng</a> &nbsp;&bull;&nbsp; <a href="#" style="color:#888888; text-decoration:underline;">Unsubscribe</a></p></td></tr></table></td></tr></table></body></html>`;
 }
 
 // 12. Critic Approved
 export function getCriticApprovedHtml(name: string, email: string): string {
-  return `
-    <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-      <div style="text-align: center; margin-bottom: 30px;">
-        <span style="font-size: 24px; font-weight: bold; color: #ffffff; font-family: Georgia, serif;">Curtain Call Curation</span>
-        <div style="height: 2px; width: 60px; background-color: #dc2626; margin: 15px auto 0;"></div>
-      </div>
-      <h2 style="font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; font-family: Georgia, serif; margin-bottom: 15px;">Congratulations, ${name}!</h2>
-      <p style="font-size: 14px; color: #a1a1aa; line-height: 1.6; text-align: center; margin-bottom: 25px;">
-        Your application to become a **Verified Critic** has been approved by the Curtain Call curation board!
-      </p>
-      <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 25px;">
-        <p style="font-size: 13px; color: #f4f4f5; font-weight: bold; margin: 0 0 5px;">Verified Email Account:</p>
-        <code style="font-size: 13px; color: #22c55e; font-family: monospace;">${email}</code>
-      </div>
-      <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; text-align: center;">
-        You can now post official professional scores and reviews across the plays archive.
-      </p>
-    </div>
-  `;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head><body style="margin:0; padding:0; background-color:#FFFFFF; font-family:Arial, sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFFFFF;"><tr><td align="center" style="padding:40px 20px;"><table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;"><tr><td align="center" style="padding-bottom:20px; border-bottom:1px solid #8B1C31;"><div style="font-family:Georgia, serif; font-size:32px; font-weight:bold; color:#8B1C31; letter-spacing:1px;">Curtain Call</div></td></tr><tr><td style="padding:40px 0;"><h1 style="margin:0 0 20px 0; font-family:Georgia, serif; font-size:24px; color:#1A1A1A; line-height:1.3; font-weight:bold; text-align:center;">Congratulations, ${name}</h1><div style="width:40px; height:2px; background-color:#8B1C31; margin:0 auto 20px auto;"></div><p style="margin:0 0 25px 0; font-family:Arial, sans-serif; font-size:16px; color:#555555; line-height:1.6; text-align:center;">Your application to become a <strong>Verified Critic</strong> has been approved by the Curtain Call curation board!</p><div style="background-color:#FDF5F6; border:1px solid #E5D5D8; border-radius:12px; padding:20px; text-align:center; margin-bottom:25px;"><p style="font-size:13px; color:#555555; font-weight:bold; margin:0 0 5px; text-transform:uppercase; letter-spacing:0.5px;">Verified Email Account</p><code style="font-size:15px; color:#8B1C31; font-family:monospace; font-weight:bold;">${email}</code></div><p style="margin:0 0 20px 0; font-family:Arial, sans-serif; font-size:15px; color:#555555; line-height:1.6; text-align:center;">You can now post official professional scores and reviews across the plays archive.</p><p style="margin:30px 0 0 0; font-family:Georgia, serif; font-size:16px; color:#1A1A1A; line-height:1.6; text-align:center;">Sincerely,<br><strong>Oyin</strong><br><span style="font-size:14px; color:#555555; font-family:Arial, sans-serif;">CC Curation Board</span></p></td></tr><tr><td align="center" style="padding-top:30px; border-top:1px solid #8B1C31;"><p style="margin:0 0 12px 0; font-family:Georgia, serif; font-size:14px; color:#555555; font-style:italic;">Documenting Nigerian Theatre and its Creators.</p><p style="margin:0; font-family:Arial, sans-serif; font-size:12px; color:#888888;"><a href="https://curtaincall.com.ng" style="color:#888888; text-decoration:underline;">curtaincall.com.ng</a></p></td></tr></table></td></tr></table></body></html>`;
 }

@@ -194,6 +194,15 @@ function resolveTruncatedCart(amount: number, tiers: { name: string; price: numb
   return null;
 }
 
+function calculateNetFromGross(gross: number): number {
+  // Paystack fee passing formula:
+  // If net < 2500: gross = net / 0.985  => net = gross * 0.985
+  // If net >= 2500: gross = (net + 100) / 0.985 => net = (gross * 0.985) - 100
+  // The threshold for gross where net is 2500 is 2500 / 0.985 = 2538.07
+  const netEstimate = gross < 2538.07 ? gross * 0.985 : (gross * 0.985) - 100;
+  return Math.round(netEstimate);
+}
+
 export async function POST(req: Request) {
   try {
     const bodyText = await req.text();
@@ -269,9 +278,10 @@ export async function POST(req: Request) {
       if (productionId && (!finalCart || Object.keys(finalCart).length === 0)) {
         const tiers = extractTicketTiers(prodGalleryImages);
         if (tiers.length > 0) {
-          const resolved = resolveTruncatedCart(amount, tiers);
+          const netAmount = calculateNetFromGross(amount);
+          const resolved = resolveTruncatedCart(netAmount, tiers);
           if (resolved) {
-            console.log(`[Paystack Webhook] Reconstructed truncated cart for ₦${amount}:`, resolved);
+            console.log(`[Paystack Webhook] Reconstructed truncated cart for gross ₦${amount} (net ₦${netAmount}):`, resolved);
             finalCart = resolved;
             finalPrices = tiers.reduce((acc, t) => {
               acc[t.name] = t.price;
@@ -336,7 +346,7 @@ export async function POST(req: Request) {
           production_title: productionTitle,
           buyer_email: email.toLowerCase(),
           tier: tierName,
-          price: amount,
+          price: calculateNetFromGross(amount),
           reference: reference,
           gate_pass: `CC-${Math.floor(100 + Math.random() * 900)}`,
           date: ticketDate,

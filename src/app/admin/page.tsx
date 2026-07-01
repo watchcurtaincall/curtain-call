@@ -603,67 +603,67 @@ export default function AdminDashboardPage() {
       let rejectionHtml = '';
       if (type === 'withdrawal') {
         rejectionHtml = `
-          <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Financials</span>
-              <div style="height: 2px; width: 80px; background-color: #dc2626; margin: 15px auto 0;"></div>
+          <div style="font-family: Arial, sans-serif; background-color: #FFFFFF; color: #555555; padding: 40px; border: 1px solid #E5D5D8; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #8B1C31; padding-bottom: 20px;">
+              <span style="font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #8B1C31; letter-spacing: 1px;">Curtain Call</span>
+              <p style="color: #555555; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Financials & Payouts</p>
             </div>
             
-            <h2 style="font-family: Georgia, serif; color: #ef4444; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Withdrawal Request Declined ❌</h2>
+            <h2 style="font-family: Georgia, serif; color: #8B1C31; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Withdrawal Request Declined ❌</h2>
             
-            <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+            <p style="color: #555555; font-size: 14px; line-height: 1.6; text-align: center;">
               Your withdrawal request has been reviewed and declined. The funds have been returned to your available balance.
             </p>
             
-            <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 20px; margin: 25px 0;">
-              <p style="color: #ef4444; font-size: 11px; text-transform: uppercase; font-weight: bold; margin: 0 0 5px 0;">Declined Amount:</p>
-              <p style="color: #ffffff; font-size: 18px; font-weight: bold; margin: 0 0 15px 0;">${name}</p>
+            <div style="background-color: #FDF5F6; border: 1px solid #E5D5D8; border-radius: 12px; padding: 20px; margin: 25px 0;">
+              <p style="color: #8B1C31; font-size: 11px; text-transform: uppercase; font-weight: bold; margin: 0 0 5px 0; letter-spacing: 0.5px;">Declined Amount:</p>
+              <p style="color: #1A1A1A; font-size: 18px; font-weight: bold; margin: 0 0 15px 0;">${name}</p>
               
-              <p style="color: #71717a; font-size: 11px; text-transform: uppercase; font-weight: bold; margin: 0 0 5px 0;">Reason for Decline:</p>
-              <p style="color: #fca5a5; font-size: 14px; line-height: 1.5; margin: 0; font-style: italic;">
+              <p style="color: #555555; font-size: 11px; text-transform: uppercase; font-weight: bold; margin: 0 0 5px 0; letter-spacing: 0.5px;">Reason for Decline:</p>
+              <p style="color: #8B1C31; font-size: 14px; line-height: 1.5; margin: 0; font-style: italic;">
                 "${reasonText}"
               </p>
             </div>
             
-            <p style="color: #a1a1aa; font-size: 13px; line-height: 1.6; text-align: center;">
+            <p style="color: #555555; font-size: 13px; line-height: 1.6; text-align: center;">
               Please review the reason above and ensure your bank account name matches your profile name, or submit a new ticket for support.
             </p>
             
-            <p style="color: #71717a; font-size: 11px; line-height: 1.6; border-top: 1px solid #27272a; padding-top: 25px; margin-top: 30px; text-align: center; font-family: monospace;">
+            <p style="color: #555555; font-size: 11px; line-height: 1.6; border-top: 1px solid #E5D5D8; padding-top: 25px; margin-top: 30px; text-align: center;">
               Curtain Call Financial Operations.
             </p>
           </div>
         `;
       } else if (type === 'article') {
         rejectionHtml = `
-          <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
-              <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+          <div style="font-family: Arial, sans-serif; background-color: #FFFFFF; color: #555555; padding: 40px; border: 1px solid #E5D5D8; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #8B1C31; padding-bottom: 20px;">
+              <span style="font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #8B1C31; letter-spacing: 1px;">Curtain Call</span>
+              <p style="color: #555555; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Editorial Chronicling</p>
             </div>
             
-            <h2 style="font-family: serif; color: #ef4444; font-size: 22px; margin-top: 0; text-align: center;">Article Submission Update ❌</h2>
+            <h2 style="font-family: Georgia, serif; color: #8B1C31; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Chronicle Draft Declined ❌</h2>
             
-            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            <p style="color: #555555; font-size: 15px; line-height: 1.6;">
               Thank you for submitting your chronicle draft <strong>"${name}"</strong> to the Curtain Call platform.
             </p>
             
-            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            <p style="color: #555555; font-size: 15px; line-height: 1.6;">
               At this time, our editorial board has reviewed your submission and decided to <strong>decline</strong> it for publishing on our main feed. As a result, no payment has been dispatched to your wallet.
             </p>
             
-            <div style="background-color: rgba(239, 68, 68, 0.03); border: 1px solid rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 20px; margin: 30px 0;">
-              <p style="color: #ef4444; font-size: 11px; text-transform: uppercase; tracking-wider: 1px; font-weight: bold; margin: 0 0 10px 0;">Curator's Rejection Reason & Notes:</p>
-              <p style="color: #fca5a5; font-size: 15px; line-height: 1.6; margin: 0; font-style: italic;">
+            <div style="background-color: #FDF5F6; border: 1px solid #E5D5D8; border-radius: 12px; padding: 20px; margin: 30px 0;">
+              <p style="color: #8B1C31; font-size: 11px; text-transform: uppercase; font-weight: bold; margin: 0 0 10px 0; letter-spacing: 0.5px;">Curator's Rejection Reason & Notes:</p>
+              <p style="color: #8B1C31; font-size: 15px; line-height: 1.6; margin: 0; font-style: italic;">
                 "${reasonText}"
               </p>
             </div>
             
-            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            <p style="color: #555555; font-size: 15px; line-height: 1.6;">
               <strong>Good news:</strong> You can resubmit your draft for curation review at any time! We highly encourage you to review the notes above, make the necessary edits, and submit again to receive your ₦2,000 publishing reward once approved.
             </p>
             
-            <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+            <p style="color: #555555; font-size: 13px; line-height: 1.5; border-top: 1px solid #E5D5D8; padding-top: 20px; margin-top: 30px;">
               Sincerely,<br/>
               <strong>The Curtain Call Curation Board</strong>
             </p>
@@ -671,34 +671,34 @@ export default function AdminDashboardPage() {
         `;
       } else {
         rejectionHtml = `
-          <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
-              <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+          <div style="font-family: Arial, sans-serif; background-color: #FFFFFF; color: #555555; padding: 40px; border: 1px solid #E5D5D8; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #8B1C31; padding-bottom: 20px;">
+              <span style="font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #8B1C31; letter-spacing: 1px;">Curtain Call</span>
+              <p style="color: #555555; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Curation Registry</p>
             </div>
             
-            <h2 style="font-family: serif; color: #ffffff; font-size: 22px; margin-top: 0;">Update Regarding Your Submission</h2>
+            <h2 style="font-family: Georgia, serif; color: #1A1A1A; font-size: 22px; margin-top: 0; font-weight: bold;">Update Regarding Your Submission</h2>
             
-            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            <p style="color: #555555; font-size: 15px; line-height: 1.6;">
               Thank you for submitting <strong>${name}</strong> to the Curtain Call platform. Our editorial and curatorial board has reviewed your submission.
             </p>
             
-            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
-              At this time, we regret to inform you that your submission has been <strong>declined</strong> for publishing on our main feed.
+            <p style="color: #555555; font-size: 15px; line-height: 1.6;">
+              At this time, we regret to inform you that your submission has been <strong>declined</strong> for publishing on our main directory.
             </p>
             
-            <div style="background-color: rgba(239, 68, 68, 0.03); border: 1px solid rgba(239, 68, 68, 0.1); border-radius: 12px; padding: 20px; margin: 30px 0;">
-              <p style="color: #ef4444; font-size: 11px; text-transform: uppercase; tracking-wider: 1px; font-weight: bold; margin: 0 0 10px 0;">Curator's Notes & Rejection Reason:</p>
-              <p style="color: #fca5a5; font-size: 15px; line-height: 1.6; margin: 0; font-style: italic;">
+            <div style="background-color: #FDF5F6; border: 1px solid #E5D5D8; border-radius: 12px; padding: 20px; margin: 30px 0;">
+              <p style="color: #8B1C31; font-size: 11px; text-transform: uppercase; font-weight: bold; margin: 0 0 10px 0; letter-spacing: 0.5px;">Curator's Notes & Rejection Reason:</p>
+              <p style="color: #8B1C31; font-size: 15px; line-height: 1.6; margin: 0; font-style: italic;">
                 "${reasonText}"
               </p>
             </div>
             
-            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
-              We encourage you to review the notes above, make the necessary corrections, and re-submit your credit when ready!
+            <p style="color: #555555; font-size: 15px; line-height: 1.6;">
+              We encourage you to review the notes above, make the necessary corrections, and re-submit your details when ready!
             </p>
             
-            <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+            <p style="color: #555555; font-size: 13px; line-height: 1.5; border-top: 1px solid #E5D5D8; padding-top: 20px; margin-top: 30px;">
               Best regards,<br/>
               <strong>The Curtain Call Curation Board</strong>
             </p>
@@ -725,23 +725,23 @@ export default function AdminDashboardPage() {
       ClientDB.approveArtist(id);
 
       const approvalHtml = `
-        <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
-            <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+        <div style="font-family: Arial, sans-serif; background-color: #FFFFFF; color: #555555; padding: 40px; border: 1px solid #E5D5D8; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #8B1C31; padding-bottom: 20px;">
+            <span style="font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #8B1C31; letter-spacing: 1px;">Curtain Call</span>
+            <p style="color: #555555; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Curation Registry</p>
           </div>
           
-          <h2 style="font-family: serif; color: #22c55e; font-size: 22px; margin-top: 0;">Artist Profile Approved! 🎉</h2>
+          <h2 style="font-family: Georgia, serif; color: #059669; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Artist Profile Approved! 🎉</h2>
           
-          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+          <p style="color: #555555; font-size: 15px; line-height: 1.6;">
             We are thrilled to inform you that the artist profile for <strong>${name}</strong> has been <strong>approved</strong> by our curatorial board!
           </p>
           
-          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+          <p style="color: #555555; font-size: 15px; line-height: 1.6;">
             It is now fully published and live in our public directory for curators and theatremakers across Africa to discover.
           </p>
           
-          <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+          <p style="color: #555555; font-size: 13px; line-height: 1.5; border-top: 1px solid #E5D5D8; padding-top: 20px; margin-top: 30px;">
             Thank you for documenting African theatre history!
             <br/><br/>
             Sincerely,<br/>
@@ -786,23 +786,23 @@ export default function AdminDashboardPage() {
       ClientDB.approvePlay(id);
 
       const approvalHtml = `
-        <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
-            <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+        <div style="font-family: Arial, sans-serif; background-color: #FFFFFF; color: #555555; padding: 40px; border: 1px solid #E5D5D8; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #8B1C31; padding-bottom: 20px;">
+            <span style="font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #8B1C31; letter-spacing: 1px;">Curtain Call</span>
+            <p style="color: #555555; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Stage Play Registry</p>
           </div>
           
-          <h2 style="font-family: serif; color: #22c55e; font-size: 22px; margin-top: 0;">Submission Approved & Published! 🎉</h2>
+          <h2 style="font-family: Georgia, serif; color: #059669; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Submission Approved & Published! 🎉</h2>
           
-          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+          <p style="color: #555555; font-size: 15px; line-height: 1.6;">
             We are absolutely thrilled to inform you that your submission of <strong>${title}</strong> has been <strong>approved</strong> by our curatorial team!
           </p>
           
-          <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+          <p style="color: #555555; font-size: 15px; line-height: 1.6;">
             It is now live in our public directory for users across the continent to view, review, and share!
           </p>
           
-          <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+          <p style="color: #555555; font-size: 13px; line-height: 1.5; border-top: 1px solid #E5D5D8; padding-top: 20px; margin-top: 30px;">
             Congratulations on staging your work! Keep building African theatre!
             <br/><br/>
             Sincerely,<br/>
@@ -845,35 +845,35 @@ export default function AdminDashboardPage() {
 
         // 2. Prepare the premium email with wallet credit information & withdraw button
         const approvalHtml = `
-          <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto;">
-            <div style="text-align: center; margin-bottom: 30px;">
-              <span style="font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #ef4444; font-family: serif;">CURTAIN CALL</span>
-              <p style="color: #a1a1aa; font-size: 14px; margin-top: 5px;">Digital Home for Theatre Culture in Africa</p>
+          <div style="font-family: Arial, sans-serif; background-color: #FFFFFF; color: #555555; padding: 40px; border: 1px solid #E5D5D8; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #8B1C31; padding-bottom: 20px;">
+              <span style="font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #8B1C31; letter-spacing: 1px;">Curtain Call</span>
+              <p style="color: #555555; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Editorial chronicling</p>
             </div>
             
-            <h2 style="font-family: serif; color: #22c55e; font-size: 22px; margin-top: 0; text-align: center;">Article Approved & Paid! ₦2,000 Dispatched 🎉</h2>
+            <h2 style="font-family: Georgia, serif; color: #059669; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Chronicle Approved & Paid! 🎉</h2>
             
-            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            <p style="color: #555555; font-size: 15px; line-height: 1.6;">
               We are absolutely thrilled to inform you that your chronicle submission <strong>${title}</strong> has been <strong>approved</strong> and published live on our editorial home feed!
             </p>
             
-            <div style="background-color: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.15); border-radius: 12px; padding: 20px; margin: 25px 0; text-align: center;">
-              <p style="color: #a1a1aa; font-size: 13px; margin: 0 0 5px 0;">Editorial Contribution Reward:</p>
-              <p style="color: #22c55e; font-size: 24px; font-weight: bold; margin: 0 0 5px 0;">+₦2,000.00</p>
-              <p style="color: #8af7a9; font-size: 12px; margin: 0 0 15px 0;">Dispatched to your Creator Hub Wallet</p>
+            <div style="background-color: #FDF5F6; border: 1px solid #E5D5D8; border-radius: 12px; padding: 25px; margin: 25px 0; text-align: center;">
+              <p style="color: #555555; font-size: 13px; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 0.5px; font-weight: bold;">Editorial Contribution Reward:</p>
+              <p style="color: #8B1C31; font-size: 28px; font-weight: bold; margin: 0 0 5px 0;">+₦2,000.00</p>
+              <p style="color: #555555; font-size: 12px; margin: 0 0 15px 0;">Dispatched to your Creator Hub Wallet</p>
               
               <div style="margin-top: 15px;">
-                <a href="${window.location.origin}/creator" style="display: inline-block; background-color: #22c55e; hover:background-color:#16a34a; color: #ffffff; font-weight: bold; font-size: 14px; text-decoration: none; padding: 12px 28px; border-radius: 8px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);">
-                  Check Now & Withdraw
+                <a href="${window.location.origin}/creator" style="display: inline-block; background-color: #8B1C31; color: #FFFFFF; font-weight: bold; font-size: 14px; text-decoration: none; padding: 12px 28px; border-radius: 6px;">
+                  Check Wallet & Payouts
                 </a>
               </div>
             </div>
             
-            <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
+            <p style="color: #555555; font-size: 15px; line-height: 1.6;">
               It is now featured live for readers worldwide. Thank you for sharing your thoughts with our theatre culture community!
             </p>
             
-            <p style="color: #a1a1aa; font-size: 13px; line-height: 1.5; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 30px;">
+            <p style="color: #555555; font-size: 13px; line-height: 1.5; border-top: 1px solid #E5D5D8; padding-top: 20px; margin-top: 30px;">
               Sincerely,<br/>
               <strong>The Curtain Call Curation Board</strong>
             </p>
@@ -900,44 +900,44 @@ export default function AdminDashboardPage() {
       ClientDB.approveWithdrawal(id);
 
       const approvalHtml = `
-        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Financials</span>
-            <div style="height: 2px; width: 80px; background-color: #22c55e; margin: 15px auto 0;"></div>
+        <div style="font-family: Arial, sans-serif; background-color: #FFFFFF; color: #555555; padding: 40px; border: 1px solid #E5D5D8; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #8B1C31; padding-bottom: 20px;">
+            <span style="font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #8B1C31; letter-spacing: 1px;">Curtain Call</span>
+            <p style="color: #555555; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Financials & Payouts</p>
           </div>
           
-          <h2 style="font-family: Georgia, serif; color: #22c55e; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Withdrawal Approved & Transferred! 💸</h2>
+          <h2 style="font-family: Georgia, serif; color: #059669; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Withdrawal Approved & Transferred! 💸</h2>
           
-          <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; text-align: center;">
             Great news! Your withdrawal request has been approved and processed. The funds have been successfully transferred to your bank account.
           </p>
           
-          <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
-            <table style="width: 100%; border-collapse: collapse;">
+          <div style="background-color: #FDF5F6; border: 1px solid #E5D5D8; border-radius: 12px; padding: 25px; margin: 30px 0;">
+            <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px; color: #1A1A1A; line-height: 1.6;">
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Amount Approved</td>
-                <td style="padding: 8px 0; font-size: 14px; color: #22c55e; text-align: right; font-weight: bold;">₦${amount.toLocaleString()}</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Amount Approved</td>
+                <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #059669;">₦${amount.toLocaleString()}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Target Bank</td>
-                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${bankName}</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Target Bank</td>
+                <td style="padding: 8px 0; font-weight: bold; text-align: right;">${bankName}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Account Name</td>
-                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right;">${accountName}</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Account Name</td>
+                <td style="padding: 8px 0; font-weight: bold; text-align: right;">${accountName}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Status</td>
-                <td style="padding: 8px 0; font-size: 11px; color: #22c55e; text-align: right; text-transform: uppercase; font-weight: bold;">Successful</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Status</td>
+                <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #059669; text-transform: uppercase;">Successful</td>
               </tr>
             </table>
           </div>
           
-          <p style="color: #a1a1aa; font-size: 13px; line-height: 1.6; text-align: center;">
+          <p style="color: #555555; font-size: 13px; line-height: 1.6; text-align: center;">
             Please note that depending on your bank, it may take a few minutes for the funds to reflect in your account. Thank you for utilizing Curtain Call!
           </p>
           
-          <p style="color: #71717a; font-size: 11px; line-height: 1.6; border-top: 1px solid #27272a; padding-top: 25px; margin-top: 30px; text-align: center; font-family: monospace;">
+          <p style="color: #555555; font-size: 11px; line-height: 1.6; border-top: 1px solid #E5D5D8; padding-top: 25px; margin-top: 30px; text-align: center;">
             Curtain Call Financial Operations.
           </p>
         </div>

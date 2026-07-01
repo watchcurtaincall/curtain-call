@@ -107,27 +107,27 @@ const deriveHandle = (name: string, email: string): string => {
 
 const sendOTP = async (email: string, name: string, code: string) => {
   const emailHtml = `
-    <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
-      <div style="text-align: center; margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px;">
-        <span style="font-size: 26px; font-weight: bold; letter-spacing: 3px; color: #ef4444; font-family: serif; text-transform: uppercase;">CURTAIN CALL</span>
-        <p style="color: #a1a1aa; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px;">The Front Row for African Theatre</p>
+    <div style="font-family: Arial, sans-serif; background-color: #FFFFFF; color: #555555; padding: 40px; border: 1px solid #E5D5D8; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 35px; border-bottom: 1px solid #8B1C31; padding-bottom: 20px;">
+        <span style="font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #8B1C31; letter-spacing: 1px;">Curtain Call</span>
+        <p style="color: #555555; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">The Front Row for African Theatre</p>
       </div>
       
-      <h2 style="font-family: serif; color: #ffffff; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Verify Your Account 🎭</h2>
+      <h2 style="font-family: Georgia, serif; color: #1A1A1A; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Verify Your Account 🎭</h2>
       
-      <p style="color: #d4d4d8; font-size: 15px; line-height: 1.7; text-align: center;">
+      <p style="color: #555555; font-size: 15px; line-height: 1.7; text-align: center;">
         Thank you for joining Curtain Call. Please enter the following 4-digit verification code to confirm your email and unlock full access to the platform:
       </p>
 
-      <div style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 25px; text-align: center; margin: 30px auto; max-width: 200px;">
-        <span style="font-size: 36px; font-weight: bold; color: #ef4444; letter-spacing: 6px; font-family: monospace;">${code}</span>
+      <div style="background-color: #FDF5F6; border: 1px solid #E5D5D8; border-radius: 12px; padding: 25px; text-align: center; margin: 30px auto; max-width: 200px;">
+        <span style="font-size: 36px; font-weight: bold; color: #8B1C31; letter-spacing: 6px; font-family: monospace;">${code}</span>
       </div>
 
-      <p style="color: #a1a1aa; font-size: 13px; line-height: 1.6; text-align: center; margin-bottom: 30px;">
+      <p style="color: #555555; font-size: 13px; line-height: 1.6; text-align: center; margin-bottom: 30px;">
         This verification step helps protect cast credits, review credentials, and secure admissions ticket purchases.
       </p>
       
-      <p style="color: #a1a1aa; font-size: 12px; line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px; margin-top: 35px; text-align: center;">
+      <p style="color: #555555; font-size: 12px; line-height: 1.6; border-top: 1px solid #E5D5D8; padding-top: 25px; margin-top: 35px; text-align: center;">
         If you did not request this code, you can safely ignore this email.
         <br/><br/>
         Sincerely,<br/>
@@ -597,45 +597,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Send Welcome Email + Verification Code in ONE beautiful email!
     const welcomeHtml = `
-      <div style="font-family: sans-serif; background-color: #0c0c0e; color: #ffffff; padding: 40px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); max-width: 600px; margin: 0 auto; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
-        <div style="text-align: center; margin-bottom: 35px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px;">
-          <span style="font-size: 26px; font-weight: bold; letter-spacing: 3px; color: #ef4444; font-family: serif; text-transform: uppercase;">CURTAIN CALL</span>
-          <p style="color: #a1a1aa; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px;">The Front Row for African Theatre</p>
+      <div style="font-family: Arial, sans-serif; background-color: #FFFFFF; color: #555555; padding: 40px; border: 1px solid #E5D5D8; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+        <div style="text-align: center; margin-bottom: 35px; border-bottom: 1px solid #8B1C31; padding-bottom: 20px;">
+          <span style="font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #8B1C31; letter-spacing: 1px;">Curtain Call</span>
+          <p style="color: #555555; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">The Front Row for African Theatre</p>
         </div>
         
-        <h2 style="font-family: serif; color: #ffffff; font-size: 24px; margin-top: 0; text-align: center; font-weight: bold;">Welcome to the Stage, ${displayName}! 🎭</h2>
+        <h2 style="font-family: Georgia, serif; color: #1A1A1A; font-size: 24px; margin-top: 0; text-align: center; font-weight: bold;">Welcome to the Stage, ${displayName}! 🎭</h2>
         
-        <p style="color: #d4d4d8; font-size: 15px; line-height: 1.7; text-align: center; margin-bottom: 30px;">
+        <p style="color: #555555; font-size: 15px; line-height: 1.7; text-align: center; margin-bottom: 30px;">
           We are absolutely thrilled to welcome you to the continent's premier digital home for theatre culture. You have successfully created your digital profile.
         </p>
 
-        <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 30px 0;"></div>
+        <div style="height: 1px; background: #E5D5D8; margin: 30px 0;"></div>
 
-        <h3 style="font-family: serif; color: #ffffff; font-size: 18px; margin-top: 0; text-align: center; font-weight: bold;">🛡️ Confirm Your Email Address</h3>
-        <p style="color: #d4d4d8; font-size: 14px; line-height: 1.7; text-align: center;">
+        <h3 style="font-family: Georgia, serif; color: #1A1A1A; font-size: 18px; margin-top: 0; text-align: center; font-weight: bold;">🛡️ Confirm Your Email Address</h3>
+        <p style="color: #555555; font-size: 14px; line-height: 1.7; text-align: center;">
           Please enter the following 4-digit verification code in the app to confirm your email and unlock full access to the platform:
         </p>
 
-        <div style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; text-align: center; margin: 25px auto; max-width: 180px;">
-          <span style="font-size: 34px; font-weight: bold; color: #ef4444; letter-spacing: 6px; font-family: monospace;">${code}</span>
+        <div style="background-color: #FDF5F6; border: 1px solid #E5D5D8; border-radius: 12px; padding: 20px; text-align: center; margin: 25px auto; max-width: 180px;">
+          <span style="font-size: 34px; font-weight: bold; color: #8B1C31; letter-spacing: 6px; font-family: monospace;">${code}</span>
         </div>
 
-        <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 30px 0;"></div>
+        <div style="height: 1px; background: #E5D5D8; margin: 30px 0;"></div>
         
-        <h3 style="font-family: serif; color: #ffffff; font-size: 18px; margin-top: 0; font-weight: bold;">⚡ What can you do once verified?</h3>
-        <ul style="color: #d4d4d8; font-size: 14px; line-height: 1.8; padding-left: 20px; margin-bottom: 30px;">
+        <h3 style="font-family: Georgia, serif; color: #1A1A1A; font-size: 18px; margin-top: 0; font-weight: bold;">⚡ What can you do once verified?</h3>
+        <ul style="color: #555555; font-size: 14px; line-height: 1.8; padding-left: 20px; margin-bottom: 30px;">
           <li style="margin-bottom: 12px;">🎟️ <strong>Buy & Manage Tickets</strong>: Discover live theatrical productions in your city, purchase gate entries securely via Paystack, and receive immediate admissions vouchers.</li>
           <li style="margin-bottom: 12px;">📁 <strong>Claim/Submit Playbills</strong>: Submit and build your digital playbills, cast rosters, and crew directory credits directly from your producer dashboard.</li>
           <li style="margin-bottom: 12px;">✍️ <strong>Write Stage Chronicles</strong>: Publish opinion pieces, theatrical analyses, and essays to be featured on our main editorial chronicle feed.</li>
           <li style="margin-bottom: 12px;">✒️ <strong>Review Plays & Rate</strong>: Share your reviews. Apply for <strong>Verified Critic</strong> status to publish official grades!</li>
         </ul>
         
-        <div style="background-color: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 30px;">
-          <p style="color: #a1a1aa; font-size: 12px; margin: 0 0 8px 0;">Your Registered Account Email:</p>
-          <code style="font-size: 14px; color: #22c55e; font-family: monospace; font-weight: bold; background: rgba(34,197,94,0.08); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(34,197,94,0.15);">${cleanEmail}</code>
+        <div style="background-color: #FDF5F6; border: 1px solid #E5D5D8; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 30px;">
+          <p style="color: #555555; font-size: 12px; margin: 0 0 8px 0; font-weight: bold; text-transform: uppercase;">Your Registered Account Email</p>
+          <code style="font-size: 14px; color: #8B1C31; font-family: monospace; font-weight: bold; background: rgba(139,28,49,0.05); padding: 4px 10px; border-radius: 8px; border: 1px solid #E5D5D8;">${cleanEmail}</code>
         </div>
         
-        <p style="color: #a1a1aa; font-size: 12px; line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 25px; margin-top: 35px; text-align: center;">
+        <p style="color: #555555; font-size: 12px; line-height: 1.6; border-top: 1px solid #E5D5D8; padding-top: 25px; margin-top: 35px; text-align: center;">
           If you have any questions or need curator assistance, simply reply directly to this email!
           <br/><br/>
           Sincerely,<br/>

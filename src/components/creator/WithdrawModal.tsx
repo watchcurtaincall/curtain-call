@@ -87,17 +87,19 @@ export function WithdrawModal({ availableBalance, onClose }: WithdrawModalProps)
       const recipient = user?.email || 'unknown@curtaincall.ng';
       const subject = `Your Withdrawal OTP 🔐`;
       const emailHtml = `
-        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Financials</span>
-            <div style="height: 2px; width: 80px; background-color: #dc2626; margin: 15px auto 0;"></div>
+        <div style="font-family: Arial, sans-serif; background-color: #FFFFFF; color: #555555; padding: 40px; border: 1px solid #E5D5D8; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #8B1C31; padding-bottom: 20px;">
+            <span style="font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #8B1C31; letter-spacing: 1px;">Curtain Call</span>
+            <p style="color: #555555; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Financials & Payouts</p>
           </div>
-          <h2 style="font-family: Georgia, serif; color: #ffffff; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Authorize Withdrawal</h2>
-          <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+          <h2 style="font-family: Georgia, serif; color: #1A1A1A; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Authorize Withdrawal</h2>
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; text-align: center;">
             You are trying to withdraw <strong>₦${parsedAmount.toLocaleString()}</strong> to ${resolvedName}. Please use the OTP below to confirm your request:
           </p>
-          <h1 style="text-align: center; font-size: 40px; letter-spacing: 8px; color: #eab308; margin: 30px 0; font-family: monospace;">${otp}</h1>
-          <p style="color: #71717a; font-size: 11px; text-align: center; font-family: monospace; border-top: 1px solid #27272a; padding-top: 20px;">
+          <div style="background-color: #FDF5F6; border: 1px solid #E5D5D8; border-radius: 12px; padding: 25px; text-align: center; margin: 30px auto; max-width: 200px;">
+            <span style="font-size: 36px; font-weight: bold; color: #8B1C31; letter-spacing: 6px; font-family: monospace;">${otp}</span>
+          </div>
+          <p style="color: #555555; font-size: 11px; text-align: center; border-top: 1px solid #E5D5D8; padding-top: 20px; margin-top: 30px;">
             If you did not request this, please contact support immediately.
           </p>
         </div>
@@ -137,50 +139,50 @@ export function WithdrawModal({ availableBalance, onClose }: WithdrawModalProps)
       const recipient = user?.email || 'unknown@curtaincall.ng';
       const subject = `Withdrawal Request Initiated 💸 - ₦${parsedAmount.toLocaleString()}`;
       const emailHtml = `
-        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <span style="font-size: 24px; font-weight: bold; color: #ffffff; letter-spacing: -0.5px; font-family: Georgia, serif;">Curtain Call Financials</span>
-            <div style="height: 2px; width: 80px; background-color: #dc2626; margin: 15px auto 0;"></div>
+        <div style="font-family: Arial, sans-serif; background-color: #FFFFFF; color: #555555; padding: 40px; border: 1px solid #E5D5D8; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #8B1C31; padding-bottom: 20px;">
+            <span style="font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #8B1C31; letter-spacing: 1px;">Curtain Call</span>
+            <p style="color: #555555; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Financials & Payouts</p>
           </div>
           
-          <h2 style="font-family: Georgia, serif; color: #ffffff; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Withdrawal Request Initiated</h2>
+          <h2 style="font-family: Georgia, serif; color: #1A1A1A; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">Withdrawal Request Initiated</h2>
           
-          <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; text-align: center;">
             We have received your request to withdraw your ticket sales earnings. Your request is currently undergoing review.
           </p>
           
-          <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
-            <table style="width: 100%; border-collapse: collapse;">
+          <div style="background-color: #FDF5F6; border: 1px solid #E5D5D8; border-radius: 12px; padding: 25px; margin: 30px 0;">
+            <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px; color: #1A1A1A; line-height: 1.6;">
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Amount Requested</td>
-                <td style="padding: 8px 0; font-size: 14px; color: #ffffff; text-align: right; font-weight: bold;">₦${parsedAmount.toLocaleString()}</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Amount Requested</td>
+                <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #8B1C31;">₦${parsedAmount.toLocaleString()}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Target Bank</td>
-                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${selectedBank?.name}</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Target Bank</td>
+                <td style="padding: 8px 0; font-weight: bold; text-align: right;">${selectedBank?.name}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Account Number</td>
-                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-family: monospace;">${accountNumber}</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Account Number</td>
+                <td style="padding: 8px 0; text-align: right; font-family: monospace; font-weight: bold;">${accountNumber}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Account Name</td>
-                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${resolvedName}</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Account Name</td>
+                <td style="padding: 8px 0; font-weight: bold; text-align: right;">${resolvedName}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Request Status</td>
-                <td style="padding: 8px 0; font-size: 12px; color: #eab308; text-align: right; font-weight: bold;">Pending Review</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Request Status</td>
+                <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #D97706;">Pending Review</td>
               </tr>
             </table>
           </div>
 
-          <div style="background-color: rgba(234, 179, 8, 0.04); border: 1px solid rgba(234, 179, 8, 0.15); border-radius: 12px; padding: 15px; margin-bottom: 25px; text-align: center;">
-            <p style="color: #eab308; font-size: 13px; margin: 0; line-height: 1.5; font-weight: 500;">
-              🕒 Notice: Payout reviews usually take between 24 to 48 hours to be fully approved and cleared into your bank account. (Usually within 24 hours on working days).
+          <div style="background-color: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px; padding: 15px; margin-bottom: 25px; text-align: center;">
+            <p style="color: #B45309; font-size: 13px; margin: 0; line-height: 1.5; font-weight: bold;">
+              🕒 Notice: Payout reviews usually take between 24 to 48 hours to be fully approved and cleared into your bank account.
             </p>
           </div>
           
-          <p style="color: #71717a; font-size: 11px; line-height: 1.6; border-top: 1px solid #27272a; padding-top: 25px; margin-top: 30px; text-align: center; font-family: monospace;">
+          <p style="color: #555555; font-size: 11px; line-height: 1.6; border-top: 1px solid #E5D5D8; padding-top: 25px; margin-top: 30px; text-align: center;">
             This is an automated financial notification from Curtain Call Ltd.
           </p>
         </div>
@@ -192,36 +194,40 @@ export function WithdrawModal({ availableBalance, onClose }: WithdrawModalProps)
       const adminRecipient = 'watchcurtaincall@gmail.com';
       const adminSubject = `ACTION REQUIRED: New Withdrawal Request 💸 - ₦${parsedAmount.toLocaleString()}`;
       const adminEmailHtml = `
-        <div style="font-family: Arial, sans-serif; background-color: #09090b; color: #f4f4f5; padding: 40px; border-radius: 24px; border: 1px solid #27272a; max-width: 600px; margin: 0 auto;">
-          <h2 style="font-family: Georgia, serif; color: #ffffff; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">New Withdrawal Request Pending</h2>
-          <p style="color: #a1a1aa; font-size: 14px; line-height: 1.6; text-align: center;">
+        <div style="font-family: Arial, sans-serif; background-color: #FFFFFF; color: #555555; padding: 40px; border: 1px solid #E5D5D8; border-radius: 12px; max-width: 600px; margin: 0 auto;">
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #8B1C31; padding-bottom: 20px;">
+            <span style="font-family: Georgia, serif; font-size: 32px; font-weight: bold; color: #8B1C31; letter-spacing: 1px;">Curtain Call</span>
+            <p style="color: #555555; font-size: 11px; margin-top: 5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: bold;">Financial Curation</p>
+          </div>
+          <h2 style="font-family: Georgia, serif; color: #1A1A1A; font-size: 22px; margin-top: 0; text-align: center; font-weight: bold;">New Withdrawal Request Pending</h2>
+          <p style="color: #555555; font-size: 14px; line-height: 1.6; text-align: center;">
             A creator has submitted a withdrawal request. Please review and process it from the Admin Dashboard.
           </p>
-          <div style="background-color: #18181b; border: 1px solid #27272a; border-radius: 16px; padding: 25px; margin: 30px 0;">
-            <table style="width: 100%; border-collapse: collapse;">
+          <div style="background-color: #FDF5F6; border: 1px solid #E5D5D8; border-radius: 12px; padding: 25px; margin: 30px 0;">
+            <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 14px; color: #1A1A1A; line-height: 1.6;">
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Creator Email</td>
-                <td style="padding: 8px 0; font-size: 12px; color: #ffffff; text-align: right; font-weight: bold;">${recipient}</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Creator Email</td>
+                <td style="padding: 8px 0; font-weight: bold; text-align: right;">${recipient}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Amount Requested</td>
-                <td style="padding: 8px 0; font-size: 14px; color: #eab308; text-align: right; font-weight: bold;">₦${parsedAmount.toLocaleString()}</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Amount Requested</td>
+                <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #8B1C31;">₦${parsedAmount.toLocaleString()}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Target Bank</td>
-                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${selectedBank?.name}</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Target Bank</td>
+                <td style="padding: 8px 0; font-weight: bold; text-align: right;">${selectedBank?.name}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Account Number</td>
-                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-family: monospace;">${accountNumber}</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Account Number</td>
+                <td style="padding: 8px 0; text-align: right; font-family: monospace; font-weight: bold;">${accountNumber}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; font-size: 11px; color: #71717a; text-transform: uppercase;">Account Name</td>
-                <td style="padding: 8px 0; font-size: 12px; color: #f4f4f5; text-align: right; font-weight: bold;">${resolvedName}</td>
+                <td style="padding: 8px 0; color: #555555; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">Account Name</td>
+                <td style="padding: 8px 0; font-weight: bold; text-align: right;">${resolvedName}</td>
               </tr>
             </table>
           </div>
-          <p style="color: #71717a; font-size: 11px; line-height: 1.6; text-align: center; font-family: monospace;">
+          <p style="color: #555555; font-size: 11px; line-height: 1.6; text-align: center; border-top: 1px solid #E5D5D8; padding-top: 20px; margin-top: 30px;">
             Curtain Call Admin Automated Notification
           </p>
         </div>
