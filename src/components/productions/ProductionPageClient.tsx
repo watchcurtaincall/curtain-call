@@ -15,6 +15,37 @@ import { ImageLightbox } from '@/components/shared/ImageLightbox';
 import { ShareModal } from '@/components/shared/ShareModal';
 import { useAuth } from '@/lib/AuthContext';
 
+function parseShowDateTime(showDateStr: string, showTimeStr: string): Date | null {
+  if (!showDateStr) return null;
+  const dateParts = showDateStr.split('-');
+  if (dateParts.length !== 3) return null;
+  const year = parseInt(dateParts[0], 10);
+  const month = parseInt(dateParts[1], 10) - 1; // 0-indexed
+  const day = parseInt(dateParts[2], 10);
+
+  let hours = 19; // Default to 7:00 PM
+  let minutes = 0;
+
+  if (showTimeStr) {
+    const timeParts = showTimeStr.match(/(\d+):(\d+)/);
+    if (timeParts) {
+      hours = parseInt(timeParts[1], 10);
+      minutes = parseInt(timeParts[2], 10);
+
+      // Handle AM/PM format if present
+      const isPM = /pm/i.test(showTimeStr);
+      const isAM = /am/i.test(showTimeStr);
+      if (isPM && hours < 12) {
+        hours += 12;
+      } else if (isAM && hours === 12) {
+        hours = 0;
+      }
+    }
+  }
+
+  return new Date(year, month, day, hours, minutes, 0, 0);
+}
+
 export function ProductionPageClient({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const { user } = useAuth();
@@ -96,6 +127,26 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
   const allReviews = ClientDB.getReviews().filter(r => r.productionId === production.id);
   const criticReviewsCount = allReviews.filter(r => r.type && r.type.toLowerCase() === 'critic').length;
   const audienceReviewsCount = allReviews.filter(r => r.type && r.type.toLowerCase() === 'audience').length;
+
+  // Calculate dynamic salesActive and reviewsLocked based on play scheduled start time
+  let reviewsLocked = production.status === 'Coming Soon';
+  let salesActive = production.status !== 'Past Production' && production.status !== 'Recently Concluded' && (production.externalTicketUrl || (production.ticketTiers && production.ticketTiers.length > 0));
+
+  if (production.showDate) {
+    const showStart = parseShowDateTime(production.showDate, production.showTime || '19:00');
+    if (showStart) {
+      const now = new Date();
+      const oneHourPastStart = new Date(showStart.getTime() + 60 * 60 * 1000);
+      const isPastOneHour = now >= oneHourPastStart;
+      
+      if (isPastOneHour) {
+        salesActive = false;
+        reviewsLocked = false; // Open reviews
+      } else {
+        reviewsLocked = production.status !== 'Past Production' && production.status !== 'Recently Concluded';
+      }
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-950">
@@ -271,7 +322,7 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
       <div className="container mx-auto px-4 mt-6">
         <div className="flex flex-col gap-2.5 max-w-xl">
           {/* Row 1: Primary Action (Get Tickets - Bold, prominent call-to-action) */}
-          {(production.status !== 'Past Production' && production.status !== 'Recently Concluded' && (production.externalTicketUrl || (production.ticketTiers && production.ticketTiers.length > 0))) && (
+          {salesActive && (
             <div>
               {production.externalTicketUrl ? (() => {
                 let linkExpired = false;
@@ -361,6 +412,7 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
               eventType={production.eventType || 'Theatre'}
               activeTab={(!production.eventType || production.eventType === 'Theatre') ? activeTab : 'audience'}
               onTabChange={setActiveTab}
+              reviewsLocked={reviewsLocked}
             />
           </div>
 

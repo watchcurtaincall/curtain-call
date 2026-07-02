@@ -84,6 +84,37 @@ function generateBarcodeSVG(text: string) {
   );
 }
 
+function parseShowDateTime(showDateStr: string, showTimeStr: string): Date | null {
+  if (!showDateStr) return null;
+  const dateParts = showDateStr.split('-');
+  if (dateParts.length !== 3) return null;
+  const year = parseInt(dateParts[0], 10);
+  const month = parseInt(dateParts[1], 10) - 1; // 0-indexed
+  const day = parseInt(dateParts[2], 10);
+
+  let hours = 19; // Default to 7:00 PM
+  let minutes = 0;
+
+  if (showTimeStr) {
+    const timeParts = showTimeStr.match(/(\d+):(\d+)/);
+    if (timeParts) {
+      hours = parseInt(timeParts[1], 10);
+      minutes = parseInt(timeParts[2], 10);
+
+      // Handle AM/PM format if present
+      const isPM = /pm/i.test(showTimeStr);
+      const isAM = /am/i.test(showTimeStr);
+      if (isPM && hours < 12) {
+        hours += 12;
+      } else if (isAM && hours === 12) {
+        hours = 0;
+      }
+    }
+  }
+
+  return new Date(year, month, day, hours, minutes, 0, 0);
+}
+
 export default function TicketPage({ params }: { params: Promise<{ id: string }> }) {
   const { user } = useAuth();
   const router = useRouter();
@@ -202,6 +233,19 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
     notFound();
   }
 
+  let isSalesConcluded = false;
+  if (production.showDate) {
+    const showStart = parseShowDateTime(production.showDate, production.showTime || '19:00');
+    if (showStart) {
+      const now = new Date();
+      const oneHourPastStart = new Date(showStart.getTime() + 60 * 60 * 1000);
+      isSalesConcluded = now >= oneHourPastStart && production.status !== 'Past Production' && production.status !== 'Recently Concluded';
+    }
+  }
+  if (production.status === 'Past Production' || production.status === 'Recently Concluded') {
+    isSalesConcluded = true;
+  }
+
   const tiersToUse = (production?.ticketTiers && production.ticketTiers.length > 0)
     ? production.ticketTiers.map(t => ({ name: t.name, price: Number(t.price) || 0, description: t.description || '', capacity: Number(t.capacity) || 0 }))
     : [
@@ -314,7 +358,25 @@ export default function TicketPage({ params }: { params: Promise<{ id: string }>
       />
       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/98 to-zinc-950/95 z-0 pointer-events-none" />
 
-      {successData ? (
+      {isSalesConcluded && !successData ? (
+        <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+          <div className="max-w-md w-full bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 text-center shadow-2xl animate-fade-up">
+            <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
+              <Clock className="h-8 w-8 text-red-500" />
+            </div>
+            <h1 className="text-2xl font-serif font-bold text-white mb-3">Sales Concluded</h1>
+            <p className="text-sm text-zinc-400 mb-8 leading-relaxed">
+              Ticket sales for <span className="text-white font-semibold">"{production.title}"</span> have closed. The performance is currently in progress or has concluded.
+            </p>
+            <Link
+              href={isTheatre ? `/shows/${production.slug || production.id}` : `/event/${production.slug || production.id}`}
+              className="w-full bg-white text-black font-bold py-4 rounded-2xl hover:bg-zinc-100 transition-all text-sm block"
+            >
+              Back to Show Details
+            </Link>
+          </div>
+        </div>
+      ) : successData ? (
         <div className="relative z-10 flex items-center justify-center min-h-screen p-4 py-20">
           <div className="max-w-xl w-full bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 md:p-8 text-center shadow-[0_0_80px_rgba(34,197,94,0.15)] overflow-hidden animate-fade-up print-wrapper">
             <style>{`

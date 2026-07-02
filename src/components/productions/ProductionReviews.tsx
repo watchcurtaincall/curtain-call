@@ -18,7 +18,7 @@ interface Review {
   date?: string;
 }
 
-export function ProductionReviews({ reviews, productionTitle, productionId, status, eventType = 'Theatre', activeTab: activeTabProp, onTabChange }: {
+export function ProductionReviews({ reviews, productionTitle, productionId, status, eventType = 'Theatre', activeTab: activeTabProp, onTabChange, reviewsLocked = false }: {
   reviews: Review[];
   productionTitle: string;
   productionId: string;
@@ -26,6 +26,7 @@ export function ProductionReviews({ reviews, productionTitle, productionId, stat
   eventType?: string;
   activeTab?: 'critic' | 'audience';
   onTabChange?: (tab: 'critic' | 'audience') => void;
+  reviewsLocked?: boolean;
 }) {
   const { user } = useAuth();
   const [localActiveTab, setLocalActiveTab] = useState<'critic' | 'audience'>('critic');
@@ -209,7 +210,7 @@ export function ProductionReviews({ reviews, productionTitle, productionId, stat
       {/* Critic Tab */}
       {(!eventType || eventType === 'Theatre') && activeTab === 'critic' && (
         <div className="space-y-4">
-          {status === 'Coming Soon' ? (
+          {reviewsLocked ? (
             <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5 text-center flex flex-col items-center justify-center gap-3 py-12">
               <span className="text-3xl">🎭</span>
               <p className="text-sm font-semibold text-zinc-400">
@@ -288,7 +289,7 @@ export function ProductionReviews({ reviews, productionTitle, productionId, stat
         // We'll pass the showDate via a custom attribute pattern below
         return (
           <div className="space-y-4">
-            {status === 'Coming Soon' ? (
+            {reviewsLocked ? (
               <div className="p-6 rounded-2xl bg-zinc-900/50 border border-white/5 text-center flex flex-col items-center justify-center gap-3 py-12">
                 <span className="text-3xl">⭐</span>
                 <p className="text-sm font-semibold text-zinc-400">
