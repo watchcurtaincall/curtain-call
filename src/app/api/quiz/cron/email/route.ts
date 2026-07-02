@@ -103,7 +103,7 @@ async function handler(req: NextRequest) {
     console.log('[CronEmail] Attempting delivery via Brevo (Primary)...');
     try {
       const brevoPayload = {
-        sender: { name: 'Curtain Call', email: 'watchcurtaincall@gmail.com' },
+        sender: { name: 'Curtain Call', email: 'notifications@curtaincall.com.ng' },
         subject: `Your daily quiz is live — play now!`,
         htmlContent: `<h4>Daily Theatre Quiz is live!</h4><p>Please refer to the customized version of the email.</p>`,
         textContent: `Daily Theatre Quiz is live! Please refer to the customized version of the email.`,
