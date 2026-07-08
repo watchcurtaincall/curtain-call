@@ -173,7 +173,7 @@ const mapProductionToDb = (p: any) => {
   };
 };
 
-const mapProductionFromDb = (row: any) => {
+export const mapProductionFromDb = (row: any) => {
   const galleryImages: string[] = [];
   let ticketTiers: any[] = [];
   let productionType: 'Student' | 'Professional' | undefined = undefined;
@@ -489,10 +489,13 @@ const syncToCloud = async (table: string, dbItem: any): Promise<void> => {
     });
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
-      console.error(`[API Sync] Upsert failed for table ${table}:`, errData.error || res.statusText);
+      const errMsg = errData.error || res.statusText || 'Sync failed';
+      console.error(`[API Sync] Upsert failed for table ${table}:`, errMsg);
+      throw new Error(errMsg);
     }
   } catch (err) {
     console.error(`[API Sync] Server error on ${table}:`, err);
+    throw err;
   }
 };
 
@@ -511,10 +514,13 @@ const deleteFromCloud = async (table: string, id: string) => {
     });
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
-      console.error(`[API Sync] Delete failed for table ${table}:`, errData.error || res.statusText);
+      const errMsg = errData.error || res.statusText || 'Delete failed';
+      console.error(`[API Sync] Delete failed for table ${table}:`, errMsg);
+      throw new Error(errMsg);
     }
   } catch (err) {
     console.error(`[API Sync] Delete server error on ${table}:`, err);
+    throw err;
   }
 };
 
@@ -938,7 +944,7 @@ export const ClientDB = {
     return found;
   },
 
-  saveProduction(production: Production): void {
+  async saveProduction(production: Production): Promise<void> {
     if (typeof window === 'undefined') return;
     const productions = this.getProductions();
     const index = productions.findIndex(p => p.id === production.id);
@@ -954,7 +960,7 @@ export const ClientDB = {
     localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify(updated));
 
     // Sync to cloud
-    syncToCloud('productions', mapProductionToDb(production));
+    await syncToCloud('productions', mapProductionToDb(production));
   },
 
   deleteProduction(id: string): void {

@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { ProductionPageClient } from '@/components/productions/ProductionPageClient';
+import { mapProductionFromDb } from '@/lib/db';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -142,6 +143,8 @@ export default async function ProductionPage({ params }: Props) {
     }
   } : null;
 
+  const mappedProd = prodData ? mapProductionFromDb(prodData) : null;
+
   return (
     <>
       {jsonLd && (
@@ -150,7 +153,7 @@ export default async function ProductionPage({ params }: Props) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
-      <ProductionPageClient params={params} />
+      <ProductionPageClient params={params} initialProduction={mappedProd} />
     </>
   );
 }

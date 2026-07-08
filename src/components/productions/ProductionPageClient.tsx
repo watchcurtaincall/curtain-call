@@ -46,10 +46,16 @@ function parseShowDateTime(showDateStr: string, showTimeStr: string): Date | nul
   return new Date(year, month, day, hours, minutes, 0, 0);
 }
 
-export function ProductionPageClient({ params }: { params: Promise<{ id: string }> }) {
+export function ProductionPageClient({
+  params,
+  initialProduction
+}: {
+  params: Promise<{ id: string }>;
+  initialProduction?: Production | null;
+}) {
   const resolvedParams = use(params);
   const { user } = useAuth();
-  const [production, setProduction] = useState<Production | null>(null);
+  const [production, setProduction] = useState<Production | null>(initialProduction || null);
   const [hasSynced, setHasSynced] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'critic' | 'audience'>('critic');
@@ -83,7 +89,7 @@ export function ProductionPageClient({ params }: { params: Promise<{ id: string 
       if (fetched) {
         setProduction(fetched);
       } else {
-        setProduction(null);
+        setProduction(initialProduction || null);
       }
     };
 

@@ -89,6 +89,8 @@ function CreateProductionForm() {
   const [uploading, setUploading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isDraftMode, setIsDraftMode] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [publishingError, setPublishingError] = useState('');
   const [banks, setBanks] = useState<Bank[]>([]);
   const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
   const [resolvedName, setResolvedName] = useState('');
@@ -395,6 +397,8 @@ function CreateProductionForm() {
 
   const handlePublish = async () => {
     try {
+      setPublishing(true);
+      setPublishingError('');
       setIsDraftMode(false);
       const firstDate = form.dates[0]?.date || '';
       const firstTime = form.dates[0]?.time || '';
@@ -460,7 +464,7 @@ function CreateProductionForm() {
         bankName: form.bankName || undefined,
       };
 
-      ClientDB.saveProduction(newPlay);
+      await ClientDB.saveProduction(newPlay);
       localStorage.removeItem('curtain_call_create_draft');
       setDraftRestored(false);
       
@@ -476,13 +480,19 @@ function CreateProductionForm() {
       setCreatedProductionId(targetId);
       setPublished(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to publish production:', err);
+      setPublishingError(err.message || 'Failed to sync with the server database. Please check your network connection and session.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setPublishing(false);
     }
   };
 
   const handleSaveDraft = async () => {
     try {
+      setPublishing(true);
+      setPublishingError('');
       setIsDraftMode(true);
       const firstDate = form.dates[0]?.date || '';
       
@@ -526,7 +536,7 @@ function CreateProductionForm() {
         castAndCrew: form.castAndCrew || [],
       };
 
-      ClientDB.saveProduction(newPlay);
+      await ClientDB.saveProduction(newPlay);
       localStorage.removeItem('curtain_call_create_draft');
       setDraftRestored(false);
 
@@ -542,8 +552,12 @@ function CreateProductionForm() {
       setCreatedProductionId(targetId);
       setPublished(true);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to save draft:', err);
+      setPublishingError(err.message || 'Failed to sync with the server database. Please check your network connection and session.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -1317,6 +1331,16 @@ function CreateProductionForm() {
         {/* ── STEP 4: Review & Publish ── */}
         {step === 4 && (
           <div className="flex flex-col gap-4 animate-fade-up">
+            {publishingError && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-200 rounded-2xl p-4 flex gap-3 text-xs leading-relaxed mb-2">
+                <AlertCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="font-bold">Failed to sync with live database:</strong>
+                  <p className="mt-1">{publishingError}</p>
+                </div>
+              </div>
+            )}
+
             {form.posterUrl && (
               <div className="aspect-[2/3] w-36 mx-auto rounded-xl overflow-hidden border border-white/10 shadow-lg mb-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1351,10 +1375,20 @@ function CreateProductionForm() {
 
             <button
               onClick={handlePublish}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-2xl transition-colors mt-2 flex items-center justify-center gap-2"
+              disabled={publishing}
+              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-500 text-white font-bold py-4 rounded-2xl transition-all mt-2 flex items-center justify-center gap-2"
             >
-              <Ticket className="h-5 w-5" />
-              {form.eventType === 'Theatre' ? 'Publish Production' : 'Publish Event'}
+              {publishing ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Publishing production...
+                </>
+              ) : (
+                <>
+                  <Ticket className="h-5 w-5" />
+                  {form.eventType === 'Theatre' ? 'Publish Production' : 'Publish Event'}
+                </>
+              )}
             </button>
             <p className="text-xs text-center text-zinc-600">
               By publishing you agree to Curtain Call&apos;s Producer Terms.
@@ -1368,14 +1402,15 @@ function CreateProductionForm() {
             {step > 0 && (
               <button
                 onClick={() => { setStep(s => s - 1); window.scrollTo(0, 0); }}
-                className="flex items-center gap-2 px-5 py-3 bg-zinc-900 border border-white/10 text-white rounded-2xl hover:bg-zinc-800 transition-colors"
+                disabled={publishing}
+                className="flex items-center gap-2 px-5 py-3 bg-zinc-900 border border-white/10 text-white rounded-2xl hover:bg-zinc-800 disabled:opacity-50 transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" /> Back
               </button>
             )}
             <button
               onClick={() => { setStep(s => s + 1); window.scrollTo(0, 0); }}
-              disabled={!canNext}
+              disabled={!canNext || publishing}
               className="flex-1 flex items-center justify-center gap-2 py-3 bg-white text-black font-bold rounded-2xl hover:bg-zinc-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Continue <ChevronRight className="h-4 w-4" />
@@ -1383,9 +1418,17 @@ function CreateProductionForm() {
             <button
               type="button"
               onClick={handleSaveDraft}
-              className="px-5 py-3 bg-zinc-900 border border-white/10 hover:border-red-650/30 hover:bg-red-950/10 text-zinc-400 hover:text-red-400 rounded-2xl font-bold transition-all text-xs uppercase tracking-wider shrink-0"
+              disabled={publishing}
+              className="px-5 py-3 bg-zinc-900 border border-white/10 hover:border-red-650/30 hover:bg-red-950/10 text-zinc-400 hover:text-red-400 disabled:text-zinc-600 disabled:border-white/5 disabled:bg-zinc-900/50 rounded-2xl font-bold transition-all text-xs uppercase tracking-wider shrink-0 flex items-center gap-2"
             >
-              Save Draft
+              {publishing && isDraftMode ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Draft'
+              )}
             </button>
           </div>
         )}
