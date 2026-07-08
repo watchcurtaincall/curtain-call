@@ -395,6 +395,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: lastError.message }, { status: 500 });
     }
 
+    const origin = request.headers.get('origin') || new URL(request.url).origin;
+    notifyAdminOfSubmission(table, finalData, origin).catch(err => {
+      console.error('[API Sync Data] Background notifyAdminOfSubmission error:', err);
+    });
+
     return NextResponse.json({ success: true, data: finalData });
   } catch (err: any) {
     console.error('[API Sync Data] POST Exception:', err);
@@ -462,5 +467,127 @@ export async function DELETE(request: Request) {
   } catch (err: any) {
     console.error('[API Sync Data] DELETE Exception:', err);
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+async function notifyAdminOfSubmission(table: string, dbItem: any, origin: string) {
+  try {
+    const adminSecret = process.env.ADMIN_SECRET || process.env.CRON_SECRET || 'fallback-secret';
+    let subject = '';
+    let html = '';
+
+    if (table === 'productions') {
+      if (dbItem.curation_status !== 'Pending' && dbItem.curationStatus !== 'Pending') {
+        return;
+      }
+      const title = dbItem.title || 'Untitled Play';
+      const submitter = dbItem.submitter_email || dbItem.submitterEmail || 'Unknown Creator';
+      subject = `🎭 New Play Submitted: ${title}`;
+      html = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #1a1a1a;">
+          <h2 style="color: #8B1C31; font-family: Georgia, serif;">New Play Bill Pending Review</h2>
+          <p>A new play has been submitted for curatorial review on Curtain Call:</p>
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; width: 150px;">Title</td>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${title}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Submitter</td>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${submitter}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Venue</td>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${dbItem.venue || 'N/A'}</td>
+            </tr>
+          </table>
+          <p>Please log in to the <a href="${origin}/admin" style="color: #8B1C31; font-weight: bold;">Admin Dashboard</a> to approve or decline this submission.</p>
+        </div>
+      `;
+    } else if (table === 'artists') {
+      if (dbItem.curation_status !== 'Pending' && dbItem.curationStatus !== 'Pending') {
+        return;
+      }
+      const name = dbItem.name || 'Unnamed Artist';
+      const submitter = dbItem.submitter_email || dbItem.submitterEmail || 'Unknown';
+      subject = `👤 New Artist Profile Pending: ${name}`;
+      html = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #1a1a1a;">
+          <h2 style="color: #8B1C31; font-family: Georgia, serif;">Artist Profile Pending Review</h2>
+          <p>A new artist profile has been submitted for review on Curtain Call:</p>
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; width: 150px;">Name</td>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Role</td>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${dbItem.role_type || dbItem.roleType || 'N/A'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Submitter</td>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${submitter}</td>
+            </tr>
+          </table>
+          <p>Please log in to the <a href="${origin}/admin" style="color: #8B1C31; font-weight: bold;">Admin Dashboard</a> to review this profile.</p>
+        </div>
+      `;
+    } else if (table === 'withdrawals') {
+      if (dbItem.status !== 'Pending') {
+        return;
+      }
+      const email = dbItem.email || 'Unknown';
+      const amount = dbItem.amount || 0;
+      subject = `💰 New Withdrawal Request: ₦${amount.toLocaleString()}`;
+      html = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #1a1a1a;">
+          <h2 style="color: #8B1C31; font-family: Georgia, serif;">Withdrawal Request Pending Approval</h2>
+          <p>A creator has requested a wallet withdrawal on Curtain Call:</p>
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold; width: 150px;">Creator Email</td>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${email}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Amount</td>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd;">₦${amount.toLocaleString()}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd; font-weight: bold;">Bank Details</td>
+              <td style="padding: 8px; border-bottom: 1px solid #ddd;">${dbItem.bank_name || dbItem.bankName || ''} · ${dbItem.account_number || dbItem.accountNumber || ''} (${dbItem.account_name || dbItem.accountName || ''})</td>
+            </tr>
+          </table>
+          <p>Please log in to the <a href="${origin}/admin" style="color: #8B1C31; font-weight: bold;">Admin Dashboard</a> to approve this request.</p>
+        </div>
+      `;
+    } else {
+      return;
+    }
+
+    console.log(`[API Sync Data] Sending admin notification email for ${table}: "${subject}"`);
+    await fetch(`${origin}/api/send-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-secret': adminSecret
+      },
+      body: JSON.stringify({
+        to: 'watchcurtaincall@gmail.com',
+        subject,
+        html,
+        type: 'transactional'
+      })
+    }).then(async r => {
+      if (!r.ok) {
+        const text = await r.text();
+        console.error(`[API Sync Data] Failed to dispatch admin email for ${table}:`, text);
+      } else {
+        console.log(`[API Sync Data] Admin email successfully sent for ${table}`);
+      }
+    }).catch(err => {
+      console.error(`[API Sync Data] Exception sending admin email for ${table}:`, err);
+    });
+  } catch (err) {
+    console.error(`[API Sync Data] notifyAdminOfSubmission failed:`, err);
   }
 }
