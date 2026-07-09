@@ -117,21 +117,36 @@ export default function BoxOfficeTicketsPage() {
 
       </div>
 
-      {/* Grid */}
       {filteredProductions.length === 0 ? (
-        <div className="text-center py-20 bg-zinc-900/30 rounded-3xl border border-white/5 max-w-xl mx-auto px-6 relative z-10 animate-fade-up">
-          <Ticket className="h-12 w-12 text-zinc-700 mx-auto mb-4 animate-bounce" />
-          <h3 className="font-serif font-bold text-white text-lg mb-1">No Active Tickets Found</h3>
-          <p className="text-xs sm:text-sm text-zinc-500 leading-relaxed max-w-xs mx-auto mb-6">
-            We couldn't find any ticketed events matching your search query or filters. Check back soon for fresh stage premieres!
-          </p>
-          <button
-            onClick={() => { setSearchQuery(''); setSelectedType('All'); }}
-            className="inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-white font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider"
-          >
-            Reset Filters
-          </button>
-        </div>
+        productions.length === 0 ? (
+          <div className="text-center py-20 bg-zinc-900/30 rounded-3xl border border-white/5 max-w-xl mx-auto px-6 relative z-10 animate-fade-up">
+            <Ticket className="h-12 w-12 text-zinc-700 mx-auto mb-4 animate-bounce" />
+            <h3 className="font-serif font-bold text-white text-lg mb-1">No Live Ticket Sales</h3>
+            <p className="text-xs sm:text-sm text-zinc-500 leading-relaxed max-w-xs mx-auto mb-6">
+              There are currently no active stage plays with live ticket sales on Curtain Call. Visit our play archive repository to browse our complete catalog of productions!
+            </p>
+            <Link
+              href="/plays"
+              className="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-3.5 rounded-xl transition-all text-xs uppercase tracking-wider shadow-lg active:scale-98"
+            >
+              Explore Play Archive
+            </Link>
+          </div>
+        ) : (
+          <div className="text-center py-20 bg-zinc-900/30 rounded-3xl border border-white/5 max-w-xl mx-auto px-6 relative z-10 animate-fade-up">
+            <Ticket className="h-12 w-12 text-zinc-700 mx-auto mb-4 animate-bounce" />
+            <h3 className="font-serif font-bold text-white text-lg mb-1">No Active Tickets Found</h3>
+            <p className="text-xs sm:text-sm text-zinc-500 leading-relaxed max-w-xs mx-auto mb-6">
+              We couldn't find any ticketed events matching your search query or filters. Check back soon for fresh stage premieres!
+            </p>
+            <button
+              onClick={() => { setSearchQuery(''); setSelectedType('All'); }}
+              className="inline-flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-white font-bold px-4 py-2.5 rounded-xl transition-all text-xs uppercase tracking-wider"
+            >
+              Reset Filters
+            </button>
+          </div>
+        )
       ) : (
         <div className="flex flex-col gap-10 relative z-10">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 w-full">

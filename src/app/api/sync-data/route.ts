@@ -324,7 +324,9 @@ export async function POST(request: Request) {
     if (!verifiedIsAdmin) {
       if (['productions', 'artists', 'articles', 'critic_applications'].includes(table)) {
         let existingStatus = 'Pending';
-        if (dbItem.id) {
+        if (table === 'productions' && isProducerManagedPlay(dbItem)) {
+          existingStatus = 'Approved';
+        } else if (dbItem.id) {
           const { data: existing } = await supabaseServer
             .from(table)
             .select('curation_status')
@@ -636,4 +638,37 @@ async function notifyAdminOfSubmission(table: string, dbItem: any, origin: strin
   } catch (err) {
     console.error(`[API Sync Data] notifyAdminOfSubmission failed:`, err);
   }
+}
+
+function isProducerManagedPlay(item: any): boolean {
+  if (item.isProducerManaged === true || item.is_producer_managed === true) return true;
+  
+  // Check gallery_images for ticketTiers or isProducerManaged
+  if (item.gallery_images && Array.isArray(item.gallery_images)) {
+    for (const img of item.gallery_images) {
+      if (typeof img === 'string') {
+        if (img.includes('__isProducerManaged":true')) return true;
+        if (img.includes('__ticketTiers":')) {
+          try {
+            const parsed = JSON.parse(img);
+            if (parsed.__ticketTiers && parsed.__ticketTiers.length > 0) return true;
+          } catch (e) {}
+        }
+      }
+    }
+  }
+  
+  // Check if it has external ticket URL
+  if (item.gallery_images && Array.isArray(item.gallery_images)) {
+    for (const img of item.gallery_images) {
+      if (typeof img === 'string' && img.includes('__externalTicketUrl":')) {
+        try {
+          const parsed = JSON.parse(img);
+          if (parsed.__externalTicketUrl && parsed.__externalTicketUrl.trim().length > 0) return true;
+        } catch (e) {}
+      }
+    }
+  }
+
+  return false;
 }
