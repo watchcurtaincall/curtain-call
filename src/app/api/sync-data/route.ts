@@ -355,15 +355,15 @@ export async function POST(request: Request) {
     }
 
     if (table === 'productions') {
-      const allowedDbStatuses = ['Currently Showing', 'Upcoming', 'Past Production'];
+      const allowedDbStatuses = ['Currently Showing', 'Coming Soon', 'Past Production'];
       const s = currentDbItem.status;
       if (!s || !allowedDbStatuses.includes(s)) {
-        if (s === 'Coming Soon' || s === 'Draft') {
-          currentDbItem.status = 'Upcoming';
+        if (s === 'Upcoming' || s === 'Draft') {
+          currentDbItem.status = 'Coming Soon';
         } else if (s === 'Past Productions') {
           currentDbItem.status = 'Past Production';
         } else {
-          currentDbItem.status = 'Upcoming';
+          currentDbItem.status = 'Coming Soon';
         }
       }
     }
@@ -406,6 +406,38 @@ export async function POST(request: Request) {
 
     if (!success && lastError) {
       console.error(`[API Sync Data] Final upsert failure on table ${table}:`, lastError);
+
+      // Send diagnostic alert email to watchcurtaincall@gmail.com
+      const BREVO_API_KEY = process.env.BREVO_API_KEY;
+      if (BREVO_API_KEY) {
+        try {
+          await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+              'accept': 'application/json',
+              'api-key': BREVO_API_KEY,
+              'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+              sender: { name: 'Curtain Call Diagnostics', email: 'notifications@curtaincall.com.ng' },
+              to: [{ email: 'watchcurtaincall@gmail.com' }],
+              subject: `[API Sync Error] table ${table}`,
+              htmlContent: `
+                <div style="font-family: monospace; padding: 20px; border: 1px solid #ccc; background-color: #f9f9f9; border-radius: 8px;">
+                  <h3>API Sync Upsert Failure</h3>
+                  <p><b>Table:</b> ${table}</p>
+                  <p><b>Error:</b> ${lastError.message} (code: ${lastError.code})</p>
+                  <p><b>Payload:</b></p>
+                  <pre style="background: #222; color: #fff; padding: 12px; border-radius: 4px;">${JSON.stringify(currentDbItem, null, 2)}</pre>
+                </div>
+              `
+            })
+          });
+        } catch (diagErr) {
+          console.error('[API Sync Data] Failed to send diagnostic email:', diagErr);
+        }
+      }
+
       return NextResponse.json({ error: lastError.message }, { status: 500 });
     }
 

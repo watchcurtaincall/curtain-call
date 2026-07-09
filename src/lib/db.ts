@@ -158,7 +158,7 @@ const mapProductionToDb = (p: any) => {
     genre: p.genre,
     runtime: p.runtime || '120 mins',
     venue: p.venue,
-    status: p.status === 'Coming Soon' || p.status === 'Draft' ? 'Upcoming' : (p.status === 'Past Productions' ? 'Past Production' : p.status),
+    status: p.status === 'Coming Soon' || p.status === 'Draft' ? 'Coming Soon' : (p.status === 'Past Productions' ? 'Past Production' : p.status),
     poster_url: p.posterUrl,
     critic_score: p.criticScore,
     audience_score: p.audienceScore,
