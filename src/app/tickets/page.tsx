@@ -20,11 +20,11 @@ export default function BoxOfficeTicketsPage() {
 
   useEffect(() => {
     const loadData = () => {
-      // Load and filter only plays that have tickets (external link OR ticket tiers) and are active/upcoming!
+      // Load and filter only plays that have active tickets (external link OR ticket tiers) and are Coming Soon!
       const all = ClientDB.getProductions();
       const ticketed = all.filter(p => {
-        const hasTickets = p.externalTicketUrl || (p.ticketTiers && p.ticketTiers.length > 0);
-        return hasTickets && p.status !== 'Draft' && p.curationStatus !== 'Pending' && p.curationStatus !== 'Declined';
+        const hasTickets = (p.externalTicketUrl && p.externalTicketUrl.trim() !== '') || (p.ticketTiers && p.ticketTiers.length > 0);
+        return hasTickets && p.status === 'Coming Soon' && p.curationStatus === 'Approved';
       });
       setProductions(sortItemsByDateAdded(ticketed));
     };
