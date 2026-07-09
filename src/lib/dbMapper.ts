@@ -84,7 +84,7 @@ export const mapProductionFromDb = (row: any): Production => {
     genre: row.genre,
     runtime: row.runtime,
     venue: row.venue,
-    status: row.status,
+    status: row.status === 'Upcoming' ? 'Coming Soon' : (row.status === 'Past Production' ? 'Past Productions' : row.status),
     posterUrl: row.poster_url || row.posterUrl,
     criticScore: row.critic_score || row.criticScore,
     audienceScore: row.audience_score || row.audienceScore ? parseFloat(row.audience_score || row.audienceScore) : null,

@@ -437,7 +437,7 @@ function CreateProductionForm() {
         venue: form.venue,
         city: form.city || undefined,
         address: form.address || undefined,
-        status: existingProd ? existingProd.status : ('Coming Soon' as const),
+        status: existingProd && existingProd.status !== 'Draft' ? existingProd.status : ('Coming Soon' as const),
         posterUrl: form.posterUrl || '/images/default_poster.png',
         criticScore: existingProd ? existingProd.criticScore : null,
         audienceScore: existingProd ? existingProd.audienceScore : null,
