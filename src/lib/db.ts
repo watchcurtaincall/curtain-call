@@ -851,9 +851,13 @@ export const ClientDB = {
       updated = [...productions];
       updated[index] = production;
     } else {
-      const titleExists = productions.some(p => p.title.toLowerCase() === production.title.toLowerCase());
-      if (titleExists) return;
-      updated = [...productions, production];
+      const duplicateIndex = productions.findIndex(p => p.title.toLowerCase() === production.title.toLowerCase());
+      if (duplicateIndex !== -1) {
+        updated = [...productions];
+        updated[duplicateIndex] = production;
+      } else {
+        updated = [...productions, production];
+      }
     }
     localStorage.setItem(PRODUCTIONS_KEY, JSON.stringify(updated));
 
