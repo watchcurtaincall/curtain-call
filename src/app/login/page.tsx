@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, ShieldCheck, Key } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff, ShieldCheck, Key, Check } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
-import { supabase } from '@/lib/db';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -14,25 +13,18 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  // Forgot password views & inputs
+  // Forgot password & OTP verification states
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
+  
+  const [isEnteringOtp, setIsEnteringOtp] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
 
-  // Recovery landing views & inputs
+  // New password input states
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [resetFinished, setResetFinished] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    // Supabase redirects password resets with hash anchors like #access_token=...&type=recovery
-    const isRecovery = window.location.hash.includes('type=recovery') || window.location.search.includes('recovery=true');
-    if (isRecovery) {
-      setIsResettingPassword(true);
-    }
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +75,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleForgotPasswordSubmit = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
     if (!resetEmail.trim()) {
@@ -94,17 +86,19 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMsg('');
     try {
-      if (!supabase) {
-        throw new Error('Database connection is not available.');
-      }
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
-        redirectTo: `${window.location.origin}/login?recovery=true`
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send-otp', email: resetEmail.trim() })
       });
+      const data = await res.json();
       setLoading(false);
-      if (error) {
-        setErrorMsg(error.message);
+      
+      if (!res.ok) {
+        setErrorMsg(data.error || 'Failed to send recovery code.');
       } else {
         setResetSuccess(true);
+        setIsEnteringOtp(true);
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'An error occurred.');
@@ -112,7 +106,42 @@ export default function LoginPage() {
     }
   };
 
-  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    if (!otpCode.trim()) {
+      setErrorMsg('Please enter the 4-digit code.');
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'verify-otp',
+          email: resetEmail.trim(),
+          code: otpCode.trim()
+        })
+      });
+      const data = await res.json();
+      setLoading(false);
+
+      if (!res.ok) {
+        setErrorMsg(data.error || 'Invalid recovery code.');
+      } else {
+        setIsResettingPassword(true);
+        setIsEnteringOtp(false);
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'An error occurred.');
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
     if (newPassword.length < 8) {
@@ -123,23 +152,57 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMsg('');
     try {
-      if (!supabase) {
-        throw new Error('Database connection is not available.');
-      }
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'reset-password',
+          email: resetEmail.trim(),
+          code: otpCode.trim(),
+          newPassword
+        })
+      });
+      const data = await res.json();
       setLoading(false);
-      if (error) {
-        setErrorMsg(error.message);
+
+      if (!res.ok) {
+        setErrorMsg(data.error || 'Failed to reset password.');
       } else {
         setResetFinished(true);
-        setTimeout(() => {
-          router.push('/profile');
-        }, 3000);
+        // Clean session trigger to authenticate them using standard login function internally
+        setTimeout(async () => {
+          try {
+            await login(resetEmail.trim(), newPassword);
+            router.push('/profile');
+          } catch {
+            // If auto-login fails, redirect to login page directly to login manually
+            setIsResettingPassword(false);
+            setIsForgotPassword(false);
+            setResetEmail('');
+            setOtpCode('');
+            setNewPassword('');
+            setResetSuccess(false);
+            setResetFinished(false);
+            setErrorMsg('Password updated! Please sign in with your new password.');
+          }
+        }, 2000);
       }
     } catch (err: any) {
       setErrorMsg(err.message || 'An error occurred.');
       setLoading(false);
     }
+  };
+
+  const resetViewStates = () => {
+    setIsForgotPassword(false);
+    setIsEnteringOtp(false);
+    setIsResettingPassword(false);
+    setResetEmail('');
+    setOtpCode('');
+    setNewPassword('');
+    setResetSuccess(false);
+    setResetFinished(false);
+    setErrorMsg('');
   };
 
   return (
@@ -149,7 +212,7 @@ export default function LoginPage() {
         <div className="absolute bottom-0 left-0 w-40 h-40 bg-blue-500/8 rounded-full blur-3xl" />
 
         <div className="relative z-10">
-          {/* View 1: Recovery Reset Password */}
+          {/* VIEW 1: ENTER NEW PASSWORD */}
           {isResettingPassword ? (
             <>
               <div className="text-center mb-8">
@@ -163,7 +226,7 @@ export default function LoginPage() {
                     <ShieldCheck className="h-6 w-6" />
                   </div>
                   <p className="text-green-300 font-medium">Password updated successfully!</p>
-                  <p className="text-zinc-500 text-xs">Redirecting you to your profile page...</p>
+                  <p className="text-zinc-500 text-xs">Signing you in and redirecting to profile...</p>
                 </div>
               ) : (
                 <>
@@ -173,7 +236,7 @@ export default function LoginPage() {
                     </div>
                   )}
 
-                  <form className="space-y-4" onSubmit={handleResetPasswordSubmit}>
+                  <form className="space-y-4" onSubmit={handleResetPassword}>
                     <div>
                       <label className="block text-sm font-medium text-zinc-300 mb-1.5">New Password</label>
                       <div className="relative">
@@ -202,82 +265,109 @@ export default function LoginPage() {
                       disabled={loading}
                       className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 mt-6 disabled:opacity-60"
                     >
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Update Password <ArrowRight className="h-4 w-4" /></>}
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Save Password <ArrowRight className="h-4 w-4" /></>}
                     </button>
                   </form>
                 </>
               )}
             </>
+          ) : isEnteringOtp ? (
+            /* VIEW 2: ENTER OTP CODE */
+            <>
+              <div className="text-center mb-8">
+                <h1 className="font-serif text-3xl font-bold text-white mb-2">Verify Code</h1>
+                <p className="text-zinc-400 text-sm">Enter the 4-digit verification code sent to <span className="text-white font-medium">{resetEmail}</span></p>
+              </div>
+
+              {errorMsg && (
+                <div className="mb-4 p-3 bg-red-950/40 border border-red-500/30 rounded-xl text-red-200 text-sm text-center font-medium">
+                  {errorMsg}
+                </div>
+              )}
+
+              <form className="space-y-4" onSubmit={handleVerifyOtp}>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Verification Code</label>
+                  <div className="relative">
+                    <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                    <input
+                      type="text"
+                      maxLength={4}
+                      value={otpCode}
+                      onChange={e => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="1234"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all font-mono text-center tracking-[8px] text-lg font-bold"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 mt-6 disabled:opacity-60"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Verify Code <ArrowRight className="h-4 w-4" /></>}
+                </button>
+              </form>
+
+              <button
+                type="button"
+                onClick={resetViewStates}
+                className="text-zinc-400 hover:text-white text-sm font-medium mt-6 block mx-auto transition-colors"
+              >
+                Cancel and Back to Sign In
+              </button>
+            </>
           ) : isForgotPassword ? (
-            /* View 2: Forgot Password Form */
+            /* VIEW 3: REQUEST OTP EMAIL */
             <>
               <div className="text-center mb-8">
                 <h1 className="font-serif text-3xl font-bold text-white mb-2">Reset Password</h1>
-                <p className="text-zinc-400 text-sm">Enter your email and we&apos;ll send you a password recovery link.</p>
+                <p className="text-zinc-400 text-sm">Enter your account email to receive a password reset code.</p>
               </div>
 
-              {resetSuccess ? (
-                <div className="text-center py-6 space-y-4">
-                  <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto text-red-400">
-                    <Key className="h-5 w-5" />
-                  </div>
-                  <p className="text-zinc-200 font-medium">Recovery email sent!</p>
-                  <p className="text-zinc-400 text-sm leading-relaxed">
-                    Check your inbox (and spam folder) for the password reset link to create your new password.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => { setIsForgotPassword(false); setResetSuccess(false); setResetEmail(''); setErrorMsg(''); }}
-                    className="text-white hover:underline text-sm font-medium mt-4 block mx-auto"
-                  >
-                    Back to Sign In
-                  </button>
+              {errorMsg && (
+                <div className="mb-4 p-3 bg-red-950/40 border border-red-500/30 rounded-xl text-red-200 text-sm text-center font-medium">
+                  {errorMsg}
                 </div>
-              ) : (
-                <>
-                  {errorMsg && (
-                    <div className="mb-4 p-3 bg-red-950/40 border border-red-500/30 rounded-xl text-red-200 text-sm text-center font-medium">
-                      {errorMsg}
-                    </div>
-                  )}
-
-                  <form className="space-y-4" onSubmit={handleForgotPasswordSubmit}>
-                    <div>
-                      <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email Address</label>
-                      <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                        <input
-                          type="email"
-                          value={resetEmail}
-                          onChange={e => setResetEmail(e.target.value)}
-                          placeholder="name@example.com"
-                          className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 mt-6 disabled:opacity-60"
-                    >
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Send Reset Link <ArrowRight className="h-4 w-4" /></>}
-                    </button>
-                  </form>
-
-                  <button
-                    type="button"
-                    onClick={() => { setIsForgotPassword(false); setErrorMsg(''); }}
-                    className="text-zinc-400 hover:text-white text-sm font-medium mt-6 block mx-auto transition-colors"
-                  >
-                    Back to Sign In
-                  </button>
-                </>
               )}
+
+              <form className="space-y-4" onSubmit={handleSendOtp}>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300 mb-1.5">Email Address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                    <input
+                      type="email"
+                      value={resetEmail}
+                      onChange={e => setResetEmail(e.target.value)}
+                      placeholder="name@example.com"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:border-white/20 transition-all"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-zinc-100 transition-colors flex items-center justify-center gap-2 mt-6 disabled:opacity-60"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Send Reset Code <ArrowRight className="h-4 w-4" /></>}
+                </button>
+              </form>
+
+              <button
+                type="button"
+                onClick={resetViewStates}
+                className="text-zinc-400 hover:text-white text-sm font-medium mt-6 block mx-auto transition-colors"
+              >
+                Back to Sign In
+              </button>
             </>
           ) : (
-            /* View 3: Standard Login Form */
+            /* VIEW 4: STANDARD SIGN IN */
             <>
               <div className="text-center mb-8">
                 <h1 className="font-serif text-3xl font-bold text-white mb-2">Welcome Back</h1>
