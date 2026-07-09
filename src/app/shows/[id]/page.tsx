@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { ProductionPageClient } from '@/components/productions/ProductionPageClient';
-import { mapProductionFromDb } from '@/lib/db';
+import { mapProductionFromDb } from '@/lib/dbMapper';
 
 interface Props {
   params: Promise<{ id: string }>;
