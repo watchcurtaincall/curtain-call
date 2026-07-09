@@ -1227,31 +1227,43 @@ export default function AdminDashboardPage() {
     setRefreshTrigger(prev => prev + 1);
   };
 
-  const handleSaveEditArtist = (e: React.FormEvent) => {
+  const handleSaveEditArtist = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingArtist) return;
-    ClientDB.saveArtist(editingArtist);
-    showToast(`Successfully updated details for "${editingArtist.name}"!`);
-    setEditingArtist(null);
-    setRefreshTrigger(prev => prev + 1);
+    try {
+      await ClientDB.saveArtist(editingArtist);
+      showToast(`Successfully updated details for "${editingArtist.name}"!`);
+      setEditingArtist(null);
+      setRefreshTrigger(prev => prev + 1);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save artist updates.', 'error');
+    }
   };
 
-  const handleSaveEditPlay = (e: React.FormEvent) => {
+  const handleSaveEditPlay = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPlay) return;
-    ClientDB.saveProduction(editingPlay);
-    showToast(`Successfully updated play bill details for "${editingPlay.title}"!`);
-    setEditingPlay(null);
-    setRefreshTrigger(prev => prev + 1);
+    try {
+      await ClientDB.saveProduction(editingPlay);
+      showToast(`Successfully updated play bill details for "${editingPlay.title}"!`);
+      setEditingPlay(null);
+      setRefreshTrigger(prev => prev + 1);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save play updates.', 'error');
+    }
   };
 
-  const handleSaveEditArticle = (e: React.FormEvent) => {
+  const handleSaveEditArticle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingArticle) return;
-    ClientDB.saveArticle(editingArticle);
-    showToast(`Successfully updated chronicle "${editingArticle.title}"!`);
-    setEditingArticle(null);
-    setRefreshTrigger(prev => prev + 1);
+    try {
+      await ClientDB.saveArticle(editingArticle);
+      showToast(`Successfully updated chronicle "${editingArticle.title}"!`);
+      setEditingArticle(null);
+      setRefreshTrigger(prev => prev + 1);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to save article updates.', 'error');
+    }
   };
 
   const handleDeleteArticle = (id: string, title: string) => {
