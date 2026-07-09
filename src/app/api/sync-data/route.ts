@@ -354,6 +354,15 @@ export async function POST(request: Request) {
       }
     }
 
+    if (table === 'productions' && currentDbItem.status) {
+      const s = currentDbItem.status;
+      if (s === 'Coming Soon' || s === 'Draft') {
+        currentDbItem.status = 'Upcoming';
+      } else if (s === 'Past Productions') {
+        currentDbItem.status = 'Past Production';
+      }
+    }
+
     let attempts = 0;
     let success = false;
     let finalData = null;
