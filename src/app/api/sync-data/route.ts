@@ -354,12 +354,17 @@ export async function POST(request: Request) {
       }
     }
 
-    if (table === 'productions' && currentDbItem.status) {
+    if (table === 'productions') {
+      const allowedDbStatuses = ['Currently Showing', 'Upcoming', 'Past Production'];
       const s = currentDbItem.status;
-      if (s === 'Coming Soon' || s === 'Draft') {
-        currentDbItem.status = 'Upcoming';
-      } else if (s === 'Past Productions') {
-        currentDbItem.status = 'Past Production';
+      if (!s || !allowedDbStatuses.includes(s)) {
+        if (s === 'Coming Soon' || s === 'Draft') {
+          currentDbItem.status = 'Upcoming';
+        } else if (s === 'Past Productions') {
+          currentDbItem.status = 'Past Production';
+        } else {
+          currentDbItem.status = 'Upcoming';
+        }
       }
     }
 
