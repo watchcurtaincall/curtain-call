@@ -53,6 +53,8 @@ export interface Production {
   galleryImages?: string[]; // Multiple photos uploaded by users / admins
   submitterEmail?: string;
   curationStatus?: 'Pending' | 'Approved' | 'Declined';
+  decline_reason?: string | null;
+  declineReason?: string | null;
   castAndCrew?: { name: string; role: string; category: 'Creative' | 'Cast' | 'Technical' }[];
   showDate?: string; // YYYY-MM-DD
   showTime?: string; // HH:MM (24h or string format)

@@ -97,6 +97,7 @@ export const mapProductionFromDb = (row: any): Production => {
     showTime: showTime !== undefined ? showTime : row.showTime,
     isProducerManaged: isProducerManaged !== undefined ? isProducerManaged : row.isProducerManaged,
     dates: parsedDates || row.dates,
+    decline_reason: row.decline_reason || row.declineReason || null,
     declineReason: row.decline_reason || row.declineReason || null,
     ticketTiers: ticketTiers.length > 0 ? ticketTiers : row.ticketTiers,
     productionType: productionType || row.productionType,
