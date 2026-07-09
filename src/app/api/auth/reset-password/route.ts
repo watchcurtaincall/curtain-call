@@ -87,7 +87,7 @@ export async function POST(request: Request) {
           'content-type': 'application/json'
         },
         body: JSON.stringify({
-          sender: { name: 'Curtain Call', email: 'watchcurtaincall@gmail.com' },
+          sender: { name: 'Curtain Call', email: 'notifications@curtaincall.com.ng' },
           to: [{ email: cleanEmail }],
           subject: 'Curtain Call — Password Reset Code',
           htmlContent: emailHtml
