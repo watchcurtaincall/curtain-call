@@ -41,6 +41,8 @@ export default function ProfilePage() {
   const [syncCount, setSyncCount] = useState(0);
   const [quizStreak, setQuizStreak] = useState(0);
   const [quizPoints, setQuizPoints] = useState(0);
+  const [quizHistory, setQuizHistory] = useState<any[]>([]);
+  const [isRedeeming, setIsRedeeming] = useState(false);
   const router = useRouter();
   
   const purchasedTickets = user ? ClientDB.getTickets().filter(t => t.buyerEmail?.toLowerCase() === user.email.toLowerCase()) : [];
@@ -183,9 +185,47 @@ export default function ProfilePage() {
       .then(data => {
         setQuizStreak(data.streakCount ?? 0);
         setQuizPoints(data.pointsBalance ?? 0);
+        setQuizHistory(data.quizHistory ?? []);
       })
       .catch(() => {});
   }, [user, syncCount]);
+
+  const handleRedeemPoints = async () => {
+    if (!user || quizPoints <= 0) return;
+    setIsRedeeming(true);
+    try {
+      const res = await fetch('/api/quiz/points/convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, pointsAmount: quizPoints })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setQuizPoints(data.newPointsBalance ?? 0);
+        setQuizHistory(prev => [
+          {
+            quiz_date: new Date().toISOString().slice(0, 10),
+            score: 0,
+            points_awarded: -quizPoints,
+            status: 'completed',
+            result_type: 'redeemed'
+          },
+          ...prev
+        ]);
+        // Trigger a database sync so Creator Hub picks up the new credits
+        syncFromSupabase();
+        setSyncCount(prev => prev + 1);
+        alert(data.message || 'Successfully converted points to cash!');
+      } else {
+        alert(data.error || 'Conversion failed.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error during conversion.');
+    } finally {
+      setIsRedeeming(false);
+    }
+  };
 
   const handleEndShow = (id: string) => {
     const play = allPlays.find(p => p.id === id);
@@ -853,7 +893,87 @@ export default function ProfilePage() {
 
             </div>
 
-            {/* ── DAILY QUIZ CARD ── */}
+            {/* 💎 POINTS WALLET & REDEMPTION CENTER */}
+            <div className="relative rounded-[32px] overflow-hidden border border-amber-500/25 bg-gradient-to-br from-zinc-900/60 to-zinc-950/90 p-8 shadow-2xl backdrop-blur-xl">
+              <div className="absolute top-0 right-0 w-[400px] h-[200px] bg-amber-500/5 rounded-full blur-[80px] pointer-events-none" />
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
+                {/* Balance & Action */}
+                <div className="lg:col-span-1 flex flex-col justify-between gap-6 border-b lg:border-b-0 lg:border-r border-white/5 pb-6 lg:pb-0 lg:pr-8">
+                  <div>
+                    <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest block mb-2">Quiz Points Wallet</span>
+                    <h3 className="text-3xl font-serif font-bold text-white flex items-baseline gap-2">
+                      <span>{quizPoints.toLocaleString()}</span>
+                      <span className="text-xs text-zinc-400 font-normal">points</span>
+                    </h3>
+                    <p className="text-sm text-zinc-400 mt-1">
+                      Equivalent to <span className="text-emerald-400 font-semibold font-mono">₦{quizPoints.toLocaleString()}</span> cash
+                    </p>
+                    <p className="text-[11px] text-zinc-500 mt-2 leading-relaxed">
+                      Convert points to cash to transfer them to your Creator Hub withdrawal balance (₦1 per point).
+                    </p>
+                  </div>
+                  
+                  {quizPoints > 0 ? (
+                    <button
+                      onClick={handleRedeemPoints}
+                      disabled={isRedeeming}
+                      className="w-full bg-amber-500 hover:bg-amber-400 disabled:bg-zinc-800 disabled:text-zinc-550 text-black font-bold py-3.5 px-6 rounded-2xl transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2 active:scale-98"
+                    >
+                      {isRedeeming ? (
+                        <>Converting…</>
+                      ) : (
+                        <>Convert to Cash (₦{quizPoints.toLocaleString()})</>
+                      )}
+                    </button>
+                  ) : (
+                    <div className="text-xs text-zinc-650 bg-zinc-950/40 border border-white/5 rounded-2xl p-4 text-center">
+                      Earn quiz points to unlock cash redemptions
+                    </div>
+                  )}
+                </div>
+
+                {/* Points History Log */}
+                <div className="lg:col-span-2 flex flex-col gap-4">
+                  <div>
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest block">Activity History</span>
+                    <p className="text-[11px] text-zinc-500 mt-0.5">Your recent quiz performances and payouts</p>
+                  </div>
+                  <div className="flex-1 overflow-y-auto max-h-[160px] pr-2 flex flex-col gap-2.5 [scrollbar-width:thin]">
+                    {quizHistory.length === 0 ? (
+                      <div className="text-zinc-600 text-xs py-8 text-center bg-zinc-950/20 rounded-2xl border border-white/5">
+                        No quiz entries recorded yet. Play this week's quiz to get started!
+                      </div>
+                    ) : (
+                      quizHistory.map((h, i) => (
+                        <div key={i} className="flex items-center justify-between p-3.5 bg-zinc-950/40 border border-white/5 rounded-2xl hover:border-white/10 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                              <Trophy className="h-4 w-4 text-amber-400" />
+                            </div>
+                            <div>
+                              <span className="text-xs font-semibold text-white block">
+                                {h.result_type === 'win' ? '🏆 Winner Slot' : h.result_type === 'consolation' ? '⭐ Consolation Prize' : h.result_type === 'redeemed' ? '💸 Cash Conversion' : 'Quiz Completed'}
+                              </span>
+                              <span className="text-[9px] text-zinc-500 font-mono block mt-0.5">{new Date(h.quiz_date).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'})}</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span className={`text-xs font-mono font-bold block ${h.result_type === 'redeemed' ? 'text-red-400' : 'text-amber-400'}`}>
+                              {h.result_type === 'redeemed' ? '-' : '+'}{Math.abs(h.points_awarded)} pts
+                            </span>
+                            <span className="text-[9px] text-zinc-500 font-mono block mt-0.5">
+                              {h.result_type === 'redeemed' ? 'Redeemed' : `Score: ${h.score}/5`}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── WEEKLY QUIZ CARD ── */}
             <Link href="/quiz" className="group/quiz block relative rounded-[32px] overflow-hidden border border-amber-500/20 bg-gradient-to-br from-zinc-900/70 to-zinc-950/90 p-7 shadow-xl hover:border-amber-500/40 transition-all">
               <div className="absolute top-0 right-0 w-[300px] h-[200px] bg-amber-500/5 rounded-full blur-[80px] pointer-events-none" />
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 relative z-10">
@@ -862,8 +982,8 @@ export default function ProfilePage() {
                     <Trophy className="h-6 w-6 text-amber-400" />
                   </div>
                   <div>
-                    <h3 className="font-serif font-bold text-white text-base">Daily Theatre Quiz</h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">Answer 5 questions · Win slots · Earn points</p>
+                    <h3 className="font-serif font-bold text-white text-base">Weekly Theatre Quiz</h3>
+                    <p className="text-xs text-zinc-400 mt-0.5">Answer 5 questions weekly · Win slots · Earn points</p>
                     <div className="flex items-center gap-3 mt-2 flex-wrap">
                       <StreakBadge count={quizStreak} />
                       {quizPoints > 0 && (
@@ -875,7 +995,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <span className="shrink-0 bg-amber-500 group-hover/quiz:bg-amber-400 text-black font-bold px-6 py-3 rounded-2xl text-xs uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-amber-900/20">
-                  Play Today <ChevronRight className="h-4 w-4 stroke-[3]" />
+                  Play Weekly Quiz <ChevronRight className="h-4 w-4 stroke-[3]" />
                 </span>
               </div>
             </Link>

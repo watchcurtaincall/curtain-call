@@ -79,21 +79,21 @@ export async function GET(request: Request) {
       const { data: userProds } = await supabaseServer
         .from('productions')
         .select('id')
-        .eq('submitter_email', email);
+        .ilike('submitter_email', email);
       const userPlayIds = (userProds || []).map(p => p.id);
 
       // 2. Fetch pending items that this user has submitted (or all pending if admin)
       const pendingProdsPromise = isAdmin
         ? supabaseServer.from('productions').select('*').eq('curation_status', 'Pending').order('created_at', { ascending: false })
-        : supabaseServer.from('productions').select('*').eq('curation_status', 'Pending').eq('submitter_email', email).order('created_at', { ascending: false });
+        : supabaseServer.from('productions').select('*').eq('curation_status', 'Pending').ilike('submitter_email', email).order('created_at', { ascending: false });
 
       const pendingArtistsPromise = isAdmin
         ? supabaseServer.from('artists').select('*').eq('curation_status', 'Pending').order('created_at', { ascending: false })
-        : supabaseServer.from('artists').select('*').eq('curation_status', 'Pending').eq('submitter_email', email).order('created_at', { ascending: false });
+        : supabaseServer.from('artists').select('*').eq('curation_status', 'Pending').ilike('submitter_email', email).order('created_at', { ascending: false });
 
       const pendingArticlesPromise = isAdmin
         ? supabaseServer.from('articles').select('*').eq('curation_status', 'Pending').order('created_at', { ascending: false })
-        : supabaseServer.from('articles').select('*').eq('curation_status', 'Pending').eq('submitter_email', email).order('created_at', { ascending: false });
+        : supabaseServer.from('articles').select('*').eq('curation_status', 'Pending').ilike('submitter_email', email).order('created_at', { ascending: false });
 
       // 3. Resolve user ID for secure quiz cash credits filtering
       let userId = null;
@@ -113,21 +113,21 @@ export async function GET(request: Request) {
         subscribersRes, profilesRes, userProfileRes, quizCashCreditsRes,
         pendingProdsRes, pendingArtistsRes, pendingArticlesRes
       ] = await Promise.all([
-        isAdmin ? supabaseServer.from('critic_applications').select('*') : supabaseServer.from('critic_applications').select('*').eq('email', email),
-        isAdmin ? supabaseServer.from('withdrawals').select('*').order('created_at', { ascending: false }) : supabaseServer.from('withdrawals').select('*').eq('email', email).order('created_at', { ascending: false }),
+        isAdmin ? supabaseServer.from('critic_applications').select('*') : supabaseServer.from('critic_applications').select('*').ilike('email', email),
+        isAdmin ? supabaseServer.from('withdrawals').select('*').order('created_at', { ascending: false }) : supabaseServer.from('withdrawals').select('*').ilike('email', email).order('created_at', { ascending: false }),
         
         // Optimize ticket fetch: fetch tickets bought by user, or tickets for their productions
         isAdmin 
           ? supabaseServer.from('tickets').select('*').order('timestamp', { ascending: false })
           : (userPlayIds.length > 0 
-              ? supabaseServer.from('tickets').select('*').or(`buyer_email.eq.${email},production_id.in.(${userPlayIds.join(',')})`).order('timestamp', { ascending: false })
-              : supabaseServer.from('tickets').select('*').eq('buyer_email', email).order('timestamp', { ascending: false })
+              ? supabaseServer.from('tickets').select('*').or(`buyer_email.ilike.${email},production_id.in.(${userPlayIds.join(',')})`).order('timestamp', { ascending: false })
+              : supabaseServer.from('tickets').select('*').ilike('buyer_email', email).order('timestamp', { ascending: false })
             ),
 
-        supabaseServer.from('notifications').select('*').eq('email', email).order('timestamp', { ascending: false }),
+        supabaseServer.from('notifications').select('*').ilike('email', email).order('timestamp', { ascending: false }),
         isAdmin ? supabaseServer.from('newsletter_subscribers').select('email, created_at') : Promise.resolve({ data: [] }),
         isAdmin ? supabaseServer.from('profiles').select('*') : Promise.resolve({ data: [] }),
-        supabaseServer.from('profiles').select('is_verified').eq('email', email).maybeSingle(),
+        supabaseServer.from('profiles').select('is_verified').ilike('email', email).maybeSingle(),
         quizCashCreditsPromise,
         pendingProdsPromise,
         pendingArtistsPromise,

@@ -3,7 +3,10 @@
 export function toWATDateString(date: Date): string {
   // WAT = UTC+1: add 1 hour offset
   const wat = new Date(date.getTime() + 60 * 60 * 1000);
-  return wat.toISOString().slice(0, 10);
+  const day = wat.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+  const sunday = new Date(wat);
+  sunday.setUTCDate(wat.getUTCDate() - day);
+  return sunday.toISOString().slice(0, 10);
 }
 
 export function addDays(date: Date, days: number): Date {
@@ -13,9 +16,9 @@ export function addDays(date: Date, days: number): Date {
 /**
  * Calculate the new streak count after a quiz completion.
  * - First ever completion (lastCompletionDate is null): returns 1
- * - Completed on the day immediately after last completion: increments by 1
- * - Completed on the same day as last completion: returns currentStreak unchanged
- * - Gap of 2+ days: resets to 1 (fresh start)
+ * - Completed on the consecutive week: increments by 1
+ * - Completed on the same week: returns currentStreak unchanged
+ * - Gap of 2+ weeks: resets to 1 (fresh start)
  */
 export function calculateNewStreak(
   currentStreak: number,
@@ -26,12 +29,12 @@ export function calculateNewStreak(
 
   const lastDateStr = toWATDateString(lastCompletionDate);
   const todayStr = toWATDateString(todayWAT);
-  const yesterdayStr = toWATDateString(addDays(todayWAT, -1));
+  const prevWeekStr = toWATDateString(new Date(todayWAT.getTime() - 7 * 24 * 60 * 60 * 1000));
 
-  if (lastDateStr === yesterdayStr) {
-    return currentStreak + 1; // consecutive day
+  if (lastDateStr === prevWeekStr) {
+    return currentStreak + 1; // consecutive week
   } else if (lastDateStr === todayStr) {
-    return currentStreak; // same day - no change
+    return currentStreak; // same week - no change
   } else {
     return 1; // gap - reset and start fresh
   }
@@ -47,7 +50,8 @@ export function shouldResetStreak(
 ): boolean {
   if (!lastCompletionDate) return false;
   const lastDateStr = toWATDateString(lastCompletionDate);
-  const yesterdayStr = toWATDateString(addDays(todayWAT, -1));
-  // If last completion was before yesterday, streak should be reset
-  return lastDateStr < yesterdayStr;
+  const prevWeekStr = toWATDateString(new Date(todayWAT.getTime() - 7 * 24 * 60 * 60 * 1000));
+  // If last completion was before the previous week, streak should be reset
+  return lastDateStr < prevWeekStr;
 }
+

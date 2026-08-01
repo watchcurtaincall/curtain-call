@@ -1,0 +1,24 @@
+
+> curtain-call@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.141.204.33:3000
+- Environments: .env.local, .env
+✓ Ready in 1068ms
+
+[QuestionGen] Finish Reason: STOP
+[CronGenerate] ✅ Generated 5 questions for 2026-06-16 (source: ai)
+ POST /api/quiz/cron/generate 200 in 20.2s (next.js: 660ms, application-code: 19.5s)
+[CronEmail] Attempting delivery via Brevo (Primary)...
+[CronEmail] Brevo Batch API error: {"code":"missing_parameter","message":"Either of htmlContent or textContent is required"}
+
+[CronEmail] Attempting delivery via Resend (Fallback)...
+[CronEmail] Successfully batched via Resend.
+[CronEmail] ✅ Sent 81/81 quiz reminder emails for 2026-06-16
+(node:7723) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[CronEmail] ✅ Sent 1 push notifications for 2026-06-16
+ POST /api/quiz/cron/email 200 in 47s (next.js: 2.2s, application-code: 45s)
+[?25h

@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     const { data: userProds } = await supabaseServer
       .from('productions')
       .select('id')
-      .eq('submitter_email', email);
+      .ilike('submitter_email', email);
     const userPlayIds = (userProds || []).map(p => p.id);
 
     // b. Fetch tickets for these productions

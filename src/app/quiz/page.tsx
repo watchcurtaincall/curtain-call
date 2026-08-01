@@ -12,6 +12,7 @@ import {
   BookOpen, CheckCircle, Share2, Copy, Check, XCircle, ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
+import { toWATDateString } from '@/lib/quiz/streakCalculation';
 
 type PageState = 'loading' | 'unauthenticated' | 'idle' | 'starting' | 'active' | 'done' | 'error';
 
@@ -33,7 +34,7 @@ function ShareResultButton({ score, pointsAwarded, slotPosition, hasWon, streakC
 
   const buildShareText = () => {
     const lines: string[] = [];
-    lines.push('🎭 Curtain Call — Daily Theatre Quiz');
+    lines.push('🎭 Curtain Call — Weekly Theatre Quiz');
     lines.push('');
 
     if (hasWon && slotPosition) {
@@ -41,11 +42,11 @@ function ShareResultButton({ score, pointsAwarded, slotPosition, hasWon, streakC
     } else if (score === 5) {
       lines.push(`⭐ I scored a perfect ${score}/5!`);
     } else {
-      lines.push(`🎬 I scored ${score}/5 on today's quiz.`);
+      lines.push(`🎬 I scored ${score}/5 on this week's quiz.`);
     }
 
     if (streakCount > 1) {
-      lines.push(`🔥 ${streakCount}-day streak`);
+      lines.push(`🔥 ${streakCount}-week streak`);
     }
 
     if (pointsAwarded > 0) {
@@ -125,6 +126,42 @@ export default function QuizPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const pollerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [weeklyCountdown, setWeeklyCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      // Current WAT Time
+      const watTime = now.getTime() + (1 * 60 * 60 * 1000);
+      const watDate = new Date(watTime);
+      
+      const day = watDate.getUTCDay(); // 0 = Sunday, 1 = Monday...
+      const daysToSunday = 7 - (day === 0 ? 7 : day); // Days until next Sunday
+      
+      const targetDate = new Date(watDate);
+      targetDate.setUTCDate(watDate.getUTCDate() + daysToSunday);
+      targetDate.setUTCHours(23, 59, 59, 999);
+      
+      const diffMs = targetDate.getTime() - watDate.getTime();
+      if (diffMs <= 0) {
+        setWeeklyCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+      
+      const totalSecs = Math.floor(diffMs / 1000);
+      const days = Math.floor(totalSecs / (24 * 3600));
+      const hours = Math.floor((totalSecs % (24 * 3600)) / 3600);
+      const minutes = Math.floor((totalSecs % 3600) / 60);
+      const seconds = totalSecs % 60;
+      
+      setWeeklyCountdown({ days, hours, minutes, seconds });
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   // ── Fetch status ──────────────────────────────────────────
   const fetchStatus = useCallback(async () => {
     if (!user) return;
@@ -142,7 +179,7 @@ export default function QuizPage() {
 
   const fetchSlots = useCallback(async () => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = toWATDateString(new Date());
       const res = await fetch(`/api/quiz/slots?date=${today}`);
       const data = await res.json();
       if (res.ok) setSlots(data.slots ?? []);
@@ -300,9 +337,9 @@ export default function QuizPage() {
               <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
                 <Trophy className="h-5 w-5 text-amber-400" />
               </div>
-              <h1 className="text-2xl font-serif font-bold text-white">Daily Theatre Quiz</h1>
+              <h1 className="text-2xl font-serif font-bold text-white">Weekly Theatre Quiz</h1>
             </div>
-            <p className="text-zinc-500 text-sm">5 questions · 15s each · {totalSlots} winner slots</p>
+            <p className="text-zinc-500 text-sm">5 questions · 15s each · {totalSlots} winner slots weekly</p>
           </div>
           <div className="self-start md:self-auto">
             <StreakBadge count={streakCount} />
@@ -326,7 +363,7 @@ export default function QuizPage() {
                   </div>
                   <div>
                     <h2 className="text-xl font-serif font-bold text-white">Quiz not ready yet</h2>
-                    <p className="text-zinc-400 text-sm mt-1.5 max-w-sm mx-auto">Check back soon — the quiz typically goes live at midnight.</p>
+                    <p className="text-zinc-400 text-sm mt-1.5 max-w-sm mx-auto">Check back soon — the weekly quiz typically goes live on Sunday midnight.</p>
                   </div>
                 </div>
               )}
@@ -338,7 +375,7 @@ export default function QuizPage() {
                     <Zap className="h-10 w-10 text-white" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-serif font-bold text-white">Today's Quiz is Live!</h2>
+                    <h2 className="text-2xl font-serif font-bold text-white">This Week's Quiz is Live!</h2>
                     <p className="text-zinc-400 text-sm mt-2 max-w-sm mx-auto leading-relaxed">
                       Answer all 5 questions to earn 200 points.
                     </p>
@@ -353,7 +390,7 @@ export default function QuizPage() {
 
                   {slotsLeft === 0 ? (
                     <div className="bg-zinc-800/60 border border-white/5 rounded-2xl px-6 py-3 text-sm text-zinc-400 flex items-center gap-2">
-                      <Users className="h-4 w-4 text-zinc-500" /> All winner slots have been claimed today
+                      <Users className="h-4 w-4 text-zinc-500" /> All winner slots have been claimed this week
                     </div>
                   ) : (
                     <button
@@ -369,7 +406,10 @@ export default function QuizPage() {
                       )}
                     </button>
                   )}
-                  <p className="text-zinc-600 text-xs">⚠️ Switching tabs will void your session</p>
+                  <p className="text-zinc-650 text-[10px] mt-1 uppercase tracking-widest font-mono">
+                    Time until weekly reset: <span className="text-amber-450 font-bold">{weeklyCountdown.days}d {weeklyCountdown.hours}h {weeklyCountdown.minutes}m {weeklyCountdown.seconds}s</span>
+                  </p>
+                  <p className="text-zinc-600 text-xs mt-1">⚠️ Switching tabs will void your session</p>
                 </div>
               )}
 
@@ -383,12 +423,14 @@ export default function QuizPage() {
                     <h2 className="text-xl font-serif font-bold text-white">
                       {hasWon ? `🏆 You won slot #${attempt.slotPosition}!` :
                        attempt.resultType === 'consolation' ? '⭐ All correct — consolation awarded' :
-                       'You completed today\'s quiz'}
+                       'You completed this week\'s quiz'}
                     </h2>
                     <p className="text-zinc-400 text-sm mt-1.5">
                       Score: <span className="text-white font-bold">{attempt.score}/5</span> · Points earned: <span className="text-amber-400 font-bold">+{attempt.pointsAwarded}</span>
                     </p>
-                    <p className="text-zinc-600 text-xs mt-2">Come back tomorrow for another chance!</p>
+                    <p className="text-zinc-450 text-xs mt-3 uppercase tracking-wider font-mono">
+                      Next weekly quiz in: <span className="text-white font-bold">{weeklyCountdown.days}d {weeklyCountdown.hours}h {weeklyCountdown.minutes}m {weeklyCountdown.seconds}s</span>
+                    </p>
                   </div>
                   <ShareResultButton
                     score={attempt.score ?? 0}
@@ -413,7 +455,10 @@ export default function QuizPage() {
                   </div>
                   <div>
                     <h2 className="text-xl font-serif font-bold text-white">Session Voided</h2>
-                    <p className="text-zinc-400 text-sm mt-1.5 max-w-sm mx-auto">Your session was voided because you left the tab. You cannot retry today.</p>
+                    <p className="text-zinc-400 text-sm mt-1.5 max-w-sm mx-auto">Your session was voided because you left the tab. You cannot retry this week.</p>
+                    <p className="text-zinc-450 text-xs mt-3 uppercase tracking-wider font-mono">
+                      Next weekly quiz in: <span className="text-white font-bold">{weeklyCountdown.days}d {weeklyCountdown.hours}h {weeklyCountdown.minutes}m {weeklyCountdown.seconds}s</span>
+                    </p>
                   </div>
                 </div>
               )}
@@ -455,7 +500,7 @@ export default function QuizPage() {
                 <div className="w-7 h-7 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
                   <Trophy className="h-3.5 w-3.5 text-amber-400" />
                 </div>
-                <h3 className="text-sm font-bold text-white">Today's Winners</h3>
+                <h3 className="text-sm font-bold text-white">This Week's Winners</h3>
               </div>
               {slots.length === 0 ? (
                 <div className="text-center py-6">

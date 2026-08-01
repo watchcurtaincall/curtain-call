@@ -2106,8 +2106,8 @@ export const syncFromSupabase = async (force = false) => {
       let finalRemote = mappedRemote;
       if (!isAdmin) {
         const cleanEmail = email ? email.toLowerCase() : '';
-        const userPlayIds = (data.productions || [])
-          .filter((p: any) => p.submitter_email && p.submitter_email.toLowerCase() === cleanEmail)
+        const userPlayIds = ClientDB.getProductions()
+          .filter((p: any) => p.submitterEmail && p.submitterEmail.toLowerCase() === cleanEmail)
           .map((p: any) => p.id);
         
         finalRemote = mappedRemote.filter((t: any) => 

@@ -37,6 +37,7 @@ export async function GET(request: Request) {
     let pointsBalance = 0;
     let cashCredits = 0;
     let cashTransactions: any[] = [];
+    let quizHistory: any[] = [];
 
     if (userId) {
       const { data: attempt, error: attemptErr } = await supabaseServer
@@ -149,6 +150,18 @@ export async function GET(request: Request) {
         cashCredits = credits.reduce((sum, row) => sum + Number(row.amount_naira), 0);
         cashTransactions = credits;
       }
+
+      // Fetch user's completed quiz attempts history
+      const { data: attemptsHistory } = await supabaseServer
+        .from('quiz_attempts')
+        .select('quiz_date, score, points_awarded, status, result_type')
+        .eq('user_id', userId)
+        .eq('status', 'completed')
+        .order('quiz_date', { ascending: false });
+
+      if (attemptsHistory) {
+        quizHistory = attemptsHistory;
+      }
     }
 
     return NextResponse.json({
@@ -162,6 +175,7 @@ export async function GET(request: Request) {
       cashCredits,
       cashTransactions,
       questionsReady,
+      quizHistory,
     }, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
