@@ -46,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
               .replace(/-+/g, '-')
               .trim();
             return cleanSlug === id.toLowerCase() || 
-                   (cleanSlug === 'pateola' && id.toLowerCase() === 'paetola-the-play');
+                   (cleanSlug === 'pateola-the-play' && id.toLowerCase() === 'paetola-the-play');
           });
           prodData = matched || null;
         }
@@ -134,7 +134,7 @@ export default async function ProductionPage({ params }: Props) {
             .replace(/-+/g, '-')
             .trim();
           return cleanSlug === id.toLowerCase() || 
-                 (cleanSlug === 'pateola' && id.toLowerCase() === 'paetola-the-play');
+                 (cleanSlug === 'pateola-the-play' && id.toLowerCase() === 'paetola-the-play');
         });
         prodData = matched || null;
       }
