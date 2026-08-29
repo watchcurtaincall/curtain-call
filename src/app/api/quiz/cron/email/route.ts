@@ -87,7 +87,7 @@ async function handler(req: NextRequest) {
     return {
       from: 'Curtain Call <notifications@curtaincall.com.ng>',
       to: [user.email],
-      subject: `${shortName} Your daily quiz is live - play now`,
+      subject: `${shortName} Your weekly quiz is live - play now`,
       html,
       text: textAlternative
     };
@@ -104,9 +104,9 @@ async function handler(req: NextRequest) {
     try {
       const brevoPayload = {
         sender: { name: 'Curtain Call', email: 'notifications@curtaincall.com.ng' },
-        subject: `Your daily quiz is live — play now!`,
-        htmlContent: `<h4>Daily Theatre Quiz is live!</h4><p>Please refer to the customized version of the email.</p>`,
-        textContent: `Daily Theatre Quiz is live! Please refer to the customized version of the email.`,
+        subject: `Your weekly quiz is live — play now!`,
+        htmlContent: `<h4>Weekly Theatre Quiz is live!</h4><p>Please refer to the customized version of the email.</p>`,
+        textContent: `Weekly Theatre Quiz is live! Please refer to the customized version of the email.`,
         messageVersions: users.map(user => {
           const html = getDailyQuizReminderHtml(user.name || user.email, user.email, today, quizDay.slots_remaining || 10, `${APP_URL}/quiz`);
           const textAlternative = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();

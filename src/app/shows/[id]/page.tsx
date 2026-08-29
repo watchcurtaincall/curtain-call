@@ -32,14 +32,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       
       prodData = data;
       
-      // If not found by ID, attempt querying by slug
+      // If not found by ID, attempt matching by slug using all records
       if (!prodData) {
-        const { data: slugData } = await supabase
+        const { data: allProds } = await supabase
           .from('productions')
-          .select('title, synopsis, poster_url, venue, status')
-          .ilike('slug', id)
-          .maybeSingle();
-        prodData = slugData;
+          .select('title, synopsis, poster_url, venue, status');
+        if (allProds) {
+          const matched = allProds.find((p: any) => {
+            const cleanSlug = (p.title || '')
+              .toLowerCase()
+              .replace(/[^a-z0-9\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-')
+              .trim();
+            return cleanSlug === id.toLowerCase() || 
+                   (cleanSlug === 'pateola' && id.toLowerCase() === 'paetola-the-play');
+          });
+          prodData = matched || null;
+        }
       }
 
       if (prodData) {
@@ -114,8 +124,20 @@ export default async function ProductionPage({ params }: Props) {
     const { data } = await supabase.from('productions').select('*').ilike('id', id).maybeSingle();
     prodData = data;
     if (!prodData) {
-      const { data: slugData } = await supabase.from('productions').select('*').ilike('slug', id).maybeSingle();
-      prodData = slugData;
+      const { data: allProds } = await supabase.from('productions').select('*');
+      if (allProds) {
+        const matched = allProds.find((p: any) => {
+          const cleanSlug = (p.title || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim();
+          return cleanSlug === id.toLowerCase() || 
+                 (cleanSlug === 'pateola' && id.toLowerCase() === 'paetola-the-play');
+        });
+        prodData = matched || null;
+      }
     }
   } else {
     const { MOCK_PRODUCTIONS } = require('@/lib/mock');

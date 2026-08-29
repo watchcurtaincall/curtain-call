@@ -11,20 +11,20 @@ export function getDailyQuizReminderHtml(name: string, email: string, date: stri
 
   const variations = [
     {
-      headline: "Today's quiz is live",
-      body: "The stage is set for today's challenge. Test your knowledge of Nigerian theatre history, modern productions, and iconic playwrights."
+      headline: "This week's quiz is live",
+      body: "The stage is set for this week's challenge. Test your knowledge of Nigerian theatre history, modern productions, and iconic playwrights."
     },
     {
       headline: "Take your place in the stalls",
-      body: "Curtain Call's daily quiz is back. We've prepared a new set of questions exploring the depths of Nigerian stagecraft. How well do you know your theatre?"
+      body: "Curtain Call's weekly quiz is back. We've prepared a new set of questions exploring the depths of Nigerian stagecraft. How well do you know your theatre?"
     },
     {
-      headline: "The curtain is up on today's quiz",
-      body: "From the golden age of the National Theatre to the contemporary stages of Terra Kulture, test your expertise in today's rapid-fire challenge."
+      headline: "The curtain is up on this week's quiz",
+      body: "From the golden age of the National Theatre to the contemporary stages of Terra Kulture, test your expertise in this week's rapid-fire challenge."
     },
     {
-      headline: "Cue the lights: Today's quiz",
-      body: "Think you know every classic script and standout performance? Prove it. The latest Curtain Call quiz is waiting for you."
+      headline: "Cue the lights: This week's quiz",
+      body: "Think you know every classic script and standout performance? Prove it. The latest Curtain Call weekly quiz is waiting for you."
     }
   ];
 
