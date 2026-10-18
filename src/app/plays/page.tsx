@@ -32,7 +32,7 @@ export default function DocumentedPlaysPage() {
   useEffect(() => {
     isFirstMount = false;
     const loadData = () => {
-      // Sort plays by date added so newly added plays appear at the top!
+      // Sort plays chronologically by date descending so backdated plays appear in their proper historical timeline
       setProductions(sortItemsByDateAdded(ClientDB.getProductions().filter(p => p.status !== 'Draft' && (!p.eventType || p.eventType === 'Theatre'))));
     };
     loadData();

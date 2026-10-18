@@ -281,7 +281,7 @@ export default function SubmitPortalPage() {
       id: `pending_play_${Date.now()}`,
       title: playForm.title,
       slug: playSlug,
-      createdAt: new Date().toISOString(),
+      createdAt: playForm.showDate ? new Date(playForm.showDate).toISOString() : new Date().toISOString(),
       eventType: playForm.eventType,
       customEventType: playForm.eventType === 'Other' ? playForm.customEventType : undefined,
       synopsis: playForm.synopsis,

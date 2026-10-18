@@ -1378,7 +1378,7 @@ export default function AdminDashboardPage() {
       castAndCrew: castMembers.length > 0 ? castMembers : undefined,
       showDate: playForm.showDate || undefined,
       showTime: playForm.showTime || undefined,
-      createdAt: new Date().toISOString(),
+      createdAt: playForm.showDate ? new Date(playForm.showDate).toISOString() : new Date().toISOString(),
       productionType: playForm.productionType,
       externalTicketUrl: playForm.externalTicketUrl || undefined
     };

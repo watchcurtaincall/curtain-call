@@ -169,7 +169,7 @@ const mapProductionToDb = (p: any) => {
     cast_and_crew: p.castAndCrew || [],
     show_date: p.showDate || null,
     decline_reason: p.declineReason || null,
-    created_at: p.createdAt || new Date().toISOString(),
+    created_at: p.showDate ? new Date(p.showDate).toISOString() : (p.createdAt || new Date().toISOString()),
     slug: p.slug || null
   };
 };
@@ -2195,16 +2195,52 @@ if (typeof window !== 'undefined') {
   document.addEventListener('visibilitychange', handleFocus);
 }
 
-// Robust, high-precision sorting utility to order plays, artists, and articles by date added descending (newest first)
+// Helper to parse dates reliably in UTC to prevent timezone shifts
+function parseDateToTimestamp(dateStr?: string | null): number | null {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  const trimmed = dateStr.trim();
+  if (!trimmed) return null;
+
+  // Handle YYYY-MM-DD directly with UTC to avoid timezone day-shift
+  const ymdMatch = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (ymdMatch) {
+    const year = parseInt(ymdMatch[1], 10);
+    const month = parseInt(ymdMatch[2], 10) - 1;
+    const day = parseInt(ymdMatch[3], 10);
+    return Date.UTC(year, month, day);
+  }
+
+  const parsed = new Date(trimmed).getTime();
+  return (!isNaN(parsed) && parsed > 0) ? parsed : null;
+}
+
+// Robust, high-precision sorting utility to order plays, artists, and articles chronologically descending (newest date first, respecting backdated show dates)
 export function sortItemsByDateAdded<T extends { id: string; createdAt?: string | null }>(items: T[]): T[] {
   // Pre-build an index map so UUID-fallback scoring uses the ORIGINAL array order
   const indexMap = new Map<T, number>(items.map((item, i) => [item, i]));
 
   const getScore = (item: T): number => {
+    const asAny = item as any;
+
+    // 0. Prioritize primary event/staging date for plays and productions
+    const playDateTs = parseDateToTimestamp(asAny.showDate || asAny.show_date);
+    if (playDateTs !== null) return playDateTs;
+
+    if (asAny.dates && Array.isArray(asAny.dates) && asAny.dates.length > 0) {
+      const firstDateTs = parseDateToTimestamp(asAny.dates[0]?.date);
+      if (firstDateTs !== null) return firstDateTs;
+    }
+
+    // For Articles: prioritize published date if present (e.g. "Dec 20, 2023")
+    if (asAny.date && typeof asAny.date === 'string') {
+      const articleDateTs = parseDateToTimestamp(asAny.date);
+      if (articleDateTs !== null) return articleDateTs;
+    }
+
     // 1. If createdAt is present and valid, use its timestamp
-    if (item.createdAt) {
-      const parsedTime = new Date(item.createdAt).getTime();
-      if (!isNaN(parsedTime) && parsedTime > 0) return parsedTime;
+    if (item.createdAt || asAny.created_at) {
+      const createdTs = parseDateToTimestamp(item.createdAt || asAny.created_at);
+      if (createdTs !== null) return createdTs;
     }
 
     // 2. Parse timestamp from dynamic custom IDs like 'pending_play_1779...', 'direct_play_1779...'
@@ -2229,7 +2265,12 @@ export function sortItemsByDateAdded<T extends { id: string; createdAt?: string 
     return Date.now() - arrayIndex * 10;
   };
 
-  return [...items].sort((a, b) => getScore(b) - getScore(a));
+  return [...items].sort((a, b) => {
+    const diff = getScore(b) - getScore(a);
+    if (diff !== 0) return diff;
+    // Tie breaker: fallback to insertion index
+    return (indexMap.get(a) ?? 0) - (indexMap.get(b) ?? 0);
+  });
 }
 
 // Strip HTML tags helper to prevent raw tags from showing in previews
